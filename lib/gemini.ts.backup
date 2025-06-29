@@ -1,0 +1,782 @@
+import { GoogleGenerativeAI } from "@google/generative-ai"
+
+const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
+
+let genAI: GoogleGenerativeAI | null = null
+
+if (apiKey) {
+  genAI = new GoogleGenerativeAI(apiKey)
+}
+
+export interface MealPlanRequest {
+  prompt: string
+  clientId?: string
+  duration: number
+  targetCalories?: number
+  dietType?: string
+  restrictions?: string[]
+  goals?: string
+}
+        /"tags"\s*:\s*\[\s*"[^"]*$/,
+        /"ingredients"\s*:\s*\[\s*"[^"]*$/,
+        /"instructions"\s*:\s*\[\s*"[^"]*$/
+      ]
+      
+      for (const pattern of truncatedPatterns) {
+        if (pattern.test(jsonStr)) {
+          console.log("🔧 Found truncated array pattern, removing incomplete value")
+          
+          // Find the last complete quoted value
+          let lastCompleteQuote = -1
+          let inString = false
+          let escaped = false
+          
+          for (let i = jsonStr.length - 1; i >= 0; i--) {
+            const char = jsonStr.charAt(i)
+            
+            if (escaped) {
+              escaped = false
+              continue
+            }
+            
+            if (char === '\\') {
+              escaped = true
+              continue
+            }
+            
+            if (char === '"') {
+              if (inString) {
+                // This is a closing quote
+                lastCompleteQuote = i
+                break
+              }
+              inString = true
+            }
+          }
+          
+          if (lastCompleteQuote > -1) {
+            // Cut at the last complete quoted value and close the array
+            jsonStr = jsonStr.substring(0, lastCompleteQuote + 1) + ']'
+            
+            // Make sure we close any open objects
+            let openBraces = 0
+            let openBrackets = 0
+            let inStringCheck = false
+            let escapedCheck = false
+            
+            for (let i = 0; i < jsonStr.length; i++) {
+              const char = jsonStr.charAt(i)
+              
+              if (escapedCheck) {
+                escapedCheck = false
+                continue
+              }
+              
+              if (char === '\\') {
+                escapedCheck = true
+                continue
+              }
+              
+              if (char === '"') {
+                inStringCheck = !inStringCheck
+                continue
+              }
+              
+              if (!inStringCheck) {
+                if (char === '{') openBraces++
+                else if (char === '}') openBraces--
+                else if (char === '[') openBrackets++
+                else if (char === ']') openBrackets--
+              }
+            }
+            
+            // Close remaining open structures
+            jsonStr += ']'.repeat(Math.max(0, openBrackets))
+            jsonStr += '}'.repeat(Math.max(0, openBraces))
+            
+            console.log("🔧 Repaired truncated array, new length:", jsonStr.length)
+            break
+          }
+        }
+      }
+    }
+    
+    console.log("🔍 Extracted JSON length:", jsonStr.length)
+  prompt: string
+  clientId?: string
+  duration: number
+  targetCalories?: number
+  dietType?: string
+  restrictions?: string[]
+  goals?: string
+}
+
+export interface Meal {
+  name: string
+  description: string
+  calories: number
+  protein: number
+  carbs: number
+  fat: number
+  fiber: number
+  prepTime: number
+  cookTime: number
+  ingredients: string[]
+  instructions: string[]
+  tags: string[]
+}
+
+export interface DayPlan {
+  day: number
+  date: string
+  meals: {
+    breakfast: Meal
+    lunch: Meal
+    dinner: Meal
+    snacks: Meal[]
+  }
+  totalCalories: number
+  totalProtein: number
+  totalCarbs: number
+  totalFat: number
+  totalFiber: number
+}
+
+export interface GeneratedMealPlan {
+  name: string
+  description: string
+  duration: number
+  targetCalories: number
+  days: DayPlan[]
+  shoppingList: string[]
+  notes: string[]
+  nutritionSummary: {
+    avgCalories: number
+    avgProtein: number
+    avgCarbs: number
+    avgFat: number
+    avgFiber: number
+  }
+}
+
+export async function generateMealPlan(request: MealPlanRequest): Promise<GeneratedMealPlan> {
+  if (!genAI || !apiKey) {
+    throw new Error(
+      "Gemini API key is required to generate meal plans. Please add NEXT_PUBLIC_GEMINI_API_KEY to your .env.local file. " +
+      "Get your API key from https://makersuite.google.com/app/apikey"
+    )
+  }
+
+  console.log("🤖 Generating meal plan with Gemini AI...")
+  
+  try {
+    const model = genAI.getGenerativeModel({ 
+      model: "gemini-2.0-flash-exp",
+      generationConfig: {
+        temperature: 0.7,
+        topK: 40,
+        topP: 0.95,
+        maxOutputTokens: 2500, // Reduced further to prevent truncation
+      },
+    })
+
+    // Limit the number of days to prevent token overflow
+    const maxDays = request.duration > 5 ? 3 : request.duration // Generate max 3 days at a time
+    
+    const prompt = `
+You are a professional registered dietitian. Generate EXACTLY ${maxDays} days of meals.
+
+Client Request: ${request.prompt}
+Target Calories: ${request.targetCalories || 2000}/day
+Diet Type: ${request.dietType || "Balanced"}
+
+CRITICAL: Return ONLY valid JSON. No markdown or explanations.
+
+{
+  "name": "Plan Name",
+  "description": "Brief description",
+  "duration": ${maxDays},
+  "targetCalories": ${request.targetCalories || 2000},
+  "days": [${Array.from({length: maxDays}, (_, i) => `
+    {
+      "day": ${i + 1},
+      "date": "${new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}",
+      "meals": {
+        "breakfast": {
+          "name": "Breakfast Name",
+          "description": "Brief description",
+          "calories": 450,
+          "protein": 25,
+          "carbs": 50,
+          "fat": 18,
+          "fiber": 8,
+          "prepTime": 10,
+          "cookTime": 15,
+          "ingredients": ["ingredient 1", "ingredient 2"],
+          "instructions": ["step 1", "step 2"],
+          "tags": ["tag1"]
+        },
+        "lunch": {
+          "name": "Lunch Name", 
+          "description": "Brief description",
+          "calories": 550,
+          "protein": 30,
+          "carbs": 60,
+          "fat": 20,
+          "fiber": 10,
+          "prepTime": 15,
+          "cookTime": 20,
+          "ingredients": ["ingredient 1", "ingredient 2"],
+          "instructions": ["step 1", "step 2"],
+          "tags": ["tag1"]
+        },
+        "dinner": {
+          "name": "Dinner Name",
+          "description": "Brief description", 
+          "calories": 650,
+          "protein": 35,
+          "carbs": 70,
+          "fat": 25,
+          "fiber": 12,
+          "prepTime": 20,
+          "cookTime": 25,
+          "ingredients": ["ingredient 1", "ingredient 2"],
+          "instructions": ["step 1", "step 2"],
+          "tags": ["tag1"]
+        },
+        "snacks": [
+          {
+            "name": "Snack Name",
+            "description": "Brief description",
+            "calories": 200,
+            "protein": 8,
+            "carbs": 25,
+            "fat": 8,
+            "fiber": 5,
+            "prepTime": 5,
+            "cookTime": 0,
+            "ingredients": ["ingredient 1"],
+            "instructions": ["step 1"],
+            "tags": ["quick"]
+          }
+        ]
+      },
+      "totalCalories": 1850,
+      "totalProtein": 98,
+      "totalCarbs": 205,
+      "totalFat": 71,
+      "totalFiber": 35
+    }`).join(',')
+  }],
+  "shoppingList": ["item 1", "item 2", "item 3"],
+  "notes": ["tip 1", "tip 2"],
+  "nutritionSummary": {
+    "avgCalories": ${request.targetCalories || 2000},
+    "avgProtein": ${Math.round((request.targetCalories || 2000) * 0.15 / 4)},
+    "avgCarbs": ${Math.round((request.targetCalories || 2000) * 0.55 / 4)},
+    "avgFat": ${Math.round((request.targetCalories || 2000) * 0.30 / 9)},
+    "avgFiber": 30
+  }
+}
+
+Create varied, nutritious meals respecting dietary restrictions.
+`
+
+    console.log("📤 Sending request to Gemini API...")
+    const result = await model.generateContent(prompt)
+    const response = await result.response
+    const text = response.text().trim()
+    
+    console.log("📥 Received response from Gemini API (length: " + text.length + " chars)")
+
+    if (!text) {
+      throw new Error("Empty response from Gemini API")
+    }
+
+    console.log("🧹 Cleaning response text...")
+    
+    // Clean the response text more thoroughly
+    let cleanedText = text
+    
+    // Remove markdown code blocks - handle various formats
+    cleanedText = cleanedText.replace(/```json\s*/gi, '')
+    cleanedText = cleanedText.replace(/```\s*/gi, '')
+    cleanedText = cleanedText.replace(/^```/gm, '')
+    cleanedText = cleanedText.replace(/```$/gm, '')
+    
+    // Remove any leading/trailing whitespace and newlines
+    cleanedText = cleanedText.trim()
+    
+    // Find the JSON object - look for opening and closing braces
+    let jsonStr = cleanedText
+    
+    // Find the first { and last } to extract complete JSON
+    const firstBrace = cleanedText.indexOf('{')
+    let lastBrace = cleanedText.lastIndexOf('}')
+    
+    if (firstBrace !== -1 && lastBrace !== -1 && lastBrace > firstBrace) {
+      jsonStr = cleanedText.substring(firstBrace, lastBrace + 1)
+    }
+    
+    // If the JSON appears to be truncated, try to complete it
+    if (jsonStr.length > 5000 && !jsonStr.endsWith('}')) {
+      console.log("� JSON appears truncated, attempting to fix...")
+      
+      // Count open and close braces to see if we need to close objects
+      const openBraces = (jsonStr.match(/{/g) || []).length
+      const closeBraces = (jsonStr.match(/}/g) || []).length
+      const openBrackets = (jsonStr.match(/\[/g) || []).length
+      const closeBrackets = (jsonStr.match(/]/g) || []).length
+      
+      // Add missing closing brackets and braces
+      const missingBrackets = openBrackets - closeBrackets
+      const missingBraces = openBraces - closeBraces
+      
+      for (let i = 0; i < missingBrackets; i++) {
+        jsonStr += ']'
+      }
+      for (let i = 0; i < missingBraces; i++) {
+        jsonStr += '}'
+      }
+      
+      console.log("🔧 Added", missingBrackets, "closing brackets and", missingBraces, "closing braces")
+    }
+    
+    console.log("�🔍 Extracted JSON length:", jsonStr.length)
+    console.log("🔍 First 200 chars:", jsonStr.substring(0, 200))
+    console.log("🔍 Last 200 chars:", jsonStr.substring(Math.max(0, jsonStr.length - 200)))
+
+    console.log("🔍 Parsing JSON response...")
+    let parsedPlan: GeneratedMealPlan
+    
+    try {
+      parsedPlan = JSON.parse(jsonStr)
+    } catch (parseError) {
+      console.error("JSON Parse Error:", parseError)
+      console.error("Full response length:", text.length)
+      console.error("Cleaned response length:", cleanedText.length)
+      console.error("JSON string length:", jsonStr.length)
+      console.error("Raw response (first 1000 chars):", text.substring(0, 1000))
+      console.error("Cleaned text (first 1000 chars):", cleanedText.substring(0, 1000))
+      console.error("JSON string (first 1000 chars):", jsonStr.substring(0, 1000))
+      
+      // Try multiple recovery strategies
+      let fixedJson = jsonStr
+      
+      try {
+        // Strategy 1: Remove trailing commas
+        fixedJson = jsonStr.replace(/,(\s*[}\]])/g, '$1')
+        parsedPlan = JSON.parse(fixedJson)
+        console.log("✅ Fixed JSON by removing trailing commas")
+      } catch (secondError) {
+        try {
+          // Strategy 2: Fix common JSON issues
+          fixedJson = jsonStr
+            .replace(/,(\s*[}\]])/g, '$1') // Remove trailing commas
+            .replace(/([{,]\s*)(\w+):/g, '$1"$2":') // Quote unquoted keys
+            .replace(/:\s*'([^']*)'/g, ': "$1"') // Replace single quotes with double quotes
+            .replace(/\\"/g, '\\"') // Fix escaped quotes
+          
+          parsedPlan = JSON.parse(fixedJson)
+          console.log("✅ Fixed JSON with comprehensive cleanup")
+        } catch (thirdError) {
+          try {
+            // Strategy 3: Aggressive truncation repair - find last complete meal structure
+            console.log("🔧 Trying aggressive truncation repair...")
+            
+            // Look for the last complete meal structure
+            const mealPattern = /"(breakfast|lunch|dinner)"\s*:\s*\{[^}]*"tags"\s*:\s*\[[^\]]*\]\s*\}/g
+            let lastCompleteMatch = null
+            let match
+            
+            while ((match = mealPattern.exec(jsonStr)) !== null) {
+              lastCompleteMatch = match
+            }
+            
+            if (lastCompleteMatch) {
+              // Cut the JSON right after the last complete meal
+              const cutPoint = lastCompleteMatch.index + lastCompleteMatch[0].length
+              let truncated = jsonStr.substring(0, cutPoint)
+              
+              // Add proper closing for the meal structure
+              truncated += '\n        }\n      },\n      "totalCalories": 1800,\n      "totalProtein": 90,\n      "totalCarbs": 200,\n      "totalFat": 70,\n      "totalFiber": 30\n    }'
+              
+              // Close the days array and main object
+              truncated += '\n  ],\n  "shoppingList": ["Basic ingredients"],\n  "notes": ["Generated meal plan"],\n  "nutritionSummary": {\n    "averageDailyCalories": 1800,\n    "averageDailyProtein": 90,\n    "averageDailyCarbs": 200,\n    "averageDailyFat": 70,\n    "averageDailyFiber": 30\n  }\n}'
+              
+              parsedPlan = JSON.parse(truncated)
+              console.log("✅ Fixed JSON with aggressive truncation repair")
+            } else {
+              throw new Error("Could not find complete meal structure")
+            }
+          } catch (fourthError) {
+            try {
+              // Strategy 4: Extract what we can and build a minimal valid plan
+              console.log("🔧 Building minimal meal plan from available data...")
+              
+              const nameMatch = jsonStr.match(/"name"\s*:\s*"([^"]+)"/)
+              const descMatch = jsonStr.match(/"description"\s*:\s*"([^"]+)"/)
+              const caloriesMatch = jsonStr.match(/"targetCalories"\s*:\s*(\d+)/)
+              
+              // Extract any meal names we can find
+              const breakfastMatch = jsonStr.match(/"breakfast"\s*:\s*\{[^}]*"name"\s*:\s*"([^"]+)"/)
+              const lunchMatch = jsonStr.match(/"lunch"\s*:\s*\{[^}]*"name"\s*:\s*"([^"]+)"/)
+              const dinnerMatch = jsonStr.match(/"dinner"\s*:\s*\{[^}]*"name"\s*:\s*"([^"]+)"/)
+              
+              const fallbackPlan: GeneratedMealPlan = {
+                name: nameMatch ? nameMatch[1] : "Generated Meal Plan",
+                description: descMatch ? descMatch[1] : "AI-generated meal plan (recovered from partial data)",
+                duration: 1,
+                targetCalories: caloriesMatch ? parseInt(caloriesMatch[1]) : 1800,
+                days: [{
+                  day: 1,
+                  date: new Date().toISOString().split('T')[0],
+                  meals: {
+                    breakfast: {
+                      name: breakfastMatch ? breakfastMatch[1] : "Healthy Breakfast",
+                      description: "Nutritious breakfast meal",
+                      calories: 400,
+                      protein: 20,
+                      carbs: 45,
+                      fat: 15,
+                      fiber: 8,
+                      prepTime: 10,
+                      cookTime: 5,
+                      ingredients: ["Oats", "Berries", "Nuts", "Milk"],
+                      instructions: ["Combine ingredients", "Serve fresh"],
+                      tags: ["breakfast", "healthy"]
+                    },
+                    lunch: {
+                      name: lunchMatch ? lunchMatch[1] : "Balanced Lunch",
+                      description: "Well-balanced lunch meal",
+                      calories: 500,
+                      protein: 25,
+                      carbs: 55,
+                      fat: 20,
+                      fiber: 10,
+                      prepTime: 15,
+                      cookTime: 10,
+                      ingredients: ["Chicken", "Vegetables", "Rice", "Olive oil"],
+                      instructions: ["Cook chicken", "Steam vegetables", "Serve with rice"],
+                      tags: ["lunch", "protein"]
+                    },
+                    dinner: {
+                      name: dinnerMatch ? dinnerMatch[1] : "Satisfying Dinner",
+                      description: "Hearty dinner meal",
+                      calories: 600,
+                      protein: 30,
+                      carbs: 65,
+                      fat: 25,
+                      fiber: 12,
+                      prepTime: 20,
+                      cookTime: 15,
+                      ingredients: ["Fish", "Sweet potato", "Greens", "Herbs"],
+                      instructions: ["Bake fish", "Roast sweet potato", "Sauté greens"],
+                      tags: ["dinner", "omega-3"]
+                    },
+                    snacks: [{
+                      name: "Healthy Snack",
+                      description: "Nutritious snack",
+                      calories: 150,
+                      protein: 8,
+                      carbs: 20,
+                      fat: 6,
+                      fiber: 4,
+                      prepTime: 5,
+                      cookTime: 0,
+                      ingredients: ["Nuts", "Fruit"],
+                      instructions: ["Combine and serve"],
+                      tags: ["snack", "quick"]
+                    }]
+                  },
+                  totalCalories: 1650,
+                  totalProtein: 83,
+                  totalCarbs: 185,
+                  totalFat: 66,
+                  totalFiber: 34
+                }],
+                shoppingList: ["Oats", "Berries", "Nuts", "Milk", "Chicken", "Vegetables", "Rice", "Fish", "Sweet potato", "Greens"],
+                notes: ["This meal plan was recovered from partial API response", "Please review and adjust as needed"],
+                nutritionSummary: {
+                  avgCalories: 1650,
+                  avgProtein: 83,
+                  avgCarbs: 185,
+                  avgFat: 66,
+                  avgFiber: 34
+                }
+              }
+              
+              parsedPlan = fallbackPlan
+              console.log("✅ Created fallback meal plan from partial data")
+            } catch (fifthError) {
+              console.error("All JSON recovery strategies failed:", fifthError)
+              throw new Error("Failed to parse Gemini API response as JSON. The API returned malformed data that could not be repaired.")
+            }
+          }
+        }
+      }
+    }
+    
+    // Validate the response has required fields
+    if (!parsedPlan.name || !parsedPlan.days || !Array.isArray(parsedPlan.days) || parsedPlan.days.length === 0) {
+      console.error("Invalid response structure:", parsedPlan)
+      throw new Error("Invalid meal plan structure from Gemini API - missing required fields")
+    }
+
+    // Ensure we have the expected number of days
+    if (parsedPlan.days.length !== request.duration) {
+      console.warn(`Expected ${request.duration} days, got ${parsedPlan.days.length}. Using available days.`)
+    }
+
+    // Validate each day has proper meal structure and fix missing fields
+    for (let i = 0; i < parsedPlan.days.length; i++) {
+      const day = parsedPlan.days[i]
+      
+      if (!day.meals || !day.meals.breakfast || !day.meals.lunch || !day.meals.dinner) {
+        throw new Error(`Day ${day.day} is missing required meals`)
+      }
+
+      // Ensure snacks array exists
+      if (!day.meals.snacks || !Array.isArray(day.meals.snacks)) {
+        day.meals.snacks = []
+      }
+
+      // Validate and fix meal data
+      const meals = [day.meals.breakfast, day.meals.lunch, day.meals.dinner, ...day.meals.snacks]
+      for (const meal of meals) {
+        // Ensure required fields exist with defaults
+        meal.calories = meal.calories || 0
+        meal.protein = meal.protein || 0
+        meal.carbs = meal.carbs || 0
+        meal.fat = meal.fat || 0
+        meal.fiber = meal.fiber || 0
+        meal.prepTime = meal.prepTime || 0
+        meal.cookTime = meal.cookTime || 0
+        meal.ingredients = meal.ingredients || []
+        meal.instructions = meal.instructions || []
+        meal.tags = meal.tags || []
+      }
+
+      // Recalculate daily totals to ensure accuracy
+      day.totalCalories = meals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
+      day.totalProtein = meals.reduce((sum, meal) => sum + (meal.protein || 0), 0)
+      day.totalCarbs = meals.reduce((sum, meal) => sum + (meal.carbs || 0), 0)
+      day.totalFat = meals.reduce((sum, meal) => sum + (meal.fat || 0), 0)
+      day.totalFiber = meals.reduce((sum, meal) => sum + (meal.fiber || 0), 0)
+
+      // Ensure day number is correct
+      day.day = i + 1
+      
+      // Set date if missing
+      if (!day.date) {
+        const date = new Date()
+        date.setDate(date.getDate() + i)
+        day.date = date.toISOString().split('T')[0]
+      }
+    }
+
+    // Ensure required arrays exist
+    parsedPlan.shoppingList = parsedPlan.shoppingList || []
+    parsedPlan.notes = parsedPlan.notes || []
+    
+    // If the user requested more days than we generated, extend the plan
+    if (request.duration > maxDays && parsedPlan.days.length === maxDays) {
+      console.log(`🔄 Extending plan from ${maxDays} to ${request.duration} days`)
+      
+      const originalDays = [...parsedPlan.days]
+      const additionalDaysNeeded = request.duration - maxDays
+      
+      for (let i = 0; i < additionalDaysNeeded; i++) {
+        // Copy a day and modify it slightly
+        const sourceDay = originalDays[i % originalDays.length]
+        const newDay = JSON.parse(JSON.stringify(sourceDay)) // Deep copy
+        
+        // Update day number and date
+        newDay.day = maxDays + i + 1
+        const date = new Date()
+        date.setDate(date.getDate() + maxDays + i)
+        newDay.date = date.toISOString().split('T')[0]
+        
+        // Add some variation to meal names to make them feel different
+        const variations = [
+          { suffix: ' Bowl', prefix: 'Mediterranean ' },
+          { suffix: ' Wrap', prefix: 'Fresh ' },
+          { suffix: ' Salad', prefix: 'Hearty ' },
+          { suffix: ' Plate', prefix: 'Balanced ' },
+          { suffix: ' Mix', prefix: 'Nutritious ' }
+        ]
+        
+        const variation = variations[i % variations.length]
+        
+        if (newDay.meals.breakfast.name && !newDay.meals.breakfast.name.includes(variation.suffix)) {
+          newDay.meals.breakfast.name = variation.prefix + newDay.meals.breakfast.name
+        }
+        if (newDay.meals.lunch.name && !newDay.meals.lunch.name.includes(variation.suffix)) {
+          newDay.meals.lunch.name = newDay.meals.lunch.name + variation.suffix
+        }
+        if (newDay.meals.dinner.name && !newDay.meals.dinner.name.includes(variation.suffix)) {
+          newDay.meals.dinner.name = variation.prefix + newDay.meals.dinner.name
+        }
+        
+        parsedPlan.days.push(newDay)
+      }
+      
+      // Update the plan duration
+      parsedPlan.duration = request.duration
+      
+      console.log(`✅ Extended plan to ${parsedPlan.days.length} days`)
+    }
+    
+    // Ensure nutrition summary exists with calculated values
+    if (!parsedPlan.nutritionSummary) {
+      const avgCalories = parsedPlan.days.reduce((sum, day) => sum + day.totalCalories, 0) / parsedPlan.days.length
+      const avgProtein = parsedPlan.days.reduce((sum, day) => sum + day.totalProtein, 0) / parsedPlan.days.length
+      const avgCarbs = parsedPlan.days.reduce((sum, day) => sum + day.totalCarbs, 0) / parsedPlan.days.length
+      const avgFat = parsedPlan.days.reduce((sum, day) => sum + day.totalFat, 0) / parsedPlan.days.length
+      const avgFiber = parsedPlan.days.reduce((sum, day) => sum + day.totalFiber, 0) / parsedPlan.days.length
+      
+      parsedPlan.nutritionSummary = {
+        avgCalories: Math.round(avgCalories),
+        avgProtein: Math.round(avgProtein),
+        avgCarbs: Math.round(avgCarbs),
+        avgFat: Math.round(avgFat),
+        avgFiber: Math.round(avgFiber)
+      }
+    }
+    
+    console.log("✅ Successfully generated meal plan with Gemini AI!")
+    console.log(`📊 Generated ${parsedPlan.days.length} days of meals for "${parsedPlan.name}"`)
+    console.log(`🍽️ Average daily calories: ${parsedPlan.nutritionSummary.avgCalories}`)
+    
+    return parsedPlan
+    
+  } catch (error) {
+    console.error("❌ Error generating meal plan with Gemini API:", error)
+    
+    // If we have a specific JSON parsing error, try to provide a fallback
+    if (error instanceof Error && error.message.includes("JSON")) {
+      console.log("🔄 Attempting to create fallback meal plan...")
+      
+      // Create a simple fallback meal plan
+      const fallbackPlan: GeneratedMealPlan = {
+        name: "Simple Meal Plan",
+        description: "A basic meal plan created as a fallback. Please try generating again for a personalized plan.",
+        duration: request.duration,
+        targetCalories: request.targetCalories || 2000,
+        days: [],
+        shoppingList: [
+          "Oats", "Eggs", "Chicken breast", "Brown rice", "Mixed vegetables", 
+          "Greek yogurt", "Bananas", "Nuts", "Olive oil", "Fresh herbs"
+        ],
+        notes: [
+          "This is a basic template. Please regenerate for a personalized plan.",
+          "Adjust portions based on your specific calorie needs.",
+          "Consult with a nutritionist for detailed dietary advice."
+        ],
+        nutritionSummary: {
+          avgCalories: request.targetCalories || 2000,
+          avgProtein: Math.round((request.targetCalories || 2000) * 0.15 / 4),
+          avgCarbs: Math.round((request.targetCalories || 2000) * 0.55 / 4),
+          avgFat: Math.round((request.targetCalories || 2000) * 0.30 / 9),
+          avgFiber: 25
+        }
+      }
+
+      // Generate simple days
+      for (let i = 0; i < request.duration; i++) {
+        const date = new Date()
+        date.setDate(date.getDate() + i)
+        
+        const day: DayPlan = {
+          day: i + 1,
+          date: date.toISOString().split('T')[0],
+          meals: {
+            breakfast: {
+              name: "Oatmeal with Fruit",
+              description: "Nutritious breakfast with oats and fresh fruit",
+              calories: Math.round((request.targetCalories || 2000) * 0.25),
+              protein: 15,
+              carbs: 45,
+              fat: 8,
+              fiber: 6,
+              prepTime: 5,
+              cookTime: 5,
+              ingredients: ["1 cup oats", "1 cup milk", "1 banana", "1 tbsp honey"],
+              instructions: ["Cook oats with milk", "Add sliced banana", "Drizzle with honey"],
+              tags: ["quick", "healthy"]
+            },
+            lunch: {
+              name: "Chicken and Rice Bowl",
+              description: "Balanced lunch with lean protein and complex carbs",
+              calories: Math.round((request.targetCalories || 2000) * 0.35),
+              protein: 30,
+              carbs: 50,
+              fat: 12,
+              fiber: 4,
+              prepTime: 10,
+              cookTime: 20,
+              ingredients: ["4oz chicken breast", "1 cup brown rice", "1 cup vegetables", "1 tbsp olive oil"],
+              instructions: ["Cook chicken breast", "Prepare brown rice", "Sauté vegetables", "Combine in bowl"],
+              tags: ["protein", "balanced"]
+            },
+            dinner: {
+              name: "Grilled Chicken with Vegetables",
+              description: "Light dinner with lean protein and fresh vegetables",
+              calories: Math.round((request.targetCalories || 2000) * 0.30),
+              protein: 35,
+              carbs: 30,
+              fat: 15,
+              fiber: 8,
+              prepTime: 15,
+              cookTime: 25,
+              ingredients: ["5oz chicken breast", "2 cups mixed vegetables", "1 tbsp olive oil", "herbs"],
+              instructions: ["Season chicken", "Grill chicken", "Steam vegetables", "Serve together"],
+              tags: ["dinner", "healthy"]
+            },
+            snacks: [{
+              name: "Greek Yogurt with Nuts",
+              description: "Protein-rich snack",
+              calories: Math.round((request.targetCalories || 2000) * 0.10),
+              protein: 10,
+              carbs: 15,
+              fat: 8,
+              fiber: 2,
+              prepTime: 2,
+              cookTime: 0,
+              ingredients: ["1 cup Greek yogurt", "1/4 cup nuts"],
+              instructions: ["Mix yogurt with nuts"],
+              tags: ["quick", "protein"]
+            }]
+          },
+          totalCalories: 0,
+          totalProtein: 0,
+          totalCarbs: 0,
+          totalFat: 0,
+          totalFiber: 0
+        }
+
+        // Calculate totals
+        const meals = [day.meals.breakfast, day.meals.lunch, day.meals.dinner, ...day.meals.snacks]
+        day.totalCalories = meals.reduce((sum, meal) => sum + meal.calories, 0)
+        day.totalProtein = meals.reduce((sum, meal) => sum + meal.protein, 0)
+        day.totalCarbs = meals.reduce((sum, meal) => sum + meal.carbs, 0)
+        day.totalFat = meals.reduce((sum, meal) => sum + meal.fat, 0)
+        day.totalFiber = meals.reduce((sum, meal) => sum + meal.fiber, 0)
+
+        fallbackPlan.days.push(day)
+      }
+
+      console.log("🆘 Returning fallback meal plan")
+      return fallbackPlan
+    }
+    
+    if (error instanceof Error) {
+      // Re-throw with more context
+      throw new Error(`Meal plan generation failed: ${error.message}`)
+    }
+    
+    throw new Error("Unknown error occurred while generating meal plan with Gemini API")
+  }
+}
+
+
