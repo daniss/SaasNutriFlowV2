@@ -54,9 +54,9 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Sign in to NutriFlow</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Connexion à NutriFlow</CardTitle>
           <CardDescription className="text-center">
-            Enter your email and password to access your dashboard
+            Entrez votre email et mot de passe pour accéder à votre tableau de bord
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>
@@ -73,7 +73,7 @@ export default function LoginPage() {
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="Entrez votre email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   className="pl-10"
@@ -83,13 +83,13 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password">Mot de passe</Label>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Enter your password"
+                  placeholder="Entrez votre mot de passe"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   className="pl-10"
@@ -104,16 +104,16 @@ export default function LoginPage() {
               {loading || authLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  {loading ? "Signing in..." : "Redirecting..."}
+                  {loading ? "Connexion..." : "Redirection..."}
                 </>
               ) : (
-                "Sign in"
+                "Se connecter"
               )}
             </Button>
             <div className="text-center text-sm">
-              Don't have an account?{" "}
+              Vous n'avez pas de compte ?{" "}
               <Link href="/signup" className="text-blue-600 hover:underline">
-                Sign up
+                S'inscrire
               </Link>
             </div>
           </CardFooter>

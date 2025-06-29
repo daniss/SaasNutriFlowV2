@@ -224,9 +224,9 @@ export default function ClientsPage() {
   return (
     <div className="space-y-6">
       <DashboardHeader 
-        title="Client Management"
-        subtitle="Manage and track your clients' nutrition journeys"
-        searchPlaceholder="Search clients..."
+        title="Gestion des clients"
+        subtitle="Gérez et suivez les parcours nutritionnels de vos clients"
+        searchPlaceholder="Rechercher des clients..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
@@ -234,25 +234,25 @@ export default function ClientsPage() {
             <DialogTrigger asChild>
               <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
                 <Plus className="mr-2 h-4 w-4" />
-                New Client
+                Nouveau client
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto shadow-soft-lg border-0">
               <DialogHeader className="space-y-3">
-                <DialogTitle className="text-xl font-semibold text-gray-900">Add New Client</DialogTitle>
+                <DialogTitle className="text-xl font-semibold text-gray-900">Ajouter un nouveau client</DialogTitle>
                 <DialogDescription className="text-gray-600 leading-relaxed">
-                  Create a new client profile to start managing their nutrition journey.
+                  Créez un nouveau profil client pour commencer à gérer son parcours nutritionnel.
                 </DialogDescription>
               </DialogHeader>
             <div className="grid gap-6 py-6">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="name" className="text-sm font-semibold text-gray-700">Full Name *</Label>
+                  <Label htmlFor="name" className="text-sm font-semibold text-gray-700">Nom complet *</Label>
                   <Input
                     id="name"
                     value={newClient.name}
                     onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
-                    placeholder="John Doe"
+                    placeholder="Marie Dupont"
                     className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
                   />
                 </div>
@@ -263,24 +263,24 @@ export default function ClientsPage() {
                     type="email"
                     value={newClient.email}
                     onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
-                    placeholder="john@example.com"
+                    placeholder="marie@exemple.fr"
                     className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Phone</Label>
+                  <Label htmlFor="phone" className="text-sm font-semibold text-gray-700">Téléphone</Label>
                   <Input
                     id="phone"
                     value={newClient.phone}
                     onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
-                    placeholder="+1 (555) 123-4567"
+                    placeholder="+33 1 23 45 67 89"
                     className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="age" className="text-sm font-semibold text-gray-700">Age</Label>
+                  <Label htmlFor="age" className="text-sm font-semibold text-gray-700">Âge</Label>
                   <Input
                     id="age"
                     type="number"
@@ -292,78 +292,78 @@ export default function ClientsPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="address" className="text-sm font-semibold text-gray-700">Address</Label>
+                <Label htmlFor="address" className="text-sm font-semibold text-gray-700">Adresse</Label>
                 <Input
                   id="address"
                   value={newClient.address}
                   onChange={(e) => setNewClient({ ...newClient, address: e.target.value })}
-                  placeholder="123 Main St, City, State 12345"
+                  placeholder="123 Rue de la Paix, 75001 Paris"
                   className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
                 />
               </div>
               <div className="grid grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="height" className="text-sm font-semibold text-gray-700">Height</Label>
+                  <Label htmlFor="height" className="text-sm font-semibold text-gray-700">Taille</Label>
                   <Input
                     id="height"
                     value={newClient.height}
                     onChange={(e) => setNewClient({ ...newClient, height: e.target.value })}
-                    placeholder="5'8&quot;"
+                    placeholder="1m75"
                     className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="current_weight" className="text-sm font-semibold text-gray-700">Current Weight (lbs)</Label>
+                  <Label htmlFor="current_weight" className="text-sm font-semibold text-gray-700">Poids actuel (kg)</Label>
                   <Input
                     id="current_weight"
                     type="number"
                     value={newClient.current_weight}
                     onChange={(e) => setNewClient({ ...newClient, current_weight: e.target.value })}
-                    placeholder="150"
+                    placeholder="70"
                     className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="goal_weight" className="text-sm font-semibold text-gray-700">Goal Weight (lbs)</Label>
+                  <Label htmlFor="goal_weight" className="text-sm font-semibold text-gray-700">Poids objectif (kg)</Label>
                   <Input
                     id="goal_weight"
                     type="number"
                     value={newClient.goal_weight}
                     onChange={(e) => setNewClient({ ...newClient, goal_weight: e.target.value })}
-                    placeholder="140"
+                    placeholder="65"
                     className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
                   />
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="goal" className="text-sm font-semibold text-gray-700">Primary Goal</Label>
+                  <Label htmlFor="goal" className="text-sm font-semibold text-gray-700">Objectif principal</Label>
                   <Select value={newClient.goal} onValueChange={(value: string) => setNewClient({ ...newClient, goal: value })}>
                     <SelectTrigger className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20">
-                      <SelectValue placeholder="Select goal" />
+                      <SelectValue placeholder="Choisir un objectif" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="weight_loss">Weight Loss</SelectItem>
-                      <SelectItem value="weight_gain">Weight Gain</SelectItem>
-                      <SelectItem value="muscle_gain">Muscle Gain</SelectItem>
-                      <SelectItem value="maintenance">Maintenance</SelectItem>
-                      <SelectItem value="health_improvement">Health Improvement</SelectItem>
+                      <SelectItem value="weight_loss">Perte de poids</SelectItem>
+                      <SelectItem value="weight_gain">Prise de poids</SelectItem>
+                      <SelectItem value="muscle_gain">Prise de masse musculaire</SelectItem>
+                      <SelectItem value="maintenance">Maintien</SelectItem>
+                      <SelectItem value="health_improvement">Amélioration de la santé</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="plan_type" className="text-sm font-semibold text-gray-700">Plan Type</Label>
+                  <Label htmlFor="plan_type" className="text-sm font-semibold text-gray-700">Type de plan</Label>
                   <Select
                     value={newClient.plan_type}
                     onValueChange={(value: string) => setNewClient({ ...newClient, plan_type: value })}
                   >
                     <SelectTrigger className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20">
-                      <SelectValue placeholder="Select plan" />
+                      <SelectValue placeholder="Choisir un plan" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="basic">Basic</SelectItem>
+                      <SelectItem value="basic">Basique</SelectItem>
                       <SelectItem value="premium">Premium</SelectItem>
-                      <SelectItem value="custom">Custom</SelectItem>
+                      <SelectItem value="custom">Personnalisé</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -374,7 +374,7 @@ export default function ClientsPage() {
                   id="notes"
                   value={newClient.notes}
                   onChange={(e) => setNewClient({ ...newClient, notes: e.target.value })}
-                  placeholder="Any additional notes about the client..."
+                  placeholder="Notes supplémentaires concernant le client..."
                   rows={3}
                   className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 resize-none"
                 />
@@ -382,14 +382,14 @@ export default function ClientsPage() {
             </div>
             <DialogFooter className="gap-3">
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)} className="border-gray-200 hover:bg-gray-50">
-                Cancel
+                Annuler
               </Button>
               <Button 
                 onClick={handleAddClient} 
                 disabled={!newClient.name || !newClient.email}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft disabled:opacity-50 font-medium"
               >
-                Add Client
+                Ajouter client
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -403,9 +403,9 @@ export default function ClientsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
-                <p className="text-emerald-700 text-sm font-semibold tracking-wide">Total Clients</p>
+                <p className="text-emerald-700 text-sm font-semibold tracking-wide">Total clients</p>
                 <p className="text-2xl font-bold text-emerald-900 tabular-nums">{clients.length}</p>
-                <p className="text-emerald-600 text-xs font-medium">Active relationships</p>
+                <p className="text-emerald-600 text-xs font-medium">Relations actives</p>
               </div>
               <div className="h-12 w-12 bg-emerald-200/80 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                 <Users className="h-6 w-6 text-emerald-700" />
@@ -418,11 +418,11 @@ export default function ClientsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
-                <p className="text-blue-700 text-sm font-semibold tracking-wide">Active Goals</p>
+                <p className="text-blue-700 text-sm font-semibold tracking-wide">Objectifs actifs</p>
                 <p className="text-2xl font-bold text-blue-900 tabular-nums">
                   {clients.filter(c => c.status === 'active').length}
                 </p>
-                <p className="text-blue-600 text-xs font-medium">In progress</p>
+                <p className="text-blue-600 text-xs font-medium">En cours</p>
               </div>
               <div className="h-12 w-12 bg-blue-200/80 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                 <Target className="h-6 w-6 text-blue-700" />
@@ -435,13 +435,13 @@ export default function ClientsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
-                <p className="text-orange-700 text-sm font-semibold tracking-wide">Avg Progress</p>
+                <p className="text-orange-700 text-sm font-semibold tracking-wide">Progrès moyen</p>
                 <p className="text-2xl font-bold text-orange-900 tabular-nums">
                   {clients.length > 0 
                     ? Math.round(clients.reduce((sum, c) => sum + (c.progress_percentage || 0), 0) / clients.length)
                     : 0}%
                 </p>
-                <p className="text-orange-600 text-xs font-medium">Goal completion</p>
+                <p className="text-orange-600 text-xs font-medium">Accomplissement objectif</p>
               </div>
               <div className="h-12 w-12 bg-orange-200/80 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                 <TrendingUp className="h-6 w-6 text-orange-700" />
@@ -454,7 +454,7 @@ export default function ClientsPage() {
           <CardContent className="p-6">
             <div className="flex items-center justify-between">
               <div className="space-y-2">
-                <p className="text-purple-700 text-sm font-semibold tracking-wide">This Month</p>
+                <p className="text-purple-700 text-sm font-semibold tracking-wide">Ce mois-ci</p>
                 <p className="text-2xl font-bold text-purple-900 tabular-nums">
                   {clients.filter(c => {
                     const joinDate = new Date(c.join_date)
@@ -462,7 +462,7 @@ export default function ClientsPage() {
                     return joinDate.getMonth() === now.getMonth() && joinDate.getFullYear() === now.getFullYear()
                   }).length}
                 </p>
-                <p className="text-purple-600 text-xs font-medium">New clients</p>
+                <p className="text-purple-600 text-xs font-medium">Nouveaux clients</p>
               </div>
               <div className="h-12 w-12 bg-purple-200/80 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
                 <Activity className="h-6 w-6 text-purple-700" />
@@ -482,12 +482,12 @@ export default function ClientsPage() {
                 <Users className="h-10 w-10 text-emerald-600" />
               </div>
               <h3 className="text-lg font-semibold text-gray-900 mb-3">
-                {searchTerm ? "No clients found" : "No clients yet"}
+                {searchTerm ? "Aucun client trouvé" : "Aucun client pour le moment"}
               </h3>
               <p className="text-gray-600 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
                 {searchTerm 
-                  ? "Try adjusting your search terms or add a new client." 
-                  : "Get started by adding your first client to begin their nutrition journey."
+                  ? "Essayez d'ajuster vos critères de recherche ou ajoutez un nouveau client." 
+                  : "Commencez par ajouter votre premier client pour débuter son parcours nutritionnel."
                 }
               </p>
               {!searchTerm && (
@@ -496,7 +496,7 @@ export default function ClientsPage() {
                   className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  Add Your First Client
+                  Ajoutez votre premier client
                 </Button>
               )}
             </div>
@@ -542,7 +542,7 @@ export default function ClientsPage() {
                         : "bg-gray-100 text-gray-600"
                     } border-0 font-medium px-3 py-1`}
                   >
-                    {client.status}
+                    {client.status === "active" ? "Actif" : "Inactif"}
                   </Badge>
                 </div>
 
@@ -559,7 +559,7 @@ export default function ClientsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center text-sm text-gray-600">
                         <Target className="mr-3 h-3 w-3 text-gray-400" />
-                        <span>Goal:</span>
+                        <span>Objectif:</span>
                       </div>
                       <span className="text-sm font-semibold text-gray-900 capitalize">
                         {client.goal.replace("_", " ")}
@@ -571,10 +571,10 @@ export default function ClientsPage() {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center text-sm text-gray-600">
                         <Scale className="mr-3 h-3 w-3 text-gray-400" />
-                        <span>Weight:</span>
+                        <span>Poids:</span>
                       </div>
                       <span className="text-sm font-semibold text-gray-900 tabular-nums">
-                        {client.current_weight} → {client.goal_weight} lbs
+                        {client.current_weight} → {client.goal_weight} kg
                       </span>
                     </div>
                   )}
@@ -584,7 +584,7 @@ export default function ClientsPage() {
                 {client.current_weight && client.goal_weight && (
                   <div className="space-y-3 mb-6">
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-700">Progress</span>
+                      <span className="text-sm font-semibold text-gray-700">Progrès</span>
                       <span className="text-sm font-bold text-emerald-600 tabular-nums">
                         {client.progress_percentage}%
                       </span>
@@ -602,7 +602,7 @@ export default function ClientsPage() {
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                   <div className="flex items-center text-xs text-gray-500 font-medium">
                     <Calendar className="mr-1 h-3 w-3 opacity-60" />
-                    Joined {new Date(client.join_date).toLocaleDateString()}
+                    Inscrit le {new Date(client.join_date).toLocaleDateString('fr-FR')}
                   </div>
                   <Button 
                     variant="ghost" 
@@ -611,7 +611,7 @@ export default function ClientsPage() {
                     className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 group-hover:bg-emerald-50/80 transition-all duration-200 font-medium"
                   >
                     <Link href={`/dashboard/clients/${client.id}`} className="flex items-center">
-                      View
+                      Voir
                       <ChevronRight className="ml-1 h-3 w-3 group-hover:translate-x-0.5 transition-transform duration-200" />
                     </Link>
                   </Button>

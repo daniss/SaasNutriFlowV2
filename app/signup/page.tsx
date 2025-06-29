@@ -34,9 +34,9 @@ export default function SignupPage() {
       const { error } = await signUp(email, password, firstName, lastName)
 
       if (error) {
-        setError(error || "Failed to create account")
+        setError(error || "Échec de la création du compte")
       } else {
-        setSuccess("Account created successfully! Please check your email to verify your account.")
+        setSuccess("Compte créé avec succès ! Veuillez vérifier votre email pour confirmer votre compte.")
         setTimeout(() => {
           router.push("/login")
         }, 3000)
@@ -53,9 +53,9 @@ export default function SignupPage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
         <CardHeader className="space-y-1">
-          <CardTitle className="text-2xl font-bold text-center">Create your NutriFlow account</CardTitle>
+          <CardTitle className="text-2xl font-bold text-center">Créez votre compte NutriFlow</CardTitle>
           <CardDescription className="text-center">
-            Enter your information to get started with your nutrition practice
+            Entrez vos informations pour commencer avec votre cabinet de nutrition
           </CardDescription>
         </CardHeader>
         <form onSubmit={handleSubmit}>

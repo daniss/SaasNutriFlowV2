@@ -66,22 +66,22 @@ export function LandingPage() {
                 onClick={() => scrollToSection("features")}
                 className="text-gray-600 hover:text-gray-900 transition-colors"
               >
-                Features
+                Fonctionnalités
               </button>
               <button
                 onClick={() => scrollToSection("pricing")}
                 className="text-gray-600 hover:text-gray-900 transition-colors"
               >
-                Pricing
+                Tarifs
               </button>
               <Link href="/login" className="text-gray-600 hover:text-gray-900 transition-colors">
-                Login
+                Connexion
               </Link>
               <Button
                 asChild
                 className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
               >
-                <Link href="/signup">Get Started</Link>
+                <Link href="/signup">Commencer</Link>
               </Button>
             </div>
 
@@ -101,20 +101,20 @@ export function LandingPage() {
                   onClick={() => scrollToSection("features")}
                   className="block px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors w-full text-left"
                 >
-                  Features
+                  Fonctionnalités
                 </button>
                 <button
                   onClick={() => scrollToSection("pricing")}
                   className="block px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors w-full text-left"
                 >
-                  Pricing
+                  Tarifs
                 </button>
                 <Link href="/login" className="block px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors">
-                  Login
+                  Connexion
                 </Link>
                 <div className="px-3 py-2">
                   <Button asChild className="w-full bg-gradient-to-r from-emerald-500 to-teal-600">
-                    <Link href="/signup">Get Started</Link>
+                    <Link href="/signup">Commencer</Link>
                   </Button>
                 </div>
               </div>
@@ -131,18 +131,17 @@ export function LandingPage() {
               <div className="space-y-4">
                 <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-50">
                   <Sparkles className="h-3 w-3 mr-1" />
-                  AI-Powered Nutrition Platform
+                  Plateforme de Nutrition IA
                 </Badge>
                 <h1 className="text-4xl sm:text-5xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                  Save time and{" "}
+                  Gagnez du temps et{" "}
                   <span className="bg-gradient-to-r from-emerald-500 to-teal-600 bg-clip-text text-transparent">
-                    empower your clients
+                    accompagnez vos clients
                   </span>{" "}
-                  with NutriFlow
+                  avec NutriFlow
                 </h1>
                 <p className="text-xl text-gray-600 leading-relaxed">
-                  Your all-in-one digital assistant for dietitians. Streamline client management, generate AI-powered
-                  meal plans, and automate your practice — all in one beautiful platform.
+                  Votre assistant numérique tout-en-un pour diététiciens. Optimisez la gestion de vos clients, générez des plans alimentaires alimentés par l'IA, et automatisez votre pratique — le tout dans une seule belle plateforme.
                 </p>
               </div>
 
@@ -153,27 +152,27 @@ export function LandingPage() {
                   className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-lg px-8 py-6"
                 >
                   <Link href="/signup">
-                    Start your free 14-day trial
+                    Commencez votre essai gratuit de 14 jours
                     <ArrowRight className="ml-2 h-5 w-5" />
                   </Link>
                 </Button>
                 <Button variant="outline" size="lg" className="text-lg px-8 py-6 bg-transparent">
-                  Watch Demo
+                  Voir la Démo
                 </Button>
               </div>
 
               <div className="flex items-center gap-6 text-sm text-gray-500">
                 <div className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-emerald-500" />
-                  <span>No credit card required</span>
+                  <span>Aucune carte bancaire requise</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-emerald-500" />
-                  <span>Setup in 5 minutes</span>
+                  <span>Configuration en 5 minutes</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <Check className="h-4 w-4 text-emerald-500" />
-                  <span>Cancel anytime</span>
+                  <span>Annulation à tout moment</span>
                 </div>
               </div>
             </div>
@@ -187,14 +186,14 @@ export function LandingPage() {
                         <Heart className="h-6 w-6 text-white" />
                       </div>
                       <div>
-                        <h3 className="font-semibold text-gray-900">Client Dashboard</h3>
-                        <p className="text-sm text-gray-600">Track progress in real-time</p>
+                        <h3 className="font-semibold text-gray-900">Tableau de bord client</h3>
+                        <p className="text-sm text-gray-600">Suivez les progrès en temps réel</p>
                       </div>
                     </div>
                     <div className="space-y-3">
                       <div className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
                         <span className="text-sm font-medium">Sarah Johnson</span>
-                        <Badge className="bg-emerald-100 text-emerald-800">On Track</Badge>
+                        <Badge className="bg-emerald-100 text-emerald-800">Sur la bonne voie</Badge>
                       </div>
                       <div className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
                         <span className="text-sm font-medium">Mike Chen</span>
@@ -202,7 +201,7 @@ export function LandingPage() {
                       </div>
                       <div className="flex items-center justify-between p-3 bg-white rounded-lg shadow-sm">
                         <span className="text-sm font-medium">Emma Davis</span>
-                        <Badge className="bg-purple-100 text-purple-800">Improving</Badge>
+                        <Badge className="bg-purple-100 text-purple-800">En amélioration</Badge>
                       </div>
                     </div>
                   </div>
@@ -219,11 +218,10 @@ export function LandingPage() {
       <section id="features" className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
-            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Features</Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Everything you need to run your practice</h2>
+            <Badge className="bg-emerald-50 text-emerald-700 border-emerald-200">Fonctionnalités</Badge>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Tout ce dont vous avez besoin pour gérer votre pratique</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              From client management to AI-powered meal planning, NutriFlow provides all the tools you need to deliver
-              exceptional care while saving time.
+              De la gestion des clients à la planification de repas alimentée par l'IA, NutriFlow fournit tous les outils dont vous avez besoin pour offrir des soins exceptionnels tout en économisant du temps.
             </p>
           </div>
 
@@ -233,10 +231,9 @@ export function LandingPage() {
                 <div className="mx-auto w-16 h-16 bg-gradient-to-br from-blue-500 to-blue-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <Users className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900">Client Management</h3>
+                <h3 className="text-xl font-semibold text-gray-900">Gestion des clients</h3>
                 <p className="text-gray-600">
-                  Easily organize, tag, and track your clients' progress with our intuitive dashboard and detailed
-                  profiles.
+                  Organisez, étiquetez et suivez facilement les progrès de vos clients avec notre tableau de bord intuitif et des profils détaillés.
                 </p>
               </CardContent>
             </Card>
@@ -246,10 +243,9 @@ export function LandingPage() {
                 <div className="mx-auto w-16 h-16 bg-gradient-to-br from-purple-500 to-purple-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <Wand2 className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900">AI-Powered Meal Plans</h3>
+                <h3 className="text-xl font-semibold text-gray-900">Plans alimentaires IA</h3>
                 <p className="text-gray-600">
-                  Generate personalized meal plans instantly using our advanced AI that considers dietary restrictions
-                  and preferences.
+                  Générez instantanément des plans alimentaires personnalisés grâce à notre IA avancée qui prend en compte les restrictions alimentaires et les préférences.
                 </p>
               </CardContent>
             </Card>
@@ -259,9 +255,9 @@ export function LandingPage() {
                 <div className="mx-auto w-16 h-16 bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <Bell className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900">Automated Reminders</h3>
+                <h3 className="text-xl font-semibold text-gray-900">Rappels automatisés</h3>
                 <p className="text-gray-600">
-                  Never miss a check-in or appointment with smart notifications via email, SMS, and WhatsApp.
+                  Ne manquez jamais un suivi ou un rendez-vous avec des notifications intelligentes par email, SMS et WhatsApp.
                 </p>
               </CardContent>
             </Card>
@@ -271,9 +267,9 @@ export function LandingPage() {
                 <div className="mx-auto w-16 h-16 bg-gradient-to-br from-orange-500 to-orange-600 rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
                   <Receipt className="h-8 w-8 text-white" />
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900">Simple Invoicing</h3>
+                <h3 className="text-xl font-semibold text-gray-900">Facturation simple</h3>
                 <p className="text-gray-600">
-                  Manage billing effortlessly with automated invoicing, payment tracking, and financial reporting.
+                  Gérez la facturation sans effort avec la facturation automatique, le suivi des paiements et les rapports financiers.
                 </p>
               </CardContent>
             </Card>
@@ -285,11 +281,10 @@ export function LandingPage() {
       <section className="py-20">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
-            <Badge className="bg-blue-50 text-blue-700 border-blue-200">How It Works</Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Get started in 3 simple steps</h2>
+            <Badge className="bg-blue-50 text-blue-700 border-blue-200">Comment ça marche</Badge>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Commencez en 3 étapes simples</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Setting up your digital nutrition practice has never been easier. Follow these steps to transform your
-              workflow.
+              Configurer votre cabinet de nutrition numérique n'a jamais été aussi simple. Suivez ces étapes pour transformer votre flux de travail.
             </p>
           </div>
 
@@ -304,9 +299,9 @@ export function LandingPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-gray-900">Sign up & customize</h3>
+                <h3 className="text-xl font-semibold text-gray-900">Inscrivez-vous et personnalisez</h3>
                 <p className="text-gray-600">
-                  Create your account and customize your client portal with your branding, colors, and welcome message.
+                  Créez votre compte et personnalisez votre portail client avec votre image de marque, vos couleurs et votre message de bienvenue.
                 </p>
               </div>
             </div>
@@ -321,9 +316,9 @@ export function LandingPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-gray-900">Manage & generate</h3>
+                <h3 className="text-xl font-semibold text-gray-900">Gérez et générez</h3>
                 <p className="text-gray-600">
-                  Add your clients, track their progress, and generate personalized meal plans using our AI assistant.
+                  Ajoutez vos clients, suivez leurs progrès et générez des plans alimentaires personnalisés grâce à notre assistant IA.
                 </p>
               </div>
             </div>
@@ -338,9 +333,9 @@ export function LandingPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <h3 className="text-xl font-semibold text-gray-900">Automate & track</h3>
+                <h3 className="text-xl font-semibold text-gray-900">Automatisez et suivez</h3>
                 <p className="text-gray-600">
-                  Set up automated reminders, track payments, and watch your practice run smoothly on autopilot.
+                  Configurez des rappels automatiques, suivez les paiements et regardez votre cabinet fonctionner en toute fluidité sur pilote automatique.
                 </p>
               </div>
             </div>
@@ -352,10 +347,10 @@ export function LandingPage() {
       <section className="py-20 bg-gradient-to-br from-emerald-50 to-teal-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center space-y-4 mb-16">
-            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Testimonials</Badge>
-            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Loved by dietitians worldwide</h2>
+            <Badge className="bg-emerald-100 text-emerald-700 border-emerald-200">Témoignages</Badge>
+            <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Adopté par les diététiciens du monde entier</h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              See how NutriFlow is transforming nutrition practices and helping dietitians deliver better care.
+              Découvrez comment NutriFlow transforme les cabinets de nutrition et aide les diététiciens à offrir de meilleurs soins.
             </p>
           </div>
 
@@ -368,16 +363,16 @@ export function LandingPage() {
                   ))}
                 </div>
                 <p className="text-gray-700 italic">
-                  "NutriFlow has completely transformed my practice. I save 10+ hours per week on meal planning and my
-                  clients love the personalized experience. The AI suggestions are incredibly accurate!"
+                  "Si NutriFlow tient ses promesses, ça va vraiment me faire gagner du temps sur les suivis. L'idée d'automatiser les plans tout en gardant le côté humain, c'est exactement ce qu'il me fallait."
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-emerald-400 to-teal-500 flex items-center justify-center text-white font-semibold">
-                    DR
+                    CR
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Dr. Rachel Martinez</p>
-                    <p className="text-sm text-gray-600">Registered Dietitian, Miami</p>
+                    <p className="font-semibold text-gray-900">Camille Roche</p>
+                    <p className="text-sm text-gray-600">Diététicienne, Lyon</p>
+                    <p className="text-xs text-emerald-600 mt-1">Inscrite sur la liste d'accès anticipé • Cabinet de 45 clients</p>
                   </div>
                 </div>
               </CardContent>
@@ -391,16 +386,16 @@ export function LandingPage() {
                   ))}
                 </div>
                 <p className="text-gray-700 italic">
-                  "The automated reminders and client portal have improved my client engagement by 300%. My clients
-                  actually stick to their plans now because everything is so organized and accessible."
+                  "Si NutriFlow tient ses promesses, ça va vraiment m'aider au quotidien. J'ai hâte de pouvoir passer moins de temps sur l'administratif et plus avec mes patients."
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center text-white font-semibold">
-                    JS
+                    ML
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">James Sullivan</p>
-                    <p className="text-sm text-gray-600">Sports Nutritionist, Denver</p>
+                    <p className="font-semibold text-gray-900">Marie Leblanc</p>
+                    <p className="text-sm text-gray-600">Diététicienne, Bordeaux</p>
+                    <p className="text-xs text-emerald-600 mt-1">A participé aux premiers retours utilisateurs • Bordeaux</p>
                   </div>
                 </div>
               </CardContent>
@@ -414,16 +409,16 @@ export function LandingPage() {
                   ))}
                 </div>
                 <p className="text-gray-700 italic">
-                  "As a busy mom and dietitian, NutriFlow gives me my life back. The invoicing is seamless, meal plans
-                  are generated in seconds, and I can focus on what I love - helping my clients succeed."
+                  "Après avoir vu la démo, j'ai hâte de tester l'intégration avec les applis de sport ! Mes athlètes pourraient enfin avoir une approche vraiment personnalisée en fonction de leur activité."
                 </p>
                 <div className="flex items-center gap-3">
                   <div className="w-12 h-12 rounded-full bg-gradient-to-br from-purple-400 to-pink-500 flex items-center justify-center text-white font-semibold">
-                    LK
+                    JM
                   </div>
                   <div>
-                    <p className="font-semibold text-gray-900">Lisa Kim</p>
-                    <p className="text-sm text-gray-600">Clinical Dietitian, Seattle</p>
+                    <p className="font-semibold text-gray-900">Julien Martinez</p>
+                    <p className="text-sm text-gray-600">Diététicien du sport, Nice</p>
+                    <p className="text-xs text-emerald-600 mt-1">Fait partie de notre comité de bêta-testeurs • Nice</p>
                   </div>
                 </div>
               </CardContent>
@@ -437,11 +432,10 @@ export function LandingPage() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="space-y-8">
             <div className="space-y-4">
-              <Badge className="bg-purple-50 text-purple-700 border-purple-200">Pricing</Badge>
-              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Start your free trial today</h2>
+              <Badge className="bg-purple-50 text-purple-700 border-purple-200">Tarifs</Badge>
+              <h2 className="text-3xl sm:text-4xl font-bold text-gray-900">Commencez votre essai gratuit aujourd'hui</h2>
               <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-                Experience the full power of NutriFlow with our 14-day free trial. No credit card required, no setup
-                fees, cancel anytime.
+                Découvrez toute la puissance de NutriFlow avec notre essai gratuit de 14 jours. Aucune carte de crédit requise, pas de frais d'installation, annulation à tout moment.
               </p>
             </div>
 
@@ -450,39 +444,38 @@ export function LandingPage() {
                 <div className="space-y-4">
                   <div className="flex items-center justify-center gap-2">
                     <Shield className="h-6 w-6 text-emerald-600" />
-                    <span className="text-lg font-semibold text-emerald-600">14-Day Free Trial</span>
+                    <span className="text-lg font-semibold text-emerald-600">Essai gratuit de 14 jours</span>
                   </div>
-                  <h3 className="text-2xl font-bold text-gray-900">Try everything, risk-free</h3>
+                  <h3 className="text-2xl font-bold text-gray-900">Testez tout, sans risque</h3>
                   <p className="text-gray-600 max-w-md mx-auto">
-                    Get full access to all features including AI meal planning, client management, automated reminders,
-                    and invoicing.
+                    Accédez à toutes les fonctionnalités incluant la planification de repas IA, la gestion des clients, les rappels automatisés et la facturation.
                   </p>
                 </div>
 
                 <div className="grid sm:grid-cols-2 gap-4 max-w-md mx-auto text-left">
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-emerald-500" />
-                    <span className="text-sm text-gray-700">Unlimited clients</span>
+                    <span className="text-sm text-gray-700">Clients illimités</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-emerald-500" />
-                    <span className="text-sm text-gray-700">AI meal planning</span>
+                    <span className="text-sm text-gray-700">Planification IA des repas</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-emerald-500" />
-                    <span className="text-sm text-gray-700">Automated reminders</span>
+                    <span className="text-sm text-gray-700">Rappels automatisés</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-emerald-500" />
-                    <span className="text-sm text-gray-700">Custom branding</span>
+                    <span className="text-sm text-gray-700">Image de marque personnalisée</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-emerald-500" />
-                    <span className="text-sm text-gray-700">Priority support</span>
+                    <span className="text-sm text-gray-700">Support prioritaire</span>
                   </div>
                   <div className="flex items-center gap-2">
                     <Check className="h-5 w-5 text-emerald-500" />
-                    <span className="text-sm text-gray-700">No setup fees</span>
+                    <span className="text-sm text-gray-700">Pas de frais d'installation</span>
                   </div>
                 </div>
 
@@ -493,11 +486,11 @@ export function LandingPage() {
                     className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700 text-lg px-12 py-6"
                   >
                     <Link href="/signup">
-                      Start your free trial
+                      Commencer votre essai gratuit
                       <ArrowRight className="ml-2 h-5 w-5" />
                     </Link>
                   </Button>
-                  <p className="text-sm text-gray-500">No credit card required • Cancel anytime • Setup in 5 minutes</p>
+                  <p className="text-sm text-gray-500">Aucune carte de crédit requise • Annulation à tout moment • Configuration en 5 minutes</p>
                 </div>
               </CardContent>
             </Card>
@@ -517,61 +510,61 @@ export function LandingPage() {
                 <span className="font-bold text-xl">NutriFlow</span>
               </div>
               <p className="text-gray-400">
-                Empowering dietitians with AI-powered tools to deliver exceptional client care and grow their practice.
+                Donner aux diététiciens les outils IA pour offrir des soins clients exceptionnels et développer leur cabinet.
               </p>
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold">Product</h4>
+              <h4 className="font-semibold">Produit</h4>
               <div className="space-y-2 text-gray-400">
                 <button
                   onClick={() => scrollToSection("features")}
                   className="block hover:text-white transition-colors"
                 >
-                  Features
+                  Fonctionnalités
                 </button>
                 <button onClick={() => scrollToSection("pricing")} className="block hover:text-white transition-colors">
-                  Pricing
+                  Tarifs
                 </button>
                 <Link href="/dashboard" className="block hover:text-white transition-colors">
-                  Dashboard
+                  Tableau de bord
                 </Link>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold">Company</h4>
+              <h4 className="font-semibold">Entreprise</h4>
               <div className="space-y-2 text-gray-400">
                 <a href="#" className="block hover:text-white transition-colors">
-                  About Us
+                  À propos
                 </a>
                 <a href="#" className="block hover:text-white transition-colors">
                   Blog
                 </a>
                 <a href="#" className="block hover:text-white transition-colors">
-                  Careers
+                  Carrières
                 </a>
               </div>
             </div>
 
             <div className="space-y-4">
-              <h4 className="font-semibold">Legal</h4>
+              <h4 className="font-semibold">Légal</h4>
               <div className="space-y-2 text-gray-400">
                 <a href="#" className="block hover:text-white transition-colors">
-                  Terms of Service
+                  Conditions d'utilisation
                 </a>
                 <a href="#" className="block hover:text-white transition-colors">
-                  Privacy Policy
+                  Politique de confidentialité
                 </a>
                 <a href="#" className="block hover:text-white transition-colors">
-                  Cookie Policy
+                  Politique de cookies
                 </a>
               </div>
             </div>
           </div>
 
           <div className="border-t border-gray-800 mt-12 pt-8 flex flex-col sm:flex-row justify-between items-center">
-            <p className="text-gray-400 text-sm">© 2024 NutriFlow. All rights reserved.</p>
+            <p className="text-gray-400 text-sm">© 2024 NutriFlow. Tous droits réservés.</p>
             <div className="flex space-x-6 mt-4 sm:mt-0">
               <a href="#" className="text-gray-400 hover:text-white transition-colors">
                 <span className="sr-only">Twitter</span>

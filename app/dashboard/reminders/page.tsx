@@ -197,9 +197,9 @@ export default function RemindersPage() {
   return (
     <div className="space-y-6">
       <DashboardHeader 
-        title="Reminders"
-        subtitle="Manage client reminders and notifications"
-        searchPlaceholder="Search reminders..."
+        title="Rappels"
+        subtitle="Gérez les rappels et notifications clients"
+        searchPlaceholder="Rechercher des rappels..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
@@ -207,24 +207,24 @@ export default function RemindersPage() {
             <DialogTrigger asChild>
               <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
                 <Plus className="mr-2 h-4 w-4" />
-                Create Reminder
+                Créer un rappel
               </Button>
             </DialogTrigger>
           <DialogContent className="sm:max-w-[500px] shadow-soft-lg border-0">
             <DialogHeader className="space-y-3">
-              <DialogTitle className="text-xl font-semibold text-gray-900">Create New Reminder</DialogTitle>
+              <DialogTitle className="text-xl font-semibold text-gray-900">Créer un nouveau rappel</DialogTitle>
               <DialogDescription className="text-gray-600 leading-relaxed">
-                Set up a reminder for your client.
+                Configurez un rappel pour votre client.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-6">
               <div className="space-y-2">
-                <Label htmlFor="reminder-title">Title *</Label>
+                <Label htmlFor="reminder-title">Titre *</Label>
                 <Input
                   id="reminder-title"
                   value={newReminder.title}
                   onChange={(e) => setNewReminder({ ...newReminder, title: e.target.value })}
-                  placeholder="e.g., Weekly Check-in"
+                  placeholder="ex: Suivi hebdomadaire"
                 />
               </div>
               <div className="space-y-2">
@@ -234,7 +234,7 @@ export default function RemindersPage() {
                   onValueChange={(value) => setNewReminder({ ...newReminder, client_id: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a client" />
+                    <SelectValue placeholder="Sélectionner un client" />
                   </SelectTrigger>
                   <SelectContent>
                     {clients.map((client) => (
@@ -253,20 +253,20 @@ export default function RemindersPage() {
                     onValueChange={(value) => setNewReminder({ ...newReminder, type: value })}
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select type" />
+                      <SelectValue placeholder="Sélectionner un type" />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="appointment">Appointment</SelectItem>
-                      <SelectItem value="follow_up">Follow-up</SelectItem>
+                      <SelectItem value="appointment">Rendez-vous</SelectItem>
+                      <SelectItem value="follow_up">Suivi</SelectItem>
                       <SelectItem value="check_in">Check-in</SelectItem>
-                      <SelectItem value="meal_plan">Meal Plan</SelectItem>
-                      <SelectItem value="weigh_in">Weigh-in</SelectItem>
-                      <SelectItem value="other">Other</SelectItem>
+                      <SelectItem value="meal_plan">Plan alimentaire</SelectItem>
+                      <SelectItem value="weigh_in">Pesée</SelectItem>
+                      <SelectItem value="other">Autre</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="scheduled-date">Scheduled Date *</Label>
+                  <Label htmlFor="scheduled-date">Date programmée *</Label>
                   <Input
                     id="scheduled-date"
                     type="datetime-local"
@@ -281,12 +281,12 @@ export default function RemindersPage() {
                   id="message"
                   value={newReminder.message}
                   onChange={(e) => setNewReminder({ ...newReminder, message: e.target.value })}
-                  placeholder="Reminder message..."
+                  placeholder="Message du rappel..."
                   rows={3}
                 />
               </div>
               <div className="space-y-3">
-                <Label>Notification Channels</Label>
+                <Label>Canaux de notification</Label>
                 <div className="flex flex-wrap gap-4">
                   {["email", "sms", "push"].map((channel) => (
                     <div key={channel} className="flex items-center space-x-2">
@@ -296,7 +296,7 @@ export default function RemindersPage() {
                         onCheckedChange={(checked) => handleChannelChange(channel, checked as boolean)}
                       />
                       <Label htmlFor={channel} className="capitalize">
-                        {channel}
+                        {channel === "email" ? "Email" : channel === "sms" ? "SMS" : "Push"}
                       </Label>
                     </div>
                   ))}

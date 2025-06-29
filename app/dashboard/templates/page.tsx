@@ -16,86 +16,86 @@ export default function TemplatesPage() {
   const templates = [
     {
       id: 1,
-      name: "Mediterranean Weight Loss",
-      description: "7-day Mediterranean-style meal plan focused on healthy weight loss",
-      category: "Weight Loss",
-      calories: "1,400-1,600",
-      duration: "7 days",
-      difficulty: "Easy",
+      name: "Perte de poids méditerranéenne",
+      description: "Plan de repas méditerranéen de 7 jours axé sur une perte de poids saine",
+      category: "Perte de poids",
+      calories: "1 400-1 600",
+      duration: "7 jours",
+      difficulty: "Facile",
       rating: 4.8,
       usageCount: 24,
-      lastUsed: "2 days ago",
-      tags: ["Mediterranean", "Heart Healthy", "Anti-inflammatory"],
+      lastUsed: "il y a 2 jours",
+      tags: ["Méditerranéen", "Bon pour le cœur", "Anti-inflammatoire"],
       isFavorite: true,
     },
     {
       id: 2,
-      name: "High Protein Muscle Building",
-      description: "14-day high-protein plan designed for muscle gain and athletic performance",
-      category: "Muscle Gain",
-      calories: "2,200-2,500",
-      duration: "14 days",
-      difficulty: "Moderate",
+      name: "Prise de muscle riche en protéines",
+      description: "Plan de 14 jours riche en protéines conçu pour la prise de muscle et la performance athlétique",
+      category: "Prise de muscle",
+      calories: "2 200-2 500",
+      duration: "14 jours",
+      difficulty: "Modéré",
       rating: 4.9,
       usageCount: 18,
-      lastUsed: "1 week ago",
-      tags: ["High Protein", "Athletic", "Performance"],
+      lastUsed: "il y a 1 semaine",
+      tags: ["Riche en protéines", "Athlétique", "Performance"],
       isFavorite: false,
     },
     {
       id: 3,
-      name: "Diabetic-Friendly Balanced",
-      description: "Low-glycemic meal plan for diabetes management with balanced nutrition",
-      category: "Medical",
-      calories: "1,600-1,800",
-      duration: "10 days",
-      difficulty: "Easy",
+      name: "Équilibré pour diabétiques",
+      description: "Plan de repas à faible index glycémique pour la gestion du diabète avec une nutrition équilibrée",
+      category: "Médical",
+      calories: "1 600-1 800",
+      duration: "10 jours",
+      difficulty: "Facile",
       rating: 4.7,
       usageCount: 31,
-      lastUsed: "3 days ago",
-      tags: ["Diabetic", "Low Glycemic", "Balanced"],
+      lastUsed: "il y a 3 jours",
+      tags: ["Diabétique", "Faible IG", "Équilibré"],
       isFavorite: true,
     },
     {
       id: 4,
-      name: "Plant-Based Detox",
-      description: "21-day plant-based cleansing program with whole foods focus",
-      category: "Detox",
-      calories: "1,500-1,700",
-      duration: "21 days",
-      difficulty: "Hard",
+      name: "Détox végétalienne",
+      description: "Programme de nettoyage végétalien de 21 jours axé sur les aliments complets",
+      category: "Détox",
+      calories: "1 500-1 700",
+      duration: "21 jours",
+      difficulty: "Difficile",
       rating: 4.6,
       usageCount: 12,
-      lastUsed: "2 weeks ago",
-      tags: ["Vegan", "Detox", "Whole Foods"],
+      lastUsed: "il y a 2 semaines",
+      tags: ["Végétalien", "Détox", "Aliments complets"],
       isFavorite: false,
     },
     {
       id: 5,
-      name: "Heart-Healthy DASH",
-      description: "DASH diet-inspired plan for cardiovascular health improvement",
-      category: "Heart Health",
-      calories: "1,800-2,000",
-      duration: "14 days",
-      difficulty: "Easy",
+      name: "DASH bon pour le cœur",
+      description: "Plan inspiré du régime DASH pour l'amélioration de la santé cardiovasculaire",
+      category: "Santé cardiaque",
+      calories: "1 800-2 000",
+      duration: "14 jours",
+      difficulty: "Facile",
       rating: 4.8,
       usageCount: 27,
-      lastUsed: "5 days ago",
-      tags: ["DASH", "Heart Health", "Low Sodium"],
+      lastUsed: "il y a 5 jours",
+      tags: ["DASH", "Santé cardiaque", "Faible en sodium"],
       isFavorite: true,
     },
     {
       id: 6,
-      name: "Keto Fat Loss",
-      description: "Low-carb ketogenic approach for rapid fat loss and metabolic health",
-      category: "Weight Loss",
-      calories: "1,300-1,500",
-      duration: "7 days",
-      difficulty: "Hard",
+      name: "Perte de graisse cétogène",
+      description: "Approche cétogène faible en glucides pour une perte de graisse rapide et la santé métabolique",
+      category: "Perte de poids",
+      calories: "1 300-1 500",
+      duration: "7 jours",
+      difficulty: "Difficile",
       rating: 4.5,
       usageCount: 15,
-      lastUsed: "1 week ago",
-      tags: ["Keto", "Low Carb", "Fat Loss"],
+      lastUsed: "il y a 1 semaine",
+      tags: ["Céto", "Faible en glucides", "Perte de graisse"],
       isFavorite: false,
     },
   ]
@@ -110,15 +110,15 @@ export default function TemplatesPage() {
 
   const getCategoryColor = (category: string) => {
     switch (category) {
-      case "Weight Loss":
+      case "Perte de poids":
         return "bg-emerald-100 text-emerald-800"
-      case "Muscle Gain":
+      case "Prise de muscle":
         return "bg-blue-100 text-blue-800"
-      case "Medical":
+      case "Médical":
         return "bg-red-100 text-red-800"
-      case "Detox":
+      case "Détox":
         return "bg-purple-100 text-purple-800"
-      case "Heart Health":
+      case "Santé cardiaque":
         return "bg-orange-100 text-orange-800"
       default:
         return "bg-gray-100 text-gray-800"
@@ -127,11 +127,11 @@ export default function TemplatesPage() {
 
   const getDifficultyColor = (difficulty: string) => {
     switch (difficulty) {
-      case "Easy":
+      case "Facile":
         return "bg-green-100 text-green-800"
-      case "Moderate":
+      case "Modéré":
         return "bg-yellow-100 text-yellow-800"
-      case "Hard":
+      case "Difficile":
         return "bg-red-100 text-red-800"
       default:
         return "bg-gray-100 text-gray-800"
@@ -141,15 +141,15 @@ export default function TemplatesPage() {
   return (
     <div className="space-y-6">
       <DashboardHeader 
-        title="Templates Library"
-        subtitle={`${templates.length} meal plan templates available for your practice`}
-        searchPlaceholder="Search templates..."
+        title="Bibliothèque de modèles"
+        subtitle={`${templates.length} modèles de plans alimentaires disponibles pour votre pratique`}
+        searchPlaceholder="Rechercher des modèles..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
           <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
             <Plus className="mr-2 h-4 w-4" />
-            New Template
+            Nouveau modèle
           </Button>
         }
       />
@@ -163,9 +163,9 @@ export default function TemplatesPage() {
               <div className="mx-auto h-20 w-20 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center mb-8 shadow-soft">
                 <Search className="h-10 w-10 text-emerald-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-3">No templates found</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">Aucun modèle trouvé</h3>
               <p className="text-gray-600 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
-                Try adjusting your search terms or create a new template.
+                Essayez d'ajuster vos termes de recherche ou créez un nouveau modèle.
               </p>
             </div>
           </CardContent>  
@@ -196,19 +196,19 @@ export default function TemplatesPage() {
                     <DropdownMenuContent align="end" className="shadow-soft-lg border-0 bg-white/95 backdrop-blur-sm">
                       <DropdownMenuItem className="hover:bg-gray-50 transition-colors">
                         <Copy className="h-4 w-4 mr-2" />
-                        Use Template
+                        Utiliser le modèle
                       </DropdownMenuItem>
                       <DropdownMenuItem className="hover:bg-gray-50 transition-colors">
                         <Edit className="h-4 w-4 mr-2" />
-                        Edit Template
+                        Modifier le modèle
                       </DropdownMenuItem>
                       <DropdownMenuItem className="hover:bg-gray-50 transition-colors">
                         <Copy className="h-4 w-4 mr-2 rotate-180" />
-                        Duplicate
+                        Dupliquer
                       </DropdownMenuItem>
                       <DropdownMenuItem className="text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors">
                         <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
+                        Supprimer
                       </DropdownMenuItem>
                     </DropdownMenuContent>
                   </DropdownMenu>
@@ -222,7 +222,7 @@ export default function TemplatesPage() {
 
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
-                    <p className="text-gray-500 font-medium">Duration</p>
+                    <p className="text-gray-500 font-medium">Durée</p>
                     <p className="font-semibold text-gray-900 tabular-nums">{template.duration}</p>
                   </div>
                   <div>
@@ -238,13 +238,13 @@ export default function TemplatesPage() {
                   </div>
                   <div className="flex items-center gap-1 text-gray-600">
                     <Users className="h-3 w-3 opacity-60" />
-                    <span className="font-medium tabular-nums">{template.usageCount} uses</span>
+                    <span className="font-medium tabular-nums">{template.usageCount} utilisations</span>
                   </div>
                 </div>
 
                 <div className="flex items-center gap-1 text-xs text-gray-500 font-medium">
                   <Clock className="h-3 w-3 opacity-60" />
-                  <span>Last used {template.lastUsed}</span>
+                  <span>Dernière utilisation {template.lastUsed}</span>
                 </div>
 
                 <div className="flex flex-wrap gap-1">
@@ -258,7 +258,7 @@ export default function TemplatesPage() {
                 <div className="flex gap-2 pt-2">
                   <Button size="sm" className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
                     <Copy className="h-4 w-4 mr-2" />
-                    Use Template
+                    Utiliser le modèle
                   </Button>
                   <Button variant="outline" size="sm" className="border-gray-200 hover:bg-gray-50 hover:shadow-soft transition-all duration-200">
                     <Edit className="h-4 w-4" />

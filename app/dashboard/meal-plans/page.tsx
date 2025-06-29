@@ -163,8 +163,8 @@ export default function MealPlansPage() {
       if (error) {
         console.error("❌ Error adding meal plan:", error)
         toast({
-          title: "Error",
-          description: "Failed to create meal plan. Please try again.",
+          title: "Erreur",
+          description: "Échec de la création du plan alimentaire. Veuillez réessayer.",
           variant: "destructive"
         })
         return
@@ -182,14 +182,14 @@ export default function MealPlansPage() {
         plan_content: {},
       })
       toast({
-        title: "Success",
-        description: "Meal plan created successfully!"
+        title: "Succès",
+        description: "Plan alimentaire créé avec succès !"
       })
     } catch (error) {
       console.error("❌ Unexpected error adding meal plan:", error)
       toast({
-        title: "Error",
-        description: "Failed to create meal plan. Please try again.",
+        title: "Erreur",
+        description: "Échec de la création du plan alimentaire. Veuillez réessayer.",
         variant: "destructive"
       })
     }
@@ -205,8 +205,8 @@ export default function MealPlansPage() {
 
       if (error) {
         toast({
-          title: "Error",
-          description: "Failed to delete meal plan. Please try again.",
+          title: "Erreur",
+          description: "Échec de la suppression du plan alimentaire. Veuillez réessayer.",
           variant: "destructive"
         })
         return
@@ -214,14 +214,14 @@ export default function MealPlansPage() {
 
       setMealPlans(mealPlans.filter(p => p.id !== plan.id))
       toast({
-        title: "Success",
-        description: "Meal plan deleted successfully."
+        title: "Succès",
+        description: "Plan alimentaire supprimé avec succès."
       })
     } catch (error) {
       console.error("Error deleting meal plan:", error)
       toast({
-        title: "Error",
-        description: "Failed to delete meal plan. Please try again.",
+        title: "Erreur",
+        description: "Échec de la suppression du plan alimentaire. Veuillez réessayer.",
         variant: "destructive"
       })
     } finally {
@@ -252,8 +252,8 @@ export default function MealPlansPage() {
 
       if (error) {
         toast({
-          title: "Error",
-          description: "Failed to duplicate meal plan. Please try again.",
+          title: "Erreur",
+          description: "Échec de la duplication du plan alimentaire. Veuillez réessayer.",
           variant: "destructive"
         })
         return
@@ -261,14 +261,14 @@ export default function MealPlansPage() {
 
       setMealPlans([data, ...mealPlans])
       toast({
-        title: "Success",
-        description: "Meal plan duplicated successfully!"
+        title: "Succès",
+        description: "Plan alimentaire dupliqué avec succès !"
       })
     } catch (error) {
       console.error("Error duplicating meal plan:", error)
       toast({
-        title: "Error",
-        description: "Failed to duplicate meal plan. Please try again.",
+        title: "Erreur",
+        description: "Échec de la duplication du plan alimentaire. Veuillez réessayer.",
         variant: "destructive"
       })
     }
@@ -365,9 +365,9 @@ export default function MealPlansPage() {
   return (
     <div className="min-h-screen">
       <DashboardHeader 
-        title="Meal Plans"
-        subtitle="Design personalized nutrition plans that transform your clients' health journey"
-        searchPlaceholder="Search meal plans and clients..."
+        title="Plans alimentaires"
+        subtitle="Créez des plans nutritionnels personnalisés qui transforment le parcours santé de vos clients"
+        searchPlaceholder="Rechercher plans alimentaires et clients..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
@@ -378,24 +378,24 @@ export default function MealPlansPage() {
                 className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold px-4 group"
               >
                 <Plus className="mr-2 h-4 w-4 group-hover:rotate-90 transition-transform duration-200" />
-                Create Plan
+                Créer un plan
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[540px] rounded-xl shadow-2xl border-0 bg-white/95 backdrop-blur-sm">
               <DialogHeader className="space-y-4 pb-2">
-                <DialogTitle className="text-2xl font-bold text-slate-900">Create New Meal Plan</DialogTitle>
+                <DialogTitle className="text-2xl font-bold text-slate-900">Créer un nouveau plan alimentaire</DialogTitle>
                 <DialogDescription className="text-slate-600 text-base leading-relaxed">
-                  Design a personalized nutrition plan tailored to your client's goals and preferences.
+                  Concevez un plan nutritionnel personnalisé adapté aux objectifs et préférences de votre client.
                 </DialogDescription>
               </DialogHeader>
               <div className="grid gap-6 py-6">
                 <div className="space-y-3">
-                  <Label htmlFor="plan-name" className="text-sm font-semibold text-slate-700">Plan Name *</Label>
+                  <Label htmlFor="plan-name" className="text-sm font-semibold text-slate-700">Nom du plan *</Label>
                   <Input
                     id="plan-name"
                     value={newMealPlan.name}
                     onChange={(e) => setNewMealPlan({ ...newMealPlan, name: e.target.value })}
-                    placeholder="e.g., Mediterranean Weight Loss Plan"
+                    placeholder="ex: Plan de perte de poids méditerranéen"
                     className="h-11 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20 rounded-lg"
                   />
                 </div>
@@ -406,7 +406,7 @@ export default function MealPlansPage() {
                     onValueChange={(value: string) => setNewMealPlan({ ...newMealPlan, client_id: value })}
                   >
                     <SelectTrigger className="h-11 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20 rounded-lg">
-                      <SelectValue placeholder="Select a client" />
+                      <SelectValue placeholder="Sélectionner un client" />
                     </SelectTrigger>
                     <SelectContent className="rounded-lg">
                       {clients.map((client) => (
@@ -419,7 +419,7 @@ export default function MealPlansPage() {
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-3">
-                    <Label htmlFor="calories" className="text-sm font-semibold text-slate-700">Calories Range</Label>
+                    <Label htmlFor="calories" className="text-sm font-semibold text-slate-700">Fourchette calorique</Label>
                     <Input
                       id="calories"
                       value={newMealPlan.calories_range}
@@ -429,7 +429,7 @@ export default function MealPlansPage() {
                     />
                   </div>
                   <div className="space-y-3">
-                    <Label htmlFor="duration" className="text-sm font-semibold text-slate-700">Duration (days)</Label>
+                    <Label htmlFor="duration" className="text-sm font-semibold text-slate-700">Durée (jours)</Label>
                     <Input
                       id="duration"
                       type="number"
@@ -446,7 +446,7 @@ export default function MealPlansPage() {
                     id="description"
                     value={newMealPlan.description}
                     onChange={(e) => setNewMealPlan({ ...newMealPlan, description: e.target.value })}
-                    placeholder="Describe the meal plan's focus and goals..."
+                    placeholder="Décrivez l'objectif et les buts du plan alimentaire..."
                     rows={3}
                     className="border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20 resize-none rounded-lg"
                   />
@@ -458,14 +458,14 @@ export default function MealPlansPage() {
                   onClick={() => setIsAddDialogOpen(false)} 
                   className="border-slate-200 hover:bg-slate-50 rounded-lg px-6"
                 >
-                  Cancel
+                  Annuler
                 </Button>
                 <Button 
                   onClick={handleAddMealPlan} 
                   disabled={!newMealPlan.name || !newMealPlan.client_id}
                   className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg disabled:opacity-50 font-semibold px-6 rounded-lg"
                 >
-                  Create Plan
+                  Créer le plan
                 </Button>
               </DialogFooter>
             </DialogContent>
@@ -480,7 +480,7 @@ export default function MealPlansPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Total Plans</p>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Total plans</p>
                   <p className="text-2xl font-bold text-slate-900">{mealPlans.length}</p>
                 </div>
                 <div className="h-12 w-12 bg-emerald-100 rounded-xl flex items-center justify-center">
@@ -494,7 +494,7 @@ export default function MealPlansPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Active Plans</p>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Plans actifs</p>
                   <p className="text-2xl font-bold text-slate-900">
                     {mealPlans.filter(plan => plan.status === 'active').length}
                   </p>
@@ -510,7 +510,7 @@ export default function MealPlansPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Clients Served</p>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Clients servis</p>
                   <p className="text-2xl font-bold text-slate-900">{clients.length}</p>
                 </div>
                 <div className="h-12 w-12 bg-purple-100 rounded-xl flex items-center justify-center">
@@ -524,7 +524,7 @@ export default function MealPlansPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">This Month</p>
+                  <p className="text-sm font-medium text-slate-600 mb-1">Ce mois-ci</p>
                   <p className="text-2xl font-bold text-slate-900">
                     {mealPlans.filter(plan => {
                       const planDate = new Date(plan.created_at)
@@ -549,10 +549,10 @@ export default function MealPlansPage() {
               <SelectValue />
             </SelectTrigger>
             <SelectContent className="rounded-lg">
-              <SelectItem value="all" className="rounded-md">All Status</SelectItem>
-              <SelectItem value="active" className="rounded-md">Active</SelectItem>
-              <SelectItem value="completed" className="rounded-md">Completed</SelectItem>
-              <SelectItem value="paused" className="rounded-md">Paused</SelectItem>
+              <SelectItem value="all" className="rounded-md">Tous les statuts</SelectItem>
+              <SelectItem value="active" className="rounded-md">Actif</SelectItem>
+              <SelectItem value="completed" className="rounded-md">Terminé</SelectItem>
+              <SelectItem value="paused" className="rounded-md">En pause</SelectItem>
             </SelectContent>
           </Select>
         </div>
@@ -565,11 +565,11 @@ export default function MealPlansPage() {
                 <div className="mx-auto h-20 w-20 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center mb-8 shadow-sm">
                   <FileText className="h-10 w-10 text-emerald-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">No meal plans found</h3>
+                <h3 className="text-xl font-semibold text-slate-900 mb-3">Aucun plan alimentaire trouvé</h3>
                 <p className="text-slate-600 mb-8 max-w-sm mx-auto leading-relaxed">
                   {searchTerm || filterStatus !== 'all' 
-                    ? "Try adjusting your search or filter criteria." 
-                    : "Create your first meal plan to start transforming your clients' health journey."
+                    ? "Essayez d'ajuster vos critères de recherche ou de filtrage." 
+                    : "Créez votre premier plan alimentaire pour commencer à transformer le parcours santé de vos clients."
                   }
                 </p>
                 {!searchTerm && filterStatus === 'all' && (
@@ -579,7 +579,7 @@ export default function MealPlansPage() {
                     className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold px-6"
                   >
                     <Plus className="mr-2 h-5 w-5" />
-                    Create Your First Plan
+                    Créez votre premier plan
                   </Button>
                 )}
               </div>
@@ -614,7 +614,9 @@ export default function MealPlansPage() {
                         <Badge 
                           className={`${getStatusColor(plan.status)} border font-medium px-2.5 py-1 text-xs`}
                         >
-                          {plan.status}
+                          {plan.status === 'active' ? 'Actif' : 
+                           plan.status === 'completed' ? 'Terminé' : 
+                           plan.status === 'paused' ? 'En pause' : plan.status}
                         </Badge>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>
@@ -626,13 +628,13 @@ export default function MealPlansPage() {
                             <DropdownMenuItem asChild className="rounded-md">
                               <Link href={`/dashboard/meal-plans/${plan.id}`}>
                                 <Eye className="mr-2 h-4 w-4" />
-                                View Details
+                                Voir les détails
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild className="rounded-md">
                               <Link href={`/dashboard/meal-plans/${plan.id}?edit=true`}>
                                 <Edit className="mr-2 h-4 w-4" />
-                                Edit Plan
+                                Modifier le plan
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem 
@@ -640,7 +642,7 @@ export default function MealPlansPage() {
                               className="rounded-md"
                             >
                               <Copy className="mr-2 h-4 w-4" />
-                              Duplicate
+                              Dupliquer
                             </DropdownMenuItem>
                             <DropdownMenuSeparator className="bg-slate-100" />
                             <DropdownMenuItem 
@@ -651,7 +653,7 @@ export default function MealPlansPage() {
                               className="text-red-600 hover:bg-red-50 rounded-md"
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
-                              Delete Plan
+                              Supprimer le plan
                             </DropdownMenuItem>
                           </DropdownMenuContent>
                         </DropdownMenu>
@@ -668,9 +670,9 @@ export default function MealPlansPage() {
                       <div className="bg-slate-50/80 rounded-lg p-3">
                         <div className="flex items-center gap-2 mb-1">
                           <Clock className="h-3.5 w-3.5 text-slate-500" />
-                          <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Duration</span>
+                          <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Durée</span>
                         </div>
-                        <span className="text-sm font-semibold text-slate-900">{plan.duration_days} days</span>
+                        <span className="text-sm font-semibold text-slate-900">{plan.duration_days} jours</span>
                       </div>
                       
                       {plan.calories_range && (
@@ -687,7 +689,7 @@ export default function MealPlansPage() {
                     <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                       <div className="flex items-center text-xs text-slate-500 font-medium">
                         <Calendar className="mr-1.5 h-3.5 w-3.5 opacity-60" />
-                        Created {new Date(plan.created_at).toLocaleDateString('en-US', { 
+                        Créé le {new Date(plan.created_at).toLocaleDateString('fr-FR', { 
                           month: 'short', 
                           day: 'numeric' 
                         })}
@@ -700,7 +702,7 @@ export default function MealPlansPage() {
                       >
                         <Link href={`/dashboard/meal-plans/${plan.id}`}>
                           <Eye className="mr-1.5 h-3.5 w-3.5" />
-                          View Plan
+                          Voir le plan
                         </Link>
                       </Button>
                     </div>
@@ -716,18 +718,18 @@ export default function MealPlansPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent className="rounded-xl">
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete Meal Plan</AlertDialogTitle>
+            <AlertDialogTitle>Supprimer le plan alimentaire</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete "{planToDelete?.name}"? This action cannot be undone and will permanently remove the meal plan and all associated data.
+              Êtes-vous sûr de vouloir supprimer "{planToDelete?.name}" ? Cette action ne peut pas être annulée et supprimera définitivement le plan alimentaire et toutes les données associées.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPlanToDelete(null)}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => setPlanToDelete(null)}>Annuler</AlertDialogCancel>
             <AlertDialogAction 
               onClick={() => planToDelete && handleDelete(planToDelete)} 
               className="bg-red-600 hover:bg-red-700"
             >
-              Delete Plan
+              Supprimer le plan
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

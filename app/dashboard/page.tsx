@@ -116,7 +116,7 @@ export default function DashboardPage() {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex items-center justify-between space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Tableau de bord</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {[...Array(4)].map((_, i) => (
@@ -140,13 +140,13 @@ export default function DashboardPage() {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex items-center justify-between space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Tableau de bord</h2>
         </div>
         <Card>
           <CardContent className="pt-6">
             <div className="text-center">
-              <p className="text-red-600 mb-4">Error loading dashboard: {error}</p>
-              <Button onClick={fetchDashboardData}>Try Again</Button>
+              <p className="text-red-600 mb-4">Erreur lors du chargement du tableau de bord : {error}</p>
+              <Button onClick={fetchDashboardData}>Réessayer</Button>
             </div>
           </CardContent>
         </Card>
@@ -157,14 +157,14 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <DashboardHeader 
-        title={`Welcome back, ${profile?.full_name?.split(' ')[0] || "Dietitian"}!`}
-        subtitle="Here's what's happening with your practice today"
+        title={`Bon retour, ${profile?.full_name?.split(' ')[0] || "Diététicien(ne)"}!`}
+        subtitle="Voici ce qui se passe dans votre cabinet aujourd'hui"
         showSearch={false}
         action={
           <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
             <Link href="/dashboard/clients">
               <Plus className="mr-2 h-4 w-4" />
-              Add Client
+              Ajouter un client
             </Link>
           </Button>
         }
@@ -174,35 +174,35 @@ export default function DashboardPage() {
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Total Clients</CardTitle>
+            <CardTitle className="text-sm font-medium">Total des clients</CardTitle>
             <Users className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.totalClients}</div>
-            <p className="text-xs text-muted-foreground">Active client relationships</p>
+            <p className="text-xs text-muted-foreground">Relations client actives</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Active Meal Plans</CardTitle>
+            <CardTitle className="text-sm font-medium">Plans alimentaires actifs</CardTitle>
             <FileText className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.activeMealPlans}</div>
-            <p className="text-xs text-muted-foreground">Currently active plans</p>
+            <p className="text-xs text-muted-foreground">Plans actuellement actifs</p>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Quick Actions</CardTitle>
+            <CardTitle className="text-sm font-medium">Actions rapides</CardTitle>
             <Clock className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
               <Button asChild size="sm" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
-                <Link href="/dashboard/meal-plans/generate">Generate Plan</Link>
+                <Link href="/dashboard/meal-plans/generate">Générer un plan</Link>
               </Button>
             </div>
           </CardContent>
@@ -210,12 +210,12 @@ export default function DashboardPage() {
 
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">Recent Activity</CardTitle>
+            <CardTitle className="text-sm font-medium">Activité récente</CardTitle>
             <Bell className="h-4 w-4 text-muted-foreground" />
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">{stats.recentMealPlans.length}</div>
-            <p className="text-xs text-muted-foreground">Plans created recently</p>
+            <p className="text-xs text-muted-foreground">Plans créés récemment</p>
           </CardContent>
         </Card>
       </div>
@@ -224,21 +224,21 @@ export default function DashboardPage() {
         {/* Recent Clients */}
         <Card className="col-span-4">
           <CardHeader>
-            <CardTitle>Recent Clients</CardTitle>
-            <CardDescription>Your newest client relationships</CardDescription>
+            <CardTitle>Clients récents</CardTitle>
+            <CardDescription>Vos nouvelles relations client</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-8">
               {stats.recentClients.length === 0 ? (
                 <div className="text-center py-8">
                   <Users className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No clients yet</h3>
-                  <p className="mt-1 text-sm text-gray-500">Get started by adding your first client.</p>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun client pour le moment</h3>
+                  <p className="mt-1 text-sm text-gray-500">Commencez par ajouter votre premier client.</p>
                   <div className="mt-6">
                     <Button asChild className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
                       <Link href="/dashboard/clients">
                         <Plus className="mr-2 h-4 w-4" />
-                        Add Client
+                        Ajouter un client
                       </Link>
                     </Button>
                   </div>
@@ -260,7 +260,7 @@ export default function DashboardPage() {
                       <p className="text-sm text-muted-foreground">{client.email}</p>
                     </div>
                     <div className="ml-auto font-medium">
-                      <Badge variant="default">Active</Badge>
+                      <Badge variant="default">Actif</Badge>
                     </div>
                   </div>
                 ))
@@ -272,21 +272,21 @@ export default function DashboardPage() {
         {/* Recent Meal Plans */}
         <Card className="col-span-3">
           <CardHeader>
-            <CardTitle>Recent Meal Plans</CardTitle>
-            <CardDescription>Your latest created plans</CardDescription>
+            <CardTitle>Plans alimentaires récents</CardTitle>
+            <CardDescription>Vos derniers plans créés</CardDescription>
           </CardHeader>
           <CardContent>
             <div className="space-y-4">
               {stats.recentMealPlans.length === 0 ? (
                 <div className="text-center py-8">
                   <FileText className="mx-auto h-12 w-12 text-gray-400" />
-                  <h3 className="mt-2 text-sm font-medium text-gray-900">No meal plans</h3>
-                  <p className="mt-1 text-sm text-gray-500">Create your first meal plan!</p>
+                  <h3 className="mt-2 text-sm font-medium text-gray-900">Aucun plan alimentaire</h3>
+                  <p className="mt-1 text-sm text-gray-500">Créez votre premier plan alimentaire !</p>
                   <div className="mt-6">
                     <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
                       <Link href="/dashboard/meal-plans/generate">
                         <Plus className="mr-2 h-4 w-4" />
-                        Generate Plan
+                        Générer un plan
                       </Link>
                     </Button>
                   </div>
@@ -300,7 +300,7 @@ export default function DashboardPage() {
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900 truncate">{plan.name}</p>
                       <p className="text-sm text-gray-500 truncate">
-                        {plan.duration_days} days • {plan.calories_range || 'Various calories'}
+                        {plan.duration_days} jours • {plan.calories_range || 'Calories variées'}
                       </p>
                     </div>
                     <Badge variant="outline">{plan.status}</Badge>

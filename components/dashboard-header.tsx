@@ -52,7 +52,7 @@ export function DashboardHeader({
   subtitle, 
   action,
   showSearch = true,
-  searchPlaceholder = "Search...",
+  searchPlaceholder = "Rechercher...",
   searchValue,
   onSearchChange,
   showNotifications = true,
@@ -111,28 +111,28 @@ export function DashboardHeader({
                   <DropdownMenuSeparator className="bg-slate-100" />
                   <DropdownMenuItem className="p-4 hover:bg-slate-50 rounded-lg mx-2 my-1">
                     <div className="flex flex-col gap-1">
-                      <p className="text-sm font-medium text-slate-900">Client check-in reminder</p>
-                      <p className="text-xs text-slate-600">Sarah Johnson - Weekly weigh-in due</p>
-                      <p className="text-xs text-emerald-600 font-medium">2 hours ago</p>
+                      <p className="text-sm font-medium text-slate-900">Rappel de suivi client</p>
+                      <p className="text-xs text-slate-600">Sarah Johnson - Pesée hebdomadaire due</p>
+                      <p className="text-xs text-emerald-600 font-medium">Il y a 2 heures</p>
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="p-4 hover:bg-slate-50 rounded-lg mx-2 my-1">
                     <div className="flex flex-col gap-1">
-                      <p className="text-sm font-medium text-slate-900">Meal plan expiring</p>
-                      <p className="text-xs text-slate-600">Mike Chen's plan expires in 2 days</p>
-                      <p className="text-xs text-amber-600 font-medium">5 hours ago</p>
+                      <p className="text-sm font-medium text-slate-900">Plan alimentaire expirant</p>
+                      <p className="text-xs text-slate-600">Le plan de Mike Chen expire dans 2 jours</p>
+                      <p className="text-xs text-amber-600 font-medium">Il y a 5 heures</p>
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuItem className="p-4 hover:bg-slate-50 rounded-lg mx-2 my-1">
                     <div className="flex flex-col gap-1">
-                      <p className="text-sm font-medium text-slate-900">Payment received</p>
-                      <p className="text-xs text-slate-600">Emma Davis - $150 consultation fee</p>
-                      <p className="text-xs text-blue-600 font-medium">1 day ago</p>
+                      <p className="text-sm font-medium text-slate-900">Paiement reçu</p>
+                      <p className="text-xs text-slate-600">Emma Davis - 150€ consultation</p>
+                      <p className="text-xs text-blue-600 font-medium">Il y a 1 jour</p>
                     </div>
                   </DropdownMenuItem>
                   <DropdownMenuSeparator className="bg-slate-100" />
                   <DropdownMenuItem className="p-2 m-2 text-center text-emerald-600 hover:bg-emerald-50 rounded-lg font-medium">
-                    View all notifications
+                    Voir toutes les notifications
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>

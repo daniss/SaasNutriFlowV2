@@ -30,7 +30,7 @@ import { useAuthContext } from "@/components/auth/AuthProvider"
 const data = {
   navMain: [
     {
-      title: "Dashboard",
+      title: "Tableau de bord",
       url: "/dashboard",
       icon: Home,
     },
@@ -40,27 +40,27 @@ const data = {
       icon: Users,
     },
     {
-      title: "Meal Plans",
+      title: "Plans alimentaires",
       url: "/dashboard/meal-plans",
       icon: FileText,
     },
     {
-      title: "Templates",
+      title: "Modèles",
       url: "/dashboard/templates",
       icon: BookOpen,
     },
     {
-      title: "Reminders",
+      title: "Rappels",
       url: "/dashboard/reminders",
       icon: Bell,
     },
     {
-      title: "Invoices",
+      title: "Factures",
       url: "/dashboard/invoices",
       icon: Receipt,
     },
     {
-      title: "Settings",
+      title: "Paramètres",
       url: "/dashboard/settings",
       icon: Settings,
     },
@@ -86,7 +86,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-semibold text-sm">NutriFlow</span>
-            <span className="text-xs text-muted-foreground">Dietitian Dashboard</span>
+            <span className="text-xs text-muted-foreground">Tableau de bord diététicien</span>
           </div>
         </div>
       </SidebarHeader>
@@ -109,14 +109,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         </SidebarGroup>
 
         <SidebarGroup className="mt-auto">
-          <SidebarGroupLabel>Quick Actions</SidebarGroupLabel>
+          <SidebarGroupLabel>Actions rapides</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link href="/dashboard/clients/new">
                     <Plus />
-                    <span>Add Client</span>
+                    <span>Ajouter un client</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -124,7 +124,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuButton asChild>
                   <Link href="/dashboard/meal-plans/generate">
                     <FileText />
-                    <span>Generate Plan</span>
+                    <span>Générer un plan</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -140,16 +140,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuButton className="w-full">
                   <div className="flex items-center gap-2 px-2 py-1.5">
                     <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-medium">
-                      {profile?.first_name?.[0] || "U"}
-                      {profile?.last_name?.[0] || "U"}
+                      {profile?.full_name?.[0] || profile?.email?.[0] || "U"}
                     </div>
                     <div className="flex flex-col group-data-[collapsible=icon]:hidden text-left">
                       <span className="text-sm font-medium">
-                        {profile?.first_name && profile?.last_name
-                          ? `${profile.first_name} ${profile.last_name}`
-                          : profile?.email || "User"}
+                        {profile?.full_name || profile?.email || "Utilisateur"}
                       </span>
-                      <span className="text-xs text-muted-foreground">{profile?.title || "Registered Dietitian"}</span>
+                      <span className="text-xs text-muted-foreground">Diététicien(ne)</span>
                     </div>
                   </div>
                 </SidebarMenuButton>
@@ -158,13 +155,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/settings">
                     <Settings className="h-4 w-4 mr-2" />
-                    Settings
+                    Paramètres
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={handleSignOut}>
                   <LogOut className="h-4 w-4 mr-2" />
-                  Sign out
+                  Se déconnecter
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -170,23 +170,23 @@ export default function MealPlanDetailPage() {
 
       if (error) {
         toast({
-          title: "Error",
-          description: "Failed to delete meal plan. Please try again.",
+          title: "Erreur",
+          description: "Impossible de supprimer le plan alimentaire. Veuillez réessayer.",
           variant: "destructive"
         })
         return
       }
 
       toast({
-        title: "Success",
-        description: "Meal plan deleted successfully."
+        title: "Succès",
+        description: "Plan alimentaire supprimé avec succès."
       })
       router.push("/dashboard/meal-plans")
     } catch (error) {
       console.error("Error deleting meal plan:", error)
       toast({
-        title: "Error",
-        description: "Failed to delete meal plan. Please try again.",
+        title: "Erreur",
+        description: "Impossible de supprimer le plan alimentaire. Veuillez réessayer.",
         variant: "destructive"
       })
     }
@@ -217,8 +217,8 @@ export default function MealPlanDetailPage() {
 
       if (error) {
         toast({
-          title: "Error",
-          description: "Failed to update meal plan. Please try again.",
+          title: "Erreur",
+          description: "Impossible de mettre à jour le plan alimentaire. Veuillez réessayer.",
           variant: "destructive"
         })
         return
@@ -227,14 +227,14 @@ export default function MealPlanDetailPage() {
       setMealPlan(data)
       setIsEditOpen(false)
       toast({
-        title: "Success",
-        description: "Meal plan updated successfully."
+        title: "Succès",
+        description: "Plan alimentaire mis à jour avec succès."
       })
     } catch (error) {
       console.error("Error updating meal plan:", error)
       toast({
-        title: "Error",
-        description: "Failed to update meal plan. Please try again.",
+        title: "Erreur",
+        description: "Impossible de mettre à jour le plan alimentaire. Veuillez réessayer.",
         variant: "destructive"
       })
     }
@@ -261,8 +261,8 @@ export default function MealPlanDetailPage() {
 
       if (error) {
         toast({
-          title: "Error",
-          description: "Failed to duplicate meal plan. Please try again.",
+          title: "Erreur",
+          description: "Impossible de dupliquer le plan alimentaire. Veuillez réessayer.",
           variant: "destructive"
         })
         return
@@ -270,15 +270,15 @@ export default function MealPlanDetailPage() {
 
       setIsDuplicateOpen(false)
       toast({
-        title: "Success",
-        description: "Meal plan duplicated successfully."
+        title: "Succès",
+        description: "Plan alimentaire dupliqué avec succès."
       })
       router.push(`/dashboard/meal-plans/${data.id}`)
     } catch (error) {
       console.error("Error duplicating meal plan:", error)
       toast({
-        title: "Error",
-        description: "Failed to duplicate meal plan. Please try again.",
+        title: "Erreur",
+        description: "Impossible de dupliquer le plan alimentaire. Veuillez réessayer.",
         variant: "destructive"
       })
     }
@@ -306,35 +306,48 @@ export default function MealPlanDetailPage() {
     }
   }
 
+  const getStatusText = (status: string) => {
+    switch (status) {
+      case "active":
+        return "Actif"
+      case "completed":
+        return "Terminé"
+      case "paused":
+        return "En pause"
+      default:
+        return status
+    }
+  }
+
   const generateSampleDays = (duration: number): DayPlan[] => {
     const sampleMeals = {
       breakfast: [
-        "Greek yogurt with berries and granola",
-        "Oatmeal with banana and almonds",
-        "Avocado toast with poached egg",
-        "Smoothie bowl with spinach and fruit",
-        "Whole grain cereal with milk"
+        "Yaourt grec aux baies et granola",
+        "Flocons d'avoine à la banane et aux amandes",
+        "Toast à l'avocat et œuf poché",
+        "Smoothie bowl aux épinards et fruits",
+        "Céréales complètes au lait"
       ],
       lunch: [
-        "Grilled chicken salad with quinoa",
-        "Mediterranean wrap with hummus",
-        "Lentil soup with whole grain bread",
-        "Buddha bowl with tofu and vegetables",
-        "Turkey and avocado sandwich"
+        "Salade de poulet grillé au quinoa",
+        "Wrap méditerranéen au houmous",
+        "Soupe de lentilles et pain complet",
+        "Buddha bowl au tofu et légumes",
+        "Sandwich dinde et avocat"
       ],
       dinner: [
-        "Baked salmon with roasted vegetables",
-        "Lean beef stir-fry with brown rice",
-        "Vegetarian pasta with marinara sauce",
-        "Grilled chicken with sweet potato",
-        "Fish tacos with black beans"
+        "Saumon grillé aux légumes rôtis",
+        "Sauté de bœuf maigre au riz brun",
+        "Pâtes végétariennes à la marinara",
+        "Poulet grillé à la patate douce",
+        "Tacos de poisson aux haricots noirs"
       ],
       snacks: [
-        "Apple slices with almond butter",
-        "Mixed nuts and dried fruit",
-        "Greek yogurt with honey",
-        "Hummus with vegetable sticks",
-        "Protein smoothie"
+        "Tranches de pomme au beurre d'amande",
+        "Mélange de noix et fruits secs",
+        "Yaourt grec au miel",
+        "Houmous aux bâtonnets de légumes",
+        "Smoothie protéiné"
       ]
     }
 
@@ -346,7 +359,7 @@ export default function MealPlanDetailPage() {
         dinner: [sampleMeals.dinner[index % sampleMeals.dinner.length]],
         snacks: [sampleMeals.snacks[index % sampleMeals.snacks.length]]
       },
-      notes: index === 0 ? "Start with lighter portions and adjust as needed" : undefined
+      notes: index === 0 ? "Commencer avec des portions plus légères et ajuster au besoin" : undefined
     }))
   }
 
@@ -381,11 +394,11 @@ export default function MealPlanDetailPage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
           <div className="text-center py-12">
             <FileText className="h-16 w-16 text-slate-400 mx-auto mb-4" />
-            <h1 className="text-2xl font-bold text-slate-900 mb-2">Meal Plan Not Found</h1>
-            <p className="text-slate-600 mb-6">The meal plan you're looking for doesn't exist or you don't have access to it.</p>
+            <h1 className="text-2xl font-bold text-slate-900 mb-2">Plan alimentaire introuvable</h1>
+            <p className="text-slate-600 mb-6">Le plan alimentaire que vous recherchez n'existe pas ou vous n'y avez pas accès.</p>
             <Button onClick={() => router.push("/dashboard/meal-plans")}>
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Back to Meal Plans
+              Retour aux plans alimentaires
             </Button>
           </div>
         </div>
@@ -416,14 +429,14 @@ export default function MealPlanDetailPage() {
               </div>
               <div>
                 <h1 className="text-2xl font-bold text-slate-900">{mealPlan.name}</h1>
-                <p className="text-slate-600">For {mealPlan.clients?.name}</p>
+                <p className="text-slate-600">Pour {mealPlan.clients?.name}</p>
               </div>
             </div>
           </div>
 
           <div className="flex items-center gap-3">
             <Badge className={`${getStatusColor(mealPlan.status)} border font-medium px-3 py-1.5`}>
-              {mealPlan.status}
+              {getStatusText(mealPlan.status)}
             </Badge>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
@@ -434,25 +447,25 @@ export default function MealPlanDetailPage() {
               <DropdownMenuContent align="end" className="w-48 rounded-lg">
                 <DropdownMenuItem onClick={() => setIsEditOpen(true)} className="rounded-md">
                   <Edit className="mr-2 h-4 w-4" />
-                  Edit Plan
+                  Modifier le plan
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={() => {
                   setDuplicateForm({
-                    name: `${mealPlan.name} (Copy)`,
+                    name: `${mealPlan.name} (Copie)`,
                     client_id: mealPlan.client_id
                   })
                   setIsDuplicateOpen(true)
                 }} className="rounded-md">
                   <Copy className="mr-2 h-4 w-4" />
-                  Duplicate
+                  Dupliquer
                 </DropdownMenuItem>
                 <DropdownMenuItem className="rounded-md">
                   <Share2 className="mr-2 h-4 w-4" />
-                  Share Plan
+                  Partager le plan
                 </DropdownMenuItem>
                 <DropdownMenuItem className="rounded-md">
                   <Download className="mr-2 h-4 w-4" />
-                  Export PDF
+                  Exporter en PDF
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 
@@ -460,7 +473,7 @@ export default function MealPlanDetailPage() {
                   className="text-red-600 hover:bg-red-50 rounded-md"
                 >
                   <Trash2 className="mr-2 h-4 w-4" />
-                  Delete Plan
+                  Supprimer le plan
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -475,7 +488,7 @@ export default function MealPlanDetailPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <FileText className="h-5 w-5 text-slate-600" />
-                  Plan Overview
+                  Aperçu du plan
                 </CardTitle>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -490,9 +503,9 @@ export default function MealPlanDetailPage() {
                   <div className="bg-slate-50/80 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Clock className="h-4 w-4 text-slate-500" />
-                      <span className="text-sm font-medium text-slate-500">Duration</span>
+                      <span className="text-sm font-medium text-slate-500">Durée</span>
                     </div>
-                    <span className="text-lg font-semibold text-slate-900">{mealPlan.duration_days} days</span>
+                    <span className="text-lg font-semibold text-slate-900">{mealPlan.duration_days} jours</span>
                   </div>
 
                   {mealPlan.calories_range && (
@@ -508,19 +521,19 @@ export default function MealPlanDetailPage() {
                   <div className="bg-slate-50/80 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Calendar className="h-4 w-4 text-slate-500" />
-                      <span className="text-sm font-medium text-slate-500">Created</span>
+                      <span className="text-sm font-medium text-slate-500">Créé le</span>
                     </div>
                     <span className="text-lg font-semibold text-slate-900">
-                      {new Date(mealPlan.created_at).toLocaleDateString()}
+                      {new Date(mealPlan.created_at).toLocaleDateString('fr-FR')}
                     </span>
                   </div>
 
                   <div className="bg-slate-50/80 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Users className="h-4 w-4 text-slate-500" />
-                      <span className="text-sm font-medium text-slate-500">Status</span>
+                      <span className="text-sm font-medium text-slate-500">Statut</span>
                     </div>
-                    <span className="text-lg font-semibold text-slate-900 capitalize">{mealPlan.status}</span>
+                    <span className="text-lg font-semibold text-slate-900">{getStatusText(mealPlan.status)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -531,10 +544,10 @@ export default function MealPlanDetailPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <ChefHat className="h-5 w-5 text-slate-600" />
-                  Daily Meal Plans
+                  Plans repas quotidiens
                 </CardTitle>
                 <CardDescription>
-                  Detailed breakdown of meals for each day of the plan
+                  Détail des repas pour chaque jour du plan
                 </CardDescription>
               </CardHeader>
               <CardContent>
@@ -542,10 +555,10 @@ export default function MealPlanDetailPage() {
                   {dayPlans.map((day) => (
                     <div key={day.day} className="border border-slate-100 rounded-lg p-6">
                       <div className="flex items-center justify-between mb-4">
-                        <h3 className="text-lg font-semibold text-slate-900">Day {day.day}</h3>
+                        <h3 className="text-lg font-semibold text-slate-900">Jour {day.day}</h3>
                         <Button variant="ghost" size="sm" className="text-emerald-600 hover:text-emerald-700">
                           <Edit className="h-4 w-4 mr-1" />
-                          Edit Day
+                          Modifier le jour
                         </Button>
                       </div>
 
@@ -553,7 +566,7 @@ export default function MealPlanDetailPage() {
                         <div>
                           <h4 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
                             <div className="h-2 w-2 bg-orange-400 rounded-full"></div>
-                            Breakfast
+                            Petit-déjeuner
                           </h4>
                           <ul className="space-y-1 text-sm text-slate-600 ml-4">
                             {day.meals.breakfast.map((meal, idx) => (
@@ -565,7 +578,7 @@ export default function MealPlanDetailPage() {
                         <div>
                           <h4 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
                             <div className="h-2 w-2 bg-blue-400 rounded-full"></div>
-                            Lunch
+                            Déjeuner
                           </h4>
                           <ul className="space-y-1 text-sm text-slate-600 ml-4">
                             {day.meals.lunch.map((meal, idx) => (
@@ -577,7 +590,7 @@ export default function MealPlanDetailPage() {
                         <div>
                           <h4 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
                             <div className="h-2 w-2 bg-purple-400 rounded-full"></div>
-                            Dinner
+                            Dîner
                           </h4>
                           <ul className="space-y-1 text-sm text-slate-600 ml-4">
                             {day.meals.dinner.map((meal, idx) => (
@@ -589,7 +602,7 @@ export default function MealPlanDetailPage() {
                         <div>
                           <h4 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
                             <div className="h-2 w-2 bg-emerald-400 rounded-full"></div>
-                            Snacks
+                            Collations
                           </h4>
                           <ul className="space-y-1 text-sm text-slate-600 ml-4">
                             {day.meals.snacks.map((meal, idx) => (
@@ -602,7 +615,7 @@ export default function MealPlanDetailPage() {
                       {day.notes && (
                         <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
                           <p className="text-sm text-amber-800">
-                            <strong>Note:</strong> {day.notes}
+                            <strong>Note :</strong> {day.notes}
                           </p>
                         </div>
                       )}
@@ -620,13 +633,13 @@ export default function MealPlanDetailPage() {
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-slate-600" />
-                  Client Information
+                  Informations client
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   <div>
-                    <p className="text-sm font-medium text-slate-500 mb-1">Name</p>
+                    <p className="text-sm font-medium text-slate-500 mb-1">Nom</p>
                     <p className="font-semibold text-slate-900">{mealPlan.clients?.name}</p>
                   </div>
                   <div>
@@ -635,7 +648,7 @@ export default function MealPlanDetailPage() {
                   </div>
                   <Separator />
                   <Button variant="outline" size="sm" className="w-full">
-                    View Client Profile
+                    Voir le profil client
                   </Button>
                 </div>
               </CardContent>
@@ -644,20 +657,20 @@ export default function MealPlanDetailPage() {
             {/* Quick Actions */}
             <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl">
               <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+                <CardTitle>Actions rapides</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <Share2 className="mr-2 h-4 w-4" />
-                  Share with Client
+                  Partager avec le client
                 </Button>
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <Download className="mr-2 h-4 w-4" />
-                  Export as PDF
+                  Exporter en PDF
                 </Button>
                 <Button variant="outline" size="sm" className="w-full justify-start">
                   <Copy className="mr-2 h-4 w-4" />
-                  Create Template
+                  Créer un modèle
                 </Button>
               </CardContent>
             </Card>
@@ -668,14 +681,14 @@ export default function MealPlanDetailPage() {
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
           <DialogContent className="sm:max-w-[540px] rounded-xl">
             <DialogHeader>
-              <DialogTitle>Edit Meal Plan</DialogTitle>
+              <DialogTitle>Modifier le plan alimentaire</DialogTitle>
               <DialogDescription>
-                Update the meal plan details and settings.
+                Mettre à jour les détails et paramètres du plan alimentaire.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-4">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Plan Name *</Label>
+                <Label htmlFor="edit-name">Nom du plan *</Label>
                 <Input
                   id="edit-name"
                   value={editForm.name}
@@ -700,7 +713,7 @@ export default function MealPlanDetailPage() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-calories">Calories Range</Label>
+                  <Label htmlFor="edit-calories">Gamme de calories</Label>
                   <Input
                     id="edit-calories"
                     value={editForm.calories_range}
@@ -709,7 +722,7 @@ export default function MealPlanDetailPage() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-duration">Duration (days)</Label>
+                  <Label htmlFor="edit-duration">Durée (jours)</Label>
                   <Input
                     id="edit-duration"
                     type="number"
@@ -720,15 +733,15 @@ export default function MealPlanDetailPage() {
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-status">Status</Label>
+                <Label htmlFor="edit-status">Statut</Label>
                 <Select value={editForm.status} onValueChange={(value: string) => setEditForm({ ...editForm, status: value })}>
                   <SelectTrigger className="h-11">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="paused">Paused</SelectItem>
-                    <SelectItem value="completed">Completed</SelectItem>
+                    <SelectItem value="active">Actif</SelectItem>
+                    <SelectItem value="paused">En pause</SelectItem>
+                    <SelectItem value="completed">Terminé</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -744,10 +757,10 @@ export default function MealPlanDetailPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsEditOpen(false)}>
-                Cancel
+                Annuler
               </Button>
               <Button onClick={handleEdit}>
-                Save Changes
+                Enregistrer les modifications
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -757,14 +770,14 @@ export default function MealPlanDetailPage() {
         <Dialog open={isDuplicateOpen} onOpenChange={setIsDuplicateOpen}>
           <DialogContent className="sm:max-w-[500px] rounded-xl">
             <DialogHeader>
-              <DialogTitle>Duplicate Meal Plan</DialogTitle>
+              <DialogTitle>Dupliquer le plan alimentaire</DialogTitle>
               <DialogDescription>
-                Create a copy of this meal plan for another client or with a different name.
+                Créer une copie de ce plan alimentaire pour un autre client ou avec un nom différent.
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-4">
               <div className="space-y-2">
-                <Label htmlFor="duplicate-name">New Plan Name *</Label>
+                <Label htmlFor="duplicate-name">Nom du nouveau plan *</Label>
                 <Input
                   id="duplicate-name"
                   value={duplicateForm.name}
@@ -790,10 +803,10 @@ export default function MealPlanDetailPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsDuplicateOpen(false)}>
-                Cancel
+                Annuler
               </Button>
               <Button onClick={handleDuplicate}>
-                Create Duplicate
+                Créer la copie
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -803,15 +816,15 @@ export default function MealPlanDetailPage() {
         <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
           <AlertDialogContent className="rounded-xl">
             <AlertDialogHeader>
-              <AlertDialogTitle>Delete Meal Plan</AlertDialogTitle>
+              <AlertDialogTitle>Supprimer le plan alimentaire</AlertDialogTitle>
               <AlertDialogDescription>
-                Are you sure you want to delete "{mealPlan.name}"? This action cannot be undone and will permanently remove the meal plan and all associated data.
+                Êtes-vous sûr de vouloir supprimer "{mealPlan.name}" ? Cette action ne peut pas être annulée et supprimera définitivement le plan alimentaire et toutes les données associées.
               </AlertDialogDescription>
             </AlertDialogHeader>
             <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
+              <AlertDialogCancel>Annuler</AlertDialogCancel>
               <AlertDialogAction onClick={handleDelete} className="bg-red-600 hover:bg-red-700">
-                Delete Plan
+                Supprimer le plan
               </AlertDialogAction>
             </AlertDialogFooter>
           </AlertDialogContent>

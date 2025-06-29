@@ -186,8 +186,8 @@ export default function InvoicesPage() {
 
   const generateInvoicePDF = async (invoice: InvoiceWithClient) => {
     toast({
-      title: "Generating PDF",
-      description: "Opening print dialog for invoice PDF...",
+      title: "Génération du PDF",
+      description: "Ouverture de la boîte de dialogue d'impression pour le PDF de la facture...",
     })
 
     // Create HTML content for the invoice
@@ -296,14 +296,14 @@ export default function InvoicesPage() {
       <body>
         <div class="header">
           <div class="logo">NutriFlow</div>
-          <div class="invoice-number">Invoice ${invoice.invoice_number}</div>
+          <div class="invoice-number">Facture ${invoice.invoice_number}</div>
         </div>
 
         <div class="info-grid">
           <div class="client-info">
-            <h2>Bill To</h2>
-            <div class="label">Client Name</div>
-            <div class="value">${invoice.clients?.name || 'Unknown Client'}</div>
+            <h2>Facturer à</h2>
+            <div class="label">Nom du client</div>
+            <div class="value">${invoice.clients?.name || 'Client inconnu'}</div>
             ${invoice.clients?.email ? `
               <div class="label">Email</div>
               <div class="value">${invoice.clients.email}</div>
@@ -311,22 +311,22 @@ export default function InvoicesPage() {
           </div>
 
           <div class="invoice-details">
-            <h2>Invoice Details</h2>
-            <div class="label">Issue Date</div>
-            <div class="value">${new Date(invoice.issue_date).toLocaleDateString()}</div>
+            <h2>Détails de la facture</h2>
+            <div class="label">Date d'émission</div>
+            <div class="value">${new Date(invoice.issue_date).toLocaleDateString('fr-FR')}</div>
             ${invoice.due_date ? `
-              <div class="label">Due Date</div>
-              <div class="value">${new Date(invoice.due_date).toLocaleDateString()}</div>
+              <div class="label">Date d'échéance</div>
+              <div class="value">${new Date(invoice.due_date).toLocaleDateString('fr-FR')}</div>
             ` : ''}
-            <div class="label">Status</div>
+            <div class="label">Statut</div>
             <div class="value">
-              <span class="status ${invoice.status}">${invoice.status.toUpperCase()}</span>
+              <span class="status ${invoice.status}">${invoice.status === 'paid' ? 'PAYÉE' : invoice.status === 'pending' ? 'EN ATTENTE' : invoice.status.toUpperCase()}</span>
             </div>
           </div>
         </div>
 
         <div class="service-section">
-          <h2>Service Description</h2>
+          <h2>Description du service</h2>
           <div class="value">${invoice.service_description}</div>
           ${invoice.notes ? `
             <div style="margin-top: 15px;">
@@ -337,16 +337,16 @@ export default function InvoicesPage() {
         </div>
 
         <div class="amount-section">
-          <div class="label">Total Amount</div>
-          <div class="amount">$${invoice.amount.toFixed(2)}</div>
+          <div class="label">Montant total</div>
+          <div class="amount">${invoice.amount.toFixed(2)} €</div>
           ${invoice.payment_date ? `
-            <div class="label" style="margin-top: 10px;">Paid on ${new Date(invoice.payment_date).toLocaleDateString()}</div>
+            <div class="label" style="margin-top: 10px;">Payée le ${new Date(invoice.payment_date).toLocaleDateString('fr-FR')}</div>
           ` : ''}
         </div>
 
         <div class="footer">
-          <p>Thank you for your business!</p>
-          <p>Generated on ${new Date().toLocaleDateString()}</p>
+          <p>Merci pour votre confiance !</p>
+          <p>Généré le ${new Date().toLocaleDateString('fr-FR')}</p>
         </div>
       </body>
       </html>
@@ -374,39 +374,39 @@ export default function InvoicesPage() {
     
     if (!clientEmail) {
       toast({
-        title: "Email not available",
-        description: "Client email not found. Please add the client email to send invoices.",
+        title: "Email non disponible",
+        description: "Email du client introuvable. Veuillez ajouter l'email du client pour envoyer les factures.",
         variant: "destructive",
       })
       return;
     }
 
     toast({
-      title: "Opening email client",
-      description: `Preparing email to ${clientEmail}...`,
+      title: "Ouverture du client email",
+      description: `Préparation de l'email pour ${clientEmail}...`,
     })
 
-    const subject = `Invoice ${invoice.invoice_number} - NutriFlow`;
-    const body = `Dear ${invoice.clients?.name || 'Valued Client'},
+    const subject = `Facture ${invoice.invoice_number} - NutriFlow`;
+    const body = `Cher(e) ${invoice.clients?.name || 'Client estimé'},
 
-I hope this email finds you well. Please find attached your invoice for the nutrition services provided.
+J'espère que ce message vous trouve en bonne santé. Veuillez trouver ci-joint votre facture pour les services de nutrition fournis.
 
-Invoice Details:
-- Invoice Number: ${invoice.invoice_number}
-- Service: ${invoice.service_description}
-- Amount: $${invoice.amount.toFixed(2)}
-- Due Date: ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString() : 'Upon receipt'}
+Détails de la facture :
+- Numéro de facture : ${invoice.invoice_number}
+- Service : ${invoice.service_description}
+- Montant : ${invoice.amount.toFixed(2)} €
+- Date d'échéance : ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('fr-FR') : 'À réception'}
 
-${invoice.notes ? `Additional Notes: ${invoice.notes}` : ''}
+${invoice.notes ? `Notes supplémentaires : ${invoice.notes}` : ''}
 
-Thank you for choosing our nutrition services. If you have any questions about this invoice, please don't hesitate to reach out.
+Merci d'avoir choisi nos services de nutrition. Si vous avez des questions concernant cette facture, n'hésitez pas à nous contacter.
 
-Best regards,
-Your Dietitian
+Cordialement,
+Votre Diététicien(ne)
 
 ---
-This invoice was generated from NutriFlow
-Generated on ${new Date().toLocaleDateString()}`;
+Cette facture a été générée depuis NutriFlow
+Généré le ${new Date().toLocaleDateString('fr-FR')}`;
 
     if (clientEmail) {
       const mailtoLink = `mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
@@ -428,7 +428,7 @@ Generated on ${new Date().toLocaleDateString()}`;
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex items-center justify-between">
-          <h2 className="text-3xl font-bold tracking-tight">Invoices</h2>
+          <h2 className="text-3xl font-bold tracking-tight">Factures</h2>
         </div>
         <div className="grid gap-4 md:grid-cols-3 mb-6">
           {[...Array(3)].map((_, i) => (
@@ -465,9 +465,9 @@ Generated on ${new Date().toLocaleDateString()}`;
   return (
     <div className="space-y-6">
       <DashboardHeader 
-        title="Invoices"
-        subtitle="Manage billing and track payments"
-        searchPlaceholder="Search invoices..."
+        title="Factures"
+        subtitle="Gérer la facturation et suivre les paiements"
+        searchPlaceholder="Rechercher des factures..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
@@ -475,13 +475,13 @@ Generated on ${new Date().toLocaleDateString()}`;
             <DialogTrigger asChild>
               <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md hover:shadow-lg transition-all duration-200 font-medium">
                 <Plus className="mr-2 h-4 w-4" />
-                Create Invoice
+                Créer une facture
               </Button>
             </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
-              <DialogTitle>Create New Invoice</DialogTitle>
-              <DialogDescription>Generate an invoice for your client services.</DialogDescription>
+              <DialogTitle>Créer une nouvelle facture</DialogTitle>
+              <DialogDescription>Générer une facture pour vos services clients.</DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4">
               <div className="space-y-2">
@@ -491,7 +491,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                   onValueChange={(value: string) => setNewInvoice({ ...newInvoice, client_id: value })}
                 >
                   <SelectTrigger>
-                    <SelectValue placeholder="Select a client" />
+                    <SelectValue placeholder="Sélectionner un client" />
                   </SelectTrigger>
                   <SelectContent>
                     {clients.map((client) => (
@@ -503,17 +503,17 @@ Generated on ${new Date().toLocaleDateString()}`;
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="service">Service Description *</Label>
+                <Label htmlFor="service">Description du service *</Label>
                 <Input
                   id="service"
                   value={newInvoice.service_description}
                   onChange={(e) => setNewInvoice({ ...newInvoice, service_description: e.target.value })}
-                  placeholder="e.g., Nutrition Consultation - 1 Hour"
+                  placeholder="ex. Consultation nutritionnelle - 1 heure"
                 />
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="amount">Amount ($) *</Label>
+                  <Label htmlFor="amount">Montant (€) *</Label>
                   <Input
                     id="amount"
                     type="number"
@@ -524,7 +524,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="due-date">Due Date</Label>
+                  <Label htmlFor="due-date">Date d'échéance</Label>
                   <Input
                     id="due-date"
                     type="date"
@@ -539,21 +539,21 @@ Generated on ${new Date().toLocaleDateString()}`;
                   id="notes"
                   value={newInvoice.notes}
                   onChange={(e) => setNewInvoice({ ...newInvoice, notes: e.target.value })}
-                  placeholder="Additional notes or payment terms..."
+                  placeholder="Notes supplémentaires ou conditions de paiement..."
                   rows={3}
                 />
               </div>
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
+                Annuler
               </Button>
               <Button
                 onClick={handleAddInvoice}
                 disabled={!newInvoice.client_id || !newInvoice.service_description || !newInvoice.amount}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-md disabled:opacity-50 font-medium"
               >
-                Create Invoice
+                Créer la facture
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -571,7 +571,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                   {selectedInvoice?.invoice_number}
                 </DialogTitle>
                 <DialogDescription className="text-gray-600 mt-1">
-                  Invoice details and management options
+                  Détails de la facture et options de gestion
                 </DialogDescription>
               </div>
               <div className="flex items-center gap-2">
@@ -605,14 +605,14 @@ Generated on ${new Date().toLocaleDateString()}`;
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <Users className="h-5 w-5 text-blue-600" />
-                      Client Information
+                      Informations client
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Client Name</label>
+                      <label className="text-sm font-medium text-gray-500">Nom du client</label>
                       <p className="text-lg font-semibold text-gray-900">
-                        {selectedInvoice.clients?.name || "Unknown Client"}
+                        {selectedInvoice.clients?.name || "Client inconnu"}
                       </p>
                     </div>
                     {selectedInvoice.clients?.email && (
@@ -629,9 +629,9 @@ Generated on ${new Date().toLocaleDateString()}`;
                       </div>
                     )}
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Invoice Date</label>
+                      <label className="text-sm font-medium text-gray-500">Date de facture</label>
                       <p className="text-gray-900">
-                        {new Date(selectedInvoice.issue_date).toLocaleDateString('en-US', {
+                        {new Date(selectedInvoice.issue_date).toLocaleDateString('fr-FR', {
                           weekday: 'long',
                           year: 'numeric',
                           month: 'long',
@@ -641,9 +641,9 @@ Generated on ${new Date().toLocaleDateString()}`;
                     </div>
                     {selectedInvoice.due_date && (
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Due Date</label>
+                        <label className="text-sm font-medium text-gray-500">Date d'échéance</label>
                         <p className="text-gray-900">
-                          {new Date(selectedInvoice.due_date).toLocaleDateString('en-US', {
+                          {new Date(selectedInvoice.due_date).toLocaleDateString('fr-FR', {
                             weekday: 'long',
                             year: 'numeric',
                             month: 'long',
@@ -659,27 +659,27 @@ Generated on ${new Date().toLocaleDateString()}`;
                   <CardHeader className="pb-3">
                     <CardTitle className="text-lg flex items-center gap-2">
                       <DollarSign className="h-5 w-5 text-emerald-600" />
-                      Payment Information
+                      Informations de paiement
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Amount</label>
+                      <label className="text-sm font-medium text-gray-500">Montant</label>
                       <p className="text-3xl font-bold text-gray-900">
-                        ${selectedInvoice.amount.toFixed(2)}
+                        {selectedInvoice.amount.toFixed(2)} €
                       </p>
                     </div>
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Status</label>
+                      <label className="text-sm font-medium text-gray-500">Statut</label>
                       <p className="text-gray-900 capitalize font-medium">
-                        {selectedInvoice.status}
+                        {selectedInvoice.status === 'paid' ? 'Payée' : selectedInvoice.status === 'pending' ? 'En attente' : selectedInvoice.status}
                       </p>
                     </div>
                     {selectedInvoice.payment_date && (
                       <div>
-                        <label className="text-sm font-medium text-gray-500">Payment Date</label>
+                        <label className="text-sm font-medium text-gray-500">Date de paiement</label>
                         <p className="text-gray-900">
-                          {new Date(selectedInvoice.payment_date).toLocaleDateString('en-US', {
+                          {new Date(selectedInvoice.payment_date).toLocaleDateString('fr-FR', {
                             weekday: 'long',
                             year: 'numeric',
                             month: 'long',
@@ -692,24 +692,23 @@ Generated on ${new Date().toLocaleDateString()}`;
                 </Card>
               </div>
 
-              {/* Service Description */}
-              <Card className="border border-gray-200">
+              {/* Service Description */}                <Card className="border border-gray-200">
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <FileText className="h-5 w-5 text-purple-600" />
-                    Service Details
+                    Détails du service
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="bg-gray-50 rounded-lg p-4">
-                    <label className="text-sm font-medium text-gray-500 block mb-2">Service Description</label>
+                    <label className="text-sm font-medium text-gray-500 block mb-2">Description du service</label>
                     <p className="text-gray-900 leading-relaxed">
                       {selectedInvoice.service_description}
                     </p>
                   </div>
                   {selectedInvoice.notes && (
                     <div className="mt-4">
-                      <label className="text-sm font-medium text-gray-500 block mb-2">Additional Notes</label>
+                      <label className="text-sm font-medium text-gray-500 block mb-2">Notes supplémentaires</label>
                       <div className="bg-blue-50 border-l-4 border-blue-200 p-4 rounded">
                         <p className="text-gray-700 leading-relaxed">
                           {selectedInvoice.notes}
@@ -725,7 +724,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                 <CardHeader className="pb-3">
                   <CardTitle className="text-lg flex items-center gap-2">
                     <Calendar className="h-5 w-5 text-indigo-600" />
-                    Invoice Timeline
+                    Chronologie de la facture
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
@@ -733,9 +732,9 @@ Generated on ${new Date().toLocaleDateString()}`;
                     <div className="flex items-start gap-4">
                       <div className="w-2 h-2 bg-blue-500 rounded-full mt-2"></div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">Invoice Created</p>
+                        <p className="font-medium text-gray-900">Facture créée</p>
                         <p className="text-sm text-gray-500">
-                          {new Date(selectedInvoice.created_at).toLocaleDateString('en-US', {
+                          {new Date(selectedInvoice.created_at).toLocaleDateString('fr-FR', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric',
@@ -749,9 +748,9 @@ Generated on ${new Date().toLocaleDateString()}`;
                     <div className="flex items-start gap-4">
                       <div className="w-2 h-2 bg-amber-500 rounded-full mt-2"></div>
                       <div className="flex-1">
-                        <p className="font-medium text-gray-900">Invoice Issued</p>
+                        <p className="font-medium text-gray-900">Facture émise</p>
                         <p className="text-sm text-gray-500">
-                          {new Date(selectedInvoice.issue_date).toLocaleDateString('en-US', {
+                          {new Date(selectedInvoice.issue_date).toLocaleDateString('fr-FR', {
                             year: 'numeric',
                             month: 'long',
                             day: 'numeric'
@@ -764,9 +763,9 @@ Generated on ${new Date().toLocaleDateString()}`;
                       <div className="flex items-start gap-4">
                         <div className="w-2 h-2 bg-emerald-500 rounded-full mt-2"></div>
                         <div className="flex-1">
-                          <p className="font-medium text-gray-900">Payment Received</p>
+                          <p className="font-medium text-gray-900">Paiement reçu</p>
                           <p className="text-sm text-gray-500">
-                            {new Date(selectedInvoice.payment_date).toLocaleDateString('en-US', {
+                            {new Date(selectedInvoice.payment_date).toLocaleDateString('fr-FR', {
                               year: 'numeric',
                               month: 'long',
                               day: 'numeric'
@@ -789,7 +788,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                     className="border-blue-200 text-blue-700 hover:bg-blue-50"
                   >
                     <Download className="mr-2 h-4 w-4" />
-                    Download PDF
+                    Télécharger PDF
                   </Button>
                   <Button 
                     variant="outline" 
@@ -798,7 +797,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                     className="border-purple-200 text-purple-700 hover:bg-purple-50"
                   >
                     <Printer className="mr-2 h-4 w-4" />
-                    Print
+                    Imprimer
                   </Button>
                   <Button 
                     variant="outline" 
@@ -807,7 +806,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                     className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
                   >
                     <Mail className="mr-2 h-4 w-4" />
-                    Send Email
+                    Envoyer par email
                   </Button>
                   <Button 
                     variant="outline" 
@@ -815,7 +814,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                     className="border-gray-200 text-gray-700 hover:bg-gray-50"
                   >
                     <Edit className="mr-2 h-4 w-4" />
-                    Edit
+                    Modifier
                   </Button>
                 </div>
                 
@@ -829,7 +828,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                       }}
                       className="bg-emerald-600 hover:bg-emerald-700 text-white"
                     >
-                      Mark as Paid
+                      Marquer comme payée
                     </Button>
                   )}
                   <Button 
@@ -838,7 +837,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                     className="border-red-200 text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
-                    Delete
+                    Supprimer
                   </Button>
                 </div>
               </div>
@@ -852,40 +851,40 @@ Generated on ${new Date().toLocaleDateString()}`;
       <div className="grid gap-6 md:grid-cols-3 animate-in slide-in-from-bottom-4 duration-700">
         <Card className="border-0 shadow-lg hover:shadow-xl bg-gradient-to-br from-emerald-50/90 to-emerald-100/60 hover:from-emerald-50 hover:to-emerald-100/80 transition-all duration-300 group">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-emerald-700 tracking-wide uppercase">Total Revenue</CardTitle>
+            <CardTitle className="text-sm font-semibold text-emerald-700 tracking-wide uppercase">Chiffre d'affaires total</CardTitle>
             <div className="h-12 w-12 bg-emerald-200/80 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
               <DollarSign className="h-6 w-6 text-emerald-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-emerald-900 tabular-nums mb-1">${totalRevenue.toFixed(2)}</div>
-            <p className="text-emerald-600 text-sm font-medium">From paid invoices</p>
+            <div className="text-3xl font-bold text-emerald-900 tabular-nums mb-1">{totalRevenue.toFixed(2)} €</div>
+            <p className="text-emerald-600 text-sm font-medium">Factures payées</p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-lg hover:shadow-xl bg-gradient-to-br from-amber-50/90 to-amber-100/60 hover:from-amber-50 hover:to-amber-100/80 transition-all duration-300 group">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-amber-700 tracking-wide uppercase">Pending Amount</CardTitle>
+            <CardTitle className="text-sm font-semibold text-amber-700 tracking-wide uppercase">Montant en attente</CardTitle>
             <div className="h-12 w-12 bg-amber-200/80 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
               <Calendar className="h-6 w-6 text-amber-600" />
             </div>
           </CardHeader>
           <CardContent>
-            <div className="text-3xl font-bold text-amber-900 tabular-nums mb-1">${pendingAmount.toFixed(2)}</div>
-            <p className="text-amber-600 text-sm font-medium">Awaiting payment</p>
+            <div className="text-3xl font-bold text-amber-900 tabular-nums mb-1">{pendingAmount.toFixed(2)} €</div>
+            <p className="text-amber-600 text-sm font-medium">En attente de paiement</p>
           </CardContent>
         </Card>
 
         <Card className="border-0 shadow-lg hover:shadow-xl bg-gradient-to-br from-blue-50/90 to-blue-100/60 hover:from-blue-50 hover:to-blue-100/80 transition-all duration-300 group">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-            <CardTitle className="text-sm font-semibold text-blue-700 tracking-wide uppercase">Total Invoices</CardTitle>
+            <CardTitle className="text-sm font-semibold text-blue-700 tracking-wide uppercase">Total des factures</CardTitle>
             <div className="h-12 w-12 bg-blue-200/80 rounded-xl flex items-center justify-center group-hover:scale-105 transition-transform duration-200">
               <FileText className="h-6 w-6 text-blue-600" />
             </div>
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-bold text-blue-900 tabular-nums mb-1">{invoices.length}</div>
-            <p className="text-blue-600 text-sm font-medium">All time</p>
+            <p className="text-blue-600 text-sm font-medium">Depuis le début</p>
           </CardContent>
         </Card>
       </div>
@@ -898,9 +897,9 @@ Generated on ${new Date().toLocaleDateString()}`;
               <div className="mx-auto w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <FileText className="h-10 w-10 text-gray-400" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">No invoices found</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune facture trouvée</h3>
               <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-                {searchTerm ? "Try adjusting your search terms to find what you're looking for." : "Create your first invoice to start tracking your billing and payments."}
+                {searchTerm ? "Essayez d'ajuster vos termes de recherche pour trouver ce que vous cherchez." : "Créez votre première facture pour commencer à suivre votre facturation et vos paiements."}
               </p>
               {!searchTerm && (
                 <Button 
@@ -908,7 +907,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                   className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow-md transition-all duration-200 font-medium"
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  Create Your First Invoice
+                  Créer votre première facture
                 </Button>
               )}
             </div>
@@ -944,18 +943,18 @@ Generated on ${new Date().toLocaleDateString()}`;
                     </div>
                     <CardDescription className="flex items-center text-gray-600">
                       <Users className="mr-2 h-4 w-4" />
-                      {invoice.clients?.name || "Unknown Client"}
+                      {invoice.clients?.name || "Client inconnu"}
                     </CardDescription>
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-gray-900">${invoice.amount.toFixed(2)}</p>
-                    <p className="text-sm text-gray-500">Amount</p>
+                    <p className="text-2xl font-bold text-gray-900">{invoice.amount.toFixed(2)} €</p>
+                    <p className="text-sm text-gray-500">Montant</p>
                   </div>
                 </div>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="bg-gray-50 rounded-lg p-4">
-                  <h4 className="font-medium text-gray-900 mb-1">Service Description</h4>
+                  <h4 className="font-medium text-gray-900 mb-1">Description du service</h4>
                   <p className="text-gray-700">{invoice.service_description}</p>
                   {invoice.notes && (
                     <div className="mt-3 pt-3 border-t border-gray-200">
@@ -969,16 +968,16 @@ Generated on ${new Date().toLocaleDateString()}`;
                   <div className="flex items-center gap-2">
                     <Calendar className="h-4 w-4 text-gray-400" />
                     <div>
-                      <span className="text-gray-500">Issue Date</span>
-                      <p className="font-medium text-gray-900">{new Date(invoice.issue_date).toLocaleDateString()}</p>
+                      <span className="text-gray-500">Date d'émission</span>
+                      <p className="font-medium text-gray-900">{new Date(invoice.issue_date).toLocaleDateString('fr-FR')}</p>
                     </div>
                   </div>
                   {invoice.due_date && (
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-amber-500" />
                       <div>
-                        <span className="text-gray-500">Due Date</span>
-                        <p className="font-medium text-gray-900">{new Date(invoice.due_date).toLocaleDateString()}</p>
+                        <span className="text-gray-500">Date d'échéance</span>
+                        <p className="font-medium text-gray-900">{new Date(invoice.due_date).toLocaleDateString('fr-FR')}</p>
                       </div>
                     </div>
                   )}
@@ -986,8 +985,8 @@ Generated on ${new Date().toLocaleDateString()}`;
                     <div className="flex items-center gap-2">
                       <Calendar className="h-4 w-4 text-emerald-500" />
                       <div>
-                        <span className="text-gray-500">Paid Date</span>
-                        <p className="font-medium text-gray-900">{new Date(invoice.payment_date).toLocaleDateString()}</p>
+                        <span className="text-gray-500">Date de paiement</span>
+                        <p className="font-medium text-gray-900">{new Date(invoice.payment_date).toLocaleDateString('fr-FR')}</p>
                       </div>
                     </div>
                   )}
@@ -996,7 +995,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                 <div className="flex items-center justify-between pt-4 border-t border-gray-100">
                   <div className="flex items-center text-sm text-gray-500">
                     <FileText className="mr-2 h-4 w-4" />
-                    Created {new Date(invoice.created_at).toLocaleDateString()}
+                    Créée le {new Date(invoice.created_at).toLocaleDateString('fr-FR')}
                   </div>
                   <div className="flex gap-2">
                     {invoice.status === "pending" && (
@@ -1006,7 +1005,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                         onClick={() => updateInvoiceStatus(invoice.id, "paid")}
                         className="border-emerald-200 text-emerald-700 hover:bg-emerald-50"
                       >
-                        Mark as Paid
+                        Marquer comme payée
                       </Button>
                     )}
                     <Button 
@@ -1019,7 +1018,7 @@ Generated on ${new Date().toLocaleDateString()}`;
                       className="border-gray-200 text-gray-700 hover:bg-gray-50"
                     >
                       <Eye className="mr-2 h-4 w-4" />
-                      View Details
+                      Voir les détails
                     </Button>
                   </div>
                 </div>

@@ -223,7 +223,7 @@ export default function GenerateMealPlanPage() {
       
     } catch (error) {
       console.error("Error generating meal plan:", error)
-      setValidationError("Failed to generate meal plan. Please try again.")
+      setValidationError("Échec de la génération du plan alimentaire. Veuillez réessayer.")
       clearInterval(progressInterval)
     } finally {
       setTimeout(() => {
@@ -564,10 +564,10 @@ export default function GenerateMealPlanPage() {
               </div>
               <div>
                 <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent">
-                  AI Meal Plan Generator
+                  Générateur de plans alimentaires IA
                 </h1>
                 <p className="text-lg text-gray-600 mt-1">
-                  Create personalized nutrition plans in seconds with intelligent AI
+                  Créez des plans nutritionnels personnalisés en quelques secondes avec l'IA intelligente
                 </p>
               </div>
             </div>
@@ -575,10 +575,10 @@ export default function GenerateMealPlanPage() {
             {/* Key Features */}
             <div className="flex flex-wrap gap-4 mt-6">
               {[
-                { icon: Target, label: "Precision Nutrition", color: "text-blue-600" },
-                { icon: Clock, label: "Instant Generation", color: "text-green-600" },
-                { icon: Users, label: "Client-Ready", color: "text-purple-600" },
-                { icon: Shield, label: "Science-Based", color: "text-orange-600" },
+                { icon: Target, label: "Nutrition de précision", color: "text-blue-600" },
+                { icon: Clock, label: "Génération instantanée", color: "text-green-600" },
+                { icon: Users, label: "Prêt pour les clients", color: "text-purple-600" },
+                { icon: Shield, label: "Basé sur la science", color: "text-orange-600" },
               ].map((feature, index) => (
                 <div key={index} className="flex items-center gap-2 px-3 py-2 bg-white/60 backdrop-blur-sm rounded-lg border border-gray-200/50">
                   <feature.icon className={`h-4 w-4 ${feature.color}`} />
@@ -603,8 +603,8 @@ export default function GenerateMealPlanPage() {
                       <Edit className="h-4 w-4 text-white" />
                     </div>
                     <div>
-                      <CardTitle className="text-lg">Describe Your Vision</CardTitle>
-                      <CardDescription className="text-sm">What kind of meal plan do you need?</CardDescription>
+                      <CardTitle className="text-lg">Décrivez votre vision</CardTitle>
+                      <CardDescription className="text-sm">Quel type de plan alimentaire avez-vous besoin ?</CardDescription>
                     </div>
                   </div>
                   <Button
@@ -622,7 +622,7 @@ export default function GenerateMealPlanPage() {
                 <div className="relative">
                   <Textarea
                     ref={textareaRef}
-                    placeholder="e.g., Create a 7-day Mediterranean diet plan for weight loss with 1600 calories per day, high in omega-3 fatty acids, suitable for someone with pre-diabetes..."
+                    placeholder="ex: Créez un plan méditerranéen de 7 jours pour la perte de poids avec 1600 calories par jour, riche en acides gras oméga-3, adapté à une personne pré-diabétique..."
                     value={formData.prompt}
                     onChange={(e) => {
                       handleInputChange("prompt", e.target.value)
@@ -820,7 +820,7 @@ export default function GenerateMealPlanPage() {
                       <div className="flex items-center justify-between text-sm">
                         <span className="text-gray-600 flex items-center gap-2">
                           <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                          Generating your meal plan...
+                          Génération de votre plan alimentaire...
                         </span>
                         <span className="font-medium text-blue-600 tabular-nums">{Math.round(generationProgress)}%</span>
                       </div>
@@ -846,17 +846,17 @@ export default function GenerateMealPlanPage() {
                     {isGenerating ? (
                       <>
                         <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                        Generating...
+                        Génération...
                       </>
                     ) : !canSubmit() ? (
                       <>
                         <Timer className="h-5 w-5 mr-2" />
-                        Wait {getCooldownTimeLeft()}s
+                        Attendez {getCooldownTimeLeft()}s
                       </>
                     ) : (
                       <>
                         <Sparkles className="h-5 w-5 mr-2" />
-                        Generate Meal Plan
+                        Générer le plan alimentaire
                       </>
                     )}
                   </Button>
@@ -872,11 +872,11 @@ export default function GenerateMealPlanPage() {
                     <Award className="h-4 w-4 text-white" />
                   </div>
                   <div className="space-y-2">
-                    <h3 className="font-semibold text-amber-900">Pro Tips</h3>
+                    <h3 className="font-semibold text-amber-900">Conseils pro</h3>
                     <ul className="text-sm text-amber-800 space-y-1">
-                      <li>• Be specific about dietary preferences and restrictions</li>
-                      <li>• Mention if meal prep or quick recipes are preferred</li>
-                      <li>• Include any health conditions or fitness goals</li>
+                      <li>• Soyez précis sur les préférences et restrictions alimentaires</li>
+                      <li>• Mentionnez si vous préférez la préparation de repas ou des recettes rapides</li>
+                      <li>• Incluez les conditions de santé ou objectifs de fitness</li>
                     </ul>
                   </div>
                 </div>
