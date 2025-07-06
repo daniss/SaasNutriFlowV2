@@ -289,21 +289,24 @@ export default function GenerateMealPlanPage() {
     if (!generatedPlan || !user) return
 
     try {
-      const { error } = await supabase.from("meal_plans").insert({
+      // Save to meal_plan_templates table
+      const { error } = await supabase.from("meal_plan_templates").insert({
         dietitian_id: user.id,
-        client_id: formData.clientId || null,
         name: formData.planName || generatedPlan.name,
-        description: generatedPlan.description,
+        description: generatedPlan.description || '',
+        category: formData.goal || 'general',
         duration_days: generatedPlan.duration,
-        plan_content: generatedPlan,
-        status: "Draft",
+        template_data: generatedPlan,
+        tags: [formData.goal, formData.dietaryRestrictions].filter(Boolean),
+        usage_count: 0,
+        is_favorite: false,
       })
 
       if (error) throw error
-      alert("Meal plan saved as template successfully!")
+      alert("Plan alimentaire sauvegardé comme modèle avec succès!")
     } catch (error) {
       console.error("Error saving template:", error)
-      alert("Failed to save template. Please try again.")
+      alert("Échec de la sauvegarde du modèle. Veuillez réessayer.")
     }
   }
 

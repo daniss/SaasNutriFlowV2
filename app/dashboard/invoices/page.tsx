@@ -26,6 +26,8 @@ import { Plus, Search, FileText, DollarSign, Calendar, Users, Download, Printer,
 import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type Invoice, type Client } from "@/lib/supabase"
 import { DashboardHeader } from "@/components/dashboard-header"
+import { PDFGenerator, type InvoiceData } from "@/lib/pdf"
+import { emailService } from "@/lib/email"
 
 interface InvoiceWithClient extends Invoice {
   clients: { name: string; email: string } | null
@@ -35,7 +37,7 @@ export default function InvoicesPage() {
   const { user } = useAuth()
   const { toast } = useToast()
   const [invoices, setInvoices] = useState<InvoiceWithClient[]>([])
-  const [clients, setClients] = useState<Client[]>([])
+  const [clients, setClients] = useState<Pick<Client, 'id' | 'name'>[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -48,6 +50,7 @@ export default function InvoicesPage() {
     due_date: "",
     notes: "",
   })
+  const [actionLoading, setActionLoading] = useState<string | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -180,183 +183,38 @@ export default function InvoicesPage() {
   }
 
   const generateInvoicePDF = async (invoice: InvoiceWithClient) => {
-    toast({
-      title: "Génération du PDF",
-      description: "Ouverture de la boîte de dialogue d'impression pour le PDF de la facture...",
-    })
+    try {
+      toast({
+        title: "Génération du PDF",
+        description: "Génération du PDF en cours...",
+      })
 
-    // Create HTML content for the invoice
-    const invoiceHTML = `
-      <!DOCTYPE html>
-      <html>
-      <head>
-        <meta charset="utf-8">
-        <title>Invoice ${invoice.invoice_number}</title>
-        <style>
-          body { 
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; 
-            max-width: 800px; 
-            margin: 0 auto; 
-            padding: 40px; 
-            color: #1f2937;
-            line-height: 1.6;
-          }
-          .header { 
-            display: flex; 
-            justify-content: space-between; 
-            align-items: flex-start; 
-            margin-bottom: 40px; 
-            border-bottom: 2px solid #10b981; 
-            padding-bottom: 20px; 
-          }
-          .logo { 
-            font-size: 28px; 
-            font-weight: bold; 
-            color: #10b981; 
-          }
-          .invoice-number { 
-            font-size: 24px; 
-            font-weight: bold; 
-            color: #374151; 
-          }
-          .client-info, .invoice-details { 
-            background: #f9fafb; 
-            padding: 20px; 
-            border-radius: 8px; 
-            margin-bottom: 20px; 
-          }
-          .info-grid { 
-            display: grid; 
-            grid-template-columns: 1fr 1fr; 
-            gap: 30px; 
-            margin-bottom: 30px; 
-          }
-          .amount-section { 
-            text-align: right; 
-            background: #ecfdf5; 
-            padding: 20px; 
-            border-radius: 8px; 
-            border: 1px solid #10b981; 
-          }
-          .amount { 
-            font-size: 36px; 
-            font-weight: bold; 
-            color: #10b981; 
-          }
-          .status { 
-            display: inline-block; 
-            padding: 6px 12px; 
-            border-radius: 20px; 
-            font-size: 12px; 
-            font-weight: 600; 
-            text-transform: uppercase; 
-          }
-          .status.paid { 
-            background: #d1fae5; 
-            color: #065f46; 
-          }
-          .status.pending { 
-            background: #fef3c7; 
-            color: #92400e; 
-          }
-          .service-section { 
-            background: #f8fafc; 
-            padding: 20px; 
-            border-radius: 8px; 
-            margin: 20px 0; 
-          }
-          .footer { 
-            margin-top: 40px; 
-            text-align: center; 
-            color: #6b7280; 
-            font-size: 14px; 
-          }
-          h2 { 
-            color: #1f2937; 
-            margin-bottom: 15px; 
-            font-size: 18px; 
-          }
-          .label { 
-            font-weight: 600; 
-            color: #6b7280; 
-            font-size: 14px; 
-          }
-          .value { 
-            color: #1f2937; 
-            font-size: 16px; 
-            margin-bottom: 10px; 
-          }
-        </style>
-      </head>
-      <body>
-        <div class="header">
-          <div class="logo">NutriFlow</div>
-          <div class="invoice-number">Facture ${invoice.invoice_number}</div>
-        </div>
+      // Prepare invoice data for PDF generation
+      const invoiceData: InvoiceData = {
+        ...invoice,
+        dietitian: {
+          name: user?.email || "Diététicien", // You might want to get this from a profile table
+          email: user?.email || "",
+          phone: "", // Add these fields to your profile if needed
+          address: "",
+          siret: "",
+        }
+      }
 
-        <div class="info-grid">
-          <div class="client-info">
-            <h2>Facturer à</h2>
-            <div class="label">Nom du client</div>
-            <div class="value">${invoice.clients?.name || 'Client inconnu'}</div>
-            ${invoice.clients?.email ? `
-              <div class="label">Email</div>
-              <div class="value">${invoice.clients.email}</div>
-            ` : ''}
-          </div>
+      // Generate and download PDF
+      await PDFGenerator.downloadInvoicePDF(invoiceData)
 
-          <div class="invoice-details">
-            <h2>Détails de la facture</h2>
-            <div class="label">Date d'émission</div>
-            <div class="value">${new Date(invoice.issue_date).toLocaleDateString('fr-FR')}</div>
-            ${invoice.due_date ? `
-              <div class="label">Date d'échéance</div>
-              <div class="value">${new Date(invoice.due_date).toLocaleDateString('fr-FR')}</div>
-            ` : ''}
-            <div class="label">Statut</div>
-            <div class="value">
-              <span class="status ${invoice.status}">${invoice.status === 'paid' ? 'PAYÉE' : invoice.status === 'pending' ? 'EN ATTENTE' : invoice.status.toUpperCase()}</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="service-section">
-          <h2>Description du service</h2>
-          <div class="value">${invoice.service_description}</div>
-          ${invoice.notes ? `
-            <div style="margin-top: 15px;">
-              <div class="label">Notes</div>
-              <div class="value">${invoice.notes}</div>
-            </div>
-          ` : ''}
-        </div>
-
-        <div class="amount-section">
-          <div class="label">Montant total</div>
-          <div class="amount">${invoice.amount.toFixed(2)} €</div>
-          ${invoice.payment_date ? `
-            <div class="label" style="margin-top: 10px;">Payée le ${new Date(invoice.payment_date).toLocaleDateString('fr-FR')}</div>
-          ` : ''}
-        </div>
-
-        <div class="footer">
-          <p>Merci pour votre confiance !</p>
-          <p>Généré le ${new Date().toLocaleDateString('fr-FR')}</p>
-        </div>
-      </body>
-      </html>
-    `;
-
-    // Create a new window for printing/PDF generation
-    const printWindow = window.open('', '_blank');
-    if (printWindow) {
-      printWindow.document.write(invoiceHTML);
-      printWindow.document.close();
-      
-      // Wait for content to load, then trigger print dialog
-      printWindow.onload = () => {
-        printWindow.print();
-      };
+      toast({
+        title: "PDF généré",
+        description: "Le PDF de la facture a été téléchargé avec succès",
+      })
+    } catch (error) {
+      console.error('Error generating PDF:', error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer le PDF",
+        variant: "destructive",
+      })
     }
   }
 
@@ -364,7 +222,7 @@ export default function InvoicesPage() {
     generateInvoicePDF(invoice);
   }
 
-  const sendEmail = (invoice: InvoiceWithClient) => {
+  const sendEmail = async (invoice: InvoiceWithClient) => {
     const clientEmail = invoice.clients?.email;
     
     if (!clientEmail) {
@@ -376,36 +234,44 @@ export default function InvoicesPage() {
       return;
     }
 
-    toast({
-      title: "Ouverture du client email",
-      description: `Préparation de l'email pour ${clientEmail}...`,
-    })
+    try {
+      setActionLoading(invoice.id)
 
-    const subject = `Facture ${invoice.invoice_number} - NutriFlow`;
-    const body = `Cher(e) ${invoice.clients?.name || 'Client estimé'},
+      // Prepare invoice data for email
+      const invoiceEmailData = {
+        invoiceNumber: invoice.invoice_number,
+        clientName: invoice.clients?.name || 'Client estimé',
+        clientEmail: clientEmail,
+        serviceDescription: invoice.service_description,
+        amount: invoice.amount,
+        dueDate: invoice.due_date,
+        notes: invoice.notes || undefined,
+      }
 
-J'espère que ce message vous trouve en bonne santé. Veuillez trouver ci-joint votre facture pour les services de nutrition fournis.
+      // Send email using the email service
+      const result = await emailService.sendInvoiceEmail(invoiceEmailData)
 
-Détails de la facture :
-- Numéro de facture : ${invoice.invoice_number}
-- Service : ${invoice.service_description}
-- Montant : ${invoice.amount.toFixed(2)} €
-- Date d'échéance : ${invoice.due_date ? new Date(invoice.due_date).toLocaleDateString('fr-FR') : 'À réception'}
-
-${invoice.notes ? `Notes supplémentaires : ${invoice.notes}` : ''}
-
-Merci d'avoir choisi nos services de nutrition. Si vous avez des questions concernant cette facture, n'hésitez pas à nous contacter.
-
-Cordialement,
-Votre Diététicien(ne)
-
----
-Cette facture a été générée depuis NutriFlow
-Généré le ${new Date().toLocaleDateString('fr-FR')}`;
-
-    if (clientEmail) {
-      const mailtoLink = `mailto:${clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
-      window.location.href = mailtoLink;
+      if (result.success) {
+        toast({
+          title: "Email envoyé",
+          description: result.message,
+        })
+      } else {
+        toast({
+          title: "Erreur",
+          description: result.message,
+          variant: "destructive",
+        })
+      }
+    } catch (error) {
+      console.error('Error sending email:', error)
+      toast({
+        title: "Erreur",
+        description: "Impossible d'envoyer l'email. Veuillez réessayer.",
+        variant: "destructive",
+      })
+    } finally {
+      setActionLoading(null)
     }
   }
 
@@ -798,10 +664,11 @@ Généré le ${new Date().toLocaleDateString('fr-FR')}`;
                     variant="outline" 
                     size="sm"
                     onClick={() => sendEmail(selectedInvoice)}
-                    className="border-indigo-200 text-indigo-700 hover:bg-indigo-50"
+                    disabled={actionLoading === selectedInvoice.id}
+                    className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
                   >
                     <Mail className="mr-2 h-4 w-4" />
-                    Envoyer par email
+                    {actionLoading === selectedInvoice.id ? "Envoi..." : "Envoyer par email"}
                   </Button>
                   <Button 
                     variant="outline" 

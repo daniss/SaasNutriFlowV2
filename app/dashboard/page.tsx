@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type Client, type MealPlan } from "@/lib/supabase"
 import { MainDashboardSkeleton } from "@/components/shared/skeletons"
 import { DashboardHeader } from "@/components/dashboard-header"
+import MonthlyAgenda from "@/components/dashboard/MonthlyAgenda"
 import Link from "next/link"
 
 interface DashboardStats {
@@ -299,6 +300,11 @@ export default function DashboardPage() {
             </div>
           </CardContent>
         </Card>
+      </div>
+
+      {/* Monthly Agenda */}
+      <div className="mt-6">
+        <MonthlyAgenda dietitianId={user.id} />
       </div>
       </div>
     </div>

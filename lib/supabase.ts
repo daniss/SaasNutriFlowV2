@@ -274,6 +274,195 @@ export interface Database {
           updated_at?: string
         }
       }
+      recipe_templates: {
+        Row: {
+          id: string
+          dietitian_id: string
+          name: string
+          description: string | null
+          category: string
+          dietary_type: string[]
+          preparation_time: number | null
+          cooking_time: number | null
+          servings: number
+          calories_per_serving: number | null
+          macros: any | null
+          ingredients: any
+          instructions: any
+          tags: string[]
+          difficulty: string
+          rating: number | null
+          usage_count: number
+          is_favorite: boolean
+          is_public: boolean
+          source: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          dietitian_id: string
+          name: string
+          description?: string | null
+          category: string
+          dietary_type?: string[]
+          preparation_time?: number | null
+          cooking_time?: number | null
+          servings?: number
+          calories_per_serving?: number | null
+          macros?: any | null
+          ingredients: any
+          instructions: any
+          tags?: string[]
+          difficulty?: string
+          rating?: number | null
+          usage_count?: number
+          is_favorite?: boolean
+          is_public?: boolean
+          source?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          dietitian_id?: string
+          name?: string
+          description?: string | null
+          category?: string
+          dietary_type?: string[]
+          preparation_time?: number | null
+          cooking_time?: number | null
+          servings?: number
+          calories_per_serving?: number | null
+          macros?: any | null
+          ingredients?: any
+          instructions?: any
+          tags?: string[]
+          difficulty?: string
+          rating?: number | null
+          usage_count?: number
+          is_favorite?: boolean
+          is_public?: boolean
+          source?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      meal_plan_templates: {
+        Row: {
+          id: string
+          dietitian_id: string
+          name: string
+          description: string | null
+          category: string
+          duration_days: number
+          target_calories: string | null
+          target_macros: any | null
+          meal_structure: any
+          tags: string[]
+          difficulty: string
+          rating: number | null
+          usage_count: number
+          is_favorite: boolean
+          is_public: boolean
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          dietitian_id: string
+          name: string
+          description?: string | null
+          category: string
+          duration_days?: number
+          target_calories?: string | null
+          target_macros?: any | null
+          meal_structure: any
+          tags?: string[]
+          difficulty?: string
+          rating?: number | null
+          usage_count?: number
+          is_favorite?: boolean
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          dietitian_id?: string
+          name?: string
+          description?: string | null
+          category?: string
+          duration_days?: number
+          target_calories?: string | null
+          target_macros?: any | null
+          meal_structure?: any
+          tags?: string[]
+          difficulty?: string
+          rating?: number | null
+          usage_count?: number
+          is_favorite?: boolean
+          is_public?: boolean
+          created_at?: string
+          updated_at?: string
+        }
+      }
+      appointments: {
+        Row: {
+          id: string
+          dietitian_id: string
+          client_id: string
+          title: string
+          description: string | null
+          appointment_date: string
+          appointment_time: string
+          duration_minutes: number
+          type: string
+          status: string
+          location: string | null
+          is_virtual: boolean
+          meeting_link: string | null
+          notes: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          dietitian_id: string
+          client_id: string
+          title: string
+          description?: string | null
+          appointment_date: string
+          appointment_time: string
+          duration_minutes?: number
+          type?: string
+          status?: string
+          location?: string | null
+          is_virtual?: boolean
+          meeting_link?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          dietitian_id?: string
+          client_id?: string
+          title?: string
+          description?: string | null
+          appointment_date?: string
+          appointment_time?: string
+          duration_minutes?: number
+          type?: string
+          status?: string
+          location?: string | null
+          is_virtual?: boolean
+          meeting_link?: string | null
+          notes?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }
@@ -283,3 +472,6 @@ export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
 export type MealPlan = Database["public"]["Tables"]["meal_plans"]["Row"]
 export type Invoice = Database["public"]["Tables"]["invoices"]["Row"]
 export type Reminder = Database["public"]["Tables"]["reminders"]["Row"]
+export type RecipeTemplate = Database["public"]["Tables"]["recipe_templates"]["Row"]
+export type MealPlanTemplate = Database["public"]["Tables"]["meal_plan_templates"]["Row"]
+export type Appointment = Database["public"]["Tables"]["appointments"]["Row"]

@@ -1,7 +1,7 @@
 "use client"
 
 import type * as React from "react"
-import { Users, FileText, BookOpen, Bell, Receipt, Settings, Home, Plus, LogOut } from "lucide-react"
+import { Users, FileText, BookOpen, Bell, Receipt, Settings, Home, Plus, LogOut, Calendar, ChefHat } from "lucide-react"
 
 import {
   Sidebar,
@@ -45,9 +45,14 @@ const data = {
       icon: FileText,
     },
     {
-      title: "Modèles",
+      title: "Bibliothèque de recettes",
       url: "/dashboard/templates",
-      icon: BookOpen,
+      icon: ChefHat,
+    },
+    {
+      title: "Rendez-vous",
+      url: "/dashboard/appointments",
+      icon: Calendar,
     },
     {
       title: "Rappels",

@@ -67,10 +67,15 @@ interface MealPlanWithClient extends MealPlan {
   clients: { name: string } | null
 }
 
+interface ClientOption {
+  id: string
+  name: string
+}
+
 export default function MealPlansPage() {
   const { user } = useAuth()
   const [mealPlans, setMealPlans] = useState<MealPlanWithClient[]>([])
-  const [clients, setClients] = useState<Client[]>([])
+  const [clients, setClients] = useState<ClientOption[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
@@ -406,55 +411,55 @@ export default function MealPlansPage() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Stats Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl">
+          <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Total plans</p>
+                  <p className="text-sm font-medium text-slate-600 mb-2">Total plans</p>
                   <p className="text-2xl font-bold text-slate-900">{mealPlans.length}</p>
                 </div>
-                <div className="h-12 w-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                  <FileText className="h-6 w-6 text-emerald-600" />
+                <div className="h-14 w-14 bg-emerald-100 rounded-xl flex items-center justify-center">
+                  <FileText className="h-7 w-7 text-emerald-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
           
-          <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl">
+          <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Plans actifs</p>
+                  <p className="text-sm font-medium text-slate-600 mb-2">Plans actifs</p>
                   <p className="text-2xl font-bold text-slate-900">
                     {mealPlans.filter(plan => plan.status === 'active').length}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-blue-100 rounded-xl flex items-center justify-center">
-                  <Activity className="h-6 w-6 text-blue-600" />
+                <div className="h-14 w-14 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <Activity className="h-7 w-7 text-blue-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl">
+          <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Clients servis</p>
+                  <p className="text-sm font-medium text-slate-600 mb-2">Clients servis</p>
                   <p className="text-2xl font-bold text-slate-900">{clients.length}</p>
                 </div>
-                <div className="h-12 w-12 bg-purple-100 rounded-xl flex items-center justify-center">
-                  <Users className="h-6 w-6 text-purple-600" />
+                <div className="h-14 w-14 bg-purple-100 rounded-xl flex items-center justify-center">
+                  <Users className="h-7 w-7 text-purple-600" />
                 </div>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl">
+          <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-slate-600 mb-1">Ce mois-ci</p>
+                  <p className="text-sm font-medium text-slate-600 mb-2">Ce mois-ci</p>
                   <p className="text-2xl font-bold text-slate-900">
                     {mealPlans.filter(plan => {
                       const planDate = new Date(plan.created_at)
@@ -463,8 +468,8 @@ export default function MealPlansPage() {
                     }).length}
                   </p>
                 </div>
-                <div className="h-12 w-12 bg-amber-100 rounded-xl flex items-center justify-center">
-                  <TrendingUp className="h-6 w-6 text-amber-600" />
+                <div className="h-14 w-14 bg-amber-100 rounded-xl flex items-center justify-center">
+                  <TrendingUp className="h-7 w-7 text-amber-600" />
                 </div>
               </div>
             </CardContent>
@@ -474,7 +479,7 @@ export default function MealPlansPage() {
         {/* Filter Section */}
         <div className="flex items-center gap-4 mb-8">
           <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-40 h-11 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20 bg-white/80 backdrop-blur-sm rounded-lg shadow-sm">
+            <SelectTrigger className="w-44 h-11 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm">
               <Filter className="h-4 w-4 mr-2 text-slate-500" />
               <SelectValue />
             </SelectTrigger>
@@ -491,14 +496,14 @@ export default function MealPlansPage() {
         {loading ? (
           <GridSkeleton items={6} />
         ) : filteredMealPlans.length === 0 ? (
-          <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl">
-            <CardContent className="pt-16 pb-16">
+          <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm rounded-xl">
+            <CardContent className="pt-20 pb-20">
               <div className="text-center">
-                <div className="mx-auto h-20 w-20 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center mb-8 shadow-sm">
-                  <FileText className="h-10 w-10 text-emerald-600" />
+                <div className="mx-auto h-24 w-24 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center mb-8 shadow-sm">
+                  <FileText className="h-12 w-12 text-emerald-600" />
                 </div>
-                <h3 className="text-xl font-semibold text-slate-900 mb-3">Aucun plan alimentaire trouvé</h3>
-                <p className="text-slate-600 mb-8 max-w-sm mx-auto leading-relaxed">
+                <h3 className="text-xl font-semibold text-slate-900 mb-4">Aucun plan alimentaire trouvé</h3>
+                <p className="text-slate-600 mb-10 max-w-md mx-auto leading-relaxed">
                   {searchTerm || filterStatus !== 'all' 
                     ? "Essayez d'ajuster vos critères de recherche ou de filtrage." 
                     : "Créez votre premier plan alimentaire pour commencer à transformer le parcours santé de vos clients."
@@ -508,7 +513,7 @@ export default function MealPlansPage() {
                   <Button 
                     onClick={() => setIsAddDialogOpen(true)}
                     size="lg"
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold px-6"
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-lg hover:shadow-xl transition-all duration-200 font-semibold px-8 py-3 h-12"
                   >
                     <Plus className="mr-2 h-5 w-5" />
                     Créez votre premier plan
@@ -518,31 +523,31 @@ export default function MealPlansPage() {
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
             {filteredMealPlans.map((plan, index) => {
               const IconComponent = getPlanTypeIcon(plan.name)
               return (
                 <Card 
                   key={plan.id} 
-                  className="group bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 rounded-xl overflow-hidden"
+                  className="group bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm hover:shadow-lg transition-all duration-300 hover:-translate-y-1 rounded-xl overflow-hidden"
                 >
-                  <CardHeader className="pb-4">
+                  <CardHeader className="pb-4 px-6 pt-6">
                     <div className="flex items-start justify-between mb-3">
                       <div className="flex items-center gap-3">
-                        <div className="h-10 w-10 bg-emerald-100 rounded-lg flex items-center justify-center">
-                          <IconComponent className="h-5 w-5 text-emerald-600" />
+                        <div className="h-12 w-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+                          <IconComponent className="h-6 w-6 text-emerald-600" />
                         </div>
                         <div className="flex-1 min-w-0">
-                          <CardTitle className="text-lg font-semibold text-slate-900 truncate leading-tight">
+                          <CardTitle className="text-lg font-semibold text-slate-900 mb-1 leading-tight">
                             {plan.name}
                           </CardTitle>
-                          <div className="flex items-center mt-1 text-slate-600">
-                            <Users className="mr-1.5 h-3.5 w-3.5 opacity-60" />
+                          <div className="flex items-center text-slate-600">
+                            <Users className="mr-1.5 h-4 w-4 opacity-60" />
                             <span className="text-sm font-medium">{plan.clients?.name || "Unknown Client"}</span>
                           </div>
                         </div>
                       </div>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 flex-shrink-0">
                         <Badge 
                           variant={getStatusVariant(plan.status)}
                           className="font-medium px-2.5 py-1 text-xs"
@@ -592,34 +597,38 @@ export default function MealPlansPage() {
                     </div>
                   </CardHeader>
                   
-                  <CardContent className="space-y-5">
+                  <CardContent className="space-y-4 px-6 pb-6">
                     {plan.description && (
-                      <p className="text-sm text-slate-600 line-clamp-2 leading-relaxed">{plan.description}</p>
+                      <div className="bg-slate-50/50 rounded-lg p-3">
+                        <p className="text-sm text-slate-600 leading-relaxed">
+                          {plan.description}
+                        </p>
+                      </div>
                     )}
                     
-                    <div className="grid grid-cols-2 gap-4">
-                      <div className="bg-slate-50/80 rounded-lg p-3">
-                        <div className="flex items-center gap-2 mb-1">
-                          <Clock className="h-3.5 w-3.5 text-slate-500" />
+                    <div className="grid grid-cols-2 gap-3">
+                      <div className="bg-gradient-to-br from-slate-50 to-slate-100/80 rounded-lg p-4">
+                        <div className="flex items-center gap-2 mb-2">
+                          <Clock className="h-4 w-4 text-slate-500" />
                           <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Durée</span>
                         </div>
-                        <span className="text-sm font-semibold text-slate-900">{plan.duration_days} jours</span>
+                        <span className="text-base font-bold text-slate-900">{plan.duration_days} jours</span>
                       </div>
                       
                       {plan.calories_range && (
-                        <div className="bg-slate-50/80 rounded-lg p-3">
-                          <div className="flex items-center gap-2 mb-1">
-                            <Zap className="h-3.5 w-3.5 text-slate-500" />
-                            <span className="text-xs font-medium text-slate-500 uppercase tracking-wide">Calories</span>
+                        <div className="bg-gradient-to-br from-emerald-50 to-emerald-100/80 rounded-lg p-4">
+                          <div className="flex items-center gap-2 mb-2">
+                            <Zap className="h-4 w-4 text-emerald-600" />
+                            <span className="text-xs font-medium text-emerald-600 uppercase tracking-wide">Calories</span>
                           </div>
-                          <span className="text-sm font-semibold text-slate-900">{plan.calories_range}</span>
+                          <span className="text-base font-bold text-emerald-700">{plan.calories_range}</span>
                         </div>
                       )}
                     </div>
 
                     <div className="flex items-center justify-between pt-4 border-t border-slate-100">
                       <div className="flex items-center text-xs text-slate-500 font-medium">
-                        <Calendar className="mr-1.5 h-3.5 w-3.5 opacity-60" />
+                        <Calendar className="mr-1.5 h-4 w-4 opacity-60" />
                         Créé le {new Date(plan.created_at).toLocaleDateString('fr-FR', { 
                           month: 'short', 
                           day: 'numeric' 
@@ -632,7 +641,7 @@ export default function MealPlansPage() {
                         className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50 font-semibold h-8 px-3 -mr-2"
                       >
                         <Link href={`/dashboard/meal-plans/${plan.id}`}>
-                          <Eye className="mr-1.5 h-3.5 w-3.5" />
+                          <Eye className="mr-1.5 h-4 w-4" />
                           Voir le plan
                         </Link>
                       </Button>

@@ -62,6 +62,17 @@ export default function ClientsPage() {
     notes: "",
   })
 
+  // Form validation states for new client
+  const [clientValidation, setClientValidation] = useState({
+    name: { isValid: true, message: "" },
+    email: { isValid: true, message: "" },
+    phone: { isValid: true, message: "" },
+    age: { isValid: true, message: "" },
+    height: { isValid: true, message: "" },
+    current_weight: { isValid: true, message: "" },
+    goal_weight: { isValid: true, message: "" }
+  })
+
   useEffect(() => {
     if (user) {
       fetchClients()
@@ -93,6 +104,25 @@ export default function ClientsPage() {
 
   const handleAddClient = async () => {
     if (!user) return
+
+    // Validate all fields
+    const validations = {
+      name: validateClientName(newClient.name),
+      email: validateClientEmail(newClient.email),
+      phone: validateClientPhone(newClient.phone),
+      age: validateClientAge(newClient.age),
+      height: validateClientHeight(newClient.height),
+      current_weight: validateClientWeight(newClient.current_weight),
+      goal_weight: validateClientWeight(newClient.goal_weight)
+    }
+
+    setClientValidation(validations)
+
+    // Check if any validation failed
+    const hasErrors = Object.values(validations).some(validation => !validation.isValid)
+    if (hasErrors) {
+      return
+    }
 
     try {
       const clientData = {
@@ -126,6 +156,7 @@ export default function ClientsPage() {
 
       setClients([data, ...clients])
       setIsAddDialogOpen(false)
+      // Reset form and validation
       setNewClient({
         name: "",
         email: "",
@@ -139,6 +170,15 @@ export default function ClientsPage() {
         plan_type: "",
         notes: "",
       })
+      setClientValidation({
+        name: { isValid: true, message: "" },
+        email: { isValid: true, message: "" },
+        phone: { isValid: true, message: "" },
+        age: { isValid: true, message: "" },
+        height: { isValid: true, message: "" },
+        current_weight: { isValid: true, message: "" },
+        goal_weight: { isValid: true, message: "" }
+      })
     } catch (error) {
       console.error("❌ Unexpected error adding client:", error)
     }
@@ -149,6 +189,110 @@ export default function ClientsPage() {
       client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       client.email.toLowerCase().includes(searchTerm.toLowerCase()),
   )
+
+  // Validation functions for new client
+  const validateClientEmail = (email: string): { isValid: boolean; message: string } => {
+    if (!email.trim()) {
+      return { isValid: false, message: "L'email est requis" }
+    }
+    
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return { isValid: false, message: "Veuillez entrer un email valide" }
+    }
+    
+    return { isValid: true, message: "" }
+  }
+
+  const validateClientName = (name: string): { isValid: boolean; message: string } => {
+    if (!name.trim()) {
+      return { isValid: false, message: "Le nom est requis" }
+    }
+    
+    if (name.trim().length < 2) {
+      return { isValid: false, message: "Le nom doit contenir au moins 2 caractères" }
+    }
+    
+    return { isValid: true, message: "" }
+  }
+
+  const validateClientPhone = (phone: string): { isValid: boolean; message: string } => {
+    if (!phone.trim()) {
+      return { isValid: true, message: "" } // Phone is optional
+    }
+    
+    const phoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/
+    if (!phoneRegex.test(phone.replace(/\s/g, ''))) {
+      return { isValid: false, message: "Veuillez entrer un numéro de téléphone français valide" }
+    }
+    
+    return { isValid: true, message: "" }
+  }
+
+  const validateClientAge = (age: string): { isValid: boolean; message: string } => {
+    if (!age.trim()) {
+      return { isValid: true, message: "" } // Age is optional
+    }
+    
+    const ageNum = parseInt(age)
+    if (isNaN(ageNum)) {
+      return { isValid: false, message: "Veuillez entrer un âge valide" }
+    }
+    
+    if (ageNum < 1 || ageNum > 120) {
+      return { isValid: false, message: "L'âge doit être entre 1 et 120 ans" }
+    }
+    
+    return { isValid: true, message: "" }
+  }
+
+  const validateClientWeight = (weight: string): { isValid: boolean; message: string } => {
+    if (!weight.trim()) {
+      return { isValid: true, message: "" } // Weight is optional
+    }
+    
+    const weightNum = parseFloat(weight)
+    if (isNaN(weightNum)) {
+      return { isValid: false, message: "Veuillez entrer un poids valide" }
+    }
+    
+    if (weightNum <= 0 || weightNum > 999) {
+      return { isValid: false, message: "Le poids doit être entre 1 et 999 kg" }
+    }
+    
+    return { isValid: true, message: "" }
+  }
+
+  const validateClientHeight = (height: string): { isValid: boolean; message: string } => {
+    if (!height.trim()) {
+      return { isValid: true, message: "" } // Height is optional
+    }
+    
+    // Remove any non-numeric characters except decimal point and "m"
+    const cleanHeight = height.replace(/[^\d.m]/g, '')
+    
+    // If it contains "m", convert to cm
+    let heightValue = cleanHeight
+    if (cleanHeight.includes('m')) {
+      const meters = parseFloat(cleanHeight.replace('m', ''))
+      if (!isNaN(meters)) {
+        heightValue = (meters * 100).toString()
+      }
+    }
+    
+    const heightNum = parseFloat(heightValue)
+    if (isNaN(heightNum)) {
+      return { isValid: false, message: "Veuillez entrer une taille valide (ex: 175 ou 1m75)" }
+    }
+    
+    if (heightNum < 50 || heightNum > 300) {
+      return { isValid: false, message: "La taille doit être entre 50 et 300 cm" }
+    }
+    
+    return { isValid: true, message: "" }
+  }
+
+  // ...existing code...
 
   if (loading) {
     return <DashboardSkeleton />
@@ -184,10 +328,35 @@ export default function ClientsPage() {
                   <Input
                     id="name"
                     value={newClient.name}
-                    onChange={(e) => setNewClient({ ...newClient, name: e.target.value })}
+                    onChange={(e) => {
+                      setNewClient({ ...newClient, name: e.target.value })
+                      if (clientValidation.name.message) {
+                        setClientValidation({
+                          ...clientValidation,
+                          name: { isValid: true, message: "" }
+                        })
+                      }
+                    }}
+                    onBlur={() => {
+                      if (newClient.name) {
+                        const validation = validateClientName(newClient.name)
+                        setClientValidation({
+                          ...clientValidation,
+                          name: validation
+                        })
+                      }
+                    }}
                     placeholder="Marie Dupont"
-                    className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                    className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                      !clientValidation.name.isValid ? "border-red-300 focus:border-red-400 focus:ring-red-400/20" : ""
+                    }`}
                   />
+                  {!clientValidation.name.isValid && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <span className="text-red-500">⚠</span>
+                      {clientValidation.name.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email" className="text-sm font-semibold text-gray-700">Email *</Label>
@@ -195,10 +364,35 @@ export default function ClientsPage() {
                     id="email"
                     type="email"
                     value={newClient.email}
-                    onChange={(e) => setNewClient({ ...newClient, email: e.target.value })}
+                    onChange={(e) => {
+                      setNewClient({ ...newClient, email: e.target.value })
+                      if (clientValidation.email.message) {
+                        setClientValidation({
+                          ...clientValidation,
+                          email: { isValid: true, message: "" }
+                        })
+                      }
+                    }}
+                    onBlur={() => {
+                      if (newClient.email) {
+                        const validation = validateClientEmail(newClient.email)
+                        setClientValidation({
+                          ...clientValidation,
+                          email: validation
+                        })
+                      }
+                    }}
                     placeholder="marie@exemple.fr"
-                    className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                    className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                      !clientValidation.email.isValid ? "border-red-300 focus:border-red-400 focus:ring-red-400/20" : ""
+                    }`}
                   />
+                  {!clientValidation.email.isValid && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <span className="text-red-500">⚠</span>
+                      {clientValidation.email.message}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -207,10 +401,35 @@ export default function ClientsPage() {
                   <Input
                     id="phone"
                     value={newClient.phone}
-                    onChange={(e) => setNewClient({ ...newClient, phone: e.target.value })}
+                    onChange={(e) => {
+                      setNewClient({ ...newClient, phone: e.target.value })
+                      if (clientValidation.phone.message) {
+                        setClientValidation({
+                          ...clientValidation,
+                          phone: { isValid: true, message: "" }
+                        })
+                      }
+                    }}
+                    onBlur={() => {
+                      if (newClient.phone) {
+                        const validation = validateClientPhone(newClient.phone)
+                        setClientValidation({
+                          ...clientValidation,
+                          phone: validation
+                        })
+                      }
+                    }}
                     placeholder="+33 1 23 45 67 89"
-                    className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                    className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                      !clientValidation.phone.isValid ? "border-red-300 focus:border-red-400 focus:ring-red-400/20" : ""
+                    }`}
                   />
+                  {!clientValidation.phone.isValid && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <span className="text-red-500">⚠</span>
+                      {clientValidation.phone.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="age" className="text-sm font-semibold text-gray-700">Âge</Label>
@@ -218,10 +437,35 @@ export default function ClientsPage() {
                     id="age"
                     type="number"
                     value={newClient.age}
-                    onChange={(e) => setNewClient({ ...newClient, age: e.target.value })}
+                    onChange={(e) => {
+                      setNewClient({ ...newClient, age: e.target.value })
+                      if (clientValidation.age.message) {
+                        setClientValidation({
+                          ...clientValidation,
+                          age: { isValid: true, message: "" }
+                        })
+                      }
+                    }}
+                    onBlur={() => {
+                      if (newClient.age) {
+                        const validation = validateClientAge(newClient.age)
+                        setClientValidation({
+                          ...clientValidation,
+                          age: validation
+                        })
+                      }
+                    }}
                     placeholder="30"
-                    className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                    className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                      !clientValidation.age.isValid ? "border-red-300 focus:border-red-400 focus:ring-red-400/20" : ""
+                    }`}
                   />
+                  {!clientValidation.age.isValid && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <span className="text-red-500">⚠</span>
+                      {clientValidation.age.message}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="space-y-2">
@@ -240,10 +484,35 @@ export default function ClientsPage() {
                   <Input
                     id="height"
                     value={newClient.height}
-                    onChange={(e) => setNewClient({ ...newClient, height: e.target.value })}
+                    onChange={(e) => {
+                      setNewClient({ ...newClient, height: e.target.value })
+                      if (clientValidation.height.message) {
+                        setClientValidation({
+                          ...clientValidation,
+                          height: { isValid: true, message: "" }
+                        })
+                      }
+                    }}
+                    onBlur={() => {
+                      if (newClient.height) {
+                        const validation = validateClientHeight(newClient.height)
+                        setClientValidation({
+                          ...clientValidation,
+                          height: validation
+                        })
+                      }
+                    }}
                     placeholder="1m75"
-                    className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                    className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                      !clientValidation.height.isValid ? "border-red-300 focus:border-red-400 focus:ring-red-400/20" : ""
+                    }`}
                   />
+                  {!clientValidation.height.isValid && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <span className="text-red-500">⚠</span>
+                      {clientValidation.height.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="current_weight" className="text-sm font-semibold text-gray-700">Poids actuel (kg)</Label>
@@ -251,10 +520,35 @@ export default function ClientsPage() {
                     id="current_weight"
                     type="number"
                     value={newClient.current_weight}
-                    onChange={(e) => setNewClient({ ...newClient, current_weight: e.target.value })}
+                    onChange={(e) => {
+                      setNewClient({ ...newClient, current_weight: e.target.value })
+                      if (clientValidation.current_weight.message) {
+                        setClientValidation({
+                          ...clientValidation,
+                          current_weight: { isValid: true, message: "" }
+                        })
+                      }
+                    }}
+                    onBlur={() => {
+                      if (newClient.current_weight) {
+                        const validation = validateClientWeight(newClient.current_weight)
+                        setClientValidation({
+                          ...clientValidation,
+                          current_weight: validation
+                        })
+                      }
+                    }}
                     placeholder="70"
-                    className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                    className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                      !clientValidation.current_weight.isValid ? "border-red-300 focus:border-red-400 focus:ring-red-400/20" : ""
+                    }`}
                   />
+                  {!clientValidation.current_weight.isValid && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <span className="text-red-500">⚠</span>
+                      {clientValidation.current_weight.message}
+                    </p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="goal_weight" className="text-sm font-semibold text-gray-700">Poids objectif (kg)</Label>
@@ -262,10 +556,35 @@ export default function ClientsPage() {
                     id="goal_weight"
                     type="number"
                     value={newClient.goal_weight}
-                    onChange={(e) => setNewClient({ ...newClient, goal_weight: e.target.value })}
+                    onChange={(e) => {
+                      setNewClient({ ...newClient, goal_weight: e.target.value })
+                      if (clientValidation.goal_weight.message) {
+                        setClientValidation({
+                          ...clientValidation,
+                          goal_weight: { isValid: true, message: "" }
+                        })
+                      }
+                    }}
+                    onBlur={() => {
+                      if (newClient.goal_weight) {
+                        const validation = validateClientWeight(newClient.goal_weight)
+                        setClientValidation({
+                          ...clientValidation,
+                          goal_weight: validation
+                        })
+                      }
+                    }}
                     placeholder="65"
-                    className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                    className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                      !clientValidation.goal_weight.isValid ? "border-red-300 focus:border-red-400 focus:ring-red-400/20" : ""
+                    }`}
                   />
+                  {!clientValidation.goal_weight.isValid && (
+                    <p className="text-sm text-red-600 flex items-center gap-1">
+                      <span className="text-red-500">⚠</span>
+                      {clientValidation.goal_weight.message}
+                    </p>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
@@ -319,7 +638,17 @@ export default function ClientsPage() {
               </Button>
               <Button 
                 onClick={handleAddClient} 
-                disabled={!newClient.name || !newClient.email}
+                disabled={
+                  !newClient.name || 
+                  !newClient.email || 
+                  !clientValidation.name.isValid || 
+                  !clientValidation.email.isValid ||
+                  !clientValidation.phone.isValid ||
+                  !clientValidation.age.isValid ||
+                  !clientValidation.height.isValid ||
+                  !clientValidation.current_weight.isValid ||
+                  !clientValidation.goal_weight.isValid
+                }
                 className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft disabled:opacity-50 font-medium"
               >
                 Ajouter client
