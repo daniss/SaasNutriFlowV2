@@ -68,7 +68,7 @@ import {
 } from "lucide-react"
 import { generateMealPlan, type GeneratedMealPlan, type Meal } from "@/lib/gemini"
 import { supabase, type Client } from "@/lib/supabase"
-import { useAuth } from "@/hooks/useAuth"
+import { useAuth } from "@/hooks/useAuthNew"
 import jsPDF from "jspdf"
 
 export default function GenerateMealPlanPage() {

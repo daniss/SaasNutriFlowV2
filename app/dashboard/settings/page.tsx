@@ -12,11 +12,11 @@ import { Switch } from "@/components/ui/switch"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Save, User, Mail, Phone, MapPin, Bell, Shield, Palette } from "lucide-react"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 import { DashboardHeader } from "@/components/dashboard-header"
 
 export default function SettingsPage() {
-  const { user, profile, updateProfile, loading: authLoading } = useAuthContext()
+  const { user, profile, updateProfile, loading: authLoading } = useAuth()
   const [loading, setLoading] = useState(false)
   const [success, setSuccess] = useState("")
   const [error, setError] = useState("")

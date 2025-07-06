@@ -23,6 +23,7 @@ interface AuthContextType {
     lastName: string,
   ) => Promise<{ data: any; error: string | null }>
   signOut: () => Promise<void>
+  resetPassword: (email: string) => Promise<{ data: any; error: string | null }>
   updateProfile: (updates: Partial<Profile>) => Promise<{ data: Profile | null; error: string | null }>
   isAuthenticated: boolean
 }
@@ -41,14 +42,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     // Get initial session
     const getInitialSession = async () => {
       try {
-        console.log("Getting initial session...")
         const { data: { session }, error } = await supabase.auth.getSession()
         if (error) {
           console.error("Session error:", error)
           throw error
         }
 
-        console.log("Initial session:", session?.user?.email || "No session")
         setSession(session)
         setUser(session?.user ?? null)
 
@@ -68,7 +67,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // Set a timeout to prevent infinite loading
     const timeout = setTimeout(() => {
-      console.log("Auth timeout - forcing loading to false")
       setLoading(false)
     }, 10000) // 10 seconds timeout
 
@@ -76,7 +74,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event: string, session: Session | null) => {
-      console.log("Auth state changed:", event, session?.user?.email || "No user")
       clearTimeout(timeout) // Clear timeout on auth state change
       setSession(session)
       setUser(session?.user ?? null)
@@ -96,6 +93,89 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearTimeout(timeout)
     }
   }, [])
+
+  // Add visibility change listener to recheck session when tab becomes active
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible" && user) {
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession()
+          if (error) {
+            console.error("Session recheck error:", error)
+            return
+          }
+
+          // Only update if session state has actually changed
+          if (session?.user?.id !== user?.id) {
+            setSession(session)
+            setUser(session?.user ?? null)
+
+            if (session?.user) {
+              await fetchProfile(session.user.id)
+            } else {
+              setProfile(null)
+            }
+          }
+        } catch (err) {
+          console.error("Visibility change session check error:", err)
+        }
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [user])
+
+  // Handle tab visibility changes to recheck session
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === "visible") {
+        console.log("🔍 Tab is visible again, rechecking session...")
+
+        try {
+          const { data: { session }, error } = await supabase.auth.getSession()
+          if (error) {
+            console.error("❌ Session recheck error:", error)
+            return
+          }
+
+          const hadUser = !!user
+          const hasUser = !!session?.user
+          
+          console.log("📊 Session recheck result:", {
+            previousUser: hadUser,
+            currentUser: hasUser,
+            email: session?.user?.email || "No session",
+            sessionExpiry: session?.expires_at ? new Date(session.expires_at * 1000).toLocaleString() : "No expiry"
+          })
+
+          // Only update state if there's a meaningful change
+          if (hadUser !== hasUser || session?.user?.id !== user?.id) {
+            console.log("🔄 Auth state changed, updating...")
+            setSession(session)
+            setUser(session?.user ?? null)
+
+            if (session?.user) {
+              await fetchProfile(session.user.id)
+            } else {
+              setProfile(null)
+            }
+          } else {
+            console.log("✅ Auth state unchanged, no update needed")
+          }
+        } catch (err) {
+          console.error("❌ Visibility change session check failed:", err)
+        }
+      }
+    }
+
+    document.addEventListener("visibilitychange", handleVisibilityChange)
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange)
+    }
+  }, [user]) // Include user in dependencies to get current state
 
   // Fetch user profile from database
   const fetchProfile = async (userId: string) => {
@@ -159,6 +239,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setError(null)
 
       console.log("Signing up user:", email)
+      
+      // Check if user already exists by calling a custom API endpoint
+      const checkResponse = await fetch('/api/auth/check-user', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      })
+      
+      if (checkResponse.ok) {
+        const { exists } = await checkResponse.json()
+        if (exists) {
+          throw new Error("Un compte avec cet email existe déjà. Veuillez vous connecter.")
+        }
+      }
+      
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -169,9 +266,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           },
         },
       })
+      
       if (error) {
         console.error("Signup error:", error)
-        throw error
+        
+        // Handle specific error cases
+        let errorMessage = "Sign up failed"
+        
+        if (error.message.includes("already registered") || error.message.includes("User already registered")) {
+          errorMessage = "Un compte avec cet email existe déjà. Veuillez vous connecter."
+        } else if (error.message.includes("duplicate")) {
+          errorMessage = "Un compte avec cet email existe déjà. Veuillez vous connecter."
+        } else if (error.message.includes("Password")) {
+          errorMessage = "Le mot de passe doit contenir au moins 6 caractères."
+        } else if (error.message.includes("email")) {
+          errorMessage = "Veuillez entrer une adresse email valide."
+        } else {
+          errorMessage = error.message
+        }
+        
+        throw new Error(errorMessage)
       }
 
       console.log("Signup successful:", data)
@@ -270,6 +384,46 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
+  // Reset password
+  const resetPassword = async (email: string) => {
+    try {
+      setLoading(true)
+      setError(null)
+
+      console.log("Sending password reset email to:", email)
+      const { data, error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/auth/reset-password`,
+      })
+
+      if (error) {
+        console.error("Password reset error:", error)
+        let errorMessage = "Erreur lors de l'envoi de l'email de réinitialisation"
+        
+        if (error.message.includes("email")) {
+          errorMessage = "Veuillez entrer une adresse email valide"
+        } else if (error.message.includes("not found") || error.message.includes("user not found")) {
+          errorMessage = "Aucun compte trouvé avec cette adresse email"
+        } else if (error.message.includes("rate limit")) {
+          errorMessage = "Trop de tentatives. Veuillez attendre quelques minutes."
+        } else {
+          errorMessage = error.message
+        }
+        
+        throw new Error(errorMessage)
+      }
+
+      console.log("Password reset email sent successfully:", data)
+      return { data, error: null }
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : "Erreur lors de la réinitialisation du mot de passe"
+      console.error("Password reset failed:", errorMessage)
+      setError(errorMessage)
+      return { data: null, error: errorMessage }
+    } finally {
+      setLoading(false)
+    }
+  }
+
   const value = {
     user,
     session,
@@ -280,6 +434,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     signIn,
     signOut,
     updateProfile,
+    resetPassword,
     isAuthenticated: !!user,
   }
 

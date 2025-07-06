@@ -25,7 +25,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 
 const data = {
   navMain: [
@@ -70,7 +70,7 @@ const data = {
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname()
   const router = useRouter()
-  const { profile, signOut } = useAuthContext()
+  const { profile, signOut } = useAuth()
 
   const handleSignOut = async () => {
     await signOut()
@@ -140,11 +140,13 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuButton className="w-full">
                   <div className="flex items-center gap-2 px-2 py-1.5">
                     <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-medium">
-                      {profile?.full_name?.[0] || profile?.email?.[0] || "U"}
+                      {profile?.first_name?.[0] || profile?.email?.[0] || "U"}
                     </div>
                     <div className="flex flex-col group-data-[collapsible=icon]:hidden text-left">
                       <span className="text-sm font-medium">
-                        {profile?.full_name || profile?.email || "Utilisateur"}
+                        {profile?.first_name && profile?.last_name 
+                          ? `${profile.first_name} ${profile.last_name}`
+                          : profile?.email || "Utilisateur"}
                       </span>
                       <span className="text-xs text-muted-foreground">Diététicien(ne)</span>
                     </div>

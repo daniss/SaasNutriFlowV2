@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Users, FileText, DollarSign, Clock, Bell, Plus } from "lucide-react"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type Client, type MealPlan } from "@/lib/supabase"
 import { DashboardHeader } from "@/components/dashboard-header"
 import Link from "next/link"
@@ -19,7 +19,7 @@ interface DashboardStats {
 }
 
 export default function DashboardPage() {
-  const { user, profile, loading: authLoading } = useAuthContext()
+  const { user, profile, loading: authLoading } = useAuth()
   const [stats, setStats] = useState<DashboardStats>({
     totalClients: 0,
     activeMealPlans: 0,
@@ -28,48 +28,22 @@ export default function DashboardPage() {
   })
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [dataLoaded, setDataLoaded] = useState(false)
 
   useEffect(() => {
-    if (user && !authLoading) {
+    // Only fetch data once when user becomes available and auth is not loading
+    if (user && !authLoading && !dataLoaded) {
+      setDataLoaded(true)
       fetchDashboardData()
     }
-  }, [user, authLoading])
-
-  // Add visibility change listener to refresh data when tab becomes visible
-  useEffect(() => {
-    const handleVisibilityChange = () => {
-      if (!document.hidden && user && !authLoading) {
-        console.log("📱 Tab became visible, refreshing dashboard data...")
-        fetchDashboardData()
-      }
-    }
-
-    const handleFocus = () => {
-      if (user && !authLoading) {
-        console.log("🔍 Window focused, refreshing dashboard data...")
-        fetchDashboardData()
-      }
-    }
-
-    // Listen for visibility changes (tab switching)
-    document.addEventListener('visibilitychange', handleVisibilityChange)
-    
-    // Listen for window focus events
-    window.addEventListener('focus', handleFocus)
-
-    // Cleanup listeners on unmount
-    return () => {
-      document.removeEventListener('visibilitychange', handleVisibilityChange)
-      window.removeEventListener('focus', handleFocus)
-    }
-  }, [user, authLoading])
+  }, [user, authLoading, dataLoaded])
 
   const fetchDashboardData = async () => {
     if (!user) return
 
     try {
       setLoading(true)
-      console.log("📊 Fetching dashboard data for user:", user.id)
+      setError(null)
 
       // Fetch clients
       const { data: clients, error: clientsError } = await supabase
@@ -79,7 +53,6 @@ export default function DashboardPage() {
         .order("created_at", { ascending: false })
 
       if (clientsError) {
-        console.error("❌ Error fetching clients:", clientsError)
         throw clientsError
       }
 
@@ -92,7 +65,6 @@ export default function DashboardPage() {
         .order("created_at", { ascending: false })
 
       if (mealPlansError) {
-        console.error("❌ Error fetching meal plans:", mealPlansError)
         throw mealPlansError
       }
 
@@ -103,16 +75,52 @@ export default function DashboardPage() {
         recentMealPlans: mealPlans?.slice(0, 5) || [],
       })
 
-      console.log("✅ Dashboard data loaded successfully")
     } catch (err) {
-      console.error("❌ Error fetching dashboard data:", err)
+      console.error("Error fetching dashboard data:", err)
       setError(err instanceof Error ? err.message : "Failed to load dashboard data")
     } finally {
       setLoading(false)
     }
   }
 
-  if (authLoading || loading) {
+  // ✅ Proper loading check - always check auth loading first
+  if (authLoading) {
+    return (
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="flex items-center justify-between space-y-2">
+          <h2 className="text-3xl font-bold tracking-tight">Tableau de bord</h2>
+        </div>
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          {[...Array(4)].map((_, i) => (
+            <Card key={i}>
+              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+                <div className="h-4 bg-gray-200 rounded w-20 animate-pulse" />
+                <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
+              </CardHeader>
+              <CardContent>
+                <div className="h-8 bg-gray-200 rounded w-16 animate-pulse mb-2" />
+                <div className="h-3 bg-gray-200 rounded w-24 animate-pulse" />
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      </div>
+    )
+  }
+
+  // ✅ Check if user exists after auth is loaded
+  if (!user) {
+    return (
+      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
+        <div className="text-center">
+          <p>Not logged in</p>
+        </div>
+      </div>
+    )
+  }
+
+  // ✅ Show loading only if data is being fetched
+  if (loading && !dataLoaded) {
     return (
       <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
         <div className="flex items-center justify-between space-y-2">
@@ -157,7 +165,7 @@ export default function DashboardPage() {
   return (
     <div className="space-y-6">
       <DashboardHeader 
-        title={`Bon retour, ${profile?.full_name?.split(' ')[0] || "Diététicien(ne)"}!`}
+        title={`Bon retour, ${profile?.first_name || "Diététicien(ne)"}!`}
         subtitle="Voici ce qui se passe dans votre cabinet aujourd'hui"
         showSearch={false}
         action={

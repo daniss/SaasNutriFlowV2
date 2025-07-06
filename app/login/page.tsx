@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Mail, Lock } from "lucide-react"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 
 export default function LoginPage() {
   const [email, setEmail] = useState("")
@@ -19,7 +19,7 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
   const router = useRouter()
-  const { signIn, user, loading: authLoading } = useAuthContext()
+  const { signIn, user, loading: authLoading } = useAuth()
 
   // Redirect if user is already authenticated
   useEffect(() => {
@@ -83,7 +83,12 @@ export default function LoginPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Mot de passe</Label>
+              <div className="flex items-center justify-between">
+                <Label htmlFor="password">Mot de passe</Label>
+                <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                  Mot de passe oublié ?
+                </Link>
+              </div>
               <div className="relative">
                 <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
                 <Input

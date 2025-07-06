@@ -2,10 +2,10 @@
 
 import { useEffect, useState } from "react"
 import { supabase } from "@/lib/supabase"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 
 export default function DatabaseTest() {
-  const { user } = useAuthContext()
+  const { user } = useAuth()
   const [results, setResults] = useState<any[]>([])
   const [error, setError] = useState<string | null>(null)
 

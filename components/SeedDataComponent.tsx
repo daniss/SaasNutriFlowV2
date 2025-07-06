@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { CheckCircle, AlertCircle, Loader2, Users, Trash2 } from "lucide-react"
 import { supabase } from "@/lib/supabase"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 
 /**
  * Component to seed the database with comprehensive sample data
@@ -15,7 +15,7 @@ export function SeedDataComponent() {
   const [clearing, setClearing] = useState(false)
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null)
   const [hasExistingData, setHasExistingData] = useState<boolean | null>(null)
-  const { user } = useAuthContext()
+  const { user } = useAuth()
 
   useEffect(() => {
     if (user) {

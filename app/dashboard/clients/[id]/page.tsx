@@ -29,7 +29,7 @@ import {
 } from "lucide-react"
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts"
 import { supabase } from "@/lib/supabase"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 import { DashboardHeader } from "@/components/dashboard-header"
 
 interface Client {
@@ -69,7 +69,7 @@ export default function ClientDetailPage() {
   const params = useParams()
   const router = useRouter()
   const clientId = params.id as string
-  const { user, profile } = useAuthContext()
+  const { user, profile } = useAuth()
 
   const [client, setClient] = useState<Client | null>(null)
   const [weightEntries, setWeightEntries] = useState<WeightEntry[]>([])

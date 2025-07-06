@@ -38,7 +38,7 @@ import {
   Utensils,
   ChefHat
 } from "lucide-react"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type MealPlan, type Client } from "@/lib/supabase"
 import { 
   DropdownMenu, 
@@ -66,7 +66,7 @@ interface MealPlanWithClient extends MealPlan {
 }
 
 export default function MealPlansPage() {
-  const { user } = useAuthContext()
+  const { user } = useAuth()
   const [mealPlans, setMealPlans] = useState<MealPlanWithClient[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)

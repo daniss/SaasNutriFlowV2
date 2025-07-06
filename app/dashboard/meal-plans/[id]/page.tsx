@@ -28,7 +28,7 @@ import {
   Check,
   X
 } from "lucide-react"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type MealPlan, type Client } from "@/lib/supabase"
 import { 
   DropdownMenu, 
@@ -79,7 +79,7 @@ interface DayPlan {
 export default function MealPlanDetailPage() {
   const params = useParams()
   const router = useRouter()
-  const { user } = useAuthContext()
+  const { user } = useAuth()
   const [mealPlan, setMealPlan] = useState<MealPlanWithClient | null>(null)
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)

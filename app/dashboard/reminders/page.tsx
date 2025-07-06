@@ -19,7 +19,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, Search, Bell, Calendar, Clock, Users } from "lucide-react"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type Reminder, type Client } from "@/lib/supabase"
 import { DashboardHeader } from "@/components/dashboard-header"
 
@@ -28,7 +28,7 @@ interface ReminderWithClient extends Reminder {
 }
 
 export default function RemindersPage() {
-  const { user } = useAuthContext()
+  const { user } = useAuth()
   const [reminders, setReminders] = useState<ReminderWithClient[]>([])
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)

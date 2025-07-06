@@ -11,7 +11,7 @@ import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Loader2, Mail, Lock, User } from "lucide-react"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 
 export default function SignupPage() {
   const [email, setEmail] = useState("")
@@ -22,13 +22,26 @@ export default function SignupPage() {
   const [error, setError] = useState("")
   const [success, setSuccess] = useState("")
   const router = useRouter()
-  const { signUp } = useAuthContext()
+  const { signUp } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError("")
     setSuccess("")
+
+    // Basic validation
+    if (!firstName.trim() || !lastName.trim() || !email.trim() || !password.trim()) {
+      setError("Veuillez remplir tous les champs")
+      setLoading(false)
+      return
+    }
+
+    if (password.length < 6) {
+      setError("Le mot de passe doit contenir au moins 6 caractères")
+      setLoading(false)
+      return
+    }
 
     try {
       const { error } = await signUp(email, password, firstName, lastName)
@@ -49,6 +62,9 @@ export default function SignupPage() {
     }
   }
 
+  // Check if error is about duplicate email
+  const isEmailAlreadyExistsError = error && error.includes("compte avec cet email existe déjà")
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md">
@@ -62,7 +78,16 @@ export default function SignupPage() {
           <CardContent className="space-y-4">
             {error && (
               <Alert variant="destructive">
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  {error}
+                  {isEmailAlreadyExistsError && (
+                    <div className="mt-2">
+                      <Link href="/login" className="text-blue-600 hover:text-blue-800 underline">
+                        Se connecter avec ce compte
+                      </Link>
+                    </div>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
             {success && (

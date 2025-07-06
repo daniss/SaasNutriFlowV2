@@ -20,7 +20,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Separator } from "@/components/ui/separator"
 import { useToast } from "@/components/ui/use-toast"
 import { Plus, Search, FileText, DollarSign, Calendar, Users, Download, Printer, Mail, Edit, Trash2, Eye } from "lucide-react"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type Invoice, type Client } from "@/lib/supabase"
 import { DashboardHeader } from "@/components/dashboard-header"
 
@@ -29,7 +29,7 @@ interface InvoiceWithClient extends Invoice {
 }
 
 export default function InvoicesPage() {
-  const { user } = useAuthContext()
+  const { user } = useAuth()
   const { toast } = useToast()
   const [invoices, setInvoices] = useState<InvoiceWithClient[]>([])
   const [clients, setClients] = useState<Client[]>([])

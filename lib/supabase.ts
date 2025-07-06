@@ -1,9 +1,7 @@
-import { createClient } from "@supabase/supabase-js"
+import { createClient } from "./supabase/client"
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey)
+// For backward compatibility - use the new client structure
+export const supabase = createClient()
 
 export interface Database {
   public: {
@@ -12,7 +10,17 @@ export interface Database {
         Row: {
           id: string
           email: string
-          full_name: string | null
+          first_name: string | null
+          last_name: string | null
+          phone: string | null
+          title: string | null
+          bio: string | null
+          address: string | null
+          city: string | null
+          state: string | null
+          zip_code: string | null
+          license_number: string | null
+          years_experience: number | null
           avatar_url: string | null
           created_at: string
           updated_at: string
@@ -20,7 +28,17 @@ export interface Database {
         Insert: {
           id: string
           email: string
-          full_name?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          phone?: string | null
+          title?: string | null
+          bio?: string | null
+          address?: string | null
+          city?: string | null
+          state?: string | null
+          zip_code?: string | null
+          license_number?: string | null
+          years_experience?: number | null
           avatar_url?: string | null
           created_at?: string
           updated_at?: string
@@ -28,7 +46,17 @@ export interface Database {
         Update: {
           id?: string
           email?: string
-          full_name?: string | null
+          first_name?: string | null
+          last_name?: string | null
+          phone?: string | null
+          title?: string | null
+          bio?: string | null
+          address?: string | null
+          city?: string | null
+          state?: string | null
+          zip_code?: string | null
+          license_number?: string | null
+          years_experience?: number | null
           avatar_url?: string | null
           created_at?: string
           updated_at?: string

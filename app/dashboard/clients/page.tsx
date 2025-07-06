@@ -35,13 +35,13 @@ import {
   Scale,
   ChevronRight
 } from "lucide-react"
-import { useAuthContext } from "@/components/auth/AuthProvider"
+import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type Client } from "@/lib/supabase"
 import { DashboardHeader } from "@/components/dashboard-header"
 import Link from "next/link"
 
 export default function ClientsPage() {
-  const { user } = useAuthContext()
+  const { user } = useAuth()
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
