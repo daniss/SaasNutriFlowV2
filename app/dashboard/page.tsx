@@ -34,7 +34,6 @@ export default function DashboardPage() {
   useEffect(() => {
     // Only fetch data once when user becomes available and auth is not loading
     if (user && !authLoading && !dataLoaded) {
-      setDataLoaded(true)
       fetchDashboardData()
     }
   }, [user, authLoading, dataLoaded])
@@ -81,6 +80,7 @@ export default function DashboardPage() {
       setError(err instanceof Error ? err.message : "Failed to load dashboard data")
     } finally {
       setLoading(false)
+      setDataLoaded(true)
     }
   }
 
