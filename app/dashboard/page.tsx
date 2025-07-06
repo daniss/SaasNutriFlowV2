@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Users, FileText, DollarSign, Clock, Bell, Plus } from "lucide-react"
 import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type Client, type MealPlan } from "@/lib/supabase"
+import { MainDashboardSkeleton } from "@/components/shared/skeletons"
 import { DashboardHeader } from "@/components/dashboard-header"
 import Link from "next/link"
 
@@ -121,27 +122,7 @@ export default function DashboardPage() {
 
   // ✅ Show loading only if data is being fetched
   if (loading && !dataLoaded) {
-    return (
-      <div className="flex-1 space-y-4 p-4 md:p-8 pt-6">
-        <div className="flex items-center justify-between space-y-2">
-          <h2 className="text-3xl font-bold tracking-tight">Tableau de bord</h2>
-        </div>
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
-          {[...Array(4)].map((_, i) => (
-            <Card key={i}>
-              <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-                <div className="h-4 bg-gray-200 rounded w-20 animate-pulse" />
-                <div className="h-4 w-4 bg-gray-200 rounded animate-pulse" />
-              </CardHeader>
-              <CardContent>
-                <div className="h-8 bg-gray-200 rounded w-16 animate-pulse mb-2" />
-                <div className="h-3 bg-gray-200 rounded w-24 animate-pulse" />
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    )
+    return <MainDashboardSkeleton />
   }
 
   if (error) {

@@ -5,6 +5,9 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { getStatusDisplay, getStatusVariant } from "@/lib/status"
+import { formatCurrency, formatDate } from "@/lib/formatters"
+import { DashboardSkeleton, ListSkeleton } from "@/components/shared/skeletons"
 import {
   Dialog,
   DialogContent,
@@ -56,8 +59,6 @@ export default function InvoicesPage() {
     if (!user) return
 
     try {
-      console.log("💰 Fetching invoices for user:", user.id)
-
       // Fetch invoices with client names and emails
       const { data: invoiceData, error: invoiceError } = await supabase
         .from("invoices")
@@ -87,8 +88,6 @@ export default function InvoicesPage() {
       } else {
         setClients(clientData || [])
       }
-
-      console.log("✅ Invoices data loaded successfully")
     } catch (error) {
       console.error("❌ Unexpected error fetching invoices:", error)
     } finally {
@@ -123,8 +122,6 @@ export default function InvoicesPage() {
         notes: newInvoice.notes || null,
       }
 
-      console.log("➕ Adding new invoice:", invoiceData)
-
       const { data, error } = await supabase
         .from("invoices")
         .insert(invoiceData)
@@ -139,7 +136,6 @@ export default function InvoicesPage() {
         return
       }
 
-      console.log("✅ Invoice added successfully:", data)
       setInvoices([data, ...invoices])
       setIsAddDialogOpen(false)
       setNewInvoice({
@@ -178,7 +174,6 @@ export default function InvoicesPage() {
       }
 
       setInvoices(invoices.map((inv) => (inv.id === invoiceId ? data : inv)))
-      console.log("✅ Invoice status updated successfully")
     } catch (error) {
       console.error("❌ Unexpected error updating invoice:", error)
     }
@@ -890,21 +885,28 @@ Généré le ${new Date().toLocaleDateString('fr-FR')}`;
       </div>
 
       {/* Invoice List */}
-      {filteredInvoices.length === 0 ? (
-        <Card className="border border-gray-200 shadow-sm">
-          <CardContent className="pt-8 pb-8">
+      {loading ? (
+        <ListSkeleton items={5} />
+      ) : filteredInvoices.length === 0 ? (
+        <Card className="border-0 shadow-soft bg-white/80 backdrop-blur-sm animate-scale-in">
+          <CardContent className="pt-16 pb-16">
             <div className="text-center">
-              <div className="mx-auto w-20 h-20 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <FileText className="h-10 w-10 text-gray-400" />
+              <div className="mx-auto h-20 w-20 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center mb-8 shadow-soft">
+                <FileText className="h-10 w-10 text-emerald-600" />
               </div>
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Aucune facture trouvée</h3>
-              <p className="text-gray-500 mb-6 max-w-sm mx-auto">
-                {searchTerm ? "Essayez d'ajuster vos termes de recherche pour trouver ce que vous cherchez." : "Créez votre première facture pour commencer à suivre votre facturation et vos paiements."}
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                {searchTerm ? "Aucune facture trouvée" : "Aucune facture pour le moment"}
+              </h3>
+              <p className="text-gray-600 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
+                {searchTerm 
+                  ? "Essayez d'ajuster vos termes de recherche pour trouver ce que vous cherchez." 
+                  : "Créez votre première facture pour commencer à suivre votre facturation et vos paiements."
+                }
               </p>
               {!searchTerm && (
                 <Button 
                   onClick={() => setIsAddDialogOpen(true)} 
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow-md transition-all duration-200 font-medium"
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Créer votre première facture
@@ -922,23 +924,8 @@ Généré le ${new Date().toLocaleDateString('fr-FR')}`;
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-2">
                       <CardTitle className="text-xl font-bold text-gray-900">{invoice.invoice_number}</CardTitle>
-                      <Badge
-                        variant={
-                          invoice.status === "paid"
-                            ? "default"
-                            : invoice.status === "pending"
-                              ? "secondary"
-                              : "destructive"
-                        }
-                        className={
-                          invoice.status === "paid"
-                            ? "bg-emerald-100 text-emerald-800 border-emerald-200"
-                            : invoice.status === "pending"
-                              ? "bg-amber-100 text-amber-800 border-amber-200"
-                              : "bg-red-100 text-red-800 border-red-200"
-                        }
-                      >
-                        {invoice.status.charAt(0).toUpperCase() + invoice.status.slice(1)}
+                      <Badge variant={getStatusVariant(invoice.status)}>
+                        {getStatusDisplay(invoice.status)}
                       </Badge>
                     </div>
                     <CardDescription className="flex items-center text-gray-600">

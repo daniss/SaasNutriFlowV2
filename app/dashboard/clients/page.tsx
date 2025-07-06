@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { getStatusDisplay, getStatusVariant } from "@/lib/status"
+import { DashboardSkeleton, EmptyStateWithSkeleton, GridSkeleton } from "@/components/shared/skeletons"
 import {
   Dialog,
   DialogContent,
@@ -70,7 +72,6 @@ export default function ClientsPage() {
     if (!user) return
 
     try {
-      console.log("👥 Fetching clients for user:", user.id)
       const { data, error } = await supabase
         .from("clients")
         .select("*")
@@ -78,14 +79,13 @@ export default function ClientsPage() {
         .order("created_at", { ascending: false })
 
       if (error) {
-        console.error("❌ Error fetching clients:", error)
+        console.error("Error fetching clients:", error)
         return
       }
 
-      console.log("✅ Clients fetched:", data?.length || 0)
       setClients(data || [])
     } catch (error) {
-      console.error("❌ Unexpected error fetching clients:", error)
+      console.error("Unexpected error fetching clients:", error)
     } finally {
       setLoading(false)
     }
@@ -117,16 +117,13 @@ export default function ClientsPage() {
         progress_percentage: 0,
       }
 
-      console.log("➕ Adding new client:", clientData)
-
       const { data, error } = await supabase.from("clients").insert(clientData).select().single()
 
       if (error) {
-        console.error("❌ Error adding client:", error)
+        console.error("Error adding client:", error)
         return
       }
 
-      console.log("✅ Client added successfully:", data)
       setClients([data, ...clients])
       setIsAddDialogOpen(false)
       setNewClient({
@@ -154,71 +151,7 @@ export default function ClientsPage() {
   )
 
   if (loading) {
-    return (
-      <div className="flex-1 space-y-8 p-6 lg:p-8 bg-gradient-to-br from-gray-50/50 via-white to-emerald-50/20 min-h-screen">
-        {/* Header Skeleton */}
-        <div className="space-y-6 animate-fade-in">
-          <div className="flex items-center justify-between">
-            <div className="space-y-3">
-              <div className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl w-48 animate-pulse" />
-              <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg w-64 animate-pulse" />
-            </div>
-            <div className="h-10 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl w-32 animate-pulse" />
-          </div>
-          
-          {/* Stats Cards Skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 animate-slide-up animate-delay-100">
-            {[...Array(4)].map((_, i) => (
-              <Card key={i} className="border-0 shadow-soft bg-white/90 backdrop-blur-sm">
-                <CardContent className="p-6">
-                  <div className="space-y-4">
-                    <div className="flex items-center justify-between">
-                      <div className="space-y-3">
-                        <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg w-20 animate-pulse" />
-                        <div className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl w-16 animate-pulse" />
-                        <div className="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-24 animate-pulse" />
-                      </div>
-                      <div className="h-12 w-12 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl animate-pulse" />
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-
-        {/* Search and Filter Skeleton */}
-        <div className="flex items-center gap-4 animate-slide-up animate-delay-200">
-          <div className="h-10 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl flex-1 max-w-md animate-pulse" />
-          <div className="h-10 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl w-24 animate-pulse" />
-        </div>
-
-        {/* Client Cards Skeleton */}
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 animate-slide-up animate-delay-300">
-          {[...Array(6)].map((_, i) => (
-            <Card key={i} className="border-0 shadow-soft bg-white/90 backdrop-blur-sm">
-              <CardContent className="p-6">
-                <div className="space-y-6">
-                  <div className="flex items-center gap-3">
-                    <div className="h-12 w-12 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full animate-pulse" />
-                    <div className="space-y-2 flex-1">
-                      <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg w-32 animate-pulse" />
-                      <div className="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-40 animate-pulse" />
-                    </div>
-                    <div className="h-6 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full w-16 animate-pulse" />
-                  </div>
-                  <div className="space-y-3">
-                    <div className="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-full animate-pulse" />
-                    <div className="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-3/4 animate-pulse" />
-                    <div className="h-2 bg-gradient-to-r from-gray-200 to-gray-300 rounded-full w-full animate-pulse" />
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    )
+    return <DashboardSkeleton />
   }
 
   return (
@@ -474,7 +407,9 @@ export default function ClientsPage() {
 
       {/* Client List Section */}
       <div>
-      {filteredClients.length === 0 ? (
+      {loading ? (
+        <GridSkeleton items={6} />
+      ) : filteredClients.length === 0 ? (
         <Card className="border-0 shadow-soft bg-white/80 backdrop-blur-sm animate-scale-in">
           <CardContent className="pt-16 pb-16">
             <div className="text-center">

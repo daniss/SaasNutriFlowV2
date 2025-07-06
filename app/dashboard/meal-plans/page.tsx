@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { getStatusDisplay, getStatusVariant } from "@/lib/status"
+import { DashboardSkeleton, GridSkeleton } from "@/components/shared/skeletons"
 import {
   Dialog,
   DialogContent,
@@ -94,8 +96,6 @@ export default function MealPlansPage() {
     if (!user) return
 
     try {
-      console.log("🍽️ Fetching meal plans for user:", user.id)
-
       // Fetch meal plans with client names
       const { data: mealPlanData, error: mealPlanError } = await supabase
         .from("meal_plans")
@@ -125,8 +125,6 @@ export default function MealPlansPage() {
       } else {
         setClients(clientData || [])
       }
-
-      console.log("✅ Meal plans data loaded successfully")
     } catch (error) {
       console.error("❌ Unexpected error fetching meal plans:", error)
     } finally {
@@ -149,8 +147,6 @@ export default function MealPlansPage() {
         status: "active",
       }
 
-      console.log("➕ Adding new meal plan:", mealPlanData)
-
       const { data, error } = await supabase
         .from("meal_plans")
         .insert(mealPlanData)
@@ -170,7 +166,6 @@ export default function MealPlansPage() {
         return
       }
 
-      console.log("✅ Meal plan added successfully:", data)
       setMealPlans([data, ...mealPlans])
       setIsAddDialogOpen(false)
       setNewMealPlan({
@@ -284,19 +279,6 @@ export default function MealPlansPage() {
     return matchesSearch && matchesFilter
   })
 
-  const getStatusColor = (status: string) => {
-    switch (status) {
-      case "active":
-        return "bg-emerald-50 text-emerald-700 border-emerald-200"
-      case "completed":
-        return "bg-blue-50 text-blue-700 border-blue-200"
-      case "paused":
-        return "bg-amber-50 text-amber-700 border-amber-200"
-      default:
-        return "bg-gray-50 text-gray-700 border-gray-200"
-    }
-  }
-
   const getPlanTypeIcon = (name: string) => {
     const lowerName = name.toLowerCase()
     if (lowerName.includes('weight') || lowerName.includes('loss')) return Target
@@ -307,59 +289,7 @@ export default function MealPlansPage() {
   }
 
   if (loading) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          {/* Header Skeleton */}
-          <div className="flex items-center justify-between mb-8">
-            <div className="space-y-3">
-              <div className="h-8 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg w-48 animate-pulse" />
-              <div className="h-4 bg-gradient-to-r from-slate-200 to-slate-300 rounded w-80 animate-pulse" />
-            </div>
-            <div className="h-11 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg w-40 animate-pulse" />
-          </div>
-
-          {/* Stats Cards Skeleton */}
-          <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-slate-100">
-                <div className="space-y-3">
-                  <div className="h-4 bg-gradient-to-r from-slate-200 to-slate-300 rounded w-16 animate-pulse" />
-                  <div className="h-8 bg-gradient-to-r from-slate-200 to-slate-300 rounded w-12 animate-pulse" />
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Search & Filter Skeleton */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-8">
-            <div className="h-11 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg flex-1 max-w-md animate-pulse" />
-            <div className="h-11 bg-gradient-to-r from-slate-200 to-slate-300 rounded-lg w-32 animate-pulse" />
-          </div>
-
-          {/* Cards Grid Skeleton */}
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {[...Array(6)].map((_, i) => (
-              <div key={i} className="bg-white/80 backdrop-blur-sm rounded-xl p-6 shadow-sm border border-slate-100">
-                <div className="space-y-4">
-                  <div className="flex items-start justify-between">
-                    <div className="space-y-2 flex-1">
-                      <div className="h-5 bg-gradient-to-r from-slate-200 to-slate-300 rounded w-32 animate-pulse" />
-                      <div className="h-4 bg-gradient-to-r from-slate-200 to-slate-300 rounded w-24 animate-pulse" />
-                    </div>
-                    <div className="h-6 bg-gradient-to-r from-slate-200 to-slate-300 rounded-full w-16 animate-pulse" />
-                  </div>
-                  <div className="space-y-2">
-                    <div className="h-3 bg-gradient-to-r from-slate-200 to-slate-300 rounded w-full animate-pulse" />
-                    <div className="h-3 bg-gradient-to-r from-slate-200 to-slate-300 rounded w-3/4 animate-pulse" />
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
+    return <DashboardSkeleton />
   }
 
   return (
@@ -558,7 +488,9 @@ export default function MealPlansPage() {
         </div>
 
         {/* Meal Plans Grid */}
-        {filteredMealPlans.length === 0 ? (
+        {loading ? (
+          <GridSkeleton items={6} />
+        ) : filteredMealPlans.length === 0 ? (
           <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl">
             <CardContent className="pt-16 pb-16">
               <div className="text-center">
@@ -612,11 +544,10 @@ export default function MealPlansPage() {
                       </div>
                       <div className="flex items-center gap-2">
                         <Badge 
-                          className={`${getStatusColor(plan.status)} border font-medium px-2.5 py-1 text-xs`}
+                          variant={getStatusVariant(plan.status)}
+                          className="font-medium px-2.5 py-1 text-xs"
                         >
-                          {plan.status === 'active' ? 'Actif' : 
-                           plan.status === 'completed' ? 'Terminé' : 
-                           plan.status === 'paused' ? 'En pause' : plan.status}
+                          {getStatusDisplay(plan.status)}
                         </Badge>
                         <DropdownMenu>
                           <DropdownMenuTrigger asChild>

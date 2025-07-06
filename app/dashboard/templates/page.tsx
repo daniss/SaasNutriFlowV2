@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input"
 import { Plus, Search, Filter, MoreHorizontal, Copy, Edit, Trash2, Star, Clock, Users } from "lucide-react"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { DashboardHeader } from "@/components/dashboard-header"
+import { getStatusColor } from "@/lib/status"
 import Link from "next/link"
 
 export default function TemplatesPage() {
@@ -108,36 +109,6 @@ export default function TemplatesPage() {
       template.tags.some((tag) => tag.toLowerCase().includes(searchTerm.toLowerCase())),
   )
 
-  const getCategoryColor = (category: string) => {
-    switch (category) {
-      case "Perte de poids":
-        return "bg-emerald-100 text-emerald-800"
-      case "Prise de muscle":
-        return "bg-blue-100 text-blue-800"
-      case "Médical":
-        return "bg-red-100 text-red-800"
-      case "Détox":
-        return "bg-purple-100 text-purple-800"
-      case "Santé cardiaque":
-        return "bg-orange-100 text-orange-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
-  const getDifficultyColor = (difficulty: string) => {
-    switch (difficulty) {
-      case "Facile":
-        return "bg-green-100 text-green-800"
-      case "Modéré":
-        return "bg-yellow-100 text-yellow-800"
-      case "Difficile":
-        return "bg-red-100 text-red-800"
-      default:
-        return "bg-gray-100 text-gray-800"
-    }
-  }
-
   return (
     <div className="space-y-6">
       <DashboardHeader 
@@ -216,8 +187,8 @@ export default function TemplatesPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex flex-wrap gap-2">
-                  <Badge className={`${getCategoryColor(template.category)} border-0 font-medium px-3 py-1`}>{template.category}</Badge>
-                  <Badge className={`${getDifficultyColor(template.difficulty)} border-0 font-medium px-3 py-1`}>{template.difficulty}</Badge>
+                  <Badge className={`${getStatusColor(template.category)} border-0 font-medium px-3 py-1`}>{template.category}</Badge>
+                  <Badge className={`${getStatusColor(template.difficulty)} border-0 font-medium px-3 py-1`}>{template.difficulty}</Badge>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4 text-sm">

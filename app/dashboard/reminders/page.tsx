@@ -20,17 +20,17 @@ import { Textarea } from "@/components/ui/textarea"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Plus, Search, Bell, Calendar, Clock, Users } from "lucide-react"
 import { useAuth } from "@/hooks/useAuthNew"
-import { supabase, type Reminder, type Client } from "@/lib/supabase"
+import { supabase, type Client } from "@/lib/supabase"
 import { DashboardHeader } from "@/components/dashboard-header"
-
-interface ReminderWithClient extends Reminder {
-  clients: { name: string } | null
-}
+import { getStatusDisplay, getStatusVariant } from "@/lib/status"
+import { formatDate } from "@/lib/formatters"
+import { DashboardSkeleton, ListSkeleton } from "@/components/shared/skeletons"
+import { api, type ReminderWithClient } from "@/lib/api"
 
 export default function RemindersPage() {
   const { user } = useAuth()
   const [reminders, setReminders] = useState<ReminderWithClient[]>([])
-  const [clients, setClients] = useState<Client[]>([])
+  const [clients, setClients] = useState<Pick<Client, 'id' | 'name'>[]>([])
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
@@ -55,41 +55,15 @@ export default function RemindersPage() {
     if (!user) return
 
     try {
-      console.log("🔔 Fetching reminders for user:", user.id)
+      const [remindersData, clientsData] = await Promise.all([
+        api.getReminders(user.id),
+        api.getActiveClients(user.id)
+      ])
 
-      // Fetch reminders with client names
-      const { data: reminderData, error: reminderError } = await supabase
-        .from("reminders")
-        .select(`
-          *,
-          clients (name)
-        `)
-        .eq("dietitian_id", user.id)
-        .order("scheduled_date", { ascending: true })
-
-      if (reminderError) {
-        console.error("❌ Error fetching reminders:", reminderError)
-      } else {
-        setReminders(reminderData || [])
-      }
-
-      // Fetch clients for the dropdown
-      const { data: clientData, error: clientError } = await supabase
-        .from("clients")
-        .select("id, name")
-        .eq("dietitian_id", user.id)
-        .eq("status", "active")
-        .order("name", { ascending: true })
-
-      if (clientError) {
-        console.error("❌ Error fetching clients:", clientError)
-      } else {
-        setClients(clientData || [])
-      }
-
-      console.log("✅ Reminders data loaded successfully")
+      setReminders(remindersData)
+      setClients(clientsData)
     } catch (error) {
-      console.error("❌ Unexpected error fetching reminders:", error)
+      console.error("Unexpected error fetching reminders:", error)
     } finally {
       setLoading(false)
     }
@@ -113,23 +87,8 @@ export default function RemindersPage() {
         sent_at: null,
       }
 
-      console.log("➕ Adding new reminder:", reminderData)
-
-      const { data, error } = await supabase
-        .from("reminders")
-        .insert(reminderData)
-        .select(`
-          *,
-          clients (name)
-        `)
-        .single()
-
-      if (error) {
-        console.error("❌ Error adding reminder:", error)
-        return
-      }
-
-      console.log("✅ Reminder added successfully:", data)
+      const data = await api.createReminder(reminderData)
+      
       setReminders([data, ...reminders])
       setIsAddDialogOpen(false)
       setNewReminder({
@@ -143,7 +102,7 @@ export default function RemindersPage() {
         channels: [],
       })
     } catch (error) {
-      console.error("❌ Unexpected error adding reminder:", error)
+      console.error("Unexpected error adding reminder:", error)
     }
   }
 
@@ -162,36 +121,7 @@ export default function RemindersPage() {
   )
 
   if (loading) {
-    return (
-      <div className="flex-1 space-y-8 p-6 lg:p-8 bg-gradient-to-br from-gray-50/50 via-white to-emerald-50/20 min-h-screen">
-        <div className="flex items-center justify-between animate-fade-in">
-          <div className="space-y-2">
-            <div className="h-8 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl w-48 animate-pulse" />
-            <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg w-64 animate-pulse" />
-          </div>
-          <div className="h-10 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl w-40 animate-pulse" />
-        </div>
-        <div className="h-10 bg-gradient-to-r from-gray-200 to-gray-300 rounded-xl max-w-sm animate-pulse" />
-        <div className="grid gap-6 animate-slide-up">
-          {[...Array(5)].map((_, i) => (
-            <Card key={i} className="border-0 shadow-soft bg-white/90 backdrop-blur-sm">
-              <CardHeader className="pb-3">
-                <div className="space-y-3">
-                  <div className="h-4 bg-gradient-to-r from-gray-200 to-gray-300 rounded-lg w-32 animate-pulse" />
-                  <div className="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-24 animate-pulse" />
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-3">
-                  <div className="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-full animate-pulse" />
-                  <div className="h-3 bg-gradient-to-r from-gray-200 to-gray-300 rounded w-3/4 animate-pulse" />
-                </div>
-              </CardContent>
-            </Card>
-          ))}
-        </div>
-      </div>
-    )
+    return <DashboardSkeleton />
   }
 
   return (
@@ -309,22 +239,22 @@ export default function RemindersPage() {
                     checked={newReminder.is_recurring}
                     onCheckedChange={(checked) => setNewReminder({ ...newReminder, is_recurring: checked as boolean })}
                   />
-                  <Label htmlFor="recurring">Recurring reminder</Label>
+                  <Label htmlFor="recurring">Rappel récurrent</Label>
                 </div>
                 {newReminder.is_recurring && (
                   <div className="space-y-2">
-                    <Label htmlFor="frequency">Frequency</Label>
+                    <Label htmlFor="frequency">Fréquence</Label>
                     <Select
                       value={newReminder.frequency}
                       onValueChange={(value) => setNewReminder({ ...newReminder, frequency: value })}
                     >
                       <SelectTrigger>
-                        <SelectValue placeholder="Select frequency" />
+                        <SelectValue placeholder="Sélectionner la fréquence" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="daily">Daily</SelectItem>
-                        <SelectItem value="weekly">Weekly</SelectItem>
-                        <SelectItem value="monthly">Monthly</SelectItem>
+                        <SelectItem value="daily">Quotidien</SelectItem>
+                        <SelectItem value="weekly">Hebdomadaire</SelectItem>
+                        <SelectItem value="monthly">Mensuel</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -333,14 +263,14 @@ export default function RemindersPage() {
             </div>
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
-                Cancel
+                Annuler
               </Button>
               <Button
                 onClick={handleAddReminder}
                 disabled={!newReminder.title || !newReminder.client_id || !newReminder.scheduled_date}
                 className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft disabled:opacity-50 font-medium"
               >
-                Create Reminder
+                Créer le rappel
               </Button>
             </DialogFooter>
           </DialogContent>
@@ -349,22 +279,32 @@ export default function RemindersPage() {
       />
 
       <div className="px-6 space-y-6">
-      {filteredReminders.length === 0 ? (
-        <Card>
-          <CardContent className="pt-6">
+      {loading ? (
+        <ListSkeleton items={5} />
+      ) : filteredReminders.length === 0 ? (
+        <Card className="border-0 shadow-soft bg-white/80 backdrop-blur-sm animate-scale-in">
+          <CardContent className="pt-16 pb-16">
             <div className="text-center">
-              <Bell className="mx-auto h-12 w-12 text-gray-400" />
-              <h3 className="mt-2 text-sm font-medium text-gray-900">No reminders found</h3>
-              <p className="mt-1 text-sm text-gray-500">
-                {searchTerm ? "Try adjusting your search terms." : "Create your first reminder to get started."}
+              <div className="mx-auto h-20 w-20 bg-gradient-to-br from-emerald-100 to-emerald-200 rounded-2xl flex items-center justify-center mb-8 shadow-soft">
+                <Bell className="h-10 w-10 text-emerald-600" />
+              </div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-3">
+                {searchTerm ? "Aucun rappel trouvé" : "Aucun rappel pour le moment"}
+              </h3>
+              <p className="text-gray-600 text-sm mb-8 max-w-sm mx-auto leading-relaxed">
+                {searchTerm 
+                  ? "Essayez d'ajuster vos termes de recherche." 
+                  : "Créez votre premier rappel pour commencer à organiser le suivi de vos clients."
+                }
               </p>
               {!searchTerm && (
-                <div className="mt-6">
-                  <Button onClick={() => setIsAddDialogOpen(true)} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
-                    <Plus className="mr-2 h-4 w-4" />
-                    Create Reminder
-                  </Button>
-                </div>
+                <Button 
+                  onClick={() => setIsAddDialogOpen(true)} 
+                  className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
+                >
+                  <Plus className="mr-2 h-4 w-4" />
+                  Créer votre premier rappel
+                </Button>
               )}
             </div>
           </CardContent>
@@ -387,15 +327,9 @@ export default function RemindersPage() {
                       {reminder.type}
                     </Badge>
                     <Badge
-                      variant={
-                        reminder.status === "pending"
-                          ? "secondary"
-                          : reminder.status === "sent"
-                            ? "default"
-                            : "destructive"
-                      }
+                      variant={getStatusVariant(reminder.status)}
                     >
-                      {reminder.status}
+                      {getStatusDisplay(reminder.status)}
                     </Badge>
                   </div>
                 </div>
@@ -405,7 +339,7 @@ export default function RemindersPage() {
                 <div className="flex items-center justify-between text-sm">
                   <div className="flex items-center text-muted-foreground">
                     <Calendar className="mr-1 h-3 w-3" />
-                    {new Date(reminder.scheduled_date).toLocaleString()}
+                    {formatDate(reminder.scheduled_date)}
                   </div>
                   {reminder.is_recurring && (
                     <Badge variant="outline" className="text-xs">
@@ -428,7 +362,7 @@ export default function RemindersPage() {
                 <div className="flex items-center justify-between pt-2">
                   <div className="flex items-center text-sm text-muted-foreground">
                     <Clock className="mr-1 h-3 w-3" />
-                    Created {new Date(reminder.created_at).toLocaleDateString()}
+                    Created {formatDate(reminder.created_at)}
                   </div>
                   <Button variant="outline" size="sm">
                     Edit

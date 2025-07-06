@@ -224,6 +224,56 @@ export interface Database {
           updated_at?: string
         }
       }
+      reminders: {
+        Row: {
+          id: string
+          client_id: string
+          dietitian_id: string
+          type: string
+          title: string
+          message: string
+          scheduled_date: string
+          is_recurring: boolean
+          frequency: string | null
+          channels: string[]
+          status: string
+          sent_at: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          dietitian_id: string
+          type: string
+          title: string
+          message: string
+          scheduled_date: string
+          is_recurring?: boolean
+          frequency?: string | null
+          channels?: string[]
+          status?: string
+          sent_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          client_id?: string
+          dietitian_id?: string
+          type?: string
+          title?: string
+          message?: string
+          scheduled_date?: string
+          is_recurring?: boolean
+          frequency?: string | null
+          channels?: string[]
+          status?: string
+          sent_at?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
     }
   }
 }
@@ -232,3 +282,4 @@ export type Client = Database["public"]["Tables"]["clients"]["Row"]
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
 export type MealPlan = Database["public"]["Tables"]["meal_plans"]["Row"]
 export type Invoice = Database["public"]["Tables"]["invoices"]["Row"]
+export type Reminder = Database["public"]["Tables"]["reminders"]["Row"]
