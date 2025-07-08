@@ -1,340 +1,487 @@
-# NutriFlow - Dietitian Dashboard 🥗
+# 🥗 NutriFlow - Professional Nutrition Management Platform
 
-A modern SaaS platform designed for independent dietitians to streamline their practice management, featuring client management, AI-powered meal planning, automated reminders, and integrated invoicing.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![TypeScript](https://img.shields.io/badge/TypeScript-007ACC?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-000000?logo=next.js&logoColor=white)](https://nextjs.org/)
+[![Supabase](https://img.shields.io/badge/Supabase-3ECF8E?logo=supabase&logoColor=white)](https://supabase.com/)
+[![Tailwind CSS](https://img.shields.io/badge/Tailwind_CSS-38B2AC?logo=tailwind-css&logoColor=white)](https://tailwindcss.com/)
 
-## 🚀 Features
+**NutriFlow** is a comprehensive, production-ready SaaS platform designed specifically for registered dietitians and nutritionists to streamline their practice management, client care, and meal planning workflows. Built with modern web technologies and enterprise-grade security, it combines AI-powered meal plan generation with robust client management tools to help nutrition professionals deliver exceptional care while running efficient practices.
 
-- **Client Management**: Comprehensive client profiles with health goals, dietary restrictions, and progress tracking
-- **AI-Powered Meal Planning**: Generate personalized meal plans using Google's Gemini AI
-- **Automated Reminders**: Send appointment and follow-up reminders to clients
-- **Invoice Management**: Create and track invoices for your services
-- **Dashboard Analytics**: Overview of practice metrics and performance
-- **Secure Authentication**: User authentication and authorization with Supabase
-- **Responsive Design**: Modern UI built with Tailwind CSS and Radix UI components
+## ✨ Key Features
 
-## 🛠️ Tech Stack
+### 🔐 **Authentication & Security**
+- Secure user authentication with Supabase Auth
+- Row-level security (RLS) for data protection
+- Role-based access control (Nutritionist/Client)
+- Security headers and CSRF protection
+- Rate limiting and API security
 
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **Styling**: Tailwind CSS, Radix UI components
-- **Backend**: Supabase (PostgreSQL database, authentication, real-time)
-- **AI Integration**: Google Gemini AI for meal plan generation
-- **Package Manager**: npm (comes with Node.js), pnpm, or yarn
-- **Deployment**: Optimized for Vercel deployment
+### 👥 **Client Management**
+- Complete client profiles with medical history
+- Progress tracking with weight, measurements, and photos
+- Dietary restrictions and preference management
+- Goal setting and achievement tracking
+- Communication history and notes
 
-## 📋 Prerequisites
+### 🍽️ **Intelligent Meal Planning**
+- AI-powered meal plan generation using Google Gemini
+- Custom meal plan creation tools
+- Recipe database with nutritional analysis
+- Dietary restriction compliance
+- Meal plan templates and duplication
+- PDF export for client distribution
 
-Before you begin, ensure you have the following installed:
+### 📊 **Advanced Analytics & Reporting**
+- Comprehensive dashboard with key metrics
+- Client progress visualization
+- Revenue tracking and financial insights
+- Custom date range filtering
+- Exportable reports (PDF, CSV)
+- Performance monitoring
 
-- **Node.js** (version 18 or higher) - includes npm
-- **Git**
-- **Package Manager**: npm (included with Node.js) or pnpm/yarn if preferred
+### 📅 **Calendar & Appointment Management**
+- Integrated scheduling system
+- Appointment types and duration management
+- Recurring appointment support
+- External calendar synchronization
+- Automated reminders via email/SMS
+- Agenda and month views
 
-## ⚡ Quick Start
+### 💰 **Financial Management**
+- Professional invoice generation
+- Payment tracking and status management
+- Revenue reporting and analytics
+- Multiple payment method support
+- Automated payment reminders
+- Financial dashboard
 
-1. **Clone and Install**:
-   ```bash
-   git clone <your-repository-url>
-   cd nutriflow
-   npm install --legacy-peer-deps
-   ```
+### 📧 **Communication & Notifications**
+- Email notification system (Resend/SendGrid)
+- SMS notifications (Twilio integration)
+- Automated appointment reminders
+- Custom message templates
+- Client portal messaging
+- System notifications
 
-2. **Set up Environment**: Copy your `.env` file or create `.env.local` with your Supabase and Google API keys
+### 🏥 **Client Portal**
+- Self-service client dashboard
+- Meal plan access and tracking
+- Progress monitoring tools
+- Appointment scheduling
+- Direct messaging with nutritionist
+- Resource downloads
 
-3. **⚠️ IMPORTANT - Set up Database**: 
-   - Go to your Supabase SQL Editor
-   - Copy and paste the contents of `scripts/supabase-schema.sql`
-   - Execute the script to create all necessary tables
-   - **This step is required before the app will work properly!**
+### 📱 **Modern User Experience**
+- Responsive design for all devices
+- Progressive Web App (PWA) support
+- Offline functionality
+- Dark/light theme support
+- Intuitive navigation
+- Accessibility compliance
 
-4. **Run Development Server**:
-   ```bash
-   npm run dev
-   ```
+### 🔧 **Advanced Integrations**
+- Food database APIs (Nutritionix, USDA)
+- Payment processing (Stripe, PayPal)
+- Email services (Resend, SendGrid, SMTP)
+- SMS services (Twilio)
+- External calendar sync
+- File storage (AWS S3)
 
-5. **Open in Browser**: Visit [http://localhost:3000](http://localhost:3000)
+---
 
-> **Note**: You'll need to set up Supabase database and Google AI API for full functionality. See detailed setup instructions below.
+## 🔧 Technology Stack
 
-## 🔧 Installation & Setup
+### Frontend
+- **Next.js 15** - React framework with App Router
+- **React 19** - Latest React with concurrent features
+- **TypeScript** - Type safety and developer experience
+- **Tailwind CSS** - Utility-first styling framework
+- **Radix UI** - Accessible component primitives
+- **Lucide React** - Beautiful icon library
+- **React Hook Form** - Form management with validation
+- **Zod** - Schema validation library
 
-### 1. Clone the Repository
+### Backend & Database
+- **Supabase** - PostgreSQL database with real-time capabilities
+- **Row Level Security (RLS)** - Data security and multi-tenancy
+- **Authentication** - Supabase Auth with profile management
 
-```bash
-git clone <your-repository-url>
-cd nutriflow
+### AI & Integrations
+- **Google Gemini AI** - Intelligent meal plan generation
+- **jsPDF** - PDF generation for reports and meal plans
+- **React Charts** - Data visualization for progress tracking
+
+### Development Tools
+- **ESLint** - Code linting and best practices
+- **PostCSS** - CSS processing and optimization
+- **pnpm** - Fast, efficient package management
+
+---
+
+## 🧩 Page-by-Page Feature Breakdown
+
+### 🏠 **Tableau de bord (Dashboard)**
+- **Status:** ✅ Fully functional
+- **Features:** 
+  - Real-time statistics (total clients, active meal plans)
+  - Recent client activity overview
+  - Quick action buttons for common tasks
+  - Monthly appointment calendar integration
+  - Professional welcome interface with personalization
+
+### 👥 **Clients Management**
+- **Status:** ✅ Fully functional
+- **Features:**
+  - Complete CRUD operations for client profiles
+  - Advanced search and filtering capabilities
+  - Weight tracking with visual progress charts
+  - Notes system for session documentation
+  - Goal setting and progress monitoring
+  - Real-time form validation and error handling
+
+### 📋 **Plans Alimentaires (Meal Plans)**
+- **Status:** ⚠️ Core functional, some features in progress
+- **Features:**
+  - ✅ AI-powered meal plan generation using Gemini API
+  - ✅ Custom meal plan creation and editing
+  - ✅ Plan templates for efficiency
+  - ✅ Client assignment and status tracking
+  - ⚠️ Individual meal editing (UI ready, logic partial)
+  - ❌ PDF export (button ready, implementation needed)
+  - ❌ Client sharing (UI ready, backend needed)
+
+### 👨‍🍳 **Bibliothèque de recettes (Recipe Templates)**
+- **Status:** ✅ Fully functional
+- **Features:**
+  - Recipe template creation with detailed ingredients
+  - Meal plan template library
+  - Categorization by dietary preferences
+  - Cooking time and difficulty tracking
+  - Reusable template system for efficiency
+
+### 📅 **Rendez-vous (Appointments)**
+- **Status:** ⚠️ Core functional, integrations needed
+- **Features:**
+  - ✅ Appointment scheduling and management
+  - ✅ Client assignment and status tracking
+  - ✅ Calendar view with time slot management
+  - ⚠️ Virtual meeting integration (basic implementation)
+  - ❌ Email notifications (UI ready)
+  - ❌ Calendar sync (planned feature)
+
+### � **Rappels (Reminders)**
+- **Status:** ⚠️ UI complete, backend integration needed
+- **Features:**
+  - ✅ Reminder creation and scheduling
+  - ✅ Multi-channel preferences (email, SMS)
+  - ✅ Client targeting and personalization
+  - ❌ Actual email/SMS delivery (integration needed)
+  - ❌ Automated reminder workflows
+
+### 💰 **Factures (Invoices)**
+- **Status:** ⚠️ Core functional, payment integration needed
+- **Features:**
+  - ✅ Invoice creation and management
+  - ✅ Client billing and service tracking
+  - ✅ Status management (draft, sent, paid)
+  - ⚠️ PDF generation (partial implementation)
+  - ❌ Payment processing integration
+  - ❌ Automated payment reminders
+
+### ⚙️ **Paramètres (Settings)**
+- **Status:** ✅ Fully functional
+- **Features:**
+  - Complete profile management for dietitians
+  - Notification preferences configuration
+  - Practice information and contact details
+  - Account security and password management
+
+### **🏠 Dashboard Principal**
+```
+/dashboard - Tableau de bord principal
+├── Stats générales (clients, plans actifs)
+├── Activité récente
+├── Clients récents
+└── Plans alimentaires récents
 ```
 
-### 2. Install Dependencies
+### **👥 Gestion des Clients**
+```
+/dashboard/clients - Liste des clients
+├── Recherche et filtres
+├── Ajout nouveau client (avec validation)
+├── Statuts et badges
+└── Actions rapides
 
-Using npm (recommended for most users):
-```bash
-npm install --legacy-peer-deps
+/dashboard/clients/[id] - Détail client
+├── Onglet "Progrès" (graphiques de poids)
+├── Onglet "Profil complet" (informations personnelles)
+├── Onglet "Notes privées" (notes du diététicien)
+├── Suivi du poids avec historique
+└── Édition des informations
 ```
 
-> **Note**: The `--legacy-peer-deps` flag is needed to resolve dependency conflicts between `date-fns` and `react-day-picker`.
+### **� Plans Alimentaires**
+```
+/dashboard/meal-plans - Liste des plans
+├── Création de nouveaux plans
+├── Attribution aux clients
+├── Gestion des statuts
+├── Duplication de plans
+└── Filtres par statut
 
-Or using pnpm (if you prefer):
+/dashboard/meal-plans/[id] - Détail du plan
+├── Aperçu du plan (durée, calories)
+├── Plans repas quotidiens
+├── Informations client
+├── Actions rapides (partage, export)
+└── Édition des paramètres
+
+/dashboard/meal-plans/generate - Générateur IA (prévu)
+```
+
+### **👨‍🍳 Bibliothèque de Ressources**
+```
+/dashboard/templates - Modèles et recettes
+├── Onglet "Recettes" (modèles de recettes)
+├── Onglet "Plans alimentaires" (modèles de plans)
+├── Catégorisation
+├── Système de favoris
+└── Recherche avancée
+```
+
+### **📅 Agenda & Rendez-vous**
+```
+/dashboard/appointments - Gestion des rendez-vous
+├── Vue calendrier
+├── Création/édition de rendez-vous
+├── Gestion des types (consultation, suivi)
+├── Support vidéo (liens de réunion)
+├── Statuts (programmé, terminé, annulé)
+└── Durée personnalisable
+```
+
+### **🔔 Système de Rappels**
+```
+/dashboard/reminders - Gestion des rappels
+├── Rappels programmés
+├── Types multiples (check-in, rendez-vous, suivi)
+├── Récurrence (quotidien, hebdomadaire)
+├── Canaux multiples (email, SMS prévu)
+├── Suivi des statuts
+└── Templates de messages
+```
+
+### **💳 Facturation**
+```
+/dashboard/invoices - Gestion des factures
+├── Liste des factures
+├── Création/édition
+├── Statuts (brouillon, envoyée, payée)
+├── Gestion des échéances
+├── Association aux clients
+└── Génération PDF (prévu)
+```
+
+### **⚙️ Configuration**
+```
+/dashboard/settings - Paramètres
+├── Profil professionnel
+├── Informations de contact
+├── Préférences de notifications
+├── Configuration de la pratique (prévu)
+└── Gestion des données
+```
+
+---
+
+## 📊 **Base de Données - Schema Principal**
+
+### **Tables Principales**
+```sql
+profiles - Profils des diététiciens
+clients - Base clients avec informations détaillées
+meal_plans - Plans alimentaires avec contenu JSON
+weight_history - Historique de poids des clients
+messages - Communication diététicien-client
+appointments - Rendez-vous et consultations
+reminders - Système de rappels automatiques
+invoices - Facturation et paiements
+recipe_templates - Bibliothèque de recettes
+meal_plan_templates - Modèles de plans alimentaires
+```
+
+### **Sécurité**
+- **RLS (Row Level Security)** activé sur toutes les tables
+- Politique d'accès basée sur `dietitian_id`
+- Authentification Supabase avec JWT
+- Validation côté client et serveur
+
+---
+
+## 🚀 **Installation et Lancement Local**
+
+### **Prérequis**
+- Node.js 18+ 
+- npm/yarn/pnpm
+- Compte Supabase
+
+### **1. Cloner le Projet**
 ```bash
+git clone [URL_DU_REPO]
+cd SaasNutriFlowV2
+```
+
+### **2. Installation des Dépendances**
+```bash
+npm install
+# ou
 pnpm install
 ```
 
-Or using yarn:
-```bash
-yarn install
-```
-
-### 3. Environment Configuration
-
-Copy the environment variables and configure them with your own values:
-
-```bash
-cp .env.example .env.local
-```
-
-Update the `.env.local` file with your configuration:
-
+### **3. Configuration Environnement**
+Créer `.env.local`:
 ```env
-# Supabase Configuration
-NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
-NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
-SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-
-# Database Configuration (Supabase)
-POSTGRES_URL=your_postgres_connection_string
-POSTGRES_USER=postgres
-POSTGRES_HOST=your_postgres_host
-POSTGRES_PASSWORD=your_postgres_password
-POSTGRES_DATABASE=postgres
-
-# Google AI Configuration
-NEXT_PUBLIC_GEMINI_API_KEY=your_google_gemini_api_key
+NEXT_PUBLIC_SUPABASE_URL=votre_url_supabase
+NEXT_PUBLIC_SUPABASE_ANON_KEY=votre_cle_publique
+SUPABASE_SERVICE_ROLE_KEY=votre_cle_service
+GEMINI_API_KEY=votre_cle_gemini
 ```
 
-### 4. Database Setup
+### **4. Configuration Base de Données**
+```bash
+# Exécuter le schema SQL sur Supabase
+psql -h [HOST] -U [USER] -d [DB] -f scripts/supabase-schema.sql
 
-#### Supabase Setup
-1. Create a new project at [supabase.com](https://supabase.com)
-2. Go to Settings > API to get your project URL and API keys
-3. Go to Settings > Database to get your database connection string
+# Optionnel: données de test
+psql -h [HOST] -U [USER] -d [DB] -f scripts/seed-data.sql
+```
 
-#### Database Schema
-Run the SQL scripts to set up your database:
-
-1. Navigate to your Supabase SQL Editor
-2. Copy and paste the contents of `scripts/supabase-schema.sql`
-3. Execute the script to create all necessary tables
-4. Optionally, run `scripts/seed-data.sql` for sample data
-
-### 5. Google AI Setup
-
-1. Go to [Google AI Studio](https://aistudio.google.com/)
-2. Create an API key for Gemini AI
-3. Add the API key to your environment variables as `NEXT_PUBLIC_GEMINI_API_KEY`
-
-> **⚠️ Important**: The Google AI API key is **required** for the meal planning feature to work. Without a valid API key, the meal plan generation will fail with an error message.
-
-## 🚀 Running the Application
-
-### Development Mode
-
-Using npm:
+### **5. Lancement en Développement**
 ```bash
 npm run dev
 ```
 
-Using pnpm:
+Application disponible sur `http://localhost:3000`
+
+### **6. Build de Production**
+```bash
+npm run build
+npm start
+```
+
+---
+
+## 🚀 Local Development Setup
+
+### Prerequisites
+- **Node.js 18+** - JavaScript runtime
+- **pnpm** - Package manager (or npm/yarn)
+- **Supabase account** - For database and authentication
+
+### Installation Steps
+
+1. **Clone the repository:**
+```bash
+git clone [repository-url]
+cd SaasNutriFlowV2
+```
+
+2. **Install dependencies:**
+```bash
+pnpm install
+```
+
+3. **Environment setup:**
+Create a `.env.local` file in the root directory:
+```env
+NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+GEMINI_API_KEY=your_google_gemini_api_key
+```
+
+4. **Database setup:**
+```bash
+# Run the schema setup in your Supabase SQL editor
+cat scripts/supabase-schema.sql
+# Then optionally run seed data
+cat scripts/seed-data.sql
+```
+
+5. **Start development server:**
 ```bash
 pnpm dev
 ```
 
-Using yarn:
+6. **Access the application:**
+Open [http://localhost:3000](http://localhost:3000) in your browser
+
+### Development Commands
 ```bash
-yarn dev
+pnpm dev          # Start development server
+pnpm build        # Build for production
+pnpm start        # Start production server
+pnpm lint         # Run ESLint
 ```
 
-The application will be available at [http://localhost:3000](http://localhost:3000)
+## 🤝 Target Audience
 
-### Build for Production
+### Primary Users: Registered Dietitians & Nutritionists
+- **Solo practitioners** looking to digitize their practice
+- **Nutrition clinics** needing client management solutions
+- **Sports nutritionists** working with athletes and teams
+- **Clinical dietitians** in healthcare settings
+- **Wellness coaches** focusing on nutrition guidance
 
-Using npm:
-```bash
-npm run build
-```
+### Use Cases:
+- **Private practice management** - Client intake, meal planning, progress tracking
+- **Clinical nutrition** - Medical nutrition therapy and patient care
+- **Sports nutrition** - Performance optimization and athlete support
+- **Corporate wellness** - Employee nutrition programs
+- **Telehealth nutrition** - Remote client consultations and support
 
-Using pnpm:
-```bash
-pnpm build
-```
+## 📊 Current Feature Status
 
-### Start Production Server
+### ✅ Production Ready Features
+- User authentication and profile management
+- Client management with progress tracking
+- Basic meal plan creation and management
+- Recipe and template library
+- Appointment scheduling
+- Settings and preferences
 
-Using npm:
-```bash
-npm start
-```
+### ⚠️ Partially Implemented Features
+- AI meal plan generation (functional but needs refinement)
+- PDF export functionality (UI ready, implementation needed)
+- Email notifications (UI ready, backend integration needed)
+- Payment processing (basic invoicing, payment gateway needed)
 
-Using pnpm:
-```bash
-pnpm start
-```
+### ❌ Planned Features
+- Real-time client messaging system
+- Advanced nutritional analysis tools
+- Food database integration
+- Mobile application
+- Multi-language support
+- Advanced reporting and analytics
+- Client self-service portal
 
-### Linting
+## 🔒 Security & Compliance
 
-Using npm:
-```bash
-npm run lint
-```
+- **Row Level Security (RLS)** - Ensures data isolation between practices
+- **HIPAA considerations** - Built with healthcare data privacy in mind
+- **Secure authentication** - Supabase Auth with modern security practices
+- **Data encryption** - All data encrypted in transit and at rest
 
-Using pnpm:
-```bash
-pnpm lint
-```
+## 📈 Future Roadmap
 
-## 📁 Project Structure
-
-```
-nutriflow/
-├── app/                        # Next.js App Router
-│   ├── auth/                   # Authentication pages
-│   ├── dashboard/              # Main dashboard pages
-│   │   ├── clients/           # Client management
-│   │   ├── meal-plans/        # Meal planning
-│   │   ├── reminders/         # Reminder system
-│   │   ├── invoices/          # Invoice management
-│   │   └── settings/          # Settings page
-│   ├── login/                 # Login page
-│   └── signup/                # Registration page
-├── components/                 # Reusable React components
-│   ├── auth/                  # Authentication components
-│   ├── ui/                    # UI component library
-│   └── [other-components]     # Feature-specific components
-├── hooks/                     # Custom React hooks
-├── lib/                       # Utility libraries
-│   ├── supabase.ts           # Supabase client configuration
-│   ├── gemini.ts             # Google AI integration
-│   └── utils.ts              # General utilities
-├── scripts/                   # Database scripts
-│   ├── supabase-schema.sql   # Database schema
-│   └── seed-data.sql         # Sample data
-└── public/                    # Static assets
-```
-
-## 🔐 Authentication Flow
-
-1. **Registration**: Users sign up with email/password
-2. **Email Verification**: Supabase sends verification email
-3. **Profile Creation**: Additional profile information is stored
-4. **Dashboard Access**: Authenticated users access the dashboard
-
-## 📊 Key Features Guide
-
-### Client Management
-- Add new clients with detailed profiles
-- Track dietary restrictions and health goals
-- Monitor client progress over time
-
-### Meal Planning
-- Generate AI-powered meal plans
-- Customize based on dietary restrictions
-- Save and reuse meal plan templates
-
-### Reminders
-- Set up automated client reminders
-- Schedule follow-up appointments
-- Track reminder delivery status
-
-### Invoicing
-- Create professional invoices
-- Track payment status
-- Generate financial reports
-
-## 🚀 Deployment
-
-### Vercel (Recommended)
-
-1. Push your code to GitHub
-2. Connect your repository to Vercel
-3. Add environment variables in Vercel dashboard
-4. Deploy automatically
-
-### Other Platforms
-
-The application is built with Next.js and can be deployed to:
-- Netlify
-- Railway
-- DigitalOcean App Platform
-- AWS Amplify
-
-## 🔧 Troubleshooting
-
-### Common Issues
-
-1. **Database Connection Issues**
-   - Verify your Supabase credentials
-   - Check if your IP is whitelisted in Supabase
-   - Ensure RLS policies are properly configured
-   - **Most Important**: Run the database schema first! Many errors are caused by missing tables
-   - If you see "relation does not exist" errors, you need to create the database tables
-
-2. **AI Integration Issues**
-   - Verify your Google AI API key is correct
-   - Check API quotas and limits in Google AI Studio
-   - Ensure the Gemini AI service is enabled
-   - **Meal plans require a valid API key** - the feature will not work without it
-   - If you see "Gemini API key is required" error, add `NEXT_PUBLIC_GEMINI_API_KEY` to your `.env.local`
-   - Restart the development server after adding the API key
-
-3. **Build Errors**
-   - Clear `.next` folder and reinstall dependencies
-   - Check TypeScript errors in the build output
-   - Verify all environment variables are set
-
-4. **Dependency Resolution Issues (npm)**
-   - Use `npm install --legacy-peer-deps` instead of `npm install`
-   - Or try `npm install --force` as an alternative
-   - This resolves conflicts between date-fns and react-day-picker versions
-   - If you see "Can't resolve 'react-is'" error, install it manually: `npm install react-is --legacy-peer-deps`
-
-5. **Supabase Import Errors**
-   - If you see `'auth' is not exported from '@/lib/supabase'` or `auth is undefined`, restart the development server
-   - Clear `.next` folder: `rm -rf .next` and restart
-   - The auth methods are accessed via `supabase.auth`, not a separate export
-   - This error can appear in multiple files (`AuthProvider.tsx`, `useAuth.ts`) - all need to be fixed
-
-6. **Authentication Errors**
-   - `Invalid login credentials` is normal when:
-     - Database tables haven't been created yet (run the SQL schema first)
-     - Trying to log in with non-existent account (create account via signup)
-     - Email/password combination is incorrect
-   - Create a test account via `/signup` page or Supabase dashboard
-
-### Getting Help
-
-- Check the [Issues](your-repo-issues-url) page for known problems
-- Review Supabase documentation for database issues
-- Check Next.js documentation for framework-related questions
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch: `git checkout -b feature/new-feature`
-3. Commit your changes: `git commit -am 'Add new feature'`
-4. Push to the branch: `git push origin feature/new-feature`
-5. Submit a pull request
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🙏 Acknowledgments
-
-- [Next.js](https://nextjs.org/) for the React framework
-- [Supabase](https://supabase.com/) for backend services
-- [Tailwind CSS](https://tailwindcss.com/) for styling
-- [Radix UI](https://www.radix-ui.com/) for accessible components
-- [Google AI](https://ai.google.dev/) for AI-powered features
-- [Vercel](https://vercel.com/) for deployment platform
+1. **Phase 1:** Complete core feature implementation (PDF export, messaging)
+2. **Phase 2:** Advanced nutrition analysis and food database integration
+3. **Phase 3:** Mobile application and client portal
+4. **Phase 4:** Practice analytics and reporting suite
+5. **Phase 5:** Third-party integrations (calendars, EMR systems)
 
 ---
 
-**NutriFlow** - Empowering dietitians with modern technology to deliver exceptional client care.
+**NutriFlow** represents the future of nutrition practice management, combining the efficiency of modern technology with the personal touch that clients expect from their nutrition professionals. Built by developers who understand the unique needs of dietitians and nutritionists in today's digital healthcare landscape.

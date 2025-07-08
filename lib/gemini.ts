@@ -1,11 +1,13 @@
-import { GoogleGenerativeAI } from "@google/generative-ai"
-
 const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY
 
-let genAI: GoogleGenerativeAI | null = null
+let genAI: any = null
 
-if (apiKey) {
-  genAI = new GoogleGenerativeAI(apiKey)
+async function initializeGenAI() {
+  if (typeof window !== 'undefined' && apiKey && !genAI) {
+    const { GoogleGenerativeAI } = await import("@google/generative-ai")
+    genAI = new GoogleGenerativeAI(apiKey)
+  }
+  return genAI
 }
 
 export interface MealPlanRequest {
@@ -67,6 +69,8 @@ export interface GeneratedMealPlan {
 }
 
 export async function generateMealPlan(request: MealPlanRequest): Promise<GeneratedMealPlan> {
+  const genAI = await initializeGenAI()
+  
   if (!genAI || !apiKey) {
     throw new Error(
       "Gemini API key is required to generate meal plans. Please add NEXT_PUBLIC_GEMINI_API_KEY to your .env.local file. " +

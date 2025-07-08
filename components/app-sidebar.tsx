@@ -1,31 +1,31 @@
 "use client"
 
+import { BarChart3, Bell, Calculator, Calendar, ChefHat, FileText, Home, LogOut, MessageCircle, Plus, Receipt, Settings, Users } from "lucide-react"
 import type * as React from "react"
-import { Users, FileText, BookOpen, Bell, Receipt, Settings, Home, Plus, LogOut, Calendar, ChefHat } from "lucide-react"
 
 import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-} from "@/components/ui/sidebar"
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import {
+    Sidebar,
+    SidebarContent,
+    SidebarFooter,
+    SidebarGroup,
+    SidebarGroupContent,
+    SidebarGroupLabel,
+    SidebarHeader,
+    SidebarMenu,
+    SidebarMenuButton,
+    SidebarMenuItem,
+    SidebarRail,
+} from "@/components/ui/sidebar"
+import { useAuth } from "@/hooks/useAuthNew"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
-import { useAuth } from "@/hooks/useAuthNew"
 
 const data = {
   navMain: [
@@ -45,6 +45,16 @@ const data = {
       icon: FileText,
     },
     {
+      title: "Analyse nutritionnelle",
+      url: "/dashboard/nutrition-analysis",
+      icon: Calculator,
+    },
+    {
+      title: "Messages",
+      url: "/dashboard/messages",
+      icon: MessageCircle,
+    },
+    {
       title: "Bibliothèque de recettes",
       url: "/dashboard/templates",
       icon: ChefHat,
@@ -58,6 +68,22 @@ const data = {
       title: "Rappels",
       url: "/dashboard/reminders",
       icon: Bell,
+    },
+    {
+      title: "Analyses & Rapports",
+      url: "/dashboard/analytics",
+      icon: BarChart3,
+    },
+    {
+      title: "Calendrier Avancé",
+      url: "/dashboard/calendar",
+      icon: Calendar,
+    },
+    {
+      title: "Portail Client",
+      url: "/client-portal",
+      icon: Users,
+      badge: "Portal",
     },
     {
       title: "Factures",

@@ -1,42 +1,5 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Badge } from "@/components/ui/badge"
-import { Separator } from "@/components/ui/separator"
-import { 
-  ArrowLeft,
-  Edit,
-  Copy,
-  Trash2,
-  Calendar,
-  Clock,
-  Zap,
-  Users,
-  Target,
-  ChefHat,
-  Activity,
-  Heart,
-  TrendingUp,
-  FileText,
-  Download,
-  Share2,
-  MoreHorizontal,
-  Plus,
-  Check,
-  X
-} from "lucide-react"
-import { useAuth } from "@/hooks/useAuthNew"
-import { supabase, type MealPlan, type Client } from "@/lib/supabase"
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger,
-  DropdownMenuSeparator 
-} from "@/components/ui/dropdown-menu"
 import {
   AlertDialog,
   AlertDialogAction,
@@ -47,6 +10,9 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
   Dialog,
   DialogContent,
@@ -55,11 +21,43 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/hooks/use-toast"
+import { useAuth } from "@/hooks/useAuthNew"
+import { generateMealPlanPDF, type MealPlanPDFData } from "@/lib/pdf-generator"
+import { supabase, type MealPlan } from "@/lib/supabase"
+import {
+  Activity,
+  ArrowLeft,
+  Calendar,
+  ChefHat,
+  Clock,
+  Copy,
+  Download,
+  Edit,
+  FileText,
+  Heart,
+  MoreHorizontal,
+  Share2,
+  Target,
+  Trash2,
+  TrendingUp,
+  Users,
+  Zap
+} from "lucide-react"
+import { useParams, useRouter } from "next/navigation"
+import { useEffect, useState } from "react"
 
 interface MealPlanWithClient extends MealPlan {
   clients: { id: string; name: string; email: string } | null
@@ -244,6 +242,32 @@ export default function MealPlanDetailPage() {
         variant: "destructive"
       })
     }
+  }
+
+  const handleExportPDF = () => {
+    if (!mealPlan) return
+
+    const dayPlans = generateSampleDays(mealPlan.duration_days || 7)
+    
+    const pdfData: MealPlanPDFData = {
+      id: mealPlan.id,
+      name: mealPlan.name,
+      description: mealPlan.description || undefined,
+      clientName: mealPlan.clients?.name || "Client inconnu",
+      clientEmail: mealPlan.clients?.email || "",
+      duration_days: mealPlan.duration_days || 7,
+      calories_range: mealPlan.calories_range || undefined,
+      status: mealPlan.status,
+      created_at: mealPlan.created_at,
+      dayPlans: dayPlans
+    }
+
+    generateMealPlanPDF(pdfData)
+    
+    toast({
+      title: "PDF généré",
+      description: "Le plan alimentaire a été exporté en PDF avec succès."
+    })
   }
 
   const handleDuplicate = async () => {
@@ -469,7 +493,7 @@ export default function MealPlanDetailPage() {
                   <Share2 className="mr-2 h-4 w-4" />
                   Partager le plan
                 </DropdownMenuItem>
-                <DropdownMenuItem className="rounded-md">
+                <DropdownMenuItem onClick={handleExportPDF} className="rounded-md">
                   <Download className="mr-2 h-4 w-4" />
                   Exporter en PDF
                 </DropdownMenuItem>
@@ -670,7 +694,7 @@ export default function MealPlanDetailPage() {
                   <Share2 className="mr-2 h-4 w-4" />
                   Partager avec le client
                 </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleExportPDF}>
                   <Download className="mr-2 h-4 w-4" />
                   Exporter en PDF
                 </Button>
