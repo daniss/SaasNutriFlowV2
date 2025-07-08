@@ -298,7 +298,7 @@ export default function MealPlansPage() {
   }
 
   return (
-    <div className="min-h-screen">
+    <div className="space-y-6">
       <DashboardHeader 
         title="Plans alimentaires"
         subtitle="Créez des plans nutritionnels personnalisés qui transforment le parcours santé de vos clients"
@@ -408,9 +408,11 @@ export default function MealPlansPage() {
         }
       />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Stats Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+      
+
+      {/* Stats Cards */}
+      <div className="px-4 sm:px-6 space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm hover:shadow-md transition-all duration-200 rounded-xl">
             <CardContent className="p-6">
               <div className="flex items-center justify-between">
@@ -477,7 +479,7 @@ export default function MealPlansPage() {
         </div>
 
         {/* Filter Section */}
-        <div className="flex items-center gap-4 mb-8">
+        <div className="flex items-center gap-4">
           <Select value={filterStatus} onValueChange={setFilterStatus}>
             <SelectTrigger className="w-44 h-11 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm">
               <Filter className="h-4 w-4 mr-2 text-slate-500" />
@@ -652,28 +654,28 @@ export default function MealPlansPage() {
             })}
           </div>
         )}
-      </div>
 
-      {/* Delete Confirmation Dialog */}
-      <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent className="rounded-xl">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Supprimer le plan alimentaire</AlertDialogTitle>
-            <AlertDialogDescription>
-              Êtes-vous sûr de vouloir supprimer "{planToDelete?.name}" ? Cette action ne peut pas être annulée et supprimera définitivement le plan alimentaire et toutes les données associées.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => setPlanToDelete(null)}>Annuler</AlertDialogCancel>
-            <AlertDialogAction 
-              onClick={() => planToDelete && handleDelete(planToDelete)} 
-              className="bg-red-600 hover:bg-red-700"
-            >
-              Supprimer le plan
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+        {/* Delete Confirmation Dialog */}
+        <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
+          <AlertDialogContent className="rounded-xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Supprimer le plan alimentaire</AlertDialogTitle>
+              <AlertDialogDescription>
+                Êtes-vous sûr de vouloir supprimer "{planToDelete?.name}" ? Cette action ne peut pas être annulée et supprimera définitivement le plan alimentaire et toutes les données associées.
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel onClick={() => setPlanToDelete(null)}>Annuler</AlertDialogCancel>
+              <AlertDialogAction 
+                onClick={() => planToDelete && handleDelete(planToDelete)} 
+                className="bg-red-600 hover:bg-red-700"
+              >
+                Supprimer le plan
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+      </div>
     </div>
   )
 }

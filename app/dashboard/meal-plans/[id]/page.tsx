@@ -65,6 +65,12 @@ interface MealPlanWithClient extends MealPlan {
   clients: { id: string; name: string; email: string } | null
 }
 
+interface ClientOption {
+  id: string
+  name: string
+  email: string
+}
+
 interface DayPlan {
   day: number
   meals: {
@@ -81,7 +87,7 @@ export default function MealPlanDetailPage() {
   const router = useRouter()
   const { user } = useAuth()
   const [mealPlan, setMealPlan] = useState<MealPlanWithClient | null>(null)
-  const [clients, setClients] = useState<Client[]>([])
+  const [clients, setClients] = useState<ClientOption[]>([])
   const [loading, setLoading] = useState(true)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
@@ -365,8 +371,8 @@ export default function MealPlanDetailPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="space-y-6">
+        <div className="px-4 sm:px-6">
           <div className="animate-pulse space-y-8">
             <div className="flex items-center gap-4">
               <div className="h-10 w-10 bg-slate-200 rounded-lg"></div>
@@ -390,8 +396,8 @@ export default function MealPlanDetailPage() {
 
   if (!mealPlan) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
-        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="space-y-6">
+        <div className="px-4 sm:px-6">
           <div className="text-center py-12">
             <FileText className="h-16 w-16 text-slate-400 mx-auto mb-4" />
             <h1 className="text-2xl font-bold text-slate-900 mb-2">Plan alimentaire introuvable</h1>
@@ -410,10 +416,10 @@ export default function MealPlanDetailPage() {
   const dayPlans = generateSampleDays(mealPlan.duration_days || 7)
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="space-y-6">
+      <div className="px-4 sm:px-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <Button
               variant="ghost"

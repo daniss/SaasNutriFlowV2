@@ -507,8 +507,8 @@ export default function ClientDetailPage() {
 
   if (!client) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="space-y-6">
+        <div className="px-4 sm:px-6">
           <Alert variant="destructive">
             <AlertDescription>Client non trouvé</AlertDescription>
           </Alert>
@@ -521,10 +521,10 @@ export default function ClientDetailPage() {
   const currentWeight = getCurrentWeight()
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <div className="space-y-6">
+      <div className="px-4 sm:px-6 space-y-6">
         {/* Back Navigation */}
-        <div className="flex items-center gap-4 mb-6">
+        <div className="flex items-center gap-4">
           <Button 
             variant="ghost" 
             size="sm" 
@@ -537,7 +537,7 @@ export default function ClientDetailPage() {
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div className="h-12 w-12 bg-emerald-100 rounded-xl flex items-center justify-center">
               <User className="h-6 w-6 text-emerald-600" />
@@ -583,7 +583,7 @@ export default function ClientDetailPage() {
         )}
 
         {/* Quick Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-4 mb-8">
+        <div className="grid gap-6 md:grid-cols-4">
           <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-sm font-semibold text-slate-700">Poids actuel</CardTitle>
