@@ -54,56 +54,11 @@ import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 // Dynamic import with client-side only loading to prevent server-side issues
 
-// Temporarily commenting out to debug build issues - NOW FIXED!
-// import { generateMealPlan, type GeneratedMealPlan, type Meal } from "@/lib/gemini"
+// Now restored and working with proper dynamic imports!
+import { generateMealPlan, type GeneratedMealPlan, type Meal } from "@/lib/gemini"
 import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type Client } from "@/lib/supabase"
 import jsPDF from "jspdf"
-
-// Temporary type definitions while debugging build issues
-interface Meal {
-  name: string
-  description: string
-  calories: number
-  protein: number
-  carbs: number
-  fat: number
-  fiber: number
-  prepTime: number
-  cookTime: number
-}
-
-interface DayPlan {
-  day: number
-  date: string
-  meals: {
-    breakfast: Meal
-    lunch: Meal
-    dinner: Meal
-    snacks: Meal[]
-  }
-  totalCalories: number
-  totalProtein: number
-  totalCarbs: number
-  totalFat: number
-  totalFiber: number
-}
-
-interface GeneratedMealPlan {
-  name: string
-  description: string
-  duration: number
-  targetCalories: number
-  days: DayPlan[]
-  shoppingList: string[]
-  notes: string[]
-  nutritionSummary: {
-    avgProtein: number
-    avgCarbs: number
-    avgFat: number
-    avgFiber: number
-  }
-}
 
 export default function GenerateMealPlanPage() {
   const router = useRouter()
@@ -238,87 +193,18 @@ export default function GenerateMealPlanPage() {
     }, 800)
 
     try {
-      // Temporary mock implementation while debugging build issues
-      const plan: GeneratedMealPlan = {
-        name: formData.planName || "Custom Meal Plan",
-        description: "This is a mock meal plan generated while debugging build issues.",
-        duration: formData.duration,
-        targetCalories: formData.targetCalories,
-        days: Array.from({ length: formData.duration }, (_, i) => ({
-          day: i + 1,
-          date: new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-          meals: {
-            breakfast: {
-              name: "Mock Breakfast",
-              description: "Temporary meal for testing",
-              calories: 400,
-              protein: 20,
-              carbs: 50,
-              fat: 15,
-              fiber: 8,
-              prepTime: 10,
-              cookTime: 5
-            },
-            lunch: {
-              name: "Mock Lunch", 
-              description: "Temporary meal for testing",
-              calories: 500,
-              protein: 25,
-              carbs: 60,
-              fat: 18,
-              fiber: 10,
-              prepTime: 15,
-              cookTime: 10
-            },
-            dinner: {
-              name: "Mock Dinner",
-              description: "Temporary meal for testing", 
-              calories: 600,
-              protein: 30,
-              carbs: 70,
-              fat: 20,
-              fiber: 12,
-              prepTime: 20,
-              cookTime: 25
-            },
-            snacks: [{
-              name: "Mock Snack",
-              description: "Temporary snack for testing",
-              calories: 200,
-              protein: 10,
-              carbs: 25,
-              fat: 8,
-              fiber: 5,
-              prepTime: 5,
-              cookTime: 0
-            }]
-          },
-          totalCalories: 1700,
-          totalProtein: 85,
-          totalCarbs: 205,
-          totalFat: 61,
-          totalFiber: 35
-        })),
-        shoppingList: ["Mock ingredient 1", "Mock ingredient 2", "Mock ingredient 3"],
-        notes: ["This is a mock plan for testing", "Build debugging in progress"],
-        nutritionSummary: {
-          avgProtein: 85,
-          avgCarbs: 205,
-          avgFat: 61,
-          avgFiber: 35
-        }
+      // Real AI generation with Google Gemini!
+      const mealPlanRequest = {
+        prompt: formData.prompt,
+        clientId: formData.selectedClient || undefined,
+        duration: parseInt(formData.duration) || 7,
+        targetCalories: parseInt(formData.targetCalories) || 2000,
+        dietType: formData.dietType,
+        restrictions: formData.restrictions,
+        goals: formData.goals
       }
 
-      // Mock the original generateMealPlan call
-      // const plan = await generateMealPlan({
-      //   prompt: formData.prompt,
-      //   clientId: formData.clientId,
-      //   duration: formData.duration,
-      //   targetCalories: formData.targetCalories,
-      //   dietType: formData.dietType,
-      //   restrictions: formData.restrictions,
-      //   goals: formData.goals,
-      // })
+      const plan: GeneratedMealPlan = await generateMealPlan(mealPlanRequest)
 
       setGenerationProgress(100)
       setTimeout(() => {

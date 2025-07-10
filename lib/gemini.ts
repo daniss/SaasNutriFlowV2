@@ -87,31 +87,25 @@ export async function generateMealPlan(request: MealPlanRequest): Promise<Genera
         temperature: 0.7,
         topK: 40,
         topP: 0.95,
-        maxOutputTokens: 2500, // Reduced to prevent truncation
+        maxOutputTokens: 4000, // Increased to handle complete responses
       },
     })
 
     // Limit the number of days to prevent token overflow
-    const maxDays = request.duration > 5 ? 3 : request.duration // Generate max 3 days at a time
+    const maxDays = Math.min(request.duration || 1, 1) // Start with 1 day for reliability
 
     const prompt = `
-You are a professional registered dietitian. Generate EXACTLY ${maxDays} days of meals.
-
-Client Request: ${request.prompt}
-Target Calories: ${request.targetCalories || 2000}/day
-Diet Type: ${request.dietType || "Balanced"}
-
-CRITICAL: Return ONLY valid JSON. No markdown or explanations.
+Create a ${maxDays}-day meal plan. Return ONLY valid JSON:
 
 {
-  "name": "Plan Name",
-  "description": "Brief description",
+  "name": "Meal Plan for ${request.prompt || 'Client'}",
+  "description": "Meal plan for ${request.dietType || 'balanced'} diet with ${request.targetCalories || 2000} calories",
   "duration": ${maxDays},
   "targetCalories": ${request.targetCalories || 2000},
-  "days": [${Array.from({length: maxDays}, (_, i) => `
+  "days": [
     {
-      "day": ${i + 1},
-      "date": "${new Date(Date.now() + i * 24 * 60 * 60 * 1000).toISOString().split('T')[0]}",
+      "day": 1,
+      "date": "${new Date().toISOString().split('T')[0]}",
       "meals": {
         "breakfast": {
           "name": "Breakfast Name",
@@ -177,8 +171,8 @@ CRITICAL: Return ONLY valid JSON. No markdown or explanations.
       "totalCarbs": 205,
       "totalFat": 71,
       "totalFiber": 35
-    }`).join(',')
-  }],
+    }
+  ],
   "shoppingList": ["item 1", "item 2", "item 3"],
   "notes": ["tip 1", "tip 2"],
   "nutritionSummary": {
@@ -190,7 +184,12 @@ CRITICAL: Return ONLY valid JSON. No markdown or explanations.
   }
 }
 
-Create varied, nutritious meals respecting dietary restrictions.
+Client: ${request.prompt || 'General nutrition'}
+Diet: ${request.dietType || 'Balanced'}
+Calories: ${request.targetCalories || 2000}/day
+Restrictions: ${request.restrictions?.join(', ') || 'None'}
+
+Create nutritious meals. Return complete, valid JSON only.
 `
 
     console.log("📤 Sending request to Gemini API...")
