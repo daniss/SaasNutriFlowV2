@@ -1,55 +1,55 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DashboardHeader } from "@/components/dashboard-header"
+import { DashboardSkeleton, EmptyStateWithSkeleton } from "@/components/shared/skeletons"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Calendar } from "@/components/ui/calendar"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog"
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
+} from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Calendar } from "@/components/ui/calendar"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger,
-  DropdownMenuSeparator 
-} from "@/components/ui/dropdown-menu"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { Alert, AlertDescription } from "@/components/ui/alert"
-import { 
-  Plus, 
-  Calendar as CalendarIcon, 
-  Clock, 
-  Users, 
-  MoreHorizontal,
-  Edit3,
-  Trash2,
-  CheckCircle,
-  AlertCircle,
-  RefreshCw,
-  Video,
-  MapPin
-} from "lucide-react"
 import { useAuth } from "@/hooks/useAuthNew"
-import { supabase, type Client, type Appointment } from "@/lib/supabase"
-import { DashboardHeader } from "@/components/dashboard-header"
-import { getStatusDisplay, getStatusVariant } from "@/lib/status"
-import { formatDate, formatTime } from "@/lib/formatters"
-import { DashboardSkeleton, ListSkeleton, EmptyStateWithSkeleton } from "@/components/shared/skeletons"
 import { api, type AppointmentWithClient } from "@/lib/api"
-import { handleApiError } from "@/lib/errors"
+import { formatTime } from "@/lib/formatters"
+import { getStatusDisplay, getStatusVariant } from "@/lib/status"
+import { type Client } from "@/lib/supabase"
+import {
+    AlertCircle,
+    Bell,
+    Calendar as CalendarIcon,
+    CheckCircle,
+    Clock,
+    Edit3,
+    MapPin,
+    MoreHorizontal,
+    Plus,
+    RefreshCw,
+    Trash2,
+    Users,
+    Video
+} from "lucide-react"
+import { useEffect, useState } from "react"
 
 // Types
 type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show'
@@ -272,6 +272,63 @@ export default function AppointmentsPage() {
       toast({
         title: "Erreur",
         description: "Impossible de mettre à jour le statut",
+        variant: "destructive",
+      })
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const sendAppointmentReminder = async (appointment: AppointmentWithClient) => {
+    if (!appointment.clients?.email) {
+      toast({
+        title: "Erreur",
+        description: "Email du client introuvable",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setActionLoading(`reminder-${appointment.id}`)
+
+      const response = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'appointment_reminder',
+          recipient: {
+            email: appointment.clients.email,
+            name: appointment.clients.name,
+          },
+          data: {
+            appointmentDate: appointment.appointment_date,
+            appointmentTime: appointment.appointment_time,
+            dietitianName: user?.email || 'Votre diététicien',
+            title: appointment.title,
+            location: appointment.is_virtual ? appointment.meeting_link : appointment.location,
+            isVirtual: appointment.is_virtual,
+          },
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi du rappel')
+      }
+
+      toast({
+        title: "Rappel envoyé",
+        description: `Rappel de rendez-vous envoyé à ${appointment.clients.name}`,
+      })
+    } catch (error) {
+      console.error('❌ Send reminder error:', error)
+      toast({
+        title: "Erreur d'envoi",
+        description: error instanceof Error ? error.message : "Une erreur s'est produite",
         variant: "destructive",
       })
     } finally {
@@ -721,7 +778,9 @@ export default function AppointmentsPage() {
                         onEdit={openEditDialog}
                         onDelete={handleDeleteAppointment}
                         onUpdateStatus={handleUpdateStatus}
+                        onSendReminder={sendAppointmentReminder}
                         isLoading={actionLoading === appointment.id}
+                        isReminderLoading={actionLoading === `reminder-${appointment.id}`}
                       />
                     ))}
                   </div>
@@ -744,7 +803,9 @@ export default function AppointmentsPage() {
                         onEdit={openEditDialog}
                         onDelete={handleDeleteAppointment}
                         onUpdateStatus={handleUpdateStatus}
+                        onSendReminder={sendAppointmentReminder}
                         isLoading={actionLoading === appointment.id}
+                        isReminderLoading={actionLoading === `reminder-${appointment.id}`}
                       />
                     ))}
                   </div>
@@ -779,7 +840,9 @@ export default function AppointmentsPage() {
                         onEdit={openEditDialog}
                         onDelete={handleDeleteAppointment}
                         onUpdateStatus={handleUpdateStatus}
+                        onSendReminder={sendAppointmentReminder}
                         isLoading={actionLoading === appointment.id}
+                        isReminderLoading={actionLoading === `reminder-${appointment.id}`}
                       />
                     ))}
                   </div>
@@ -799,13 +862,17 @@ function AppointmentCard({
   onEdit, 
   onDelete, 
   onUpdateStatus, 
-  isLoading 
+  onSendReminder,
+  isLoading,
+  isReminderLoading
 }: { 
   appointment: AppointmentWithClient
   onEdit: (appointment: AppointmentWithClient) => void
   onDelete: (appointmentId: string) => void
   onUpdateStatus: (appointmentId: string, status: AppointmentStatus) => void
+  onSendReminder: (appointment: AppointmentWithClient) => void
   isLoading: boolean
+  isReminderLoading: boolean
 }) {
   const getTypeLabel = (type: string) => {
     const labels = {
@@ -870,6 +937,13 @@ function AppointmentCard({
                 <DropdownMenuItem onClick={() => onEdit(appointment)}>
                   <Edit3 className="mr-2 h-4 w-4" />
                   Modifier
+                </DropdownMenuItem>
+                <DropdownMenuItem 
+                  onClick={() => onSendReminder(appointment)}
+                  disabled={isReminderLoading || appointment.status === "cancelled"}
+                >
+                  <Bell className="mr-2 h-4 w-4" />
+                  {isReminderLoading ? "Envoi..." : "Envoyer rappel"}
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem 

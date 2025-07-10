@@ -15,48 +15,48 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Textarea } from "@/components/ui/textarea"
 import {
-  Activity,
-  AlertTriangle,
-  Award,
-  BarChart3,
-  BookOpen,
-  Calendar,
-  Check,
-  ChefHat,
-  Clock,
-  Download,
-  Edit,
-  Flame,
-  Globe,
-  Grid,
-  Leaf,
-  List,
-  Loader2,
-  PieChart,
-  RefreshCw,
-  Save,
-  Send,
-  Settings,
-  Shield,
-  ShoppingCart,
-  Sparkles,
-  Target,
-  ThumbsDown,
-  ThumbsUp,
-  Timer,
-  TrendingUp,
-  Users,
-  Utensils,
-  X,
-  Zap
+    Activity,
+    AlertTriangle,
+    Award,
+    BarChart3,
+    BookOpen,
+    Calendar,
+    Check,
+    ChefHat,
+    Clock,
+    Download,
+    Edit,
+    Flame,
+    Globe,
+    Grid,
+    Leaf,
+    List,
+    Loader2,
+    PieChart,
+    RefreshCw,
+    Save,
+    Send,
+    Settings,
+    Shield,
+    ShoppingCart,
+    Sparkles,
+    Target,
+    ThumbsDown,
+    ThumbsUp,
+    Timer,
+    TrendingUp,
+    Users,
+    Utensils,
+    X,
+    Zap
 } from "lucide-react"
 import { useRouter } from "next/navigation"
 import { useEffect, useRef, useState } from "react"
 // Dynamic import with client-side only loading to prevent server-side issues
 
 // Now restored and working with proper dynamic imports!
-import { generateMealPlan, type GeneratedMealPlan, type Meal } from "@/lib/gemini"
 import { useAuth } from "@/hooks/useAuthNew"
+import { generateMealPlan, type GeneratedMealPlan, type Meal } from "@/lib/gemini"
 import { supabase, type Client } from "@/lib/supabase"
 import jsPDF from "jspdf"
 
@@ -196,9 +196,9 @@ export default function GenerateMealPlanPage() {
       // Real AI generation with Google Gemini!
       const mealPlanRequest = {
         prompt: formData.prompt,
-        clientId: formData.selectedClient || undefined,
-        duration: parseInt(formData.duration) || 7,
-        targetCalories: parseInt(formData.targetCalories) || 2000,
+        clientId: formData.clientId || undefined,
+        duration: parseInt(formData.duration.toString()) || 7,
+        targetCalories: parseInt(formData.targetCalories.toString()) || 2000,
         dietType: formData.dietType,
         restrictions: formData.restrictions,
         goals: formData.goals

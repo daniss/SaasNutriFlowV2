@@ -1,4 +1,3 @@
-import config from '@/lib/config'
 import { createClient } from '@/lib/supabase/server'
 import { NextResponse } from 'next/server'
 
@@ -73,7 +72,7 @@ export async function GET() {
       uptime: process.uptime(),
       services,
       environment: {
-        nodeEnv: config.app.env,
+        nodeEnv: process.env.NODE_ENV || 'development',
         region: process.env.VERCEL_REGION || process.env.AWS_REGION || null
       },
       performance: {
@@ -136,7 +135,7 @@ async function checkDatabase(): Promise<ServiceStatus> {
 }
 
 async function checkAIService(): Promise<ServiceStatus> {
-  if (!config.ai.googleApiKey && !config.ai.openaiApiKey) {
+  if (!process.env.GEMINI_API_KEY) {
     return {
       status: 'not_configured',
       message: 'No AI service configured',
@@ -153,10 +152,8 @@ async function checkAIService(): Promise<ServiceStatus> {
   }
 }
 
-async function checkEmailService(): Promise<ServiceStatus> {
-  const hasEmailConfig = config.email.resendApiKey || 
-                        config.email.sendgridApiKey || 
-                        (config.email.smtp.host && config.email.smtp.user)
+async function checkEmailService(): Promise<ServiceStatus> {  const hasEmailConfig = process.env.RESEND_API_KEY ||
+                        process.env.SENDGRID_API_KEY
   
   if (!hasEmailConfig) {
     return {
@@ -174,7 +171,7 @@ async function checkEmailService(): Promise<ServiceStatus> {
 }
 
 async function checkStorageService(): Promise<ServiceStatus> {
-  if (!config.storage.aws.accessKeyId || !config.storage.aws.secretAccessKey) {
+  if (!process.env.AWS_ACCESS_KEY_ID || !process.env.AWS_SECRET_ACCESS_KEY) {
     return {
       status: 'not_configured',
       message: 'Storage service not configured (using local storage)',
@@ -190,7 +187,7 @@ async function checkStorageService(): Promise<ServiceStatus> {
 }
 
 async function checkMonitoringService(): Promise<ServiceStatus> {
-  if (!config.monitoring.enabled) {
+  if (!process.env.SENTRY_DSN) {
     return {
       status: 'not_configured',
       message: 'Monitoring disabled',

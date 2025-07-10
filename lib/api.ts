@@ -2,12 +2,12 @@
  * Centralized API service for data fetching
  */
 
-import { supabase } from "@/lib/supabase"
-import type { Client, MealPlan, Invoice, Reminder, Appointment } from "@/lib/supabase"
-import { withErrorHandling } from "@/lib/errors"
+import { withErrorHandling } from "@/lib/errors";
+import type { Appointment, Client, Invoice, MealPlan, Reminder } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
 
 export interface ReminderWithClient extends Reminder {
-  clients: { name: string } | null
+  clients: { name: string; email: string; phone?: string } | null
 }
 
 export interface MealPlanWithClient extends MealPlan {
@@ -92,7 +92,7 @@ export const api = {
         .from("reminders")
         .select(`
           *,
-          clients (name)
+          clients (name, email, phone)
         `)
         .eq("dietitian_id", dietitianId)
         .order("scheduled_date", { ascending: true })
@@ -109,7 +109,7 @@ export const api = {
         .insert(reminderData)
         .select(`
           *,
-          clients (name)
+          clients (name, email, phone)
         `)
         .single()
 
@@ -126,7 +126,7 @@ export const api = {
         .eq("id", reminderId)
         .select(`
           *,
-          clients (name)
+          clients (name, email, phone)
         `)
         .single()
 

@@ -1,58 +1,54 @@
 "use client"
 
-import { useEffect, useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { DashboardHeader } from "@/components/dashboard-header"
+import { DashboardSkeleton, EmptyStateWithSkeleton } from "@/components/shared/skeletons"
+import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
 } from "@/components/ui/dialog"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Textarea } from "@/components/ui/textarea"
-import { Checkbox } from "@/components/ui/checkbox"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { 
-  Plus, 
-  Bell, 
-  Calendar, 
-  Clock, 
-  Users, 
-  MoreHorizontal,
-  Edit3,
-  Trash2,
-  Send,
-  Eye,
-  CheckCircle,
-  AlertCircle,
-  Filter,
-  X,
-  RefreshCw
-} from "lucide-react"
 import { useAuth } from "@/hooks/useAuthNew"
-import { supabase, type Client } from "@/lib/supabase"
-import { DashboardHeader } from "@/components/dashboard-header"
-import { getStatusDisplay, getStatusVariant } from "@/lib/status"
-import { formatDate } from "@/lib/formatters"
-import { DashboardSkeleton, ListSkeleton, EmptyStateWithSkeleton } from "@/components/shared/skeletons"
 import { api, type ReminderWithClient } from "@/lib/api"
-import { handleApiError } from "@/lib/errors"
+import { formatDate } from "@/lib/formatters"
+import { getStatusDisplay, getStatusVariant } from "@/lib/status"
+import { type Client } from "@/lib/supabase"
+import {
+    AlertCircle,
+    Bell,
+    Calendar,
+    CheckCircle,
+    Clock,
+    Edit3,
+    MoreHorizontal,
+    Plus,
+    RefreshCw,
+    Send,
+    Trash2,
+    Users
+} from "lucide-react"
+import { useEffect, useState } from "react"
 
 // Enhanced types for better UX
 type ReminderStatus = 'pending' | 'sent' | 'failed' | 'cancelled'
@@ -250,6 +246,84 @@ export default function RemindersPage() {
       toast({
         title: "Erreur",
         description: "Impossible de marquer le rappel comme envoyé",
+        variant: "destructive",
+      })
+    } finally {
+      setActionLoading(null)
+    }
+  }
+
+  const sendReminderNow = async (reminder: ReminderWithClient) => {
+    if (!reminder.clients?.email) {
+      toast({
+        title: "Erreur",
+        description: "Email du client introuvable",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      setActionLoading(`send-${reminder.id}`)
+
+      // Map reminder type to notification type
+      let notificationType = 'appointment_reminder'
+      switch (reminder.type) {
+        case 'appointment':
+          notificationType = 'appointment_reminder'
+          break
+        case 'meal_plan':
+          notificationType = 'meal_plan_notification'
+          break
+        case 'follow_up':
+        case 'check_in':
+        case 'weigh_in':
+        case 'other':
+        default:
+          notificationType = 'custom_notification'
+          break
+      }
+
+      const response = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: notificationType,
+          recipient: {
+            email: reminder.clients.email,
+            name: reminder.clients.name,
+            phone: reminder.clients.phone, // Add phone if available
+          },
+          data: {
+            title: reminder.title,
+            message: reminder.message,
+            clientName: reminder.clients.name,
+            scheduledDate: reminder.scheduled_date,
+            reminderType: reminder.type,
+          },
+        }),
+      })
+
+      const result = await response.json()
+
+      if (!response.ok) {
+        throw new Error(result.error || 'Erreur lors de l\'envoi du rappel')
+      }
+
+      // Mark as sent in the database
+      await handleMarkAsSent(reminder.id)
+
+      toast({
+        title: "Rappel envoyé",
+        description: `Rappel envoyé à ${reminder.clients.name}`,
+      })
+    } catch (error) {
+      console.error('❌ Send reminder error:', error)
+      toast({
+        title: "Erreur d'envoi",
+        description: error instanceof Error ? error.message : "Une erreur s'est produite",
         variant: "destructive",
       })
     } finally {
@@ -603,13 +677,22 @@ export default function RemindersPage() {
                                 Modifier
                               </DropdownMenuItem>
                               {reminder.status === 'pending' && (
-                                <DropdownMenuItem 
-                                  onClick={() => handleMarkAsSent(reminder.id)}
-                                  disabled={actionLoading === reminder.id}
-                                >
-                                  <Send className="mr-2 h-4 w-4" />
-                                  Marquer comme envoyé
-                                </DropdownMenuItem>
+                                <>
+                                  <DropdownMenuItem 
+                                    onClick={() => sendReminderNow(reminder)}
+                                    disabled={actionLoading === `send-${reminder.id}`}
+                                  >
+                                    <Send className="mr-2 h-4 w-4" />
+                                    {actionLoading === `send-${reminder.id}` ? "Envoi..." : "Envoyer maintenant"}
+                                  </DropdownMenuItem>
+                                  <DropdownMenuItem 
+                                    onClick={() => handleMarkAsSent(reminder.id)}
+                                    disabled={actionLoading === reminder.id}
+                                  >
+                                    <CheckCircle className="mr-2 h-4 w-4" />
+                                    Marquer comme envoyé
+                                  </DropdownMenuItem>
+                                </>
                               )}
                               <DropdownMenuSeparator />
                               <DropdownMenuItem 

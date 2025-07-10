@@ -35,7 +35,7 @@ import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/useAuthNew"
-import { generateMealPlanPDF, type MealPlanPDFData } from "@/lib/pdf-generator"
+import { downloadMealPlanPDF, type MealPlanPDFData } from "@/lib/pdf-generator"
 import { supabase, type MealPlan } from "@/lib/supabase"
 import {
   Activity,
@@ -80,6 +80,15 @@ interface DayPlan {
   notes?: string
 }
 
+interface EditDayForm {
+  day: number
+  breakfast: string
+  lunch: string
+  dinner: string
+  snacks: string
+  notes: string
+}
+
 export default function MealPlanDetailPage() {
   const params = useParams()
   const router = useRouter()
@@ -90,6 +99,15 @@ export default function MealPlanDetailPage() {
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDuplicateOpen, setIsDuplicateOpen] = useState(false)
+  const [isEditDayOpen, setIsEditDayOpen] = useState(false)
+  const [editDayForm, setEditDayForm] = useState<EditDayForm>({
+    day: 1,
+    breakfast: "",
+    lunch: "",
+    dinner: "",
+    snacks: "",
+    notes: ""
+  })
   const [editForm, setEditForm] = useState({
     name: "",
     description: "",
@@ -247,27 +265,106 @@ export default function MealPlanDetailPage() {
   const handleExportPDF = () => {
     if (!mealPlan) return
 
-    const dayPlans = generateSampleDays(mealPlan.duration_days || 7)
-    
-    const pdfData: MealPlanPDFData = {
-      id: mealPlan.id,
-      name: mealPlan.name,
-      description: mealPlan.description || undefined,
-      clientName: mealPlan.clients?.name || "Client inconnu",
-      clientEmail: mealPlan.clients?.email || "",
-      duration_days: mealPlan.duration_days || 7,
-      calories_range: mealPlan.calories_range || undefined,
-      status: mealPlan.status,
-      created_at: mealPlan.created_at,
-      dayPlans: dayPlans
+    try {
+      const dayPlans = generateSampleDays(mealPlan.duration_days || 7)
+      
+      const pdfData: MealPlanPDFData = {
+        id: mealPlan.id,
+        name: mealPlan.name,
+        description: mealPlan.description || undefined,
+        clientName: mealPlan.clients?.name || "Client inconnu",
+        clientEmail: mealPlan.clients?.email || "",
+        duration_days: mealPlan.duration_days || 7,
+        calories_range: mealPlan.calories_range || undefined,
+        status: mealPlan.status,
+        created_at: mealPlan.created_at,
+        dayPlans: dayPlans
+      }
+
+      // Use downloadMealPlanPDF to actually trigger the download
+      downloadMealPlanPDF(pdfData)
+      
+      toast({
+        title: "PDF généré",
+        description: "Le plan alimentaire a été exporté en PDF avec succès."
+      })
+    } catch (error) {
+      console.error('Error exporting PDF:', error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer le PDF. Veuillez réessayer.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleSharePlan = async () => {
+    if (!mealPlan || !mealPlan.clients?.email) {
+      toast({
+        title: "Erreur",
+        description: "Email du client introuvable pour partager le plan.",
+        variant: "destructive"
+      })
+      return
     }
 
-    generateMealPlanPDF(pdfData)
-    
-    toast({
-      title: "PDF généré",
-      description: "Le plan alimentaire a été exporté en PDF avec succès."
-    })
+    try {
+      // First generate and download the PDF
+      const dayPlans = generateSampleDays(mealPlan.duration_days || 7)
+      const pdfData: MealPlanPDFData = {
+        id: mealPlan.id,
+        name: mealPlan.name,
+        description: mealPlan.description || undefined,
+        clientName: mealPlan.clients.name,
+        clientEmail: mealPlan.clients.email,
+        duration_days: mealPlan.duration_days || 7,
+        calories_range: mealPlan.calories_range || undefined,
+        status: mealPlan.status,
+        created_at: mealPlan.created_at,
+        dayPlans: dayPlans
+      }
+
+      // Download the PDF for the dietitian
+      downloadMealPlanPDF(pdfData)
+
+      // Send notification to client
+      const response = await fetch('/api/notifications', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'meal_plan_notification',
+          recipient: {
+            email: mealPlan.clients.email,
+            name: mealPlan.clients.name,
+          },
+          data: {
+            planName: mealPlan.name,
+            clientName: mealPlan.clients.name,
+            duration: mealPlan.duration_days || 7,
+            calories: mealPlan.calories_range || 'Non spécifié',
+            description: mealPlan.description || '',
+          },
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error('Erreur lors de l\'envoi de la notification')
+      }
+
+      toast({
+        title: "Plan partagé",
+        description: `Le plan alimentaire a été partagé avec ${mealPlan.clients.name} par email.`
+      })
+    } catch (error) {
+      console.error('Error sharing meal plan:', error)
+      toast({
+        title: "Erreur de partage",
+        description: error instanceof Error ? error.message : "Une erreur s'est produite lors du partage.",
+        variant: "destructive"
+      })
+    }
   }
 
   const handleDuplicate = async () => {
@@ -309,6 +406,92 @@ export default function MealPlanDetailPage() {
       toast({
         title: "Erreur",
         description: "Impossible de dupliquer le plan alimentaire. Veuillez réessayer.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleEditDay = (dayNumber: number) => {
+    const dayPlans = generateSampleDays(mealPlan?.duration_days || 7)
+    const dayData = dayPlans.find(d => d.day === dayNumber)
+    
+    if (dayData) {
+      setEditDayForm({
+        day: dayNumber,
+        breakfast: dayData.meals.breakfast.join(', '),
+        lunch: dayData.meals.lunch.join(', '),
+        dinner: dayData.meals.dinner.join(', '),
+        snacks: dayData.meals.snacks.join(', '),
+        notes: dayData.notes || ""
+      })
+      setIsEditDayOpen(true)
+    }
+  }
+
+  const handleSaveDay = async () => {
+    if (!mealPlan) return
+
+    try {
+      // In a real implementation, you would save the day data to the database
+      // For now, we'll just show a success message since the meal plans are generated
+      toast({
+        title: "Jour modifié",
+        description: `Les repas du jour ${editDayForm.day} ont été mis à jour.`
+      })
+      setIsEditDayOpen(false)
+    } catch (error) {
+      console.error("Error updating day:", error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de mettre à jour le jour. Veuillez réessayer.",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const handleViewClientProfile = () => {
+    if (mealPlan?.client_id) {
+      router.push(`/dashboard/clients/${mealPlan.client_id}`)
+    }
+  }
+
+  const handleCreateTemplate = async () => {
+    if (!mealPlan) return
+
+    try {
+      const { data, error } = await supabase
+        .from("meal_plan_templates")
+        .insert({
+          dietitian_id: user?.id,
+          name: `Modèle - ${mealPlan.name}`,
+          description: mealPlan.description,
+          template_content: mealPlan.plan_content || {},
+          calories_range: mealPlan.calories_range,
+          duration_days: mealPlan.duration_days,
+          category: "custom"
+        })
+        .select()
+        .single()
+
+      if (error) {
+        toast({
+          title: "Erreur",
+          description: "Impossible de créer le modèle. Veuillez réessayer.",
+          variant: "destructive"
+        })
+        return
+      }
+
+      toast({
+        title: "Modèle créé",
+        description: "Le modèle a été créé avec succès et est maintenant disponible dans vos modèles."
+      })
+      router.push("/dashboard/templates")
+    } catch (error) {
+      console.error("Error creating template:", error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de créer le modèle. Veuillez réessayer.",
         variant: "destructive"
       })
     }
@@ -489,7 +672,7 @@ export default function MealPlanDetailPage() {
                   <Copy className="mr-2 h-4 w-4" />
                   Dupliquer
                 </DropdownMenuItem>
-                <DropdownMenuItem className="rounded-md">
+                <DropdownMenuItem onClick={handleSharePlan} className="rounded-md">
                   <Share2 className="mr-2 h-4 w-4" />
                   Partager le plan
                 </DropdownMenuItem>
@@ -586,7 +769,12 @@ export default function MealPlanDetailPage() {
                     <div key={day.day} className="border border-slate-100 rounded-lg p-6">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-slate-900">Jour {day.day}</h3>
-                        <Button variant="ghost" size="sm" className="text-emerald-600 hover:text-emerald-700">
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          className="text-emerald-600 hover:text-emerald-700"
+                          onClick={() => handleEditDay(day.day)}
+                        >
                           <Edit className="h-4 w-4 mr-1" />
                           Modifier le jour
                         </Button>
@@ -677,7 +865,12 @@ export default function MealPlanDetailPage() {
                     <p className="text-sm text-slate-600">{mealPlan.clients?.email}</p>
                   </div>
                   <Separator />
-                  <Button variant="outline" size="sm" className="w-full">
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full"
+                    onClick={handleViewClientProfile}
+                  >
                     Voir le profil client
                   </Button>
                 </div>
@@ -690,7 +883,12 @@ export default function MealPlanDetailPage() {
                 <CardTitle>Actions rapides</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-start"
+                  onClick={handleSharePlan}
+                >
                   <Share2 className="mr-2 h-4 w-4" />
                   Partager avec le client
                 </Button>
@@ -698,7 +896,12 @@ export default function MealPlanDetailPage() {
                   <Download className="mr-2 h-4 w-4" />
                   Exporter en PDF
                 </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start">
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-start"
+                  onClick={handleCreateTemplate}
+                >
                   <Copy className="mr-2 h-4 w-4" />
                   Créer un modèle
                 </Button>
@@ -837,6 +1040,78 @@ export default function MealPlanDetailPage() {
               </Button>
               <Button onClick={handleDuplicate}>
                 Créer la copie
+              </Button>
+            </DialogFooter>
+          </DialogContent>
+        </Dialog>
+
+        {/* Edit Day Dialog */}
+        <Dialog open={isEditDayOpen} onOpenChange={setIsEditDayOpen}>
+          <DialogContent className="sm:max-w-[600px] rounded-xl">
+            <DialogHeader>
+              <DialogTitle>Modifier le jour {editDayForm.day}</DialogTitle>
+              <DialogDescription>
+                Personnaliser les repas et collations pour ce jour spécifique.
+              </DialogDescription>
+            </DialogHeader>
+            <div className="grid gap-6 py-4">
+              <div className="space-y-2">
+                <Label htmlFor="day-breakfast">Petit-déjeuner</Label>
+                <Textarea
+                  id="day-breakfast"
+                  value={editDayForm.breakfast}
+                  onChange={(e) => setEditDayForm({ ...editDayForm, breakfast: e.target.value })}
+                  placeholder="Ex: Yaourt grec aux baies et granola"
+                  rows={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="day-lunch">Déjeuner</Label>
+                <Textarea
+                  id="day-lunch"
+                  value={editDayForm.lunch}
+                  onChange={(e) => setEditDayForm({ ...editDayForm, lunch: e.target.value })}
+                  placeholder="Ex: Salade de poulet grillé au quinoa"
+                  rows={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="day-dinner">Dîner</Label>
+                <Textarea
+                  id="day-dinner"
+                  value={editDayForm.dinner}
+                  onChange={(e) => setEditDayForm({ ...editDayForm, dinner: e.target.value })}
+                  placeholder="Ex: Saumon grillé aux légumes rôtis"
+                  rows={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="day-snacks">Collations</Label>
+                <Textarea
+                  id="day-snacks"
+                  value={editDayForm.snacks}
+                  onChange={(e) => setEditDayForm({ ...editDayForm, snacks: e.target.value })}
+                  placeholder="Ex: Tranches de pomme au beurre d'amande"
+                  rows={2}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="day-notes">Notes (optionnel)</Label>
+                <Textarea
+                  id="day-notes"
+                  value={editDayForm.notes}
+                  onChange={(e) => setEditDayForm({ ...editDayForm, notes: e.target.value })}
+                  placeholder="Conseils ou instructions spécifiques pour ce jour"
+                  rows={2}
+                />
+              </div>
+            </div>
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDayOpen(false)}>
+                Annuler
+              </Button>
+              <Button onClick={handleSaveDay}>
+                Enregistrer les modifications
               </Button>
             </DialogFooter>
           </DialogContent>

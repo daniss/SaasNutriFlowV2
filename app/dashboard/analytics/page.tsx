@@ -187,18 +187,166 @@ export default function AnalyticsPage() {
   }
 
   const exportReport = async () => {
+    if (!analyticsData) return
+
     toast({
       title: "Exportation en cours",
       description: "Génération du rapport PDF..."
     })
     
-    // Implement PDF export logic here
-    setTimeout(() => {
+    try {
+      // Dynamic import to avoid SSR issues
+      const jsPDF = (await import('jspdf')).default
+
+      const doc = new jsPDF()
+      const pageWidth = doc.internal.pageSize.getWidth()
+      const pageHeight = doc.internal.pageSize.getHeight()
+      let yPosition = 20
+
+      // Helper function to check page break
+      const checkPageBreak = (requiredSpace: number) => {
+        if (yPosition + requiredSpace > pageHeight - 20) {
+          doc.addPage()
+          yPosition = 20
+        }
+      }
+
+      // Header
+      doc.setFontSize(24)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(16, 185, 129) // emerald-500
+      doc.text('NutriFlow', 20, yPosition)
+      
+      yPosition += 10
+      doc.setFontSize(18)
+      doc.setTextColor(51, 65, 85) // slate-700
+      doc.text('Rapport d\'Analyse', 20, yPosition)
+      
+      yPosition += 5
+      doc.setFontSize(12)
+      doc.setTextColor(100, 116, 139) // slate-500
+      doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, 20, yPosition)
+      doc.text(`Période: ${getTimeRangeLabel(timeRange)}`, 20, yPosition + 5)
+
+      yPosition += 20
+
+      // Key Metrics
+      checkPageBreak(40)
+      doc.setFontSize(16)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(51, 65, 85)
+      doc.text('Métriques Clés', 20, yPosition)
+      yPosition += 15
+
+      const metrics = [
+        { label: 'Total Clients', value: analyticsData.clientGrowth[analyticsData.clientGrowth.length - 1]?.clients || 0 },
+        { label: 'Plans Actifs', value: analyticsData.planDistribution.find(p => p.status === "Actif")?.count || 0 },
+        { label: 'Revenus du Mois', value: `${analyticsData.revenueData[analyticsData.revenueData.length - 1]?.revenue || 0}€` },
+        { label: 'Factures Émises', value: analyticsData.revenueData[analyticsData.revenueData.length - 1]?.invoices || 0 }
+      ]
+
+      metrics.forEach((metric, index) => {
+        const xPos = 20 + (index % 2) * 90
+        const yPos = yPosition + Math.floor(index / 2) * 15
+        
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(100, 116, 139)
+        doc.text(metric.label + ':', xPos, yPos)
+        
+        doc.setFont('helvetica', 'bold')
+        doc.setTextColor(51, 65, 85)
+        doc.text(metric.value.toString(), xPos + 40, yPos)
+      })
+
+      yPosition += 35
+
+      // Client Growth Data
+      checkPageBreak(60)
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(51, 65, 85)
+      doc.text('Évolution des Clients', 20, yPosition)
+      yPosition += 10
+
+      analyticsData.clientGrowth.slice(-6).forEach((data, index) => {
+        checkPageBreak(8)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(100, 116, 139)
+        doc.text(`${data.month}: ${data.clients} clients (+${data.newClients} nouveaux)`, 25, yPosition)
+        yPosition += 8
+      })
+
+      yPosition += 10
+
+      // Plan Distribution
+      checkPageBreak(60)
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(51, 65, 85)
+      doc.text('Distribution des Plans', 20, yPosition)
+      yPosition += 10
+
+      analyticsData.planDistribution.forEach((plan) => {
+        checkPageBreak(8)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(100, 116, 139)
+        doc.text(`${plan.status}: ${plan.count} plans`, 25, yPosition)
+        yPosition += 8
+      })
+
+      yPosition += 10
+
+      // Revenue Data
+      checkPageBreak(60)
+      doc.setFontSize(14)
+      doc.setFont('helvetica', 'bold')
+      doc.setTextColor(51, 65, 85)
+      doc.text('Données de Revenus', 20, yPosition)
+      yPosition += 10
+
+      analyticsData.revenueData.slice(-6).forEach((revenue) => {
+        checkPageBreak(8)
+        doc.setFontSize(10)
+        doc.setFont('helvetica', 'normal')
+        doc.setTextColor(100, 116, 139)
+        doc.text(`${revenue.month}: ${revenue.revenue}€ (${revenue.invoices} factures)`, 25, yPosition)
+        yPosition += 8
+      })
+
+      // Footer
+      doc.setFontSize(8)
+      doc.setTextColor(156, 163, 175)
+      doc.text('Rapport généré par NutriFlow', pageWidth - 60, pageHeight - 10)
+
+      // Save the PDF
+      doc.save(`rapport-analytics-${new Date().toISOString().split('T')[0]}.pdf`)
+
       toast({
         title: "Rapport exporté",
-        description: "Le rapport a été téléchargé avec succès"
+        description: "Le rapport PDF a été téléchargé avec succès"
       })
-    }, 2000)
+    } catch (error) {
+      console.error('Error exporting report:', error)
+      toast({
+        title: "Erreur d'exportation",
+        description: "Impossible de générer le rapport PDF",
+        variant: "destructive"
+      })
+    }
+  }
+
+  const getTimeRangeLabel = (range: string) => {
+    const labels = {
+      'last7days': '7 derniers jours',
+      'last30days': '30 derniers jours',
+      'last3months': '3 derniers mois',
+      'last6months': '6 derniers mois',
+      'lastyear': 'Dernière année'
+    }
+    return labels[range as keyof typeof labels] || range
   }
 
   if (loading) {

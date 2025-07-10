@@ -1,10 +1,11 @@
-// Email service for sending invoices and notifications
-// This is a placeholder implementation - you'll need to configure with a real email service
+// Enhanced email service using the new notification system
+import { notificationService } from './notification-service'
 
 export interface EmailData {
   to: string
   subject: string
   htmlContent: string
+  textContent?: string
   attachments?: {
     filename: string
     content: string | Buffer
@@ -25,17 +26,8 @@ export interface InvoiceEmailData {
 
 export class EmailService {
   private static instance: EmailService
-  private isConfigured = false
 
-  private constructor() {
-    // Check if email service is configured
-    this.isConfigured = !!(
-      process.env.NEXT_PUBLIC_EMAIL_SERVICE_CONFIGURED ||
-      process.env.RESEND_API_KEY ||
-      process.env.SENDGRID_API_KEY ||
-      process.env.NODEMAILER_CONFIG
-    )
-  }
+  private constructor() {}
 
   public static getInstance(): EmailService {
     if (!EmailService.instance) {
@@ -45,32 +37,38 @@ export class EmailService {
   }
 
   public isEmailServiceAvailable(): boolean {
-    return this.isConfigured
+    // Check if notification service has email provider configured
+    return !!(process.env.EMAIL_PROVIDER && (process.env.SENDGRID_API_KEY || process.env.RESEND_API_KEY))
   }
 
   public async sendInvoiceEmail(invoiceData: InvoiceEmailData): Promise<{ success: boolean; message: string }> {
-    if (!this.isConfigured) {
+    if (!this.isEmailServiceAvailable()) {
       return this.fallbackToMailto(invoiceData)
     }
 
     try {
-      // TODO: Implement actual email sending with your preferred service
-      // Examples:
-      // - Resend (recommended for modern apps)
-      // - SendGrid
-      // - Nodemailer with SMTP
-      // - AWS SES
+      const subject = `Facture ${invoiceData.invoiceNumber} - NutriFlow`
+      const textContent = this.generateEmailTemplate(invoiceData)
+      const htmlContent = this.generateHTMLEmailTemplate(invoiceData)
 
-      // For now, return a placeholder response
-      console.log('Email service not fully configured, using mailto fallback')
-      return this.fallbackToMailto(invoiceData)
+      const success = await notificationService.sendEmail(
+        invoiceData.clientEmail,
+        subject,
+        textContent,
+        htmlContent
+      )
 
+      if (success) {
+        return {
+          success: true,
+          message: `Email envoyé avec succès à ${invoiceData.clientEmail}`
+        }
+      } else {
+        return this.fallbackToMailto(invoiceData)
+      }
     } catch (error) {
       console.error('Error sending email:', error)
-      return {
-        success: false,
-        message: 'Erreur lors de l\'envoi de l\'email. Veuillez réessayer.'
-      }
+      return this.fallbackToMailto(invoiceData)
     }
   }
 
@@ -176,7 +174,7 @@ Généré le ${new Date().toLocaleDateString('fr-FR')}`
     meetingLink?: string
   }): Promise<{ success: boolean; message: string }> {
     const subject = `Rappel de rendez-vous - ${data.appointmentDate}`
-    const body = `Cher(e) ${data.clientName},
+    const textContent = `Cher(e) ${data.clientName},
 
 Ceci est un rappel pour votre rendez-vous de ${data.appointmentType} prévu le ${data.appointmentDate} à ${data.appointmentTime}.
 
@@ -188,8 +186,8 @@ Si vous avez besoin de modifier ou annuler ce rendez-vous, veuillez nous contact
 Cordialement,
 Votre Diététicien(ne)`
 
-    if (!this.isConfigured) {
-      const mailtoLink = `mailto:${data.clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`
+    if (!this.isEmailServiceAvailable()) {
+      const mailtoLink = `mailto:${data.clientEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(textContent)}`
       if (typeof window !== 'undefined') {
         window.location.href = mailtoLink
       }
@@ -199,10 +197,20 @@ Votre Diététicien(ne)`
       }
     }
 
-    // TODO: Implement actual email sending
-    return {
-      success: false,
-      message: 'Service email non configuré'
+    try {
+      const success = await notificationService.sendEmail(data.clientEmail, subject, textContent)
+      return {
+        success,
+        message: success 
+          ? `Rappel envoyé avec succès à ${data.clientEmail}` 
+          : 'Erreur lors de l\'envoi du rappel'
+      }
+    } catch (error) {
+      console.error('Error sending appointment reminder:', error)
+      return {
+        success: false,
+        message: 'Erreur lors de l\'envoi du rappel'
+      }
     }
   }
 }

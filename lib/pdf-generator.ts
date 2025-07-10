@@ -27,11 +27,19 @@ export class MealPlanPDFGenerator {
   private pageWidth: number
   private pageHeight: number
   private margins = { top: 20, right: 20, bottom: 20, left: 20 }
+  private currentY = 0
 
   constructor() {
     this.doc = new jsPDF('p', 'mm', 'a4')
     this.pageWidth = this.doc.internal.pageSize.getWidth()
     this.pageHeight = this.doc.internal.pageSize.getHeight()
+  }
+
+  private checkPageBreak(requiredSpace: number = 20): void {
+    if (this.currentY + requiredSpace > this.pageHeight - this.margins.bottom) {
+      this.doc.addPage()
+      this.currentY = this.margins.top
+    }
   }
 
   private addHeader(title: string) {
@@ -52,15 +60,17 @@ export class MealPlanPDFGenerator {
     this.doc.setLineWidth(0.5)
     this.doc.line(this.margins.left, this.margins.top + 30, this.pageWidth - this.margins.right, this.margins.top + 30)
     
-    return this.margins.top + 40
+    this.currentY = this.margins.top + 40
   }
 
-  private addClientInfo(mealPlan: MealPlanPDFData, currentY: number): number {
+  private addClientInfo(mealPlan: MealPlanPDFData): void {
+    this.checkPageBreak(30)
+    
     this.doc.setFontSize(16)
     this.doc.setFont('helvetica', 'bold')
     this.doc.setTextColor(0, 0, 0)
-    this.doc.text('Informations Client', this.margins.left, currentY)
-    currentY += 10
+    this.doc.text('Informations Client', this.margins.left, this.currentY)
+    this.currentY += 10
 
     this.doc.setFontSize(11)
     this.doc.setFont('helvetica', 'normal')
@@ -70,177 +80,166 @@ export class MealPlanPDFGenerator {
     const col1X = this.margins.left
     const col2X = this.pageWidth / 2
     
-    this.doc.text(`Nom: ${mealPlan.clientName}`, col1X, currentY)
-    this.doc.text(`Email: ${mealPlan.clientEmail}`, col2X, currentY)
-    currentY += 6
+    this.doc.text(`Nom: ${mealPlan.clientName}`, col1X, this.currentY)
+    this.doc.text(`Email: ${mealPlan.clientEmail}`, col2X, this.currentY)
+    this.currentY += 6
     
-    this.doc.text(`Durée: ${mealPlan.duration_days} jours`, col1X, currentY)
+    this.doc.text(`Durée: ${mealPlan.duration_days} jours`, col1X, this.currentY)
     if (mealPlan.calories_range) {
-      this.doc.text(`Calories: ${mealPlan.calories_range}`, col2X, currentY)
+      this.doc.text(`Calories: ${mealPlan.calories_range}`, col2X, this.currentY)
     }
-    currentY += 6
+    this.currentY += 6
     
-    this.doc.text(`Statut: ${mealPlan.status}`, col1X, currentY)
-    this.doc.text(`Créé le: ${new Date(mealPlan.created_at).toLocaleDateString('fr-FR')}`, col2X, currentY)
-    currentY += 15
-
-    return currentY
+    this.doc.text(`Statut: ${mealPlan.status}`, col1X, this.currentY)
+    this.doc.text(`Créé le: ${new Date(mealPlan.created_at).toLocaleDateString('fr-FR')}`, col2X, this.currentY)
+    this.currentY += 15
   }
 
-  private addPlanOverview(mealPlan: MealPlanPDFData, currentY: number): number {
+  private addPlanOverview(mealPlan: MealPlanPDFData): void {
+    this.checkPageBreak(25)
+    
     this.doc.setFontSize(16)
     this.doc.setFont('helvetica', 'bold')
     this.doc.setTextColor(0, 0, 0)
-    this.doc.text('Aperçu du Plan', this.margins.left, currentY)
-    currentY += 10
+    this.doc.text('Aperçu du Plan', this.margins.left, this.currentY)
+    this.currentY += 10
 
     if (mealPlan.description) {
       this.doc.setFontSize(11)
       this.doc.setFont('helvetica', 'normal')
       this.doc.setTextColor(75, 85, 99)
       
-      // Split long descriptions
-      const splitDescription = this.doc.splitTextToSize(mealPlan.description, this.pageWidth - this.margins.left - this.margins.right)
-      this.doc.text(splitDescription, this.margins.left, currentY)
-      currentY += splitDescription.length * 5 + 10
+      // Split description into lines
+      const lines = this.doc.splitTextToSize(mealPlan.description, this.pageWidth - this.margins.left - this.margins.right)
+      lines.forEach((line: string) => {
+        this.checkPageBreak()
+        this.doc.text(line, this.margins.left, this.currentY)
+        this.currentY += 5
+      })
     }
-
-    return currentY
+    this.currentY += 10
   }
 
-  private addDayPlan(dayPlan: MealPlanPDFData['dayPlans'][0], currentY: number): number {
-    // Check if we need a new page
-    if (currentY > this.pageHeight - 60) {
-      this.doc.addPage()
-      currentY = this.margins.top
-    }
-
+  private addDayPlan(dayPlan: any, dayNumber: number): void {
+    this.checkPageBreak(40)
+    
     // Day header
     this.doc.setFontSize(14)
     this.doc.setFont('helvetica', 'bold')
     this.doc.setTextColor(0, 0, 0)
-    this.doc.text(`Jour ${dayPlan.day}`, this.margins.left, currentY)
-    currentY += 12
+    this.doc.text(`Jour ${dayNumber}`, this.margins.left, this.currentY)
+    this.currentY += 10
 
     // Meals
     const mealTypes = [
-      { key: 'breakfast', name: 'Petit-déjeuner', color: [251, 146, 60] }, // orange
-      { key: 'lunch', name: 'Déjeuner', color: [59, 130, 246] }, // blue
-      { key: 'dinner', name: 'Dîner', color: [139, 92, 246] }, // purple
-      { key: 'snacks', name: 'Collations', color: [16, 185, 129] } // emerald
+      { key: 'breakfast', label: 'Petit-déjeuner' },
+      { key: 'lunch', label: 'Déjeuner' },
+      { key: 'dinner', label: 'Dîner' },
+      { key: 'snacks', label: 'Collations' }
     ]
 
-    for (const mealType of mealTypes) {
-      const meals = dayPlan.meals[mealType.key as keyof typeof dayPlan.meals]
-      
-      // Meal type header
-      this.doc.setFontSize(12)
-      this.doc.setFont('helvetica', 'bold')
-      this.doc.setTextColor(mealType.color[0], mealType.color[1], mealType.color[2])
-      this.doc.text(mealType.name, this.margins.left, currentY)
-      currentY += 8
+    mealTypes.forEach(({ key, label }) => {
+      const meals = dayPlan.meals[key]
+      if (meals && meals.length > 0) {
+        this.checkPageBreak(15)
+        
+        this.doc.setFontSize(12)
+        this.doc.setFont('helvetica', 'bold')
+        this.doc.setTextColor(16, 185, 129)
+        this.doc.text(label, this.margins.left + 5, this.currentY)
+        this.currentY += 6
 
-      // Meal items
-      this.doc.setFontSize(10)
-      this.doc.setFont('helvetica', 'normal')
-      this.doc.setTextColor(75, 85, 99)
-      
-      if (meals.length === 0) {
-        this.doc.text('• Aucun repas planifié', this.margins.left + 5, currentY)
-        currentY += 5
-      } else {
-        for (const meal of meals) {
-          const splitMeal = this.doc.splitTextToSize(`• ${meal}`, this.pageWidth - this.margins.left - this.margins.right - 5)
-          this.doc.text(splitMeal, this.margins.left + 5, currentY)
-          currentY += splitMeal.length * 4
-        }
+        this.doc.setFontSize(10)
+        this.doc.setFont('helvetica', 'normal')
+        this.doc.setTextColor(75, 85, 99)
+        
+        meals.forEach((meal: string) => {
+          this.checkPageBreak()
+          this.doc.text(`• ${meal}`, this.margins.left + 10, this.currentY)
+          this.currentY += 4
+        })
+        this.currentY += 3
       }
-      currentY += 3
-    }
+    })
 
-    // Notes if any
+    // Notes if available
     if (dayPlan.notes) {
+      this.checkPageBreak(15)
       this.doc.setFontSize(10)
       this.doc.setFont('helvetica', 'italic')
-      this.doc.setTextColor(192, 132, 252) // purple-300
-      this.doc.text('Note:', this.margins.left, currentY)
-      currentY += 5
-      
-      const splitNotes = this.doc.splitTextToSize(dayPlan.notes, this.pageWidth - this.margins.left - this.margins.right)
-      this.doc.text(splitNotes, this.margins.left, currentY)
-      currentY += splitNotes.length * 4
+      this.doc.setTextColor(107, 114, 128)
+      this.doc.text(`Notes: ${dayPlan.notes}`, this.margins.left + 5, this.currentY)
+      this.currentY += 8
     }
 
-    currentY += 10
-
-    return currentY
+    this.currentY += 5
   }
 
-  private addFooter() {
-    const footerY = this.pageHeight - this.margins.bottom
+  private addFooter(): void {
+    const pageCount = this.doc.getNumberOfPages()
     
-    this.doc.setFontSize(8)
-    this.doc.setFont('helvetica', 'normal')
-    this.doc.setTextColor(156, 163, 175) // slate-400
-    
-    // Date generated
-    const today = new Date().toLocaleDateString('fr-FR')
-    this.doc.text(`Généré le ${today} par NutriFlow`, this.margins.left, footerY)
-    
-    // Page number - using a simpler approach
-    const pageCount = (this.doc as any).internal.getNumberOfPages()
-    this.doc.text(`Page ${pageCount}`, this.pageWidth - this.margins.right - 15, footerY)
-  }
-
-  public generate(mealPlan: MealPlanPDFData): string {
-    let currentY = this.addHeader(mealPlan.name)
-    
-    // Client information
-    currentY = this.addClientInfo(mealPlan, currentY)
-    
-    // Plan overview
-    currentY = this.addPlanOverview(mealPlan, currentY)
-    
-    // Daily plans
-    this.doc.setFontSize(16)
-    this.doc.setFont('helvetica', 'bold')
-    this.doc.setTextColor(0, 0, 0)
-    this.doc.text('Plans Repas Quotidiens', this.margins.left, currentY)
-    currentY += 15
-
-    for (const dayPlan of mealPlan.dayPlans) {
-      currentY = this.addDayPlan(dayPlan, currentY)
-    }
-
-    // Add footer to all pages
-    const totalPages = (this.doc as any).internal.getNumberOfPages()
-    for (let i = 1; i <= totalPages; i++) {
+    for (let i = 1; i <= pageCount; i++) {
       this.doc.setPage(i)
-      this.addFooter()
+      
+      // Footer line
+      this.doc.setDrawColor(229, 231, 235)
+      this.doc.setLineWidth(0.3)
+      this.doc.line(this.margins.left, this.pageHeight - 25, this.pageWidth - this.margins.right, this.pageHeight - 25)
+      
+      // Footer text
+      this.doc.setFontSize(8)
+      this.doc.setFont('helvetica', 'normal')
+      this.doc.setTextColor(128, 128, 128)
+      this.doc.text('Généré par NutriFlow - Plateforme de gestion nutritionnelle', this.margins.left, this.pageHeight - 15)
+      this.doc.text(`Page ${i} / ${pageCount}`, this.pageWidth - this.margins.right, this.pageHeight - 15, { align: 'right' })
     }
-
-    // Return the PDF as base64 string
-    return this.doc.output('datauristring')
   }
 
-  public download(mealPlan: MealPlanPDFData, filename?: string) {
-    this.generate(mealPlan)
-    const fileName = filename || `plan-alimentaire-${mealPlan.clientName}-${new Date().toISOString().split('T')[0]}.pdf`
-    this.doc.save(fileName)
-  }
-
-  public getBlob(mealPlan: MealPlanPDFData): Blob {
-    this.generate(mealPlan)
-    return this.doc.output('blob')
+  generate(mealPlan: MealPlanPDFData): jsPDF {
+    try {
+      // Add header
+      this.addHeader(mealPlan.name)
+      
+      // Add client information
+      this.addClientInfo(mealPlan)
+      
+      // Add plan overview
+      this.addPlanOverview(mealPlan)
+      
+      // Add day plans
+      mealPlan.dayPlans.forEach((dayPlan, index) => {
+        this.addDayPlan(dayPlan, index + 1)
+      })
+      
+      // Add footer to all pages
+      this.addFooter()
+      
+      return this.doc
+    } catch (error) {
+      console.error('Error generating meal plan PDF:', error)
+      throw new Error('Failed to generate meal plan PDF')
+    }
   }
 }
 
-export const generateMealPlanPDF = (mealPlan: MealPlanPDFData, filename?: string) => {
+/**
+ * Convenience function to generate meal plan PDF
+ */
+export function generateMealPlanPDF(mealPlan: MealPlanPDFData): jsPDF {
   const generator = new MealPlanPDFGenerator()
-  generator.download(mealPlan, filename)
+  return generator.generate(mealPlan)
 }
 
-export const getMealPlanPDFBlob = (mealPlan: MealPlanPDFData): Blob => {
-  const generator = new MealPlanPDFGenerator()
-  return generator.getBlob(mealPlan)
+/**
+ * Download meal plan PDF
+ */
+export function downloadMealPlanPDF(mealPlan: MealPlanPDFData, filename?: string): void {
+  try {
+    const doc = generateMealPlanPDF(mealPlan)
+    const defaultFilename = `plan-repas-${mealPlan.clientName.replace(/\s+/g, '-').toLowerCase()}-${new Date().toISOString().split('T')[0]}.pdf`
+    doc.save(filename || defaultFilename)
+  } catch (error) {
+    console.error('Error downloading meal plan PDF:', error)
+    throw new Error('Failed to download meal plan PDF')
+  }
 }

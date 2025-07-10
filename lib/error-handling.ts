@@ -173,7 +173,7 @@ export class ErrorHandler {
       }
     }
 
-    return errorMap[code] || {
+    return (errorMap as any)[code] || {
       userMessage: 'Erreur inconnue',
       severity: 'medium' as const,
       suggestions: ['Réessayez', 'Contactez le support si le problème persiste']
