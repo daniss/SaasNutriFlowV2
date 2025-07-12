@@ -97,34 +97,15 @@ const nextConfig = {
   // Experimental features
   experimental: {
     optimizePackageImports: ['lucide-react', '@radix-ui/react-icons'],
+    // Turbopack configuration (replaces webpack config)
+    turbo: {
+      // Turbopack doesn't need manual polyfills - it handles them automatically
+      // The serverExternalPackages below will handle Supabase externalization
+    },
   },
 
-  // Server external packages
+  // Server external packages (works with both Webpack and Turbopack)
   serverExternalPackages: ['@supabase/supabase-js'],
-
-  // Webpack configuration
-  webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
-    if (isServer) {
-      // Add polyfills for server-side rendering
-      config.resolve.fallback = {
-        ...config.resolve.fallback,
-        fs: false,
-        net: false,
-        tls: false,
-        crypto: false,
-        stream: false,
-        url: false,
-        zlib: false,
-        http: false,
-        https: false,
-        assert: false,
-        os: false,
-        path: false,
-      }
-    }
-
-    return config
-  },
 
   // Redirects
   async redirects() {
