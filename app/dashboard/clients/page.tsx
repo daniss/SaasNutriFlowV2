@@ -46,6 +46,7 @@ export default function ClientsPage() {
   const { user } = useAuth()
   const [clients, setClients] = useState<Client[]>([])
   const [loading, setLoading] = useState(true)
+  const [emailValidationLoading, setEmailValidationLoading] = useState(false)
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [newClient, setNewClient] = useState({
@@ -79,6 +80,25 @@ export default function ClientsPage() {
     }
   }, [user])
 
+  const calculateProgress = (initialWeight: number, currentWeight: number, goalWeight: number): number => {
+    // If goal is weight loss (goal < initial)
+    if (goalWeight < initialWeight) {
+      const totalWeightToLose = initialWeight - goalWeight
+      const weightLost = Math.max(0, initialWeight - currentWeight) // Ensure non-negative
+      return Math.min(100, Math.round((weightLost / totalWeightToLose) * 100))
+    }
+    // If goal is weight gain (goal > initial)
+    else if (goalWeight > initialWeight) {
+      const totalWeightToGain = goalWeight - initialWeight
+      const weightGained = Math.max(0, currentWeight - initialWeight) // Ensure non-negative
+      return Math.min(100, Math.round((weightGained / totalWeightToGain) * 100))
+    }
+    // If goal equals initial weight (maintenance)
+    else {
+      return 100
+    }
+  }
+
   const fetchClients = async () => {
     if (!user) return
 
@@ -94,7 +114,33 @@ export default function ClientsPage() {
         return
       }
 
-      setClients(data || [])
+      // Fetch weight history for each client and calculate progress
+      const clientsWithProgress = await Promise.all(
+        (data || []).map(async (client) => {
+          if (!client.goal_weight || !client.current_weight) {
+            return { ...client, progress_percentage: 0 }
+          }
+
+          // Fetch weight history to get initial weight
+          const { data: weightHistory, error: weightError } = await supabase
+            .from("weight_history")
+            .select("*")
+            .eq("client_id", client.id)
+            .order("recorded_date", { ascending: true })
+
+          if (weightError || !weightHistory || weightHistory.length === 0) {
+            // No weight history, use current weight as baseline
+            return { ...client, progress_percentage: 0 }
+          }
+
+          const initialWeight = weightHistory[0].weight
+          const progress = calculateProgress(initialWeight, client.current_weight, client.goal_weight)
+          
+          return { ...client, progress_percentage: progress }
+        })
+      )
+
+      setClients(clientsWithProgress)
     } catch (error) {
       console.error("Unexpected error fetching clients:", error)
     } finally {
@@ -105,10 +151,10 @@ export default function ClientsPage() {
   const handleAddClient = async () => {
     if (!user) return
 
-    // Validate all fields
+    // Validate all fields (email validation is async)
     const validations = {
       name: validateClientName(newClient.name),
-      email: validateClientEmail(newClient.email),
+      email: await validateClientEmail(newClient.email),
       phone: validateClientPhone(newClient.phone),
       age: validateClientAge(newClient.age),
       height: validateClientHeight(newClient.height),
@@ -210,7 +256,7 @@ export default function ClientsPage() {
   )
 
   // Validation functions for new client
-  const validateClientEmail = (email: string): { isValid: boolean; message: string } => {
+  const validateClientEmail = async (email: string): Promise<{ isValid: boolean; message: string }> => {
     if (!email.trim()) {
       return { isValid: false, message: "L'email est requis" }
     }
@@ -218,6 +264,32 @@ export default function ClientsPage() {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
       return { isValid: false, message: "Veuillez entrer un email valide" }
+    }
+    
+    // Check if email already exists for this dietitian
+    if (user) {
+      setEmailValidationLoading(true)
+      try {
+        const { data: existingClient, error } = await supabase
+          .from("clients")
+          .select("id")
+          .eq("dietitian_id", user.id)
+          .eq("email", email.trim())
+          .limit(1)
+          .single()
+
+        if (existingClient && !error) {
+          return { isValid: false, message: "Cette adresse email est déjà utilisée par un autre client" }
+        }
+      } catch (err) {
+        // If no client found, that's good (error expected)
+        // Only log unexpected errors
+        if (err && typeof err === 'object' && 'code' in err && err.code !== 'PGRST116') {
+          console.error("Error checking email uniqueness:", err)
+        }
+      } finally {
+        setEmailValidationLoading(false)
+      }
     }
     
     return { isValid: true, message: "" }
@@ -392,9 +464,9 @@ export default function ClientsPage() {
                         })
                       }
                     }}
-                    onBlur={() => {
+                    onBlur={async () => {
                       if (newClient.email) {
-                        const validation = validateClientEmail(newClient.email)
+                        const validation = await validateClientEmail(newClient.email)
                         setClientValidation({
                           ...clientValidation,
                           email: validation
@@ -410,6 +482,12 @@ export default function ClientsPage() {
                     <p className="text-sm text-red-600 flex items-center gap-1">
                       <span className="text-red-500">⚠</span>
                       {clientValidation.email.message}
+                    </p>
+                  )}
+                  {emailValidationLoading && (
+                    <p className="text-sm text-blue-600 flex items-center gap-1">
+                      <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full"></div>
+                      Vérification de l'email...
                     </p>
                   )}
                 </div>
@@ -666,7 +744,8 @@ export default function ClientsPage() {
                   !clientValidation.age.isValid ||
                   !clientValidation.height.isValid ||
                   !clientValidation.current_weight.isValid ||
-                  !clientValidation.goal_weight.isValid
+                  !clientValidation.goal_weight.isValid ||
+                  emailValidationLoading
                 }
                 className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft disabled:opacity-50 font-medium"
               >

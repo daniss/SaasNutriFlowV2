@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge"
 import { Separator } from "@/components/ui/separator"
 import { Textarea } from "@/components/ui/textarea"
 import { Alert, AlertDescription } from "@/components/ui/alert"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import {
   ArrowLeft,
   Edit,
@@ -160,10 +161,10 @@ export default function ClientDetailPage() {
   }
 
   const handleSaveClient = async () => {
-    // Validate all fields
+    // Validate all fields (email is read-only, so skip email validation)
     const validations = {
       name: validateName(editForm.name || ""),
-      email: validateEmail(editForm.email || ""),
+      email: { isValid: true, message: "" }, // Email is read-only, always valid
       phone: validatePhone(editForm.phone || ""),
       age: validateAge(editForm.age?.toString() || ""),
       height: validateHeight(editForm.height || ""),
@@ -184,6 +185,9 @@ export default function ClientDetailPage() {
       setLoading(true)
       setError("")
 
+      // Check if current_weight is being added for the first time
+      const isFirstWeightEntry = !client?.current_weight && editForm.current_weight
+      
       const { data, error } = await supabase
         .from("clients")
         .update({
@@ -195,6 +199,29 @@ export default function ClientDetailPage() {
         .single()
 
       if (error) throw error
+
+      // If current_weight was added for the first time, create a weight measurement entry
+      if (isFirstWeightEntry && editForm.current_weight) {
+        const { data: weightData, error: weightError } = await supabase
+          .from("weight_history")
+          .insert({
+            client_id: clientId,
+            weight: editForm.current_weight,
+            recorded_date: new Date().toISOString().split("T")[0],
+            notes: "Poids initial enregistré lors de la mise à jour du profil",
+          })
+          .select()
+          .single()
+
+        if (!weightError && weightData) {
+          // Update local weight entries
+          const updatedEntries = [...weightEntries, weightData]
+          setWeightEntries(updatedEntries)
+          
+          // Update progress calculation
+          await updateClientProgress(updatedEntries)
+        }
+      }
 
       setClient(data)
       setEditing(false)
@@ -259,9 +286,14 @@ export default function ClientDetailPage() {
       if (clientUpdateError) throw clientUpdateError
 
       // Update local state
-      setWeightEntries([...weightEntries, data])
+      const updatedEntries = [...weightEntries, data]
+      setWeightEntries(updatedEntries)
       setClient(prev => prev ? { ...prev, current_weight: weightValue } : null)
       setEditForm(prev => ({ ...prev, current_weight: weightValue }))
+      
+      // Update progress calculation
+      await updateClientProgress(updatedEntries)
+      
       setNewWeight("")
       setNewWeightNotes("")
       setWeightValidation({ isValid: true, message: "" })
@@ -386,6 +418,23 @@ export default function ClientDetailPage() {
       // Update local state
       setClient(prev => prev ? { ...prev, current_weight: newCurrentWeight || undefined } : null)
       setEditForm(prev => ({ ...prev, current_weight: newCurrentWeight || undefined }))
+      
+      // Update progress calculation
+      if (updatedEntries.length > 0) {
+        await updateClientProgress(updatedEntries)
+      } else {
+        // No weight entries left, reset progress to 0
+        try {
+          await supabase
+            .from("clients")
+            .update({ progress_percentage: 0 })
+            .eq("id", clientId)
+          setClient(prev => prev ? { ...prev, progress_percentage: 0 } : null)
+        } catch (err) {
+          console.error("Error resetting progress:", err)
+        }
+      }
+      
       setSuccess("Mesure supprimée avec succès!")
       setTimeout(() => setSuccess(""), 3000)
     } catch (err) {
@@ -501,9 +550,19 @@ export default function ClientDetailPage() {
       return { isValid: true, message: "" } // Height is optional
     }
     
-    const heightNum = parseFloat(height)
+    // Remove "cm" suffix if present and clean the input
+    const cleanHeight = height.trim().toLowerCase().replace(/\s*cm\s*$/, '')
+    
+    // Check if the cleaned value is a valid number
+    const heightNum = parseFloat(cleanHeight)
     if (isNaN(heightNum)) {
-      return { isValid: false, message: "Veuillez entrer une taille valide" }
+      return { isValid: false, message: "Veuillez entrer une taille valide (ex: 175 ou 175cm)" }
+    }
+    
+    // Check for invalid characters (anything other than numbers, decimal point, and "cm")
+    const validHeightRegex = /^\d+(\.\d+)?\s*(cm)?\s*$/i
+    if (!validHeightRegex.test(height.trim())) {
+      return { isValid: false, message: "Format invalide. Utilisez uniquement des chiffres (ex: 175 ou 175cm)" }
     }
     
     if (heightNum < 50 || heightNum > 300) {
@@ -539,6 +598,55 @@ export default function ClientDetailPage() {
       return { isValid: false, message: "La note doit contenir au moins 3 caractères" }
     }
     return { isValid: true, message: "" }
+  }
+
+  const getGoalDisplayLabel = (goalValue: string): string => {
+    switch (goalValue) {
+      case "weight_loss": return "Perte de poids"
+      case "weight_gain": return "Prise de poids"
+      case "muscle_gain": return "Prise de masse musculaire"
+      case "maintenance": return "Maintien"
+      case "health_improvement": return "Amélioration de la santé"
+      default: return goalValue
+    }
+  }
+
+  const calculateProgress = (initialWeight: number, currentWeight: number, goalWeight: number): number => {
+    // If goal is weight loss (goal < initial)
+    if (goalWeight < initialWeight) {
+      const totalWeightToLose = initialWeight - goalWeight
+      const weightLost = Math.max(0, initialWeight - currentWeight) // Ensure non-negative
+      return Math.min(100, Math.round((weightLost / totalWeightToLose) * 100))
+    }
+    // If goal is weight gain (goal > initial)
+    else if (goalWeight > initialWeight) {
+      const totalWeightToGain = goalWeight - initialWeight
+      const weightGained = Math.max(0, currentWeight - initialWeight) // Ensure non-negative
+      return Math.min(100, Math.round((weightGained / totalWeightToGain) * 100))
+    }
+    // If goal equals initial weight (maintenance)
+    else {
+      return 100
+    }
+  }
+
+  const updateClientProgress = async (updatedWeightEntries: WeightEntry[]) => {
+    if (!client?.goal_weight || updatedWeightEntries.length === 0) return
+
+    const initialWeight = updatedWeightEntries[0].weight
+    const currentWeight = updatedWeightEntries[updatedWeightEntries.length - 1].weight
+    const progress = calculateProgress(initialWeight, currentWeight, client.goal_weight)
+
+    try {
+      await supabase
+        .from("clients")
+        .update({ progress_percentage: progress })
+        .eq("id", clientId)
+
+      setClient(prev => prev ? { ...prev, progress_percentage: progress } : null)
+    } catch (err) {
+      console.error("Error updating progress:", err)
+    }
   }
 
   if (loading && !client) {
@@ -942,12 +1050,10 @@ export default function ClientDetailPage() {
                         id="email"
                         type="email"
                         value={editForm.email || ""}
-                        onChange={(e) => setEditForm({ ...editForm, email: e.target.value })}
-                        className="border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20"
+                        readOnly
+                        className="border-slate-200 bg-slate-50 text-slate-600 cursor-not-allowed"
                       />
-                      {!profileValidation.email.isValid && (
-                        <p className="text-red-500 text-sm mt-1">{profileValidation.email.message}</p>
-                      )}
+                      <p className="text-xs text-slate-500">L'adresse email ne peut pas être modifiée</p>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="phone" className="text-sm font-semibold text-slate-700">Téléphone</Label>
@@ -988,12 +1094,21 @@ export default function ClientDetailPage() {
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="goal" className="text-sm font-semibold text-slate-700">Objectif</Label>
-                      <Input
-                        id="goal"
-                        value={editForm.goal || ""}
-                        onChange={(e) => setEditForm({ ...editForm, goal: e.target.value })}
-                        className="border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20"
-                      />
+                      <Select 
+                        value={editForm.goal || ""} 
+                        onValueChange={(value: string) => setEditForm({ ...editForm, goal: value })}
+                      >
+                        <SelectTrigger className="border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20">
+                          <SelectValue placeholder="Choisir un objectif" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="weight_loss">Perte de poids</SelectItem>
+                          <SelectItem value="weight_gain">Prise de poids</SelectItem>
+                          <SelectItem value="muscle_gain">Prise de masse musculaire</SelectItem>
+                          <SelectItem value="maintenance">Maintien</SelectItem>
+                          <SelectItem value="health_improvement">Amélioration de la santé</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="goalWeight" className="text-sm font-semibold text-slate-700">Poids objectif (kg)</Label>
@@ -1022,6 +1137,21 @@ export default function ClientDetailPage() {
                       {!profileValidation.current_weight.isValid && (
                         <p className="text-red-500 text-sm mt-1">{profileValidation.current_weight.message}</p>
                       )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="status" className="text-sm font-semibold text-slate-700">Statut</Label>
+                      <Select 
+                        value={editForm.status || "active"} 
+                        onValueChange={(value: string) => setEditForm({ ...editForm, status: value })}
+                      >
+                        <SelectTrigger className="border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20">
+                          <SelectValue placeholder="Choisir un statut" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Actif</SelectItem>
+                          <SelectItem value="inactive">Inactif</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </div>
                   </div>
                 ) : (
@@ -1069,7 +1199,7 @@ export default function ClientDetailPage() {
                             <Target className="h-4 w-4" />
                             Objectif principal
                           </h4>
-                          <p className="text-emerald-700">{client.goal}</p>
+                          <p className="text-emerald-700">{getGoalDisplayLabel(client.goal)}</p>
                         </div>
                       )}
                       {client.goal_weight && (
@@ -1090,6 +1220,21 @@ export default function ClientDetailPage() {
                           <p className="text-purple-700">{currentWeight} kg</p>
                         </div>
                       )}
+                      <div className="p-4 bg-slate-50/50 rounded-lg border border-slate-100">
+                        <h4 className="font-semibold text-slate-800 mb-2 flex items-center gap-2">
+                          <Activity className="h-4 w-4" />
+                          Statut
+                        </h4>
+                        <Badge 
+                          variant={client.status === "active" ? "default" : "secondary"}
+                          className={client.status === "active" 
+                            ? "bg-emerald-100 text-emerald-800 hover:bg-emerald-100" 
+                            : "bg-slate-100 text-slate-700 hover:bg-slate-100"
+                          }
+                        >
+                          {client.status === "active" ? "Actif" : "Inactif"}
+                        </Badge>
+                      </div>
                     </div>
                   </div>
                 )}

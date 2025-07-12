@@ -91,12 +91,20 @@ export default function AppointmentsPage() {
   const [editingAppointment, setEditingAppointment] = useState<AppointmentWithClient | null>(null)
   const [error, setError] = useState<string | null>(null)
   
+  // Utility function to get local date string (YYYY-MM-DD) without timezone conversion
+  const getLocalDateString = (date: Date) => {
+    const year = date.getFullYear()
+    const month = String(date.getMonth() + 1).padStart(2, '0')
+    const day = String(date.getDate()).padStart(2, '0')
+    return `${year}-${month}-${day}`
+  }
+  
   // Form state
   const [newAppointment, setNewAppointment] = useState<AppointmentFormData>({
     title: "",
     description: "",
     client_id: "",
-    appointment_date: new Date().toISOString().split('T')[0],
+    appointment_date: getLocalDateString(new Date()),
     appointment_time: "09:00",
     duration_minutes: 60,
     type: "",
@@ -365,7 +373,7 @@ export default function AppointmentsPage() {
       title: "",
       description: "",
       client_id: "",
-      appointment_date: new Date().toISOString().split('T')[0],
+      appointment_date: getLocalDateString(new Date()),
       appointment_time: "09:00",
       duration_minutes: 60,
       type: "",
@@ -377,7 +385,7 @@ export default function AppointmentsPage() {
   }
 
   const getAppointmentsByDate = (date: Date) => {
-    const dateStr = date.toISOString().split('T')[0]
+    const dateStr = getLocalDateString(date)
     return appointments.filter(apt => apt.appointment_date === dateStr)
   }
 
@@ -420,17 +428,17 @@ export default function AppointmentsPage() {
     endOfWeek.setDate(startOfWeek.getDate() + 6)
     
     return appointments.filter(apt => {
-      const appointmentDate = new Date(apt.appointment_date)
+      const appointmentDate = new Date(apt.appointment_date + 'T00:00:00') // Ensure local timezone
       return appointmentDate >= startOfWeek && appointmentDate <= endOfWeek
     })
   }
 
   const getTodayStats = () => {
-    const today = new Date().toISOString().split('T')[0]
+    const today = getLocalDateString(new Date())
     const todayAppointments = appointments.filter(apt => apt.appointment_date === today)
     const thisWeekAppointments = getAppointmentsForWeek(new Date())
     const thisMonthAppointments = appointments.filter(apt => {
-      const aptDate = new Date(apt.appointment_date)
+      const aptDate = new Date(apt.appointment_date + 'T00:00:00') // Ensure local timezone
       const now = new Date()
       return aptDate.getMonth() === now.getMonth() && aptDate.getFullYear() === now.getFullYear()
     })
@@ -856,7 +864,7 @@ export default function AppointmentsPage() {
                     }}
                     className="rounded-md border"
                     events={appointments.map(appointment => ({
-                      date: new Date(appointment.appointment_date),
+                      date: new Date(appointment.appointment_date + 'T00:00:00'), // Ensure local timezone
                       title: appointment.title,
                       type: appointment.type
                     }))}

@@ -533,12 +533,12 @@ export default function GenerateMealPlanPage() {
   ]
 
   const dietTypes = [
-    { value: "balanced", label: "Balanced" },
-    { value: "weight-loss", label: "Weight Loss" },
-    { value: "weight-gain", label: "Weight Gain" },
-    { value: "muscle-building", label: "Muscle Building" },
-    { value: "heart-healthy", label: "Heart Healthy" },
-    { value: "diabetic", label: "Diabetic Friendly" },
+    { value: "balanced", label: "Équilibré" },
+    { value: "weight-loss", label: "Perte de poids" },
+    { value: "weight-gain", label: "Prise de poids" },
+    { value: "muscle-building", label: "Développement musculaire" },
+    { value: "heart-healthy", label: "Santé cardiaque" },
+    { value: "diabetic", label: "Adapté aux diabétiques" },
   ]
 
   return (

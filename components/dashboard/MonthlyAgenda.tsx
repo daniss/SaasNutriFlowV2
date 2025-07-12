@@ -71,9 +71,17 @@ export default function MonthlyAgenda({ dietitianId }: MonthlyAgendaProps) {
     const days: CalendarDay[] = []
     const today = new Date()
     
+    // Utility function to get local date string
+    const getLocalDateString = (date: Date) => {
+      const year = date.getFullYear()
+      const month = String(date.getMonth() + 1).padStart(2, '0')
+      const day = String(date.getDate()).padStart(2, '0')
+      return `${year}-${month}-${day}`
+    }
+    
     for (let date = new Date(startDate); date <= endDate; date.setDate(date.getDate() + 1)) {
       const currentDate = new Date(date)
-      const dateString = currentDate.toISOString().split('T')[0]
+      const dateString = getLocalDateString(currentDate)
       
       // Filter appointments for this date
       const dayAppointments = appointments.filter(
