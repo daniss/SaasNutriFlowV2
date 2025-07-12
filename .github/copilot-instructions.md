@@ -172,3 +172,12 @@ When adding new features, follow the existing patterns: RLS-enabled database tab
 - French UI labels: "Connexion", "Commencer", "Mon espace", "Se déconnecter"
 - Mobile navigation follows same auth patterns
 - Uses `useAuth()` hook for seamless auth state management
+
+### Weight Tracking System
+
+- **Automatic Synchronization**: Client's `current_weight` field automatically syncs with weight measurements
+- **Adding Measurements**: New weight entries automatically update the client's `current_weight`
+- **Removing Measurements**: Deleting a weight entry updates `current_weight` to the most recent remaining measurement
+- **Initial Weight**: Creating a client with a `current_weight` automatically creates an initial measurement record
+- **Database Tables**: `clients.current_weight` and `weight_history` table work in tandem
+- **French UI**: "nouvelle mesure", "poids actuel" terminology for nutrition practice

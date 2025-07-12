@@ -154,6 +154,25 @@ export default function ClientsPage() {
         return
       }
 
+      // If client has a current weight, create an initial weight measurement
+      if (clientData.current_weight) {
+        try {
+          await supabase
+            .from("weight_history")
+            .insert({
+              client_id: data.id,
+              weight: clientData.current_weight,
+              recorded_date: new Date().toISOString().split("T")[0],
+              notes: "Poids initial lors de la création du profil",
+            })
+
+          console.log("✅ Initial weight measurement created")
+        } catch (weightError) {
+          console.error("⚠️ Error creating initial weight measurement:", weightError)
+          // Don't fail the client creation if weight history fails
+        }
+      }
+
       setClients([data, ...clients])
       setIsAddDialogOpen(false)
       // Reset form and validation
@@ -282,7 +301,7 @@ export default function ClientsPage() {
     
     const heightNum = parseFloat(heightValue)
     if (isNaN(heightNum)) {
-      return { isValid: false, message: "Veuillez entrer une taille valide (ex: 175 ou 1m75)" }
+      return { isValid: false, message: "Veuillez entrer une taille valide (ex: 175)" }
     }
     
     if (heightNum < 50 || heightNum > 300) {
@@ -502,7 +521,7 @@ export default function ClientsPage() {
                         })
                       }
                     }}
-                    placeholder="1m75"
+                    placeholder="175"
                     className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
                       !clientValidation.height.isValid ? "border-red-300 focus:border-red-400 focus:ring-red-400/20" : ""
                     }`}

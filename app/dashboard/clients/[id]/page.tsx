@@ -231,11 +231,14 @@ export default function ClientDetailPage() {
       setLoading(true)
       setError("")
 
+      const weightValue = parseFloat(newWeight)
+
+      // Start transaction: Add weight entry and update client's current_weight
       const { data, error } = await supabase
         .from("weight_history")
         .insert({
           client_id: clientId,
-          weight: parseFloat(newWeight),
+          weight: weightValue,
           recorded_date: new Date().toISOString().split("T")[0],
           notes: newWeightNotes || null,
         })
@@ -244,7 +247,21 @@ export default function ClientDetailPage() {
 
       if (error) throw error
 
+      // Update client's current_weight to the new weight
+      const { error: clientUpdateError } = await supabase
+        .from("clients")
+        .update({ 
+          current_weight: weightValue,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", clientId)
+
+      if (clientUpdateError) throw clientUpdateError
+
+      // Update local state
       setWeightEntries([...weightEntries, data])
+      setClient(prev => prev ? { ...prev, current_weight: weightValue } : null)
+      setEditForm(prev => ({ ...prev, current_weight: weightValue }))
       setNewWeight("")
       setNewWeightNotes("")
       setWeightValidation({ isValid: true, message: "" })
@@ -334,6 +351,11 @@ export default function ClientDetailPage() {
       setLoading(true)
       setError("")
 
+      // Find the weight entry being deleted
+      const deletingEntry = weightEntries.find(entry => entry.id === weightId)
+      if (!deletingEntry) return
+
+      // Delete the weight entry
       const { error } = await supabase
         .from("weight_history")
         .delete()
@@ -341,7 +363,29 @@ export default function ClientDetailPage() {
 
       if (error) throw error
 
-      setWeightEntries(weightEntries.filter(entry => entry.id !== weightId))
+      // Update local weight entries
+      const updatedEntries = weightEntries.filter(entry => entry.id !== weightId)
+      setWeightEntries(updatedEntries)
+
+      // Determine new current weight (most recent remaining entry or null)
+      const newCurrentWeight = updatedEntries.length > 0 
+        ? updatedEntries[updatedEntries.length - 1].weight 
+        : null
+
+      // Update client's current_weight
+      const { error: clientUpdateError } = await supabase
+        .from("clients")
+        .update({ 
+          current_weight: newCurrentWeight,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", clientId)
+
+      if (clientUpdateError) throw clientUpdateError
+
+      // Update local state
+      setClient(prev => prev ? { ...prev, current_weight: newCurrentWeight || undefined } : null)
+      setEditForm(prev => ({ ...prev, current_weight: newCurrentWeight || undefined }))
       setSuccess("Mesure supprimée avec succès!")
       setTimeout(() => setSuccess(""), 3000)
     } catch (err) {
