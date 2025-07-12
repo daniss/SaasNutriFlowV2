@@ -1,31 +1,45 @@
-"use client"
-
-import { BarChart3, Bell, Calculator, Calendar, ChefHat, FileText, Home, LogOut, MessageCircle, Plus, Receipt, Settings, Users } from "lucide-react"
-import type * as React from "react"
+"use client";
 
 import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
+  BarChart3,
+  Bell,
+  Calculator,
+  Calendar,
+  ChefHat,
+  FileText,
+  Home,
+  LogOut,
+  MessageCircle,
+  Plus,
+  Receipt,
+  Settings,
+  Users,
+} from "lucide-react";
+import type * as React from "react";
+
 import {
-    Sidebar,
-    SidebarContent,
-    SidebarFooter,
-    SidebarGroup,
-    SidebarGroupContent,
-    SidebarGroupLabel,
-    SidebarHeader,
-    SidebarMenu,
-    SidebarMenuButton,
-    SidebarMenuItem,
-    SidebarRail,
-} from "@/components/ui/sidebar"
-import { useAuth } from "@/hooks/useAuthNew"
-import Link from "next/link"
-import { usePathname, useRouter } from "next/navigation"
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Sidebar,
+  SidebarContent,
+  SidebarFooter,
+  SidebarGroup,
+  SidebarGroupContent,
+  SidebarGroupLabel,
+  SidebarHeader,
+  SidebarMenu,
+  SidebarMenuButton,
+  SidebarMenuItem,
+  SidebarRail,
+} from "@/components/ui/sidebar";
+import { useAuth } from "@/hooks/useAuthNew";
+import Link from "next/link";
+import { usePathname, useRouter } from "next/navigation";
 
 const data = {
   navMain: [
@@ -91,17 +105,17 @@ const data = {
       icon: Settings,
     },
   ],
-}
+};
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
-  const pathname = usePathname()
-  const router = useRouter()
-  const { profile, signOut } = useAuth()
+  const pathname = usePathname();
+  const router = useRouter();
+  const { profile, signOut } = useAuth();
 
   const handleSignOut = async () => {
-    await signOut()
-    router.push("/")
-  }
+    await signOut();
+    router.push("/");
+  };
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -112,7 +126,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           </div>
           <div className="flex flex-col group-data-[collapsible=icon]:hidden">
             <span className="font-semibold text-sm">NutriFlow</span>
-            <span className="text-xs text-muted-foreground">Tableau de bord diététicien</span>
+            <span className="text-xs text-muted-foreground">
+              Tableau de bord diététicien
+            </span>
           </div>
         </div>
       </SidebarHeader>
@@ -122,7 +138,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               {data.navMain.map((item) => (
                 <SidebarMenuItem key={item.title}>
-                  <SidebarMenuButton asChild isActive={pathname === item.url} tooltip={item.title}>
+                  <SidebarMenuButton
+                    asChild
+                    isActive={pathname === item.url}
+                    tooltip={item.title}
+                  >
                     <Link href={item.url}>
                       <item.icon />
                       <span>{item.title}</span>
@@ -170,16 +190,21 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                     </div>
                     <div className="flex flex-col group-data-[collapsible=icon]:hidden text-left">
                       <span className="text-sm font-medium">
-                        {profile?.first_name && profile?.last_name 
+                        {profile?.first_name && profile?.last_name
                           ? `${profile.first_name} ${profile.last_name}`
                           : profile?.email || "Utilisateur"}
                       </span>
-                      <span className="text-xs text-muted-foreground">Diététicien(ne)</span>
+                      <span className="text-xs text-muted-foreground">
+                        Diététicien(ne)
+                      </span>
                     </div>
                   </div>
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
-              <DropdownMenuContent side="top" className="w-[--radix-popper-anchor-width]">
+              <DropdownMenuContent
+                side="top"
+                className="w-[--radix-popper-anchor-width]"
+              >
                 <DropdownMenuItem asChild>
                   <Link href="/dashboard/settings">
                     <Settings className="h-4 w-4 mr-2" />
@@ -198,5 +223,5 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>
-  )
+  );
 }
