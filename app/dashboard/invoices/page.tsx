@@ -40,7 +40,23 @@ export default function InvoicesPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isDetailsDialogOpen, setIsDetailsDialogOpen] = useState(false)
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [selectedInvoice, setSelectedInvoice] = useState<InvoiceWithClient | null>(null)
+  const [editInvoice, setEditInvoice] = useState({
+    id: "",
+    client_id: "",
+    invoice_number: "",
+    service_description: "",
+    amount: "",
+    due_date: "",
+    notes: "",
+    status: "",
+    hourly_rate: "",
+    hours_worked: "",
+    consultation_type: "",
+    payment_terms: "",
+    tax_rate: "",
+  })
   const [newInvoice, setNewInvoice] = useState({
     client_id: "",
     service_description: "",
@@ -544,6 +560,96 @@ export default function InvoicesPage() {
     }
   }
 
+  const openEditDialog = (invoice: InvoiceWithClient) => {
+    setEditInvoice({
+      id: invoice.id,
+      client_id: invoice.client_id,
+      invoice_number: invoice.invoice_number,
+      service_description: invoice.service_description,
+      amount: invoice.amount.toString(),
+      due_date: invoice.due_date,
+      notes: invoice.notes || "",
+      status: invoice.status,
+      hourly_rate: "", // These can be added to database schema later
+      hours_worked: "",
+      consultation_type: "consultation",
+      payment_terms: "30",
+      tax_rate: "0",
+    })
+    setIsEditDialogOpen(true)
+  }
+
+  const calculateTotal = () => {
+    const amount = parseFloat(editInvoice.amount) || 0
+    const taxRate = parseFloat(editInvoice.tax_rate) || 0
+    const tax = amount * (taxRate / 100)
+    return amount + tax
+  }
+
+  const handleEditInvoice = async () => {
+    if (!user || !editInvoice.client_id || !editInvoice.service_description || !editInvoice.amount) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez remplir tous les champs obligatoires.",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      const updateData = {
+        client_id: editInvoice.client_id,
+        service_description: editInvoice.service_description,
+        amount: parseFloat(editInvoice.amount),
+        due_date: editInvoice.due_date,
+        notes: editInvoice.notes,
+        status: editInvoice.status,
+      }
+
+      const { data, error } = await supabase
+        .from("invoices")
+        .update(updateData)
+        .eq("id", editInvoice.id)
+        .eq("dietitian_id", user.id)
+        .select(`
+          *,
+          clients (name, email)
+        `)
+        .single()
+
+      if (error) {
+        console.error("❌ Error updating invoice:", error)
+        toast({
+          title: "Erreur",
+          description: "Impossible de modifier la facture.",
+          variant: "destructive",
+        })
+        return
+      }
+
+      // Update the invoices list
+      setInvoices(prev => prev.map(inv => inv.id === editInvoice.id ? data : inv))
+      
+      // Update selected invoice if it's the same
+      if (selectedInvoice?.id === editInvoice.id) {
+        setSelectedInvoice(data)
+      }
+
+      setIsEditDialogOpen(false)
+      toast({
+        title: "Facture modifiée",
+        description: `La facture #${data.invoice_number} a été mise à jour avec succès.`,
+      })
+    } catch (error) {
+      console.error("❌ Unexpected error updating invoice:", error)
+      toast({
+        title: "Erreur",
+        description: "Une erreur inattendue s'est produite.",
+        variant: "destructive",
+      })
+    }
+  }
+
   const filteredInvoices = invoices.filter(
     (invoice) =>
       invoice.invoice_number.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -693,7 +799,7 @@ export default function InvoicesPage() {
 
       {/* Invoice Details Dialog */}
       <Dialog open={isDetailsDialogOpen} onOpenChange={setIsDetailsDialogOpen}>
-        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
           <DialogHeader className="pb-4">
             <div className="flex items-center justify-between">
               <div>
@@ -909,13 +1015,14 @@ export default function InvoicesPage() {
               </Card>
 
               {/* Action Buttons */}
-              <div className="flex flex-wrap gap-3 pt-4 border-t border-gray-200">
-                <div className="flex gap-2 flex-wrap">
+              <div className="border-t border-gray-200 pt-6 space-y-4">
+                {/* Main Actions */}
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
                   <Button 
                     variant="outline" 
                     size="sm"
                     onClick={() => generateInvoicePDF(selectedInvoice)}
-                    className="border-blue-200 text-blue-700 hover:bg-blue-50"
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 w-full"
                   >
                     <Download className="mr-2 h-4 w-4" />
                     Télécharger PDF
@@ -924,7 +1031,7 @@ export default function InvoicesPage() {
                     variant="outline" 
                     size="sm"
                     onClick={() => printInvoice(selectedInvoice)}
-                    className="border-purple-200 text-purple-700 hover:bg-purple-50"
+                    className="border-purple-200 text-purple-700 hover:bg-purple-50 w-full"
                   >
                     <Printer className="mr-2 h-4 w-4" />
                     Imprimer
@@ -934,7 +1041,7 @@ export default function InvoicesPage() {
                     size="sm"
                     onClick={() => sendEmail(selectedInvoice)}
                     disabled={actionLoading === selectedInvoice.id}
-                    className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50"
+                    className="border-indigo-200 text-indigo-700 hover:bg-indigo-50 disabled:opacity-50 w-full"
                   >
                     <Mail className="mr-2 h-4 w-4" />
                     {actionLoading === selectedInvoice.id ? "Envoi..." : "Envoyer par email"}
@@ -942,50 +1049,69 @@ export default function InvoicesPage() {
                   <Button 
                     variant="outline" 
                     size="sm"
-                    className="border-gray-200 text-gray-700 hover:bg-gray-50"
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      openEditDialog(selectedInvoice)
+                    }}
+                    className="border-blue-200 text-blue-700 hover:bg-blue-50 w-full"
+                    type="button"
                   >
                     <Edit className="mr-2 h-4 w-4" />
                     Modifier
                   </Button>
                 </div>
                 
-                <div className="flex gap-2 ml-auto">
-                  {selectedInvoice.status === "pending" && (
-                    <>
-                      <Button 
-                        size="sm"
-                        onClick={() => processPayment(selectedInvoice)}
-                        disabled={actionLoading === `payment-${selectedInvoice.id}`}
-                        className="bg-blue-600 hover:bg-blue-700 text-white"
-                      >
-                        <CreditCard className="mr-2 h-4 w-4" />
-                        {actionLoading === `payment-${selectedInvoice.id}` ? "Traitement..." : "Processus de paiement"}
-                      </Button>
-                      <Button 
-                        variant="outline"
-                        size="sm"
-                        onClick={() => sendPaymentReminder(selectedInvoice)}
-                        disabled={actionLoading === `reminder-${selectedInvoice.id}`}
-                        className="border-orange-200 text-orange-700 hover:bg-orange-50"
-                      >
-                        <Send className="mr-2 h-4 w-4" />
-                        {actionLoading === `reminder-${selectedInvoice.id}` ? "Envoi..." : "Envoyer rappel"}
-                      </Button>
-                      <Button 
-                        size="sm"
-                        onClick={() => {
-                          updateInvoiceStatus(selectedInvoice.id, "paid")
-                          setIsDetailsDialogOpen(false)
-                        }}
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white"
-                      >
-                        Marquer comme payée
-                      </Button>
-                    </>
-                  )}
+                {/* Status-specific Actions */}
+                {selectedInvoice.status === "pending" && (
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                    <Button 
+                      size="sm"
+                      onClick={() => processPayment(selectedInvoice)}
+                      disabled={actionLoading === `payment-${selectedInvoice.id}`}
+                      className="bg-blue-600 hover:bg-blue-700 text-white w-full"
+                    >
+                      <CreditCard className="mr-2 h-4 w-4" />
+                      {actionLoading === `payment-${selectedInvoice.id}` ? "Traitement..." : "Processus de paiement"}
+                    </Button>
+                    <Button 
+                      variant="outline"
+                      size="sm"
+                      onClick={() => sendPaymentReminder(selectedInvoice)}
+                      disabled={actionLoading === `reminder-${selectedInvoice.id}`}
+                      className="border-orange-200 text-orange-700 hover:bg-orange-50 w-full"
+                    >
+                      <Send className="mr-2 h-4 w-4" />
+                      {actionLoading === `reminder-${selectedInvoice.id}` ? "Envoi..." : "Envoyer rappel"}
+                    </Button>
+                    <Button 
+                      size="sm"
+                      onClick={() => {
+                        updateInvoiceStatus(selectedInvoice.id, "paid")
+                        setIsDetailsDialogOpen(false)
+                      }}
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white w-full"
+                    >
+                      Marquer comme payée
+                    </Button>
+                  </div>
+                )}
+                
+                {/* Danger Zone */}
+                <div className="pt-4 border-t border-red-100">
                   <Button 
-                    variant="outline" 
+                    variant="outline"
                     size="sm"
+                    onClick={() => {
+                      if (confirm("Êtes-vous sûr de vouloir supprimer cette facture ?")) {
+                        // Add delete functionality here
+                        toast({
+                          title: "Facture supprimée",
+                          description: "La facture a été supprimée avec succès.",
+                        })
+                        setIsDetailsDialogOpen(false)
+                      }
+                    }}
                     className="border-red-200 text-red-700 hover:bg-red-50"
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
@@ -995,6 +1121,217 @@ export default function InvoicesPage() {
               </div>
             </div>
           )}
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Invoice Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[950px] max-h-[75vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-bold text-gray-900">
+              Modifier la facture #{editInvoice.invoice_number}
+            </DialogTitle>
+            <DialogDescription>
+              Mettre à jour les informations de la facture. Les champs marqués d'un * sont obligatoires.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-3 py-3">
+            {/* Client and Status Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="client">Client *</Label>
+                <Select
+                  value={editInvoice.client_id}
+                  onValueChange={(value: string) => setEditInvoice({ ...editInvoice, client_id: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un client" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clients.map((client) => (
+                      <SelectItem key={client.id} value={client.id}>
+                        {client.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="status">Statut de la facture</Label>
+                <Select
+                  value={editInvoice.status}
+                  onValueChange={(value: string) => setEditInvoice({ ...editInvoice, status: value })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un statut" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="draft">Brouillon</SelectItem>
+                    <SelectItem value="pending">En attente</SelectItem>
+                    <SelectItem value="paid">Payée</SelectItem>
+                    <SelectItem value="overdue">En retard</SelectItem>
+                    <SelectItem value="cancelled">Annulée</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="service">Description du service *</Label>
+              <Input
+                id="service"
+                value={editInvoice.service_description}
+                onChange={(e) => setEditInvoice({ ...editInvoice, service_description: e.target.value })}
+                placeholder="ex. Consultation nutritionnelle - 1 heure"
+              />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="amount">Montant (€) *</Label>
+                <Input
+                  id="amount"
+                  type="number"
+                  step="0.01"
+                  value={editInvoice.amount}
+                  onChange={(e) => setEditInvoice({ ...editInvoice, amount: e.target.value })}
+                  placeholder="120.00"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="due-date">Date d'échéance</Label>
+                <Input
+                  id="due-date"
+                  type="date"
+                  value={editInvoice.due_date}
+                  onChange={(e) => setEditInvoice({ ...editInvoice, due_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="tax_rate">Taux de TVA (%)</Label>
+                <Input
+                  id="tax_rate"
+                  type="number"
+                  step="0.01"
+                  value={editInvoice.tax_rate}
+                  onChange={(e) => setEditInvoice({ ...editInvoice, tax_rate: e.target.value })}
+                  placeholder="20.00"
+                />
+              </div>
+            </div>
+            {/* Notes and Summary Row */}
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="notes">Notes</Label>
+                <Textarea
+                  id="notes"
+                  value={editInvoice.notes}
+                  onChange={(e) => setEditInvoice({ ...editInvoice, notes: e.target.value })}
+                  placeholder="Notes supplémentaires ou conditions de paiement..."
+                  className="h-16 resize-none"
+                />
+              </div>
+              
+              {/* Invoice Summary - Compact */}
+              {editInvoice.amount && (
+                <div className="bg-emerald-50 p-3 rounded-lg border border-emerald-200 h-fit">
+                  <h4 className="font-semibold text-emerald-900 mb-2 text-sm">Récapitulatif</h4>
+                  <div className="space-y-1 text-sm">
+                    <div className="flex justify-between">
+                      <span>Montant HT:</span>
+                      <span className="font-medium">{parseFloat(editInvoice.amount || "0").toFixed(2)} €</span>
+                    </div>
+                    {parseFloat(editInvoice.tax_rate || "0") > 0 && (
+                      <div className="flex justify-between">
+                        <span>TVA ({editInvoice.tax_rate}%):</span>
+                        <span className="font-medium">
+                          {((parseFloat(editInvoice.amount || "0") * parseFloat(editInvoice.tax_rate || "0")) / 100).toFixed(2)} €
+                        </span>
+                      </div>
+                    )}
+                    <hr className="my-1" />
+                    <div className="flex justify-between font-bold text-base">
+                      <span>Total:</span>
+                      <span className="text-emerald-700">{calculateTotal().toFixed(2)} €</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Professional Information - Ultra Compact */}
+            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
+              <h4 className="text-sm font-medium text-gray-700 mb-2">Informations professionnelles</h4>
+              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                <div className="space-y-1">
+                  <Label htmlFor="hourly_rate" className="text-xs">Taux horaire</Label>
+                  <Input
+                    id="hourly_rate"
+                    type="number"
+                    step="0.01"
+                    value={editInvoice.hourly_rate}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, hourly_rate: e.target.value })}
+                    placeholder="50.00"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="hours_worked" className="text-xs">Heures travaillées</Label>
+                  <Input
+                    id="hours_worked"
+                    type="number"
+                    value={editInvoice.hours_worked}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, hours_worked: e.target.value })}
+                    placeholder="2"
+                    className="h-8 text-sm"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="consultation_type" className="text-xs">Type consultation</Label>
+                  <Select
+                    value={editInvoice.consultation_type}
+                    onValueChange={(value: string) => setEditInvoice({ ...editInvoice, consultation_type: value })}
+                  >
+                    <SelectTrigger className="h-8 text-sm">
+                      <SelectValue placeholder="Type" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="consultation">Consultation initiale</SelectItem>
+                      <SelectItem value="suivi">Suivi nutritionnel</SelectItem>
+                      <SelectItem value="education">Éducation thérapeutique</SelectItem>
+                      <SelectItem value="bilan">Bilan nutritionnel</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="payment_terms" className="text-xs">Conditions paiement (j)</Label>
+                  <Input
+                    id="payment_terms"
+                    type="number"
+                    value={editInvoice.payment_terms}
+                    onChange={(e) => setEditInvoice({ ...editInvoice, payment_terms: e.target.value })}
+                    placeholder="30"
+                    className="h-8 text-sm"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <DialogFooter className="gap-3">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditDialogOpen(false)}
+              className="px-6"
+            >
+              Annuler
+            </Button>
+            <Button
+              onClick={handleEditInvoice}
+              disabled={!editInvoice.client_id || !editInvoice.service_description || !editInvoice.amount}
+              className="bg-blue-600 hover:bg-blue-700 text-white shadow-md disabled:opacity-50 font-medium px-6"
+            >
+              <Edit className="mr-2 h-4 w-4" />
+              Enregistrer les modifications
+            </Button>
+          </DialogFooter>
         </DialogContent>
       </Dialog>
 

@@ -29,6 +29,15 @@ app/layout.tsx (root)
     → app/dashboard/[feature]/page.tsx
 ```
 
+### Navigation Patterns
+
+- Dynamic routes for client/plan details: `/dashboard/clients/[id]` and `/dashboard/meal-plans/[id]`
+- Dashboard cards use Link components with hover states for navigation
+- Always validate entity IDs exist before navigation to prevent broken links
+- Use consistent hover styling: `hover:bg-gray-50 transition-colors duration-200`
+- Sidebar "Actions rapides" section links to existing pages (not separate routes)
+- "Ajouter un client" links to `/dashboard/clients` where dialog-based creation exists
+
 ## Development Workflow
 
 ### Commands
@@ -120,8 +129,24 @@ When adding new features, follow the existing patterns: RLS-enabled database tab
 
 ## Recent Updates
 
-### Auth-Aware Landing Page (Latest)
+### Invoice Modal Width Fixed (Latest)
+- Increased invoice details modal width from 700px to 900px for better content display
+- Fixed broken layout when clicking "Modifier" button in invoice details
+- Improved responsive layout and button arrangement in modal dialogs
 
+### Calendar Component Fixed
+- Fixed broken calendar layout in appointments page from vertical list to proper grid
+- Updated CSS classes to use `grid grid-cols-7` for proper calendar table structure
+- Calendar now displays correctly with proper week/day grid layout
+- Compatible with react-day-picker v9.8.0
+
+### Clickable Dashboard Cards
+- Dashboard client and meal plan cards are now clickable Link components
+- Navigate to `/dashboard/clients/[id]` for client details
+- Navigate to `/dashboard/meal-plans/[id]` for plan details
+- Added hover states with consistent gray background and smooth transitions
+
+### Auth-Aware Landing Page
 - Landing page navbar dynamically adapts to authentication state
 - Implemented profile dropdown with user display name and logout functionality
 - French UI labels: "Connexion", "Commencer", "Mon espace", "Se déconnecter"

@@ -4,6 +4,7 @@ import { DashboardHeader } from "@/components/dashboard-header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
+import { ProfessionalCalendar } from "@/components/ui/professional-calendar"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
     Dialog,
@@ -610,17 +611,20 @@ export default function AdvancedCalendarPage() {
             <TabsContent value="month" className="mt-0">
               <Card>
                 <CardContent className="p-6">
-                  <Calendar
+                  <ProfessionalCalendar
                     mode="single"
                     selected={selectedDate}
-                    onSelect={(date) => date && setSelectedDate(date)}
+                    onSelect={(date) => {
+                      if (date instanceof Date) {
+                        setSelectedDate(date)
+                      }
+                    }}
                     className="rounded-md border"
-                    modifiers={{
-                      hasEvents: (date) => getEventsForDate(date).length > 0
-                    }}
-                    modifiersStyles={{
-                      hasEvents: { backgroundColor: '#dbeafe', fontWeight: 'bold' }
-                    }}
+                    events={events.map(event => ({
+                      date: new Date(event.start_time),
+                      title: event.title,
+                      type: event.type
+                    }))}
                   />
                 </CardContent>
               </Card>

@@ -145,7 +145,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/dashboard/clients/new">
+                  <Link href="/dashboard/clients">
                     <Plus />
                     <span>Ajouter un client</span>
                   </Link>

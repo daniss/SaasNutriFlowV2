@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
+import { ProfessionalCalendar } from "@/components/ui/professional-calendar"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
     Dialog,
@@ -731,24 +732,33 @@ export default function AppointmentsPage() {
       </Dialog>
 
       <div className="px-6 space-y-6">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
           {/* Calendar */}
-          <Card className="lg:col-span-1 border-0 shadow-soft bg-white/80 backdrop-blur-sm">
+          <Card className="xl:col-span-1 border-0 shadow-soft bg-white/80 backdrop-blur-sm">
             <CardHeader>
               <CardTitle className="text-sm font-medium">Calendrier</CardTitle>
             </CardHeader>
-            <CardContent>
-              <Calendar
+            <CardContent className="p-4">
+              <ProfessionalCalendar
                 mode="single"
                 selected={selectedDate}
-                onSelect={(date) => date && setSelectedDate(date)}
-                className="rounded-md border-0"
+                onSelect={(date) => {
+                  if (date instanceof Date) {
+                    setSelectedDate(date)
+                  }
+                }}
+                className="rounded-md border-0 w-full"
+                events={appointments.map(apt => ({
+                  date: new Date(apt.appointment_date),
+                  title: apt.title,
+                  type: apt.type
+                }))}
               />
             </CardContent>
           </Card>
 
           {/* Appointments List */}
-          <div className="lg:col-span-3 space-y-4">
+          <div className="xl:col-span-3 space-y-4">
             <Tabs defaultValue="today" className="w-full">
               <TabsList className="grid w-full grid-cols-3">
                 <TabsTrigger value="today">
