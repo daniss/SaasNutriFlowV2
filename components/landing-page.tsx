@@ -143,12 +143,31 @@ export function LandingPage() {
                 </div>
               ) : (
                 <>
-                  <Link
-                    href="/login"
-                    className="text-gray-600 hover:text-gray-900 transition-colors"
-                  >
-                    Connexion
-                  </Link>
+                  <DropdownMenu>
+                    <DropdownMenuTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        className="text-gray-600 hover:text-gray-900 transition-colors gap-1"
+                      >
+                        Connexion
+                        <ChevronDown className="h-4 w-4" />
+                      </Button>
+                    </DropdownMenuTrigger>
+                    <DropdownMenuContent align="end" className="w-48">
+                      <DropdownMenuItem asChild>
+                        <Link href="/login" className="cursor-pointer">
+                          <User className="mr-2 h-4 w-4" />
+                          Espace Nutritionniste
+                        </Link>
+                      </DropdownMenuItem>
+                      <DropdownMenuItem asChild>
+                        <Link href="/client-login" className="cursor-pointer">
+                          <Heart className="mr-2 h-4 w-4" />
+                          Portail Client
+                        </Link>
+                      </DropdownMenuItem>
+                    </DropdownMenuContent>
+                  </DropdownMenu>
                   <Button
                     asChild
                     className="bg-gradient-to-r from-emerald-500 to-teal-600 hover:from-emerald-600 hover:to-teal-700"
@@ -214,9 +233,17 @@ export function LandingPage() {
                   <>
                     <Link
                       href="/login"
-                      className="block px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                      className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
                     >
-                      Connexion
+                      <User className="h-4 w-4 mr-2" />
+                      Espace Nutritionniste
+                    </Link>
+                    <Link
+                      href="/client-login"
+                      className="flex items-center px-3 py-2 text-gray-600 hover:text-gray-900 transition-colors"
+                    >
+                      <Heart className="h-4 w-4 mr-2" />
+                      Portail Client
                     </Link>
                     <div className="px-3 py-2">
                       <Button

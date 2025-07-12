@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Dialog,
   DialogContent,
@@ -26,6 +27,7 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuthNew";
+import { generateTemporaryPassword, hashPassword, formatClientAccountEmail } from "@/lib/client-account-utils";
 import { supabase, type Client } from "@/lib/supabase";
 import {
   Activity,
@@ -49,6 +51,7 @@ export default function ClientsPage() {
   const [emailValidationLoading, setEmailValidationLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [createClientAccount, setCreateClientAccount] = useState(false);
   const [newClient, setNewClient] = useState({
     name: "",
     email: "",
@@ -241,8 +244,49 @@ export default function ClientsPage() {
         }
       }
 
+      // Create client account if checkbox is checked
+      if (createClientAccount) {
+        try {
+          const tempPassword = generateTemporaryPassword(newClient.name);
+          const hashedPassword = hashPassword(tempPassword);
+          const accountEmail = formatClientAccountEmail(newClient.email, newClient.name);
+
+          console.log("🔧 Creating client account:", {
+            tempPassword,
+            hashedPassword,
+            accountEmail,
+            clientEmail: newClient.email,
+            clientName: newClient.name
+          });
+
+          const { error: accountError } = await supabase
+            .from("client_accounts")
+            .insert({
+              client_id: data.id,
+              email: accountEmail,
+              password_hash: hashedPassword,
+              is_active: true,
+            });
+
+          if (accountError) {
+            console.error("⚠️ Error creating client account:", accountError);
+            // Don't fail the client creation if account creation fails
+          } else {
+            console.log("✅ Client account created!");
+            console.log("📧 Login Email:", accountEmail);
+            console.log("🔑 Temporary Password:", tempPassword);
+            console.log("🔒 Password Hash:", hashedPassword);
+            // TODO: In production, send this password via email to the client
+          }
+        } catch (accountError) {
+          console.error("⚠️ Unexpected error creating client account:", accountError);
+          // Don't fail the client creation if account creation fails
+        }
+      }
+
       setClients([data, ...clients]);
       setIsAddDialogOpen(false);
+      setCreateClientAccount(false);
       // Reset form and validation
       setNewClient({
         name: "",
@@ -562,10 +606,10 @@ export default function ClientsPage() {
                       </p>
                     )}
                     {emailValidationLoading && (
-                      <p className="text-sm text-blue-600 flex items-center gap-1">
+                      <div className="text-sm text-blue-600 flex items-center gap-1">
                         <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full"></div>
                         Vérification de l'email...
-                      </p>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -892,6 +936,30 @@ export default function ClientsPage() {
                     rows={3}
                     className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 resize-none"
                   />
+                </div>
+                
+                {/* Client Account Creation Section */}
+                <div className="space-y-3 pt-4 border-t border-gray-100">
+                  <div className="flex items-start space-x-3">
+                    <Checkbox
+                      id="create-account"
+                      checked={createClientAccount}
+                      onCheckedChange={(checked) => setCreateClientAccount(checked as boolean)}
+                      className="mt-1"
+                    />
+                    <div className="grid gap-1">
+                      <Label
+                        htmlFor="create-account"
+                        className="text-sm font-semibold text-gray-700 cursor-pointer"
+                      >
+                        Créer un compte client
+                      </Label>
+                      <p className="text-xs text-gray-500 leading-relaxed">
+                        Permettre au client d'accéder à son portail personnel pour consulter 
+                        ses plans alimentaires, suivre ses progrès et communiquer avec vous.
+                      </p>
+                    </div>
+                  </div>
                 </div>
               </div>
               <DialogFooter className="gap-3">

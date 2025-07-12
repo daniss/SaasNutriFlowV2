@@ -141,16 +141,6 @@ When adding new features, follow the existing patterns: RLS-enabled database tab
 - Real database integration maintained with professional calendar visualization
 - Week view component added for better temporal scheduling overview
 
-### Unified Calendar & Appointments System (Latest)
-
-- **MERGED** `/dashboard/calendar` and `/dashboard/appointments` into single comprehensive system
-- Unified appointments page now includes: Today, Week, Month, and List views
-- Enhanced sidebar with contextual information, statistics, and quick actions
-- Calendar page now redirects to appointments with appropriate view mode
-- Removed redundant navigation entry - single "Rendez-vous & Calendrier" menu item
-- Real database integration maintained with professional calendar visualization
-- Week view component added for better temporal scheduling overview
-
 ### Invoice Modal Width Fixed
 
 - Increased invoice details modal width from 700px to 900px for better content display
@@ -187,3 +177,29 @@ When adding new features, follow the existing patterns: RLS-enabled database tab
 - **Initial Weight**: Creating a client with a `current_weight` automatically creates an initial measurement record
 - **Database Tables**: `clients.current_weight` and `weight_history` table work in tandem
 - **French UI**: "nouvelle mesure", "poids actuel" terminology for nutrition practice
+
+### Client Portal Authentication System (Latest)
+
+- **Dual Authentication Architecture**: Complete separation between nutritionist (`useAuth`) and client (`useClientAuth`) authentication systems
+- **Client Authentication Flow**: 
+  - New `ClientAuthProvider` context for client session management
+  - Client login at `/client-login` with emerald gradient professional styling
+  - Client portal at `/client-portal` with real data integration and weight tracking
+  - `ClientProtectedRoute` component guards client-only pages
+- **Database Schema**: `client_accounts` table with RLS policies for client authentication
+- **API Endpoints**: 
+  - `/api/client-auth/login` - Client authentication with service role bypass
+  - `/api/client-auth/logout` - Client session termination  
+  - `/api/client-auth/data` - Client profile and meal plan data
+  - `/api/client-auth/weight` - Weight tracking with instant UI updates
+- **Cross-Authentication Protection**: 
+  - Nutritionists cannot access `/client-login` (redirected to `/dashboard`)
+  - Clients cannot access `/login` (redirected to `/client-portal`)
+  - Both `ClientAuthProvider` and `AuthProvider` available app-wide via root layout
+- **Professional UI Consistency**: 
+  - Both login pages use emerald gradient background (`from-emerald-50 via-white to-teal-50`)
+  - Consistent logo positioning, card styling, and form layouts
+  - Activity icon for nutritionist login, Heart icon for client login
+  - "Retour au site principal" navigation links on both pages
+- **Client Data Integration**: Real client data display with tabs for profile, meal plans, weight tracking with chart visualization
+- **Hydration Fixes**: Resolved HTML validation issues (no `<div>` inside `<p>` elements) for clean rendering

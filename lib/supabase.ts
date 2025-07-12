@@ -136,6 +136,44 @@ export interface Database {
           updated_at?: string
         }
       }
+      client_accounts: {
+        Row: {
+          id: string
+          client_id: string
+          email: string
+          password_hash: string
+          is_active: boolean
+          last_login: string | null
+          password_reset_token: string | null
+          password_reset_expires: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          client_id: string
+          email: string
+          password_hash: string
+          is_active?: boolean
+          last_login?: string | null
+          password_reset_token?: string | null
+          password_reset_expires?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          client_id?: string
+          email?: string
+          password_hash?: string
+          is_active?: boolean
+          last_login?: string | null
+          password_reset_token?: string | null
+          password_reset_expires?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+      }
       meal_plans: {
         Row: {
           id: string
@@ -468,6 +506,7 @@ export interface Database {
 }
 
 export type Client = Database["public"]["Tables"]["clients"]["Row"]
+export type ClientAccount = Database["public"]["Tables"]["client_accounts"]["Row"]
 export type Profile = Database["public"]["Tables"]["profiles"]["Row"]
 export type MealPlan = Database["public"]["Tables"]["meal_plans"]["Row"]
 export type Invoice = Database["public"]["Tables"]["invoices"]["Row"]
