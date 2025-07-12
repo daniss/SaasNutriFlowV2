@@ -404,34 +404,34 @@ export function useLoadingState() {
   }
 }
 
-// HOC for automatic error handling
-export function withErrorHandling<T extends object>(
-  Component: React.ComponentType<T>
-): React.ComponentType<T> {
-  return function ErrorBoundaryComponent(props: T) {
-    const { handleError } = useErrorHandler()
+// HOC for automatic error handling - disabled due to JSX in .ts file
+// export function withErrorHandling<T extends object>(
+//   Component: React.ComponentType<T>
+// ): React.ComponentType<T> {
+//   return function ErrorBoundaryComponent(props: T) {
+//     const { handleError } = useErrorHandler()
 
-    useEffect(() => {
-      const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
-        handleError(event.reason, 'unhandled_promise_rejection')
-      }
+//     useEffect(() => {
+//       const handleUnhandledRejection = (event: PromiseRejectionEvent) => {
+//         handleError(event.reason, 'unhandled_promise_rejection')
+//       }
 
-      const handleError = (event: ErrorEvent) => {
-        handleError(event.error, 'unhandled_error')
-      }
+//       const handleError = (event: ErrorEvent) => {
+//         handleError(event.error, 'unhandled_error')
+//       }
 
-      window.addEventListener('unhandledrejection', handleUnhandledRejection)
-      window.addEventListener('error', handleError)
+//       window.addEventListener('unhandledrejection', handleUnhandledRejection)
+//       window.addEventListener('error', handleError)
 
-      return () => {
-        window.removeEventListener('unhandledrejection', handleUnhandledRejection)
-        window.removeEventListener('error', handleError)
-      }
-    }, [])
+//       return () => {
+//         window.removeEventListener('unhandledrejection', handleUnhandledRejection)
+//         window.removeEventListener('error', handleError)
+//       }
+//     }, [])
 
-    return <Component {...props} />
-  }
-}
+//     return <Component {...props} />
+//   }
+// }
 
 // Async operation wrapper with error handling and loading states
 export async function withErrorAndLoadingHandling<T>(

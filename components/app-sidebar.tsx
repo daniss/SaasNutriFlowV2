@@ -60,7 +60,7 @@ const data = {
       icon: ChefHat,
     },
     {
-      title: "Rendez-vous",
+      title: "Rendez-vous & Calendrier",
       url: "/dashboard/appointments",
       icon: Calendar,
     },
@@ -73,11 +73,6 @@ const data = {
       title: "Analyses & Rapports",
       url: "/dashboard/analytics",
       icon: BarChart3,
-    },
-    {
-      title: "Calendrier Avancé",
-      url: "/dashboard/calendar",
-      icon: Calendar,
     },
     {
       title: "Portail Client",

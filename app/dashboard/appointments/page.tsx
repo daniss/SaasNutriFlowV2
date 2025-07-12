@@ -7,6 +7,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Calendar } from "@/components/ui/calendar"
 import { ProfessionalCalendar } from "@/components/ui/professional-calendar"
+import { WeekView } from "@/components/appointments/WeekView"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import {
     Dialog,
@@ -51,6 +52,7 @@ import {
     Video
 } from "lucide-react"
 import { useEffect, useState } from "react"
+import { useSearchParams } from "next/navigation"
 
 // Types
 type AppointmentStatus = 'scheduled' | 'completed' | 'cancelled' | 'no_show'
@@ -73,6 +75,8 @@ interface AppointmentFormData {
 export default function AppointmentsPage() {
   const { user } = useAuth()
   const { toast } = useToast()
+  const searchParams = useSearchParams()
+  const initialView = searchParams.get('view') as 'today' | 'week' | 'month' | 'list' || 'today'
   
   // State management
   const [appointments, setAppointments] = useState<AppointmentWithClient[]>([])
@@ -81,6 +85,7 @@ export default function AppointmentsPage() {
   const [actionLoading, setActionLoading] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState("")
   const [selectedDate, setSelectedDate] = useState<Date>(new Date())
+  const [viewMode, setViewMode] = useState<'today' | 'week' | 'month' | 'list'>(initialView)
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingAppointment, setEditingAppointment] = useState<AppointmentWithClient | null>(null)
@@ -407,11 +412,44 @@ export default function AppointmentsPage() {
     )
   }
 
+  // Helper functions for calendar views
+  const getAppointmentsForWeek = (date: Date) => {
+    const startOfWeek = new Date(date)
+    startOfWeek.setDate(date.getDate() - date.getDay())
+    const endOfWeek = new Date(startOfWeek)
+    endOfWeek.setDate(startOfWeek.getDate() + 6)
+    
+    return appointments.filter(apt => {
+      const appointmentDate = new Date(apt.appointment_date)
+      return appointmentDate >= startOfWeek && appointmentDate <= endOfWeek
+    })
+  }
+
+  const getTodayStats = () => {
+    const today = new Date().toISOString().split('T')[0]
+    const todayAppointments = appointments.filter(apt => apt.appointment_date === today)
+    const thisWeekAppointments = getAppointmentsForWeek(new Date())
+    const thisMonthAppointments = appointments.filter(apt => {
+      const aptDate = new Date(apt.appointment_date)
+      const now = new Date()
+      return aptDate.getMonth() === now.getMonth() && aptDate.getFullYear() === now.getFullYear()
+    })
+
+    return {
+      today: todayAppointments.length,
+      week: thisWeekAppointments.length,
+      month: thisMonthAppointments.length,
+      completed: appointments.filter(apt => apt.status === 'completed').length
+    }
+  }
+
+  const stats = getTodayStats()
+
   return (
     <div className="space-y-6">
       <DashboardHeader 
-        title="Rendez-vous"
-        subtitle="Gérez vos rendez-vous clients"
+        title="Rendez-vous & Calendrier"
+        subtitle="Gérez vos rendez-vous avec vue calendrier intégrée"
         searchPlaceholder="Rechercher des rendez-vous..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
@@ -731,137 +769,412 @@ export default function AppointmentsPage() {
         </DialogContent>
       </Dialog>
 
-      <div className="px-6 space-y-6">
-        <div className="grid grid-cols-1 xl:grid-cols-4 gap-6">
-          {/* Calendar */}
-          <Card className="xl:col-span-1 border-0 shadow-soft bg-white/80 backdrop-blur-sm">
-            <CardHeader>
-              <CardTitle className="text-sm font-medium">Calendrier</CardTitle>
-            </CardHeader>
-            <CardContent className="p-4">
-              <ProfessionalCalendar
-                mode="single"
-                selected={selectedDate}
-                onSelect={(date) => {
-                  if (date instanceof Date) {
-                    setSelectedDate(date)
+      {/* Unified Calendar & Appointments Interface */}
+      <div className="grid gap-6 lg:grid-cols-4">
+        <div className="lg:col-span-3">
+          <Tabs value={viewMode} onValueChange={(value: any) => setViewMode(value)} className="space-y-6">
+            <div className="flex items-center justify-between">
+              <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
+                <TabsTrigger value="today">Aujourd'hui</TabsTrigger>
+                <TabsTrigger value="week">Semaine</TabsTrigger>
+                <TabsTrigger value="month">Mois</TabsTrigger>
+                <TabsTrigger value="list">Liste</TabsTrigger>
+              </TabsList>
+              
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={fetchData}>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Actualiser
+                </Button>
+              </div>
+            </div>
+
+            {/* Today View */}
+            <TabsContent value="today" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <CalendarIcon className="h-5 w-5" />
+                    Rendez-vous d'aujourd'hui
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {todayAppointments.length === 0 ? (
+                    <EmptyStateWithSkeleton 
+                      icon={CalendarIcon}
+                      title="Aucun rendez-vous aujourd'hui"
+                      description="Vous n'avez pas de rendez-vous programmés pour aujourd'hui."
+                    />
+                  ) : (
+                    <div className="space-y-4">
+                      {todayAppointments.map((appointment) => (
+                        <AppointmentCard 
+                          key={appointment.id} 
+                          appointment={appointment}
+                          onEdit={openEditDialog}
+                          onDelete={handleDeleteAppointment}
+                          onUpdateStatus={handleUpdateStatus}
+                          onSendReminder={sendAppointmentReminder}
+                          isLoading={actionLoading === appointment.id}
+                          isReminderLoading={actionLoading === `reminder-${appointment.id}`}
+                        />
+                      ))}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Week View */}
+            <TabsContent value="week" className="mt-6">
+              <Card>
+                <CardHeader>
+                  <CardTitle>Vue hebdomadaire</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <WeekView 
+                    appointments={getAppointmentsForWeek(selectedDate)}
+                    selectedDate={selectedDate}
+                    onDateSelect={setSelectedDate}
+                    onAppointmentClick={openEditDialog}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* Month View */}
+            <TabsContent value="month" className="mt-6">
+              <Card>
+                <CardContent className="p-6">
+                  <ProfessionalCalendar
+                    mode="single"
+                    selected={selectedDate}
+                    onSelect={(date) => {
+                      if (date instanceof Date) {
+                        setSelectedDate(date)
+                      }
+                    }}
+                    className="rounded-md border"
+                    events={appointments.map(appointment => ({
+                      date: new Date(appointment.appointment_date),
+                      title: appointment.title,
+                      type: appointment.type
+                    }))}
+                  />
+                </CardContent>
+              </Card>
+            </TabsContent>
+
+            {/* List View */}
+            <TabsContent value="list" className="mt-6">
+              {filteredAppointments.length === 0 ? (
+                <EmptyStateWithSkeleton 
+                  icon={CalendarIcon}
+                  title={searchTerm ? "Aucun rendez-vous trouvé" : "Aucun rendez-vous"}
+                  description={searchTerm 
+                    ? "Essayez d'ajuster vos termes de recherche." 
+                    : "Créez votre premier rendez-vous pour commencer."
                   }
-                }}
-                className="rounded-md border-0 w-full"
-                events={appointments.map(apt => ({
-                  date: new Date(apt.appointment_date),
-                  title: apt.title,
-                  type: apt.type
-                }))}
-              />
+                  action={!searchTerm ? (
+                    <Button 
+                      onClick={() => setIsAddDialogOpen(true)} 
+                      className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Créer votre premier rendez-vous
+                    </Button>
+                  ) : undefined}
+                />
+              ) : (
+                <div className="space-y-4">
+                  {filteredAppointments.map((appointment) => (
+                    <AppointmentCard 
+                      key={appointment.id} 
+                      appointment={appointment}
+                      onEdit={openEditDialog}
+                      onDelete={handleDeleteAppointment}
+                      onUpdateStatus={handleUpdateStatus}
+                      onSendReminder={sendAppointmentReminder}
+                      isLoading={actionLoading === appointment.id}
+                      isReminderLoading={actionLoading === `reminder-${appointment.id}`}
+                    />
+                  ))}
+                </div>
+              )}
+            </TabsContent>
+          </Tabs>
+        </div>
+
+        {/* Context Sidebar */}
+        <div className="space-y-6">
+          {/* Selected Date Info */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">
+                {selectedDate.toLocaleDateString('fr-FR', { 
+                  weekday: 'long', 
+                  year: 'numeric', 
+                  month: 'long', 
+                  day: 'numeric' 
+                })}
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                {selectedDateAppointments.length === 0 ? (
+                  <p className="text-sm text-gray-600">Aucun événement</p>
+                ) : (
+                  selectedDateAppointments.map((appointment) => (
+                    <div key={appointment.id} className="p-3 rounded-lg border bg-gray-50 hover:bg-gray-100 cursor-pointer transition-colors" onClick={() => openEditDialog(appointment)}>
+                      <div className="flex items-center gap-2 mb-1">
+                        <Clock className="w-3 h-3 text-gray-500" />
+                        <span className="text-sm font-medium">{appointment.title}</span>
+                      </div>
+                      <p className="text-xs text-gray-600">
+                        {formatTime(appointment.appointment_time)} ({appointment.duration_minutes}min)
+                      </p>
+                      {appointment.clients?.name && (
+                        <p className="text-xs text-blue-600 mt-1">{appointment.clients.name}</p>
+                      )}
+                    </div>
+                  ))
+                )}
+              </div>
             </CardContent>
           </Card>
 
-          {/* Appointments List */}
-          <div className="xl:col-span-3 space-y-4">
-            <Tabs defaultValue="today" className="w-full">
-              <TabsList className="grid w-full grid-cols-3">
-                <TabsTrigger value="today">
-                  Aujourd'hui ({todayAppointments.length})
-                </TabsTrigger>
-                <TabsTrigger value="selected">
-                  {selectedDate.toLocaleDateString('fr-FR', { day: 'numeric', month: 'short' })} ({selectedDateAppointments.length})
-                </TabsTrigger>
-                <TabsTrigger value="all">
-                  Tous ({filteredAppointments.length})
-                </TabsTrigger>
-              </TabsList>
+          {/* Quick Stats */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Statistiques</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-3">
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Aujourd'hui</span>
+                  <span className="text-sm font-semibold">{stats.today} RDV</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Cette semaine</span>
+                  <span className="text-sm font-semibold">{stats.week} RDV</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Ce mois</span>
+                  <span className="text-sm font-semibold">{stats.month} RDV</span>
+                </div>
+                <div className="flex justify-between">
+                  <span className="text-sm text-gray-600">Terminés</span>
+                  <span className="text-sm font-semibold">{stats.completed}</span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
 
-              <TabsContent value="today" className="space-y-4 mt-6">
-                {todayAppointments.length === 0 ? (
-                  <EmptyStateWithSkeleton 
-                    icon={CalendarIcon}
-                    title="Aucun rendez-vous aujourd'hui"
-                    description="Vous n'avez pas de rendez-vous programmés pour aujourd'hui."
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    {todayAppointments.map((appointment) => (
-                      <AppointmentCard 
-                        key={appointment.id} 
-                        appointment={appointment}
-                        onEdit={openEditDialog}
-                        onDelete={handleDeleteAppointment}
-                        onUpdateStatus={handleUpdateStatus}
-                        onSendReminder={sendAppointmentReminder}
-                        isLoading={actionLoading === appointment.id}
-                        isReminderLoading={actionLoading === `reminder-${appointment.id}`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="selected" className="space-y-4 mt-6">
-                {selectedDateAppointments.length === 0 ? (
-                  <EmptyStateWithSkeleton 
-                    icon={CalendarIcon}
-                    title="Aucun rendez-vous ce jour"
-                    description="Vous n'avez pas de rendez-vous programmés pour cette date."
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    {selectedDateAppointments.map((appointment) => (
-                      <AppointmentCard 
-                        key={appointment.id} 
-                        appointment={appointment}
-                        onEdit={openEditDialog}
-                        onDelete={handleDeleteAppointment}
-                        onUpdateStatus={handleUpdateStatus}
-                        onSendReminder={sendAppointmentReminder}
-                        isLoading={actionLoading === appointment.id}
-                        isReminderLoading={actionLoading === `reminder-${appointment.id}`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-
-              <TabsContent value="all" className="space-y-4 mt-6">
-                {filteredAppointments.length === 0 ? (
-                  <EmptyStateWithSkeleton 
-                    icon={CalendarIcon}
-                    title={searchTerm ? "Aucun rendez-vous trouvé" : "Aucun rendez-vous"}
-                    description={searchTerm 
-                      ? "Essayez d'ajuster vos termes de recherche." 
-                      : "Créez votre premier rendez-vous pour commencer."
-                    }
-                    action={!searchTerm ? (
-                      <Button 
-                        onClick={() => setIsAddDialogOpen(true)} 
-                        className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
-                      >
-                        <Plus className="mr-2 h-4 w-4" />
-                        Créer votre premier rendez-vous
-                      </Button>
-                    ) : undefined}
-                  />
-                ) : (
-                  <div className="space-y-4">
-                    {filteredAppointments.map((appointment) => (
-                      <AppointmentCard 
-                        key={appointment.id} 
-                        appointment={appointment}
-                        onEdit={openEditDialog}
-                        onDelete={handleDeleteAppointment}
-                        onUpdateStatus={handleUpdateStatus}
-                        onSendReminder={sendAppointmentReminder}
-                        isLoading={actionLoading === appointment.id}
-                        isReminderLoading={actionLoading === `reminder-${appointment.id}`}
-                      />
-                    ))}
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
-          </div>
+          {/* Quick Actions */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-lg">Actions rapides</CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-start"
+                onClick={() => setIsAddDialogOpen(true)}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Nouveau rendez-vous
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-start"
+                onClick={() => setViewMode('today')}
+              >
+                <CalendarIcon className="h-4 w-4 mr-2" />
+                Vue d'aujourd'hui
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="w-full justify-start"
+                onClick={() => {
+                  setSelectedDate(new Date())
+                  setViewMode('month')
+                }}
+              >
+                <Users className="h-4 w-4 mr-2" />
+                Aller à aujourd'hui
+              </Button>
+            </CardContent>
+          </Card>
         </div>
       </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[500px] shadow-soft-lg border-0 max-h-[90vh] overflow-y-auto">
+          <DialogHeader className="space-y-3">
+            <DialogTitle className="text-xl font-semibold text-gray-900">Modifier le rendez-vous</DialogTitle>
+            <DialogDescription className="text-gray-600 leading-relaxed">
+              Modifiez les détails de ce rendez-vous.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-6 py-6">
+            <div className="space-y-2">
+              <Label htmlFor="edit-title">Titre *</Label>
+              <Input
+                id="edit-title"
+                value={newAppointment.title}
+                onChange={(e) => setNewAppointment({ ...newAppointment, title: e.target.value })}
+                placeholder="ex: Consultation initiale"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-client">Client *</Label>
+              <Select
+                value={newAppointment.client_id}
+                onValueChange={(value) => setNewAppointment({ ...newAppointment, client_id: value })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Sélectionner un client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map((client) => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-appointment-date">Date *</Label>
+                <Input
+                  id="edit-appointment-date"
+                  type="date"
+                  value={newAppointment.appointment_date}
+                  onChange={(e) => setNewAppointment({ ...newAppointment, appointment_date: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-appointment-time">Heure *</Label>
+                <Input
+                  id="edit-appointment-time"
+                  type="time"
+                  value={newAppointment.appointment_time}
+                  onChange={(e) => setNewAppointment({ ...newAppointment, appointment_time: e.target.value })}
+                />
+              </div>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-type">Type</Label>
+                <Select
+                  value={newAppointment.type}
+                  onValueChange={(value) => setNewAppointment({ ...newAppointment, type: value as AppointmentType })}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Type de rendez-vous" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="consultation">Consultation</SelectItem>
+                    <SelectItem value="follow_up">Suivi</SelectItem>
+                    <SelectItem value="nutrition_planning">Planification nutritionnelle</SelectItem>
+                    <SelectItem value="assessment">Évaluation</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-duration">Durée (min)</Label>
+                <Select
+                  value={newAppointment.duration_minutes.toString()}
+                  onValueChange={(value) => setNewAppointment({ ...newAppointment, duration_minutes: parseInt(value) })}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="30">30 minutes</SelectItem>
+                    <SelectItem value="45">45 minutes</SelectItem>
+                    <SelectItem value="60">60 minutes</SelectItem>
+                    <SelectItem value="90">90 minutes</SelectItem>
+                    <SelectItem value="120">120 minutes</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-description">Description</Label>
+              <Textarea
+                id="edit-description"
+                value={newAppointment.description}
+                onChange={(e) => setNewAppointment({ ...newAppointment, description: e.target.value })}
+                placeholder="Description du rendez-vous..."
+                rows={3}
+              />
+            </div>
+            <div className="flex items-center space-x-2">
+              <input
+                type="checkbox"
+                id="edit-is-virtual"
+                checked={newAppointment.is_virtual}
+                onChange={(e) => setNewAppointment({ ...newAppointment, is_virtual: e.target.checked })}
+                className="rounded border-gray-300"
+              />
+              <Label htmlFor="edit-is-virtual">Rendez-vous virtuel</Label>
+            </div>
+            {!newAppointment.is_virtual ? (
+              <div className="space-y-2">
+                <Label htmlFor="edit-location">Lieu</Label>
+                <Input
+                  id="edit-location"
+                  value={newAppointment.location}
+                  onChange={(e) => setNewAppointment({ ...newAppointment, location: e.target.value })}
+                  placeholder="Adresse ou lieu du rendez-vous..."
+                />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="edit-meeting-link">Lien de visioconférence</Label>
+                <Input
+                  id="edit-meeting-link"
+                  value={newAppointment.meeting_link}
+                  onChange={(e) => setNewAppointment({ ...newAppointment, meeting_link: e.target.value })}
+                  placeholder="https://meet.google.com/..."
+                />
+              </div>
+            )}
+            <div className="space-y-2">
+              <Label htmlFor="edit-notes">Notes</Label>
+              <Textarea
+                id="edit-notes"
+                value={newAppointment.notes}
+                onChange={(e) => setNewAppointment({ ...newAppointment, notes: e.target.value })}
+                placeholder="Notes internes..."
+                rows={2}
+              />
+            </div>
+          </div>
+          <DialogFooter className="gap-2">
+            <Button 
+              variant="outline" 
+              onClick={() => setIsEditDialogOpen(false)}
+              disabled={actionLoading === "edit"}
+            >
+              Annuler
+            </Button>
+            <Button 
+              onClick={handleEditAppointment}
+              disabled={actionLoading === "edit"}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+            >
+              {actionLoading === "edit" ? "Modification..." : "Modifier"}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

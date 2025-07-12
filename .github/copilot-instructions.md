@@ -37,6 +37,8 @@ app/layout.tsx (root)
 - Use consistent hover styling: `hover:bg-gray-50 transition-colors duration-200`
 - Sidebar "Actions rapides" section links to existing pages (not separate routes)
 - "Ajouter un client" links to `/dashboard/clients` where dialog-based creation exists
+- **Calendar functionality integrated into `/dashboard/appointments`** with multiple view modes
+- Old `/dashboard/calendar` route redirects to unified appointments system
 
 ## Development Workflow
 
@@ -129,7 +131,25 @@ When adding new features, follow the existing patterns: RLS-enabled database tab
 
 ## Recent Updates
 
-### Invoice Modal Width Fixed (Latest)
+### Unified Calendar & Appointments System (Latest)
+- **MERGED** `/dashboard/calendar` and `/dashboard/appointments` into single comprehensive system
+- Unified appointments page now includes: Today, Week, Month, and List views
+- Enhanced sidebar with contextual information, statistics, and quick actions
+- Calendar page now redirects to appointments with appropriate view mode
+- Removed redundant navigation entry - single "Rendez-vous & Calendrier" menu item
+- Real database integration maintained with professional calendar visualization
+- Week view component added for better temporal scheduling overview
+
+### Unified Calendar & Appointments System (Latest)
+- **MERGED** `/dashboard/calendar` and `/dashboard/appointments` into single comprehensive system
+- Unified appointments page now includes: Today, Week, Month, and List views
+- Enhanced sidebar with contextual information, statistics, and quick actions
+- Calendar page now redirects to appointments with appropriate view mode
+- Removed redundant navigation entry - single "Rendez-vous & Calendrier" menu item
+- Real database integration maintained with professional calendar visualization
+- Week view component added for better temporal scheduling overview
+
+### Invoice Modal Width Fixed
 - Increased invoice details modal width from 700px to 900px for better content display
 - Fixed broken layout when clicking "Modifier" button in invoice details
 - Improved responsive layout and button arrangement in modal dialogs
