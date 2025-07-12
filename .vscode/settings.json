@@ -42,7 +42,7 @@
     "**/.next": true,
     "**/dist": true,
     "**/coverage": true,
-    "pnpm-lock.yaml": true
+    "package-lock.json": true
   },
   "jest.jestCommandLine": "npm run test",
   "jest.autoRun": "off",

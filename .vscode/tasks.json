@@ -4,8 +4,8 @@
     {
       "label": "dev",
       "type": "shell",
-      "command": "pnpm",
-      "args": ["dev"],
+      "command": "npm",
+      "args": ["run", "dev"],
       "group": "build",
       "isBackground": true,
       "problemMatcher": {
@@ -28,8 +28,8 @@
     {
       "label": "build",
       "type": "shell",
-      "command": "pnpm",
-      "args": ["build"],
+      "command": "npm",
+      "args": ["run", "build"],
       "group": {
         "kind": "build",
         "isDefault": true
@@ -39,8 +39,8 @@
     {
       "label": "test",
       "type": "shell",
-      "command": "pnpm",
-      "args": ["test"],
+      "command": "npm",
+      "args": ["run", "test"],
       "group": {
         "kind": "test",
         "isDefault": true
@@ -55,8 +55,8 @@
     {
       "label": "test:watch",
       "type": "shell",
-      "command": "pnpm",
-      "args": ["test:watch"],
+      "command": "npm",
+      "args": ["run", "test:watch"],
       "group": "test",
       "isBackground": true,
       "problemMatcher": {
@@ -73,23 +73,23 @@
     {
       "label": "lint",
       "type": "shell",
-      "command": "pnpm",
-      "args": ["lint"],
+      "command": "npm",
+      "args": ["run", "lint"],
       "group": "build",
       "problemMatcher": ["$eslint-stylish"]
     },
     {
       "label": "type-check",
       "type": "shell",
-      "command": "pnpm",
-      "args": ["type-check"],
+      "command": "npm",
+      "args": ["run", "type-check"],
       "group": "build",
       "problemMatcher": ["$tsc"]
     },
     {
       "label": "install",
       "type": "shell",
-      "command": "pnpm",
+      "command": "npm",
       "args": ["install"],
       "group": "build"
     }

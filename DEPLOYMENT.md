@@ -5,6 +5,7 @@ This guide covers deploying NutriFlow to production with security, performance, 
 ## 📋 Pre-Deployment Checklist
 
 ### 🔐 Security Requirements
+
 - [ ] All environment variables are set with secure values
 - [ ] Database Row Level Security (RLS) policies are enabled
 - [ ] API keys are rotated and stored securely
@@ -15,6 +16,7 @@ This guide covers deploying NutriFlow to production with security, performance, 
 - [ ] Input validation is implemented
 
 ### 🔧 Environment Configuration
+
 - [ ] Production environment variables are configured
 - [ ] Database connection strings are correct
 - [ ] External service API keys are valid
@@ -22,6 +24,7 @@ This guide covers deploying NutriFlow to production with security, performance, 
 - [ ] Monitoring and logging services are set up
 
 ### 🧪 Testing & Quality Assurance
+
 - [ ] All tests pass (`npm run test`)
 - [ ] TypeScript compilation succeeds (`npm run type-check`)
 - [ ] ESLint checks pass (`npm run lint`)
@@ -34,6 +37,7 @@ This guide covers deploying NutriFlow to production with security, performance, 
 ### Vercel (Recommended)
 
 #### 1. Deploy to Vercel
+
 ```bash
 # Install Vercel CLI
 npm i -g vercel
@@ -49,6 +53,7 @@ vercel env add SUPABASE_SERVICE_ROLE_KEY
 ```
 
 #### 2. Configure Vercel Project
+
 ```json
 {
   "buildCommand": "npm run build",
@@ -66,7 +71,9 @@ vercel env add SUPABASE_SERVICE_ROLE_KEY
 ### Netlify
 
 #### 1. Build Configuration
+
 Create `netlify.toml`:
+
 ```toml
 [build]
   command = "npm run build"
@@ -82,6 +89,7 @@ Create `netlify.toml`:
 ```
 
 #### 2. Deploy
+
 ```bash
 # Install Netlify CLI
 npm i -g netlify-cli
@@ -93,6 +101,7 @@ netlify deploy --prod --dir=.next
 ### Docker Deployment
 
 #### 1. Create Dockerfile
+
 ```dockerfile
 FROM node:18-alpine AS base
 
@@ -102,8 +111,8 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Copy package files
-COPY package.json pnpm-lock.yaml* ./
-RUN corepack enable pnpm && pnpm i --frozen-lockfile
+COPY package.json package-lock.json* ./
+RUN npm ci --only=production
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -112,7 +121,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED 1
-RUN corepack enable pnpm && pnpm run build
+RUN npm run build
 
 # Production image
 FROM base AS runner
@@ -145,8 +154,9 @@ CMD ["node", "server.js"]
 ```
 
 #### 2. Docker Compose
+
 ```yaml
-version: '3.8'
+version: "3.8"
 services:
   nutriflow:
     build: .
@@ -158,7 +168,7 @@ services:
       - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
       - SUPABASE_SERVICE_ROLE_KEY=${SUPABASE_SERVICE_ROLE_KEY}
     restart: unless-stopped
-    
+
   nginx:
     image: nginx:alpine
     ports:
@@ -177,6 +187,7 @@ services:
 ### Supabase Production Configuration
 
 #### 1. Database Migration
+
 ```sql
 -- Run the enhanced schema
 \i scripts/enhanced-schema.sql
@@ -201,6 +212,7 @@ CREATE POLICY "Nutritionists can see their clients" ON clients
 ```
 
 #### 2. Database Backup Strategy
+
 ```bash
 # Set up automated backups
 pg_dump -h db.xxx.supabase.co -U postgres -d postgres > backup.sql
@@ -212,6 +224,7 @@ pg_dump -h db.xxx.supabase.co -U postgres -d postgres > backup.sql
 ## 🔒 Security Hardening
 
 ### Environment Variables
+
 ```bash
 # Production environment variables
 export NODE_ENV=production
@@ -237,6 +250,7 @@ export GOOGLE_ANALYTICS_ID=G-...
 ```
 
 ### SSL/TLS Configuration
+
 ```nginx
 # nginx.conf
 server {
@@ -267,59 +281,66 @@ server {
 ## 📊 Monitoring & Observability
 
 ### 1. Application Monitoring
+
 ```typescript
 // lib/monitoring.ts - Already implemented
-import { initMonitoring } from '@/lib/monitoring'
+import { initMonitoring } from "@/lib/monitoring";
 
 // Initialize monitoring in production
-if (process.env.NODE_ENV === 'production') {
-  initMonitoring()
+if (process.env.NODE_ENV === "production") {
+  initMonitoring();
 }
 ```
 
 ### 2. Health Checks
+
 Create `app/api/health/route.ts`:
+
 ```typescript
-import { NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase'
+import { NextResponse } from "next/server";
+import { supabase } from "@/lib/supabase";
 
 export async function GET() {
   try {
     // Check database connection
     const { data, error } = await supabase
-      .from('profiles')
-      .select('count')
-      .limit(1)
+      .from("profiles")
+      .select("count")
+      .limit(1);
 
     if (error) {
-      throw error
+      throw error;
     }
 
     return NextResponse.json({
-      status: 'healthy',
+      status: "healthy",
       timestamp: new Date().toISOString(),
       services: {
-        database: 'connected',
-        application: 'running'
-      }
-    })
+        database: "connected",
+        application: "running",
+      },
+    });
   } catch (error) {
-    return NextResponse.json({
-      status: 'unhealthy',
-      timestamp: new Date().toISOString(),
-      error: error instanceof Error ? error.message : 'Unknown error'
-    }, { status: 500 })
+    return NextResponse.json(
+      {
+        status: "unhealthy",
+        timestamp: new Date().toISOString(),
+        error: error instanceof Error ? error.message : "Unknown error",
+      },
+      { status: 500 }
+    );
   }
 }
 ```
 
 ### 3. Logging Configuration
+
 ```typescript
 // lib/logger.ts
-import winston from 'winston'
+import winston from "winston";
 
 const logger = winston.createLogger({
-  level: process.env.LOG_LEVEL || 'info',
+  level: process.env.LOG_LEVEL || "info",
   format: winston.format.combine(
     winston.format.timestamp(),
     winston.format.errors({ stack: true }),
@@ -328,74 +349,77 @@ const logger = winston.createLogger({
   transports: [
     new winston.transports.Console(),
     new winston.transports.File({
-      filename: 'logs/error.log',
-      level: 'error'
+      filename: "logs/error.log",
+      level: "error",
     }),
     new winston.transports.File({
-      filename: 'logs/combined.log'
-    })
-  ]
-})
+      filename: "logs/combined.log",
+    }),
+  ],
+});
 
-export default logger
+export default logger;
 ```
 
 ## 🚦 Performance Optimization
 
 ### 1. Next.js Optimization
+
 ```javascript
 // next.config.mjs additions
 const nextConfig = {
   // ... existing config
-  
+
   // Performance optimizations
   experimental: {
-    optimizePackageImports: ['lucide-react', '@radix-ui/react-icons']
+    optimizePackageImports: ["lucide-react", "@radix-ui/react-icons"],
   },
-  
+
   // Image optimization
   images: {
-    domains: ['your-domain.com'],
-    formats: ['image/webp', 'image/avif'],
-    minimumCacheTTL: 60
+    domains: ["your-domain.com"],
+    formats: ["image/webp", "image/avif"],
+    minimumCacheTTL: 60,
   },
-  
+
   // Compression
   compress: true,
-  
+
   // Bundle analysis
   webpack: (config, { buildId, dev, isServer, defaultLoaders, webpack }) => {
     if (!dev && !isServer) {
       config.optimization.splitChunks = {
-        chunks: 'all',
+        chunks: "all",
         cacheGroups: {
           vendor: {
             test: /[\\/]node_modules[\\/]/,
-            name: 'vendors',
-            chunks: 'all',
+            name: "vendors",
+            chunks: "all",
           },
         },
-      }
+      };
     }
-    return config
-  }
-}
+    return config;
+  },
+};
 ```
 
 ### 2. CDN Configuration
+
 ```javascript
 // Configure static asset CDN
 const nextConfig = {
-  assetPrefix: process.env.NODE_ENV === 'production' 
-    ? 'https://cdn.yourdomain.com' 
-    : '',
-}
+  assetPrefix:
+    process.env.NODE_ENV === "production" ? "https://cdn.yourdomain.com" : "",
+};
 ```
 
 ## 🔄 CI/CD Pipeline
 
 ### GitHub Actions
+
 Create `.github/workflows/deploy.yml`:
+
 ```yaml
 name: Deploy to Production
 
@@ -410,9 +434,9 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-      
+          node-version: "18"
+          cache: "npm"
+
       - run: npm ci
       - run: npm run lint
       - run: npm run type-check
@@ -423,71 +447,77 @@ jobs:
     needs: test
     runs-on: ubuntu-latest
     if: github.ref == 'refs/heads/main'
-    
+
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
-          node-version: '18'
-          cache: 'npm'
-      
+          node-version: "18"
+          cache: "npm"
+
       - run: npm ci
       - run: npm run build
-      
+
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
         with:
           vercel-token: ${{ secrets.VERCEL_TOKEN }}
           vercel-org-id: ${{ secrets.ORG_ID }}
           vercel-project-id: ${{ secrets.PROJECT_ID }}
-          vercel-args: '--prod'
+          vercel-args: "--prod"
 ```
 
 ## 📈 Scaling Considerations
 
 ### 1. Database Scaling
+
 - Set up read replicas for read-heavy operations
 - Implement connection pooling
 - Use database indexes for frequently queried fields
 - Consider partitioning large tables
 
 ### 2. Application Scaling
+
 - Use serverless functions for API routes
 - Implement caching at multiple levels
 - Use CDN for static assets
 - Consider implementing a Redis cache for sessions
 
 ### 3. Monitoring Scaling
+
 ```typescript
 // Implement application metrics
 const metrics = {
   apiRequests: new prometheus.Counter({
-    name: 'api_requests_total',
-    help: 'Total API requests'
+    name: "api_requests_total",
+    help: "Total API requests",
   }),
-  
+
   responseTime: new prometheus.Histogram({
-    name: 'api_response_time_seconds',
-    help: 'API response time'
-  })
-}
+    name: "api_response_time_seconds",
+    help: "API response time",
+  }),
+};
 ```
 
 ## 🆘 Disaster Recovery
 
 ### 1. Backup Strategy
+
 - Automated daily database backups
 - Application code backup (Git)
 - Environment configuration backup
 - SSL certificate backup
 
 ### 2. Recovery Procedures
+
 1. Database restoration from backup
 2. Application redeployment from Git
 3. Environment variable restoration
 4. DNS failover procedures
 
 ### 3. Incident Response
+
 - Monitor application health continuously
 - Set up alerting for critical failures
 - Document incident response procedures
@@ -498,6 +528,7 @@ const metrics = {
 ## 📞 Production Support
 
 For production issues:
+
 1. Check application logs
 2. Verify database connectivity
 3. Check external service status

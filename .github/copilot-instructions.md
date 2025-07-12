@@ -19,6 +19,7 @@ This is **NutriFlow**, a Next.js 15 SaaS platform for French dietitian-nutrition
 - `ProtectedRoute.tsx` HOC guards dashboard routes
 - Middleware in `middleware.ts` handles auth redirects for `/dashboard/*` paths
 - Three Supabase clients: `client.ts` (browser), `server.ts` (SSR), `middleware.ts` (Edge)
+- Landing page navbar adapts based on auth state using `useAuth()` hook
 
 ### Dashboard Layout Hierarchy
 
@@ -45,6 +46,7 @@ npm run lint         # ESLint check
 - SQL scripts in `/scripts/` for schema management
 - Use `supabase` CLI for migrations: `supabase db push`
 - Always enable RLS on new tables with dietitian_id policies
+- Use `npm install` for package management (never use pnpm or legacy-peer-deps)
 
 ## Component Patterns
 
@@ -61,9 +63,20 @@ npm run lint         # ESLint check
 - Example import: `import { useForm } from "react-hook-form"`
 - French UI labels but English field names/validation
 
+### Auth-Aware Navigation
+
+- Landing page navbar uses conditional rendering based on `isAuthenticated` from `useAuth()`
+- **Authenticated users**: Profile dropdown with display name, "Mon espace" link, "Se déconnecter" option
+- **Unauthenticated users**: "Connexion" link and "Commencer" signup button
+- Mobile navigation follows same auth patterns with appropriate styling
+- Use `DropdownMenu` from shadcn/ui for profile menus
+- Display name priority: `first_name last_name` > `first_name` > `email prefix` > "Mon Compte"
+
 ### French Interface Standards
 
 - Sidebar navigation in French: "Tableau de bord", "Clients", "Plans alimentaires"
+- Landing page navbar: "Connexion" for login, "Commencer" for signup
+- Auth dropdown menu: "Mon espace" (dashboard), "Se déconnecter" (logout)
 - API responses can be English, but UI text must be French
 - Error messages and notifications in French
 
@@ -104,3 +117,13 @@ npm run lint         # ESLint check
 - French UI text should be tested with exact string matches
 
 When adding new features, follow the existing patterns: RLS-enabled database tables, French UI labels, proper client/server separation, and multi-tenant isolation by dietitian_id.
+
+## Recent Updates
+
+### Auth-Aware Landing Page (Latest)
+
+- Landing page navbar dynamically adapts to authentication state
+- Implemented profile dropdown with user display name and logout functionality
+- French UI labels: "Connexion", "Commencer", "Mon espace", "Se déconnecter"
+- Mobile navigation follows same auth patterns
+- Uses `useAuth()` hook for seamless auth state management

@@ -5,6 +5,7 @@
 ## 🎯 What NutriFlow Does
 
 NutriFlow serves as a complete digital practice management solution for nutrition professionals, enabling them to:
+
 - **Manage client relationships** with detailed profiles, progress tracking, and communication tools
 - **Create personalized meal plans** using AI-powered generation or custom templates
 - **Track client progress** through weight history, measurements, and visual analytics
@@ -22,6 +23,7 @@ NutriFlow serves as a complete digital practice management solution for nutritio
 ## 🔧 Technology Stack
 
 ### Frontend
+
 - **Next.js 15** - React framework with App Router
 - **React 19** - Latest React with concurrent features
 - **TypeScript** - Type safety and developer experience
@@ -33,12 +35,14 @@ NutriFlow serves as a complete digital practice management solution for nutritio
 - **PWA Support** - Offline functionality and native app experience
 
 ### Backend & Database
+
 - **Supabase** - PostgreSQL database with real-time capabilities
 - **Row Level Security (RLS)** - Data security and multi-tenancy
 - **Authentication** - Supabase Auth with profile management
 - **Real-time subscriptions** - Live updates across the platform
 
 ### AI & Integrations
+
 - **Google Gemini AI** - Intelligent meal plan generation
 - **Advanced Food Database** - Comprehensive nutrition information
 - **External Calendar Sync** - Google Calendar, Outlook integration
@@ -47,9 +51,10 @@ NutriFlow serves as a complete digital practice management solution for nutritio
 - **PDF Generation** - jsPDF with meal plans and reports
 
 ### Development Tools
+
 - **ESLint** - Code linting and best practices
 - **PostCSS** - CSS processing and optimization
-- **pnpm** - Fast, efficient package management
+- **npm** - Fast, efficient package management
 - **Service Worker** - Offline functionality and caching
 
 ---
@@ -57,8 +62,9 @@ NutriFlow serves as a complete digital practice management solution for nutritio
 ## ✨ Key Features
 
 ### 🏠 **Dashboard & Analytics**
+
 - **Status:** ✅ Fully functional
-- **Features:** 
+- **Features:**
   - Real-time statistics and KPIs
   - Advanced analytics dashboard with charts and metrics
   - Client activity overview and trends
@@ -67,6 +73,7 @@ NutriFlow serves as a complete digital practice management solution for nutritio
   - Export capabilities for reports
 
 ### 👥 **Client Management**
+
 - **Status:** ✅ Fully functional
 - **Features:**
   - Complete CRUD operations for client profiles
@@ -78,6 +85,7 @@ NutriFlow serves as a complete digital practice management solution for nutritio
   - Real-time form validation and error handling
 
 ### 📋 **Meal Plans & Nutrition**
+
 - **Status:** ✅ Fully functional
 - **Features:**
   - ✅ AI-powered meal plan generation using Gemini API
@@ -91,6 +99,7 @@ NutriFlow serves as a complete digital practice management solution for nutritio
   - ✅ Client feedback system
 
 ### 💬 **Enhanced Messaging System**
+
 - **Status:** ✅ Fully functional
 - **Features:**
   - Real-time messaging with clients
@@ -102,6 +111,7 @@ NutriFlow serves as a complete digital practice management solution for nutritio
   - Mobile-optimized interface
 
 ### 📅 **Advanced Calendar & Appointments**
+
 - **Status:** ✅ Fully functional
 - **Features:**
   - ✅ Appointment scheduling and management
@@ -113,6 +123,7 @@ NutriFlow serves as a complete digital practice management solution for nutritio
   - ✅ Time zone handling
 
 ### 🏪 **Client Self-Service Portal**
+
 - **Status:** ✅ Fully functional
 - **Features:**
   - Dedicated client dashboard
@@ -124,6 +135,7 @@ NutriFlow serves as a complete digital practice management solution for nutritio
   - Mobile-responsive design
 
 ### 💳 **Payment Processing & Invoicing**
+
 - **Status:** ✅ Fully functional
 - **Features:**
   - Multi-provider payment processing (Stripe, PayPal, SumUp, Lydia Pro)
@@ -134,6 +146,7 @@ NutriFlow serves as a complete digital practice management solution for nutritio
   - Tax calculation and compliance
 
 ### 🔔 **Notification & Communication**
+
 - **Status:** ✅ Fully functional
 - **Features:**
   - ✅ Multi-channel notifications (email, SMS)
@@ -143,6 +156,7 @@ NutriFlow serves as a complete digital practice management solution for nutritio
   - ✅ Provider integration (SendGrid, Twilio, OVH)
 
 ### 📱 **Mobile Optimization & PWA**
+
 - **Status:** ✅ Fully functional
 - **Features:**
   - Progressive Web App (PWA) support
@@ -153,6 +167,7 @@ NutriFlow serves as a complete digital practice management solution for nutritio
   - App-like experience
 
 ### 🌍 **Multi-language Support**
+
 - **Status:** ✅ Implemented
 - **Features:**
   - French, English, Spanish support
@@ -161,6 +176,7 @@ NutriFlow serves as a complete digital practice management solution for nutritio
   - Cultural adaptation
 
 ### 📊 **Monitoring & Performance**
+
 - **Status:** ✅ Implemented
 - **Features:**
   - Error tracking and reporting
@@ -174,23 +190,28 @@ NutriFlow serves as a complete digital practice management solution for nutritio
 ## 🚀 Installation and Setup
 
 ### **Prerequisites**
-- Node.js 18+ 
-- pnpm (recommended) or npm/yarn
+
+- Node.js 18+
+- npm 9+
 - Supabase account
 
 ### **1. Clone the Repository**
+
 ```bash
 git clone [repository-url]
 cd SaasNutriFlowV2
 ```
 
 ### **2. Install Dependencies**
+
 ```bash
-pnpm install
+npm install
 ```
 
 ### **3. Environment Setup**
+
 Create a `.env.local` file:
+
 ```env
 # Supabase Configuration
 NEXT_PUBLIC_SUPABASE_URL=your_supabase_project_url
@@ -230,6 +251,7 @@ NEXT_PUBLIC_LOGROCKET_ID=your_logrocket_id
 ```
 
 ### **4. Database Setup**
+
 ```bash
 # Run the enhanced schema in your Supabase SQL editor
 # Copy and paste the content from scripts/enhanced-schema.sql
@@ -239,16 +261,18 @@ NEXT_PUBLIC_LOGROCKET_ID=your_logrocket_id
 ```
 
 ### **5. Start Development Server**
+
 ```bash
-pnpm dev
+npm run dev
 ```
 
 Application available at `http://localhost:3000`
 
 ### **6. Build for Production**
+
 ```bash
-pnpm build
-pnpm start
+npm run build
+npm start
 ```
 
 ---
@@ -297,6 +321,7 @@ SaasNutriFlowV2/
 ## 🎯 Target Audience
 
 ### Primary Users: Registered Dietitians & Nutritionists
+
 - **Solo practitioners** looking to digitize their practice
 - **Nutrition clinics** needing comprehensive client management
 - **Sports nutritionists** working with athletes and teams
@@ -304,6 +329,7 @@ SaasNutriFlowV2/
 - **Wellness coaches** focusing on nutrition guidance
 
 ### Use Cases:
+
 - **Private practice management** - Complete client lifecycle management
 - **Clinical nutrition** - Medical nutrition therapy and patient care
 - **Sports nutrition** - Performance optimization and athlete support
@@ -337,26 +363,31 @@ SaasNutriFlowV2/
 ## 🔮 Future Roadmap
 
 ### Phase 1: Enhanced Mobile Experience
+
 - [ ] Native mobile app (React Native)
 - [ ] Enhanced offline capabilities
 - [ ] Voice commands and dictation
 
 ### Phase 2: AI & Machine Learning
+
 - [ ] Predictive analytics for client outcomes
 - [ ] Smart meal plan recommendations
 - [ ] Automated progress insights
 
 ### Phase 3: Integrations & Ecosystem
+
 - [ ] Electronic Health Record (EHR) integrations
 - [ ] Fitness tracker synchronization
 - [ ] Third-party nutrition app connections
 
 ### Phase 4: Advanced Features
+
 - [ ] Telehealth video consultations
 - [ ] Group coaching capabilities
 - [ ] Marketplace for meal plans and resources
 
 ### Phase 5: Enterprise Features
+
 - [ ] Multi-location practice management
 - [ ] Staff and role management
 - [ ] Advanced reporting and compliance tools
@@ -366,6 +397,7 @@ SaasNutriFlowV2/
 ## 🤝 Contributing
 
 We welcome contributions! Please see our contributing guidelines for details on how to:
+
 - Report bugs and issues
 - Suggest new features
 - Submit pull requests
@@ -384,4 +416,4 @@ We welcome contributions! Please see our contributing guidelines for details on 
 
 **NutriFlow** represents the future of nutrition practice management, combining the efficiency of modern technology with the personal touch that clients expect from their nutrition professionals. Built by developers who understand the unique needs of dietitians and nutritionists in today's digital healthcare landscape.
 
-*Ready to transform your nutrition practice? Get started today!* 🚀
+_Ready to transform your nutrition practice? Get started today!_ 🚀
