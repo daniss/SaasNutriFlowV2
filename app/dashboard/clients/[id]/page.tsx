@@ -1,5 +1,9 @@
 "use client";
 
+import { DocumentList } from "@/components/documents/DocumentList";
+import { DocumentUpload } from "@/components/documents/DocumentUpload";
+import { ProgressPhotoUpload } from "@/components/progress/ProgressPhotoUpload";
+import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,6 +32,7 @@ import {
   Activity,
   ArrowLeft,
   Calendar,
+  Camera,
   Clock,
   Edit,
   FileText,
@@ -109,6 +114,7 @@ export default function ClientDetailPage() {
   const [newWeight, setNewWeight] = useState("");
   const [newWeightNotes, setNewWeightNotes] = useState("");
   const [newNote, setNewNote] = useState("");
+  const [documentRefresh, setDocumentRefresh] = useState(0);
 
   // Form validation states
   const [weightValidation, setWeightValidation] = useState({
@@ -965,6 +971,20 @@ export default function ClientDetailPage() {
               <FileText className="h-4 w-4 mr-2" />
               Notes privées
             </TabsTrigger>
+            <TabsTrigger
+              value="documents"
+              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600"
+            >
+              <FileText className="h-4 w-4 mr-2" />
+              Documents
+            </TabsTrigger>
+            <TabsTrigger
+              value="photos"
+              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600"
+            >
+              <Camera className="h-4 w-4 mr-2" />
+              Photos de progrès
+            </TabsTrigger>
           </TabsList>
 
           {/* Progress Tab */}
@@ -1617,6 +1637,70 @@ export default function ClientDetailPage() {
                     {loading ? "Ajout en cours..." : "Ajouter la note"}
                   </Button>
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Documents Tab */}
+          <TabsContent value="documents" className="space-y-6">
+            <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-slate-900 flex items-center gap-2">
+                      <FileText className="h-5 w-5 text-emerald-600" />
+                      Documents
+                    </CardTitle>
+                    <CardDescription className="text-slate-600">
+                      Gérez les documents du client (analyses, prescriptions,
+                      photos...)
+                    </CardDescription>
+                  </div>
+                  <DocumentUpload
+                    clientId={client.id}
+                    onUploadComplete={() =>
+                      setDocumentRefresh((prev) => prev + 1)
+                    }
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <DocumentList
+                  clientId={client.id}
+                  refreshTrigger={documentRefresh}
+                />
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Progress Photos Tab */}
+          <TabsContent value="photos" className="space-y-6">
+            <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="text-slate-900 flex items-center gap-2">
+                      <Camera className="h-5 w-5 text-emerald-600" />
+                      Photos de progrès
+                    </CardTitle>
+                    <CardDescription className="text-slate-600">
+                      Suivez l'évolution visuelle de votre client avec des
+                      photos avant/après
+                    </CardDescription>
+                  </div>
+                  <ProgressPhotoUpload
+                    clientId={client.id}
+                    onUploadComplete={() =>
+                      setDocumentRefresh((prev) => prev + 1)
+                    }
+                  />
+                </div>
+              </CardHeader>
+              <CardContent>
+                <ProgressPhotos
+                  clientId={client.id}
+                  refreshTrigger={documentRefresh}
+                />
               </CardContent>
             </Card>
           </TabsContent>

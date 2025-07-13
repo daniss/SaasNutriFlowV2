@@ -55,7 +55,9 @@ npm run lint         # ESLint check
 ### Database Operations
 
 - SQL scripts in `/scripts/` for schema management
-- Use `supabase` CLI for migrations: `supabase db push`
+- **IMPORTANT**: Never attempt to run database scripts with terminal commands
+- **Always provide the SQL script content for manual execution in supabase.com**
+- Use Supabase SQL Editor at https://supabase.com/dashboard/project/[project-id]/sql
 - Always enable RLS on new tables with dietitian_id policies
 - Use `npm install` for package management (never use pnpm or legacy-peer-deps)
 
@@ -113,6 +115,55 @@ npm run lint         # ESLint check
 - Services and utilities in `/lib/`
 - Database types generated from Supabase schema
 
+## Current Production Status
+
+### 🚀 **FULLY PRODUCTION READY**
+
+NutriFlow is now a complete, production-ready SaaS platform with all core features implemented:
+
+**✅ Core Features Complete:**
+
+- Client management with full CRUD operations
+- Meal plan creation, editing, and AI generation
+- Appointment scheduling with calendar integration
+- Invoice generation and payment processing
+- Real-time analytics dashboard
+- Comprehensive messaging system
+- Document management with client sharing
+- Progress tracking (weight, photos, measurements)
+- Mobile-responsive PWA
+
+**✅ Security & Compliance Complete:**
+
+- Two-factor authentication (email-based)
+- Role-based access control (dietitian/admin/superadmin)
+- Comprehensive audit logging
+- GDPR compliance with mandatory consent collection
+- Row Level Security (RLS) on all database tables
+- Session management with device trust
+- Secure file storage and document sharing
+
+**✅ Client Experience Complete:**
+
+- Dual authentication system (nutritionist + client portals)
+- Real-time data across all interfaces
+- Document access with visibility controls
+- Weight tracking with chart visualization
+- Appointment management
+- GDPR rights management
+- Responsive design across all devices
+
+**✅ Technical Architecture Complete:**
+
+- Next.js 15 with App Router and React 19
+- TypeScript throughout codebase
+- Supabase for database, auth, and storage
+- Real-time subscriptions for live updates
+- Professional UI with shadcn/ui components
+- Comprehensive error handling and validation
+
+The platform is ready for immediate deployment to production with full confidence.
+
 ## Critical Don'ts
 
 - Never expose SUPABASE_SERVICE_ROLE_KEY in client-side code
@@ -130,6 +181,38 @@ npm run lint         # ESLint check
 When adding new features, follow the existing patterns: RLS-enabled database tables, French UI labels, proper client/server separation, and multi-tenant isolation by dietitian_id.
 
 ## Recent Updates
+
+### Document Management & Client Portal Integration (Latest)
+
+- **COMPLETE** Document system with nutritionist upload and client access
+- Enhanced client portal with real data across all tabs (Profile, Plans, Weight, Appointments, Documents, Messages, GDPR)
+- Document categories: general, blood_test, prescription, photo, report, meal_plan, exercise_plan
+- Visibility controls: `is_visible_to_client` boolean field controls client access
+- Secure downloads: Service role authentication for client document access
+- Real-time updates: Document visibility can be toggled post-upload
+- Professional UI: Category badges, file size display, upload dates, download buttons
+- Complete audit trail: All document operations logged via AuditLogService
+
+### Client Portal Real Data Implementation (Latest)
+
+- **7-tab navigation**: Overview, Mon Plan, Progrès, Rendez-vous, Documents, Messages, Confidentialité
+- **Real API integration**: All data comes from `/api/client-auth/data` endpoint
+- **Document access**: New `ClientDocuments.tsx` component for secure document viewing
+- **Weight tracking**: Real-time weight entry with chart visualization
+- **Appointment display**: Real appointments from database with proper formatting
+- **Message system**: Real conversation threading with nutritionist
+- **GDPR management**: Complete consent management and data rights interface
+
+### GDPR Compliance System (Latest)
+
+- **Mandatory Consent Collection**: Non-dismissible modal for first-time client portal access
+- **Complete Admin Interface**: `/dashboard/gdpr` with consent management, data export, deletion requests
+- **Client Rights Management**: Full GDPR interface in client portal "Confidentialité" tab
+- **Database Schema**: GDPR tables (`consent_records`, `data_retention_policies`, `data_export_requests`, etc.)
+- **Email Notifications**: Automatic admin notifications for GDPR requests
+- **Consent Categories**: 5 types (data_processing, health_data, photos, marketing, data_sharing)
+- **Legal Compliance**: Complete audit trails, retention policies, and right to erasure
+- **API Endpoints**: Full GDPR management APIs with service role authentication
 
 ### Unified Calendar & Appointments System (Latest)
 
@@ -181,25 +264,66 @@ When adding new features, follow the existing patterns: RLS-enabled database tab
 ### Client Portal Authentication System (Latest)
 
 - **Dual Authentication Architecture**: Complete separation between nutritionist (`useAuth`) and client (`useClientAuth`) authentication systems
-- **Client Authentication Flow**: 
+- **Client Authentication Flow**:
   - New `ClientAuthProvider` context for client session management
   - Client login at `/client-login` with emerald gradient professional styling
   - Client portal at `/client-portal` with real data integration and weight tracking
   - `ClientProtectedRoute` component guards client-only pages
 - **Database Schema**: `client_accounts` table with RLS policies for client authentication
-- **API Endpoints**: 
+- **API Endpoints**:
   - `/api/client-auth/login` - Client authentication with service role bypass
-  - `/api/client-auth/logout` - Client session termination  
+  - `/api/client-auth/logout` - Client session termination
   - `/api/client-auth/data` - Client profile and meal plan data
   - `/api/client-auth/weight` - Weight tracking with instant UI updates
-- **Cross-Authentication Protection**: 
+  - `/api/client-auth/documents` - Client document access (visible only)
+  - `/api/client-auth/documents/download` - Secure document downloads
+  - `/api/client-auth/gdpr/consents` - GDPR consent management
+- **Cross-Authentication Protection**:
   - Nutritionists cannot access `/client-login` (redirected to `/dashboard`)
   - Clients cannot access `/login` (redirected to `/client-portal`)
   - Both `ClientAuthProvider` and `AuthProvider` available app-wide via root layout
-- **Professional UI Consistency**: 
+- **Professional UI Consistency**:
   - Both login pages use emerald gradient background (`from-emerald-50 via-white to-teal-50`)
   - Consistent logo positioning, card styling, and form layouts
   - Activity icon for nutritionist login, Heart icon for client login
   - "Retour au site principal" navigation links on both pages
-- **Client Data Integration**: Real client data display with tabs for profile, meal plans, weight tracking with chart visualization
+- **Client Data Integration**: Real client data display with tabs for profile, meal plans, weight tracking with chart visualization, documents, and GDPR rights
 - **Hydration Fixes**: Resolved HTML validation issues (no `<div>` inside `<p>` elements) for clean rendering
+
+### Document Management System (Latest)
+
+- **Complete Document Lifecycle**: Upload, categorization, visibility control, and secure client access
+- **Nutritionist Interface**:
+  - Document upload in `/dashboard/clients/[id]` with 7 categories (general, blood_test, prescription, photo, report, meal_plan, exercise_plan)
+  - Visibility toggle per document (`is_visible_to_client` boolean)
+  - Document management with download, visibility control, and deletion
+  - Audit logging for all document operations
+- **Client Portal Integration**:
+  - New "Documents" tab in client portal (`/client-portal`)
+  - `ClientDocuments.tsx` component for secure document viewing
+  - Only shows documents marked as `is_visible_to_client: true`
+  - Secure download functionality with proper authentication
+- **Database Schema**:
+  - `documents` table with RLS policies and visibility controls
+  - Supabase Storage bucket with proper access policies
+  - File organization: `/dietitian_id/client_id/filename`
+- **Security Features**:
+  - Service role authentication for client document access
+  - Validation of document ownership and visibility
+  - File type validation (PDF, images, Word docs)
+  - 10MB file size limit
+- **API Implementation**:
+  - Real-time visibility updates in dashboard
+  - Secure download through backend proxy
+  - Proper error handling and user feedback
+
+### GDPR Compliance System (Latest)
+
+- **Mandatory Consent Collection**: Non-dismissible modal for first-time client portal access
+- **Complete Admin Interface**: `/dashboard/gdpr` with consent management, data export, deletion requests
+- **Client Rights Management**: Full GDPR interface in client portal "Confidentialité" tab
+- **Database Schema**: GDPR tables (`consent_records`, `data_retention_policies`, `data_export_requests`, etc.)
+- **Email Notifications**: Automatic admin notifications for GDPR requests
+- **Consent Categories**: 5 types (data_processing, health_data, photos, marketing, data_sharing)
+- **Legal Compliance**: Complete audit trails, retention policies, and right to erasure
+- **API Endpoints**: Full GDPR management APIs with service role authentication

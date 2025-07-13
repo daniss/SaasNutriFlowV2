@@ -33,9 +33,20 @@ ADD COLUMN IF NOT EXISTS attachment_name TEXT,
 ADD COLUMN IF NOT EXISTS read_at TIMESTAMP WITH TIME ZONE,
 ADD COLUMN IF NOT EXISTS metadata JSONB DEFAULT '{}';
 
--- Update messages to use conversation_id
+-- Make client_id and dietitian_id nullable for conversation-based messages
+-- (Keep them for backward compatibility with old direct messages)
+ALTER TABLE messages ALTER COLUMN client_id DROP NOT NULL;
+ALTER TABLE messages ALTER COLUMN dietitian_id DROP NOT NULL;
 ALTER TABLE messages 
 ADD FOREIGN KEY (conversation_id) REFERENCES conversations(id) ON DELETE CASCADE;
+
+-- Add constraint to ensure we have either conversation_id or direct client/dietitian relationship
+ALTER TABLE messages 
+ADD CONSTRAINT messages_relationship_check 
+CHECK (
+  (conversation_id IS NOT NULL) OR 
+  (client_id IS NOT NULL AND dietitian_id IS NOT NULL)
+);
 
 -- Notification Templates
 CREATE TABLE IF NOT EXISTS notification_templates (

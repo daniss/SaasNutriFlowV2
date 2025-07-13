@@ -13,6 +13,8 @@ import {
   Plus,
   Receipt,
   Settings,
+  Shield,
+  TestTube,
   Users,
 } from "lucide-react";
 import type * as React from "react";
@@ -38,6 +40,7 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuthNew";
+import { useRoleBasedAccess } from "@/hooks/useRoleBasedAccess";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -100,6 +103,26 @@ const data = {
       icon: Receipt,
     },
     {
+      title: "Journaux d'audit",
+      url: "/dashboard/audit",
+      icon: Shield,
+    },
+    {
+      title: "Tests E2E",
+      url: "/dashboard/testing",
+      icon: TestTube,
+    },
+    {
+      title: "Conformité RGPD",
+      url: "/dashboard/gdpr",
+      icon: Shield,
+    },
+    {
+      title: "Gestion Admin",
+      url: "/dashboard/admin",
+      icon: Shield,
+    },
+    {
       title: "Paramètres",
       url: "/dashboard/settings",
       icon: Settings,
@@ -111,11 +134,29 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const router = useRouter();
   const { profile, signOut } = useAuth();
+  const { hasPermission, isSuperAdmin } = useRoleBasedAccess();
 
   const handleSignOut = async () => {
     await signOut();
     router.push("/");
   };
+
+  // Filter navigation items based on permissions
+  const filteredNavItems = data.navMain.filter((item) => {
+    if (item.url === "/dashboard/audit") {
+      return hasPermission("canAccessAuditLogs");
+    }
+    if (item.url === "/dashboard/testing") {
+      return hasPermission("canAccessTesting");
+    }
+    if (item.url === "/dashboard/gdpr") {
+      return hasPermission("canAccessAuditLogs"); // GDPR requires same admin access as audit logs
+    }
+    if (item.url === "/dashboard/admin") {
+      return isSuperAdmin;
+    }
+    return true; // Show all other items
+  });
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -136,7 +177,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu>
-              {data.navMain.map((item) => (
+              {filteredNavItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild

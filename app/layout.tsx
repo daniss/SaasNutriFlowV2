@@ -1,39 +1,40 @@
-import type React from "react"
-import type { Metadata } from "next"
-import { Inter } from "next/font/google"
-import "./globals.css"
-import { Toaster } from "@/components/ui/toaster"
-import { AuthProvider } from "@/components/auth/AuthProviderNew"
-import { ClientAuthProvider } from "@/components/auth/ClientAuthProvider"
+import { AuthProvider } from "@/components/auth/AuthProviderNew";
+import { ClientAuthProvider } from "@/components/auth/ClientAuthProvider";
+import { TwoFactorProvider } from "@/components/auth/TwoFactorProvider";
+import { Toaster } from "@/components/ui/toaster";
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import type React from "react";
+import "./globals.css";
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
   title: "NutriFlow - Dietitian Dashboard",
   description: "Modern SaaS platform for independent dietitians",
-  generator: 'v0.dev',
+  generator: "v0.dev",
   icons: {
-    icon: '/favicon.png',
-    shortcut: '/favicon.png',
-    apple: '/favicon.png',
+    icon: "/favicon.png",
+    shortcut: "/favicon.png",
+    apple: "/favicon.png",
   },
-}
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
       <body className={inter.className}>
         <AuthProvider>
-          <ClientAuthProvider>
-            {children}
-          </ClientAuthProvider>
+          <TwoFactorProvider>
+            <ClientAuthProvider>{children}</ClientAuthProvider>
+          </TwoFactorProvider>
         </AuthProvider>
         <Toaster />
       </body>
     </html>
-  )
+  );
 }
