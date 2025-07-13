@@ -1,16 +1,24 @@
+import { validateClientAuth } from "@/lib/client-auth-security";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { clientId, message } = body;
-
-    if (!clientId || !message) {
+    // SECURITY FIX: Use secure client authentication
+    const authResult = await validateClientAuth(request);
+    if ("error" in authResult) {
       return NextResponse.json(
-        { error: "Client ID et message requis" },
-        { status: 400 }
+        { error: authResult.error },
+        { status: authResult.status }
       );
+    }
+    const { clientId } = authResult;
+
+    const body = await request.json();
+    const { message } = body;
+
+    if (!message) {
+      return NextResponse.json({ error: "Message requis" }, { status: 400 });
     }
 
     // Use service role to send message

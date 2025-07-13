@@ -13,6 +13,8 @@ interface ClientAuthContextType {
   client: ClientData | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  hasCheckedSession: boolean;
+  getAuthToken: () => string | null;
   login: (
     email: string,
     password: string
@@ -39,8 +41,9 @@ export function ClientAuthProvider({
 }) {
   const [client, setClient] = useState<ClientData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [hasCheckedSession, setHasCheckedSession] = useState(false);
 
-  const isAuthenticated = !!client;
+  const isAuthenticated = !!client && hasCheckedSession;
 
   // Check if client is already logged in on mount
   useEffect(() => {
@@ -49,15 +52,60 @@ export function ClientAuthProvider({
 
   const checkClientSession = async () => {
     try {
-      // Check if there's a valid client session
+      // Check if there's a valid client session and token
       const sessionData = localStorage.getItem("client-session");
-      if (sessionData) {
-        const clientData = JSON.parse(sessionData);
-        setClient(clientData);
+      const clientToken = localStorage.getItem("client-token");
+
+      if (sessionData && clientToken) {
+        // First set client from stored session data to avoid timing issues
+        try {
+          const storedClient = JSON.parse(sessionData);
+          if (storedClient && storedClient.id) {
+            setClient(storedClient);
+          }
+        } catch (parseError) {
+          console.error("Error parsing stored client session:", parseError);
+        }
+
+        // Then verify the token is still valid with lightweight validation endpoint
+        const response = await fetch("/api/client-auth/validate-session", {
+          method: "GET",
+          headers: {
+            Authorization: `Bearer ${clientToken}`,
+          },
+        });
+
+        if (response.ok) {
+          const result = await response.json();
+          if (result.success && result.client) {
+            // Update with fresh client data from server
+            setClient(result.client);
+            setHasCheckedSession(true);
+          } else {
+            // Session invalid, clear stored data
+            setClient(null);
+            setHasCheckedSession(true);
+            localStorage.removeItem("client-session");
+            localStorage.removeItem("client-token");
+          }
+        } else {
+          // Token is invalid, clear stored data
+          setClient(null);
+          setHasCheckedSession(true);
+          localStorage.removeItem("client-session");
+          localStorage.removeItem("client-token");
+        }
+      } else {
+        // No session data available
+        setClient(null);
+        setHasCheckedSession(true);
       }
     } catch (error) {
       console.error("Error checking client session:", error);
+      setClient(null);
+      setHasCheckedSession(true);
       localStorage.removeItem("client-session");
+      localStorage.removeItem("client-token");
     } finally {
       setIsLoading(false);
     }
@@ -82,7 +130,10 @@ export function ClientAuthProvider({
 
       if (response.ok && data.success) {
         setClient(data.client);
+        setHasCheckedSession(true);
+        // SECURITY FIX: Store both client data and secure token
         localStorage.setItem("client-session", JSON.stringify(data.client));
+        localStorage.setItem("client-token", data.token); // Store the secure token
         return { success: true };
       } else {
         return { success: false, error: data.error || "Erreur de connexion" };
@@ -97,22 +148,37 @@ export function ClientAuthProvider({
 
   const logout = async (): Promise<void> => {
     try {
-      await fetch("/api/client-auth/logout", {
-        method: "POST",
-      });
+      // Use the stored token for authenticated logout
+      const clientToken = localStorage.getItem("client-token");
+      if (clientToken) {
+        await fetch("/api/client-auth/logout", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${clientToken}`,
+          },
+        });
+      }
     } catch (error) {
       console.error("Logout error:", error);
     } finally {
       setClient(null);
+      setHasCheckedSession(true);
       localStorage.removeItem("client-session");
+      localStorage.removeItem("client-token"); // Clear the secure token
       localStorage.removeItem("client-consents-given");
     }
+  };
+
+  const getAuthToken = (): string | null => {
+    return localStorage.getItem("client-token");
   };
 
   const value: ClientAuthContextType = {
     client,
     isLoading,
     isAuthenticated,
+    hasCheckedSession,
+    getAuthToken,
     login,
     logout,
   };

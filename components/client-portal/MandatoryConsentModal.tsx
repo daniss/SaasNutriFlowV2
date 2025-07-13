@@ -13,6 +13,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { clientPost } from "@/lib/client-api";
 import { AlertTriangle, Shield } from "lucide-react";
 import { useState } from "react";
 
@@ -70,35 +71,28 @@ export function MandatoryConsentModal({
     setIsSubmitting(true);
 
     try {
-      // Save consents
-      const response = await fetch("/api/client-auth/gdpr/consents", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          clientId: client?.id,
-          consents: Object.entries(consents).map(([type, granted]) => ({
-            consent_type: type,
-            granted,
-          })),
-        }),
+      // Save consents using secure authentication
+      const response = await clientPost("/api/client-auth/gdpr/consents", {
+        consents: Object.entries(consents).map(([type, granted]) => ({
+          consent_type: type,
+          granted,
+        })),
       });
 
-      if (!response.ok) {
-        throw new Error("Erreur lors de l'enregistrement des consentements");
+      if (response.success) {
+        // Mark as consents given
+        localStorage.setItem("client-consents-given", "true");
+
+        toast({
+          title: "Consentements enregistrés",
+          description:
+            "Vos préférences de confidentialité ont été enregistrées avec succès.",
+        });
+
+        onConsentGiven();
+      } else {
+        throw new Error("Failed to save consents");
       }
-
-      // Mark as consents given
-      localStorage.setItem("client-consents-given", "true");
-
-      toast({
-        title: "Consentements enregistrés",
-        description:
-          "Vos préférences de confidentialité ont été enregistrées avec succès.",
-      });
-
-      onConsentGiven();
     } catch (error) {
       console.error("Error saving consents:", error);
       toast({

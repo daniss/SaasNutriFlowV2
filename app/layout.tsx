@@ -1,5 +1,6 @@
 import { AuthProvider } from "@/components/auth/AuthProviderNew";
 import { ClientAuthProvider } from "@/components/auth/ClientAuthProvider";
+import { ClientAuthRouter } from "@/components/auth/ClientAuthRouter";
 import { TwoFactorProvider } from "@/components/auth/TwoFactorProvider";
 import { Toaster } from "@/components/ui/toaster";
 import type { Metadata } from "next";
@@ -30,7 +31,10 @@ export default function RootLayout({
       <body className={inter.className}>
         <AuthProvider>
           <TwoFactorProvider>
-            <ClientAuthProvider>{children}</ClientAuthProvider>
+            <ClientAuthProvider>
+              <ClientAuthRouter />
+              {children}
+            </ClientAuthProvider>
           </TwoFactorProvider>
         </AuthProvider>
         <Toaster />

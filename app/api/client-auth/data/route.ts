@@ -1,14 +1,48 @@
+import { validateClientSession } from "@/lib/client-auth-security";
+import {
+  authTokenSchema,
+  checkRateLimit,
+  validateInput,
+} from "@/lib/security-validation";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get client ID from URL params
-    const url = new URL(request.url);
-    const clientId = url.searchParams.get("clientId");
+    // Rate limiting by IP
+    const clientIP =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const rateLimit = checkRateLimit(`data:${clientIP}`, 50, 60 * 1000); // 50 requests per minute
 
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: "Trop de requêtes. Veuillez patienter." },
+        { status: 429 }
+      );
+    }
+
+    // SECURITY FIX: Validate client session instead of accepting arbitrary clientId
+    const authHeader = request.headers.get("authorization");
+
+    // Input validation
+    const validation = await validateInput({ authHeader }, authTokenSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 401 });
+    }
+
+    const token = (validation.data as { authHeader: string }).authHeader.split(
+      " "
+    )[1];
+
+    // Validate client token and get clientId from secure session
+    const clientId = await validateClientSession(token);
     if (!clientId) {
-      return NextResponse.json({ error: "Client ID requis" }, { status: 400 });
+      return NextResponse.json(
+        { error: "Session client invalide" },
+        { status: 401 }
+      );
     }
 
     // Use service role to fetch client data

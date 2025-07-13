@@ -21,6 +21,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useToast } from "@/hooks/use-toast";
+import { clientGet, clientPost } from "@/lib/client-api";
 import {
   AlertTriangle,
   CheckCircle,
@@ -99,12 +100,11 @@ export function ClientGDPRRights() {
     if (!client?.id) return;
 
     try {
-      // Load current consent status from API
-      const response = await fetch(
-        `/api/client-auth/gdpr/consents?clientId=${client.id}`
-      );
-      if (response.ok) {
-        const data = await response.json();
+      // Load current consent status from API using secure authentication
+      const response = await clientGet("/api/client-auth/gdpr/consents");
+
+      if (response.success && response.data) {
+        const data = response.data;
         if (data.consents) {
           setConsents((prev) =>
             prev.map((consent) => {
@@ -131,26 +131,19 @@ export function ClientGDPRRights() {
       )
     );
   };
-
   const saveConsents = async () => {
     if (!client?.id) return;
 
     try {
       setLoading(true);
-
-      const response = await fetch("/api/client-auth/gdpr/consents", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          clientId: client.id,
-          consents: consents.map((consent) => ({
-            consent_type: consent.type,
-            granted: consent.granted,
-          })),
-        }),
+      const response = await clientPost("/api/client-auth/gdpr/consents", {
+        consents: consents.map((consent) => ({
+          consent_type: consent.type,
+          granted: consent.granted,
+        })),
       });
 
-      if (response.ok) {
+      if (response.success) {
         toast({
           title: "Succès",
           description: "Vos préférences de consentement ont été sauvegardées",
@@ -174,13 +167,11 @@ export function ClientGDPRRights() {
     try {
       setLoading(true);
 
-      const response = await fetch("/api/client-auth/gdpr/export", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestType: "export" }),
+      const response = await clientPost("/api/client-auth/gdpr/export", {
+        requestType: "export",
       });
 
-      if (response.ok) {
+      if (response.success) {
         toast({
           title: "Demande envoyée",
           description:
@@ -205,13 +196,11 @@ export function ClientGDPRRights() {
     try {
       setLoading(true);
 
-      const response = await fetch("/api/client-auth/gdpr/deletion", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ requestType: "deletion" }),
+      const response = await clientPost("/api/client-auth/gdpr/deletion", {
+        requestType: "deletion",
       });
 
-      if (response.ok) {
+      if (response.success) {
         toast({
           title: "Demande envoyée",
           description:

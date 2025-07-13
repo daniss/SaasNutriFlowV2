@@ -12,6 +12,7 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { useToast } from "@/hooks/use-toast";
+import { clientGet } from "@/lib/client-api";
 import {
   AlertTriangle,
   Calendar,
@@ -90,15 +91,10 @@ export function ClientDocuments() {
     try {
       setLoading(true);
 
-      const response = await fetch(
-        `/api/client-auth/documents?clientId=${client.id}`
-      );
-      if (!response.ok) {
-        throw new Error("Failed to fetch documents");
+      const response = await clientGet("/api/client-auth/documents");
+      if (response.success && response.data) {
+        setDocuments(response.data.documents || []);
       }
-
-      const data = await response.json();
-      setDocuments(data.documents || []);
     } catch (error) {
       console.error("Error loading documents:", error);
       toast({
@@ -117,13 +113,19 @@ export function ClientDocuments() {
     try {
       setDownloadingIds((prev) => new Set(prev).add(doc.id));
 
+      // For file downloads, we need to use fetch directly to handle blob response
+      const authToken = localStorage.getItem("client-token");
+      if (!authToken) {
+        throw new Error("Authentication required");
+      }
+
       const response = await fetch(`/api/client-auth/documents/download`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          Authorization: `Bearer ${authToken}`,
         },
         body: JSON.stringify({
-          clientId: client.id,
           documentId: doc.id,
           filePath: doc.file_path,
         }),

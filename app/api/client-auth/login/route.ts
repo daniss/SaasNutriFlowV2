@@ -1,17 +1,38 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
-import { hashPassword } from '@/lib/client-account-utils'
+import { hashPassword } from "@/lib/client-account-utils";
+import { createClientToken } from "@/lib/client-auth-security";
+import {
+  checkRateLimit,
+  clientLoginSchema,
+  validateInput,
+} from "@/lib/security-validation";
+import { createClient } from "@supabase/supabase-js";
+import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json()
+    // Rate limiting
+    const clientIP =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const rateLimit = checkRateLimit(`login:${clientIP}`, 5, 15 * 60 * 1000); // 5 attempts per 15 minutes
 
-    if (!email || !password) {
+    if (!rateLimit.success) {
       return NextResponse.json(
-        { error: 'Email et mot de passe requis' },
-        { status: 400 }
-      )
+        { error: "Trop de tentatives de connexion. Réessayez plus tard." },
+        { status: 429 }
+      );
     }
+
+    const body = await request.json();
+
+    // Input validation
+    const validation = await validateInput(body, clientLoginSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    const { email, password } = validation.data;
 
     // Use service role to bypass RLS for client authentication
     const supabase = createClient(
@@ -20,25 +41,29 @@ export async function POST(request: NextRequest) {
       {
         auth: {
           autoRefreshToken: false,
-          persistSession: false
-        }
+          persistSession: false,
+        },
       }
-    )
+    );
 
     // Find the client account by email
-    console.log("🔍 Looking for client account with email:", email.toLowerCase())
-    
+    console.log(
+      "🔍 Looking for client account with email:",
+      email.toLowerCase()
+    );
+
     // First, let's check what client accounts exist (for debugging)
     const { data: allAccounts, error: debugError } = await supabase
-      .from('client_accounts')
-      .select('id, email, is_active')
-      .limit(10)
-    
-    console.log("🔍 All client accounts in database:", allAccounts)
-    
+      .from("client_accounts")
+      .select("id, email, is_active")
+      .limit(10);
+
+    console.log("🔍 All client accounts in database:", allAccounts);
+
     const { data: clientAccount, error: accountError } = await supabase
-      .from('client_accounts')
-      .select(`
+      .from("client_accounts")
+      .select(
+        `
         id,
         client_id,
         email,
@@ -50,65 +75,70 @@ export async function POST(request: NextRequest) {
           email,
           dietitian_id
         )
-      `)
-      .eq('email', email.toLowerCase())
-      .eq('is_active', true)
-      .single()
+      `
+      )
+      .eq("email", email.toLowerCase())
+      .eq("is_active", true)
+      .single();
 
-    console.log("🔍 Supabase query result:", { clientAccount, accountError })
+    console.log("🔍 Supabase query result:", { clientAccount, accountError });
 
     if (accountError || !clientAccount) {
-      console.log("❌ No client account found or error:", accountError)
+      console.log("❌ No client account found or error:", accountError);
       return NextResponse.json(
-        { error: 'Email ou mot de passe incorrect' },
+        { error: "Email ou mot de passe incorrect" },
         { status: 401 }
-      )
+      );
     }
 
     // Verify password (simple hash comparison for demo)
-    const providedPasswordHash = hashPassword(password)
-    
+    const providedPasswordHash = hashPassword(password);
+
     // Debug logging
     console.log("🔍 Login Debug:", {
       email: email.toLowerCase(),
       providedPassword: password,
       providedPasswordHash,
       storedPasswordHash: clientAccount.password_hash,
-      hashesMatch: providedPasswordHash === clientAccount.password_hash
-    })
-    
+      hashesMatch: providedPasswordHash === clientAccount.password_hash,
+    });
+
     if (providedPasswordHash !== clientAccount.password_hash) {
       return NextResponse.json(
-        { error: 'Email ou mot de passe incorrect' },
+        { error: "Email ou mot de passe incorrect" },
         { status: 401 }
-      )
+      );
     }
 
     // Update last login
     await supabase
-      .from('client_accounts')
+      .from("client_accounts")
       .update({ last_login: new Date().toISOString() })
-      .eq('id', clientAccount.id)
+      .eq("id", clientAccount.id);
 
-    // Return client session data (without password hash)
+    // Create secure authentication token
+    const clientId = clientAccount.client_id;
+    const secureToken = createClientToken(clientId, clientAccount.email);
+
+    // Return client session data with secure token
     const clientData = {
       id: clientAccount.client_id,
       name: (clientAccount.clients as any)?.name,
       email: clientAccount.email,
-      account_id: clientAccount.id
-    }
+      account_id: clientAccount.id,
+    };
 
     return NextResponse.json({
       success: true,
       client: clientData,
-      message: 'Connexion réussie'
-    })
-
+      token: secureToken, // SECURITY FIX: Secure token instead of exposing client ID
+      message: "Connexion réussie",
+    });
   } catch (error) {
-    console.error('Client login error:', error)
+    console.error("Client login error:", error);
     return NextResponse.json(
-      { error: 'Erreur lors de la connexion' },
+      { error: "Erreur lors de la connexion" },
       { status: 500 }
-    )
+    );
   }
 }

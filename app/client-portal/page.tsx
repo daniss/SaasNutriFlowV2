@@ -22,6 +22,7 @@ import { Progress } from "@/components/ui/progress";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
+import { clientGet, clientPost } from "@/lib/client-api";
 import {
   Bell,
   Calendar,
@@ -99,30 +100,28 @@ function ClientPortalContent() {
   const [weightNote, setWeightNote] = useState("");
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [consentsChecked, setConsentsChecked] = useState(false);
+  const [dataLoaded, setDataLoaded] = useState(false); // Track if data has been loaded
 
-  // Load client data on component mount
+  // Load client data on component mount - only once per session
   useEffect(() => {
     const loadClientData = async () => {
+      // Prevent redundant API calls
+      if (dataLoaded || !sessionClient?.id) return;
+
       try {
         setLoading(true);
 
-        const clientResponse = await fetch(
-          `/api/client-auth/data?clientId=${sessionClient!.id}`,
-          {
-            credentials: "include",
-          }
-        );
+        // SECURITY FIX: Use secure API call without clientId parameter
+        const response = await clientGet("/api/client-auth/data");
 
-        if (clientResponse.ok) {
-          const response = await clientResponse.json();
-          if (response.success && response.data) {
-            setClient(response.data.profile);
-            setPortalData(response.data);
-          } else {
-            console.error("Invalid response format:", response);
-          }
+        if (response.success && response.data) {
+          // Fix: The API double-wraps the data, so we need response.data.data
+          const actualData = response.data.data || response.data;
+          setClient(actualData.profile);
+          setPortalData(actualData);
+          setDataLoaded(true); // Mark data as loaded
         } else {
-          console.error("Failed to fetch client data");
+          console.error("Error loading client data:", response.error);
         }
       } catch (error) {
         console.error("Error loading client data:", error);
@@ -131,15 +130,14 @@ function ClientPortalContent() {
       }
     };
 
-    if (sessionClient?.id) {
-      loadClientData();
-    }
-  }, [sessionClient]);
+    loadClientData();
+  }, [sessionClient?.id, dataLoaded]); // Only depend on sessionClient ID and data loaded state
 
-  // Check if mandatory consents have been given
+  // Check if mandatory consents have been given - only after data is loaded
   useEffect(() => {
     const checkConsents = async () => {
-      if (!sessionClient?.id || !portalData) return;
+      // Only check consents after portal data is loaded and not already checked
+      if (!sessionClient?.id || !portalData || consentsChecked) return;
 
       try {
         // First check localStorage for quick access
@@ -151,15 +149,10 @@ function ClientPortalContent() {
         }
 
         // Check with server for current consents
-        const response = await fetch(
-          `/api/client-auth/gdpr/consents?clientId=${sessionClient.id}`,
-          {
-            credentials: "include",
-          }
-        );
+        const response = await clientGet("/api/client-auth/gdpr/consents");
 
-        if (response.ok) {
-          const data = await response.json();
+        if (response.success) {
+          const data = response.data;
 
           if (data.success && data.consents) {
             // Check if mandatory consents (data_processing and health_data) are given
@@ -191,7 +184,7 @@ function ClientPortalContent() {
     };
 
     checkConsents();
-  }, [sessionClient, portalData]);
+  }, [sessionClient?.id, portalData, consentsChecked]); // Add consentsChecked to prevent duplicate checks
 
   const handleConsentGiven = () => {
     setShowConsentModal(false);
@@ -199,29 +192,32 @@ function ClientPortalContent() {
   };
 
   const fetchClientPortalData = async () => {
+    // Reuse the same logic but allow manual refresh
     try {
       setLoading(true);
 
-      const clientResponse = await fetch(
-        `/api/client-auth/data?clientId=${sessionClient?.id}`,
-        {
-          credentials: "include",
-        }
-      );
+      // SECURITY FIX: Use secure API call without clientId parameter
+      const response = await clientGet("/api/client-auth/data");
 
-      if (clientResponse.ok) {
-        const response = await clientResponse.json();
-        if (response.success && response.data) {
-          setClient(response.data.profile);
-          setPortalData(response.data);
-        } else {
-          console.error("Invalid response format:", response);
-        }
+      if (response.success && response.data) {
+        setClient(response.data.profile);
+        setPortalData(response.data);
+        setDataLoaded(true); // Mark data as refreshed
       } else {
-        console.error("Failed to fetch client data");
+        console.error("Error fetching client data:", response.error);
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les données",
+          variant: "destructive",
+        });
       }
     } catch (error) {
       console.error("Error fetching client data:", error);
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors du chargement",
+        variant: "destructive",
+      });
     } finally {
       setLoading(false);
     }
@@ -231,20 +227,13 @@ function ClientPortalContent() {
     if (!newWeight || !sessionClient) return;
 
     try {
-      const response = await fetch("/api/client-auth/weight", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        credentials: "include",
-        body: JSON.stringify({
-          clientId: sessionClient.id,
-          weight: parseFloat(newWeight),
-          notes: weightNote || undefined,
-        }),
+      // SECURITY FIX: Use secure API call without clientId in body
+      const response = await clientPost("/api/client-auth/weight", {
+        weight: parseFloat(newWeight),
+        notes: weightNote || undefined,
       });
 
-      if (response.ok) {
+      if (response.success) {
         const weightValue = parseFloat(newWeight);
         const today = new Date().toISOString().split("T")[0];
 
@@ -287,7 +276,7 @@ function ClientPortalContent() {
         setNewWeight("");
         setWeightNote("");
       } else {
-        throw new Error("Failed to update weight");
+        throw new Error(response.error || "Failed to update weight");
       }
     } catch (error) {
       console.error("Error updating weight:", error);
@@ -359,8 +348,8 @@ function ClientPortalContent() {
         onConsentGiven={handleConsentGiven}
       />
 
-      {/* Portal Content - Only show if consents are checked */}
-      {consentsChecked && (
+      {/* Portal Content */}
+      {consentsChecked && !showConsentModal && (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
           {/* Professional Header */}
           <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
@@ -1039,10 +1028,7 @@ function ClientPortalContent() {
               </TabsContent>
 
               <TabsContent value="messages" className="mt-8">
-                <ClientMessages
-                  clientId={sessionClient?.id || ""}
-                  initialMessages={portalData.messages}
-                />
+                <ClientMessages initialMessages={portalData.messages} />
               </TabsContent>
 
               <TabsContent value="documents" className="mt-8">

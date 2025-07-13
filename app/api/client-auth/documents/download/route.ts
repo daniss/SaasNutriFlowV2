@@ -1,16 +1,50 @@
+import { validateClientAuth } from "@/lib/client-auth-security";
+import {
+  checkRateLimit,
+  documentRequestSchema,
+  validateInput,
+} from "@/lib/security-validation";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function POST(request: NextRequest) {
   try {
-    const { clientId, documentId, filePath } = await request.json();
+    // Rate limiting by IP
+    const clientIP =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const rateLimit = checkRateLimit(`download:${clientIP}`, 20, 60 * 1000); // 20 downloads per minute
 
-    if (!clientId || !documentId || !filePath) {
+    if (!rateLimit.success) {
       return NextResponse.json(
-        { error: "Missing required parameters" },
-        { status: 400 }
+        { error: "Trop de requêtes de téléchargement. Veuillez patienter." },
+        { status: 429 }
       );
     }
+
+    // SECURITY FIX: Use secure client authentication
+    const authResult = await validateClientAuth(request);
+    if ("error" in authResult) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: authResult.status }
+      );
+    }
+    const { clientId } = authResult;
+
+    const body = await request.json();
+
+    // Input validation
+    const validation = await validateInput(body, documentRequestSchema);
+    if (!validation.success) {
+      return NextResponse.json({ error: validation.error }, { status: 400 });
+    }
+
+    const { documentId, filePath } = validation.data as {
+      documentId: string;
+      filePath: string;
+    };
 
     // Use service role client to bypass RLS for client authentication
     const supabase = createClient(

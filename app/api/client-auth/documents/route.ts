@@ -1,17 +1,18 @@
+import { validateClientAuth } from "@/lib/client-auth-security";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    const { searchParams } = new URL(request.url);
-    const clientId = searchParams.get("clientId");
-
-    if (!clientId) {
+    // SECURITY FIX: Use secure client authentication
+    const authResult = await validateClientAuth(request);
+    if ("error" in authResult) {
       return NextResponse.json(
-        { error: "Client ID is required" },
-        { status: 400 }
+        { error: authResult.error },
+        { status: authResult.status }
       );
     }
+    const { clientId } = authResult;
 
     // Use service role client to bypass RLS for client authentication
     const supabase = createClient(

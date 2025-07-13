@@ -1,8 +1,23 @@
+import { checkRateLimit } from "@/lib/security-validation";
 import { createClient } from "@/lib/supabase/server";
 import { NextRequest, NextResponse } from "next/server";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
+    // Rate limiting by IP
+    const clientIP =
+      request.headers.get("x-forwarded-for") ||
+      request.headers.get("x-real-ip") ||
+      "unknown";
+    const rateLimit = checkRateLimit(`sessions:${clientIP}`, 20, 60 * 1000); // 20 requests per minute
+
+    if (!rateLimit.success) {
+      return NextResponse.json(
+        { error: "Trop de requêtes de sessions. Veuillez patienter." },
+        { status: 429 }
+      );
+    }
+
     const supabase = await createClient();
 
     const {

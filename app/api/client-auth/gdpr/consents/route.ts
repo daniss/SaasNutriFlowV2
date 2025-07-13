@@ -1,15 +1,18 @@
+import { validateClientAuth } from "@/lib/client-auth-security";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(request: NextRequest) {
   try {
-    // Get client ID from URL params (similar to data API)
-    const url = new URL(request.url);
-    const clientId = url.searchParams.get("clientId");
-
-    if (!clientId) {
-      return NextResponse.json({ error: "Client ID requis" }, { status: 400 });
+    // SECURITY FIX: Use secure client authentication instead of URL parameter
+    const authResult = await validateClientAuth(request);
+    if ("error" in authResult) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: authResult.status }
+      );
     }
+    const { clientId } = authResult;
 
     // Use service role to fetch client data (bypassing RLS like other client APIs)
     const supabase = createClient(
@@ -50,12 +53,18 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json();
-    const { clientId, consents } = body;
-
-    if (!clientId) {
-      return NextResponse.json({ error: "Client ID requis" }, { status: 400 });
+    // SECURITY FIX: Use secure client authentication instead of accepting clientId from body
+    const authResult = await validateClientAuth(request);
+    if ("error" in authResult) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: authResult.status }
+      );
     }
+    const { clientId } = authResult;
+
+    const body = await request.json();
+    const { consents } = body;
 
     if (!consents || !Array.isArray(consents)) {
       return NextResponse.json(
