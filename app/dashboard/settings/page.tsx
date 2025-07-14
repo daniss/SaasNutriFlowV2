@@ -27,7 +27,8 @@ import {
   Loader2,
   Mail,
   MapPin,
-  Palette,
+  // MASKED FOR MVP - Palette icon removed (client portal customization)
+  // Palette,
   Phone,
   Save,
   Shield,
@@ -426,7 +427,7 @@ export default function SettingsPage() {
             </CardContent>
           </Card>
 
-          {/* Notification Providers Configuration */}
+          {/* MASKED FOR MVP - Notification Providers Configuration will be added in future
           <Card className="border-0 shadow-soft bg-white/90 backdrop-blur-sm">
             <CardHeader className="pb-6">
               <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
@@ -441,187 +442,12 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">
-                  Fournisseurs d'email
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="sendgridApi"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      SendGrid API Key
-                    </Label>
-                    <Input
-                      id="sendgridApi"
-                      type="password"
-                      placeholder="sg-xxxxxxxxxxxxxxxxxxxx"
-                      className="border-gray-200 focus:border-purple-300 focus:ring-purple-500/20"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Clé API SendGrid pour l'envoi d'emails
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="resendApi"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Resend API Key
-                    </Label>
-                    <Input
-                      id="resendApi"
-                      type="password"
-                      placeholder="re_xxxxxxxxxxxxxxxxxxxx"
-                      className="border-gray-200 focus:border-purple-300 focus:ring-purple-500/20"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Clé API Resend pour l'envoi d'emails
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Fournisseurs SMS</h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="twilioSid"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Twilio Account SID
-                    </Label>
-                    <Input
-                      id="twilioSid"
-                      type="password"
-                      placeholder="ACxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
-                      className="border-gray-200 focus:border-purple-300 focus:ring-purple-500/20"
-                    />
-                    <p className="text-xs text-gray-500">
-                      SID de compte Twilio
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="twilioToken"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Twilio Auth Token
-                    </Label>
-                    <Input
-                      id="twilioToken"
-                      type="password"
-                      placeholder="Token d'authentification"
-                      className="border-gray-200 focus:border-purple-300 focus:ring-purple-500/20"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Token d'authentification Twilio
-                    </p>
-                  </div>
-                </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="ovhApiKey"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      OVH SMS API Key
-                    </Label>
-                    <Input
-                      id="ovhApiKey"
-                      type="password"
-                      placeholder="Clé API OVH SMS"
-                      className="border-gray-200 focus:border-purple-300 focus:ring-purple-500/20"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Clé API OVH pour SMS
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="ovhApiSecret"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      OVH SMS API Secret
-                    </Label>
-                    <Input
-                      id="ovhApiSecret"
-                      type="password"
-                      placeholder="Secret API OVH SMS"
-                      className="border-gray-200 focus:border-purple-300 focus:ring-purple-500/20"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Secret API OVH pour SMS
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <Separator />
-
-              <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">
-                  Fournisseurs de paiement
-                </h4>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="stripeKey"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Stripe Secret Key
-                    </Label>
-                    <Input
-                      id="stripeKey"
-                      type="password"
-                      placeholder="sk_test_xxxxxxxxxxxxxxxxxxxx"
-                      className="border-gray-200 focus:border-purple-300 focus:ring-purple-500/20"
-                    />
-                    <p className="text-xs text-gray-500">
-                      Clé secrète Stripe pour les paiements
-                    </p>
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="paypalClientId"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      PayPal Client ID
-                    </Label>
-                    <Input
-                      id="paypalClientId"
-                      type="password"
-                      placeholder="Client ID PayPal"
-                      className="border-gray-200 focus:border-purple-300 focus:ring-purple-500/20"
-                    />
-                    <p className="text-xs text-gray-500">
-                      ID client PayPal pour les paiements
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <Alert>
-                <AlertDescription>
-                  <strong>Note de sécurité :</strong> Ces clés API sont
-                  sensibles et doivent être conservées en toute sécurité.
-                  Utilisez des variables d'environnement pour les stocker en
-                  production.
-                </AlertDescription>
-              </Alert>
-
-              <Button className="bg-purple-600 hover:bg-purple-700 text-white shadow-soft transition-all duration-200">
-                <Save className="mr-2 h-4 w-4" />
-                Sauvegarder la configuration
-              </Button>
+              ... [All notification provider fields removed for MVP]
             </CardContent>
           </Card>
+          */}
 
-          {/* Client Portal Customization */}
+          {/* MASKED FOR MVP - Client Portal Customization will be added in future
           <Card className="border-0 shadow-soft bg-white/90 backdrop-blur-sm">
             <CardHeader className="pb-6">
               <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
@@ -635,37 +461,10 @@ export default function SettingsPage() {
               </CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="portalTitle">Titre du portail</Label>
-                <Input
-                  id="portalTitle"
-                  placeholder="Nom de votre cabinet"
-                  defaultValue="Portail Client NutriFlow"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="welcomeMessage">Message de bienvenue</Label>
-                <Textarea
-                  id="welcomeMessage"
-                  placeholder="Message de bienvenue pour vos clients"
-                  defaultValue="Bienvenue sur votre portail de nutrition personnalisé !"
-                  rows={3}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Couleurs de marque</Label>
-                <div className="flex gap-2">
-                  <div className="w-8 h-8 rounded bg-emerald-500 border-2 border-gray-300"></div>
-                  <div className="w-8 h-8 rounded bg-blue-500 border"></div>
-                  <div className="w-8 h-8 rounded bg-purple-500 border"></div>
-                  <div className="w-8 h-8 rounded bg-orange-500 border"></div>
-                </div>
-              </div>
-              <Button variant="outline" size="sm">
-                Aperçu du portail
-              </Button>
+              ... [All portal customization fields removed for MVP]
             </CardContent>
           </Card>
+          */}
         </TabsContent>
 
         <TabsContent value="security" className="space-y-8">

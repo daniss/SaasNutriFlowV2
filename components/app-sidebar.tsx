@@ -2,14 +2,11 @@
 
 import {
   BarChart3,
-  Bell,
-  Calculator,
   Calendar,
   ChefHat,
   FileText,
   Home,
   LogOut,
-  MessageCircle,
   Plus,
   Receipt,
   Settings,
@@ -61,16 +58,20 @@ const data = {
       url: "/dashboard/meal-plans",
       icon: FileText,
     },
+    /* MASKED FOR MVP - Analyse nutritionnelle functionality will be added in future
     {
       title: "Analyse nutritionnelle",
       url: "/dashboard/nutrition-analysis",
       icon: Calculator,
     },
+    */
+    /* MASKED FOR MVP - Messages functionality will be added in future
     {
       title: "Messages",
       url: "/dashboard/messages",
       icon: MessageCircle,
     },
+    */
     {
       title: "Bibliothèque de recettes",
       url: "/dashboard/templates",
@@ -81,22 +82,26 @@ const data = {
       url: "/dashboard/appointments",
       icon: Calendar,
     },
+    /* MASKED FOR MVP - Rappels functionality will be added in future
     {
       title: "Rappels",
       url: "/dashboard/reminders",
       icon: Bell,
     },
+    */
     {
       title: "Analyses & Rapports",
       url: "/dashboard/analytics",
       icon: BarChart3,
     },
+    /* MASKED FOR MVP - Portail Client will be added in future
     {
       title: "Portail Client",
       url: "/client-portal",
       icon: Users,
       badge: "Portal",
     },
+    */
     {
       title: "Factures",
       url: "/dashboard/invoices",

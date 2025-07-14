@@ -4,7 +4,8 @@ import { useClientAuth } from "@/components/auth/ClientAuthProvider";
 import { ClientProtectedRoute } from "@/components/auth/ClientProtectedRoute";
 import { ClientDocuments } from "@/components/client-portal/ClientDocuments";
 import { ClientGDPRRights } from "@/components/client-portal/ClientGDPRRights";
-import { ClientMessages } from "@/components/client-portal/ClientMessages";
+// MASKED FOR MVP - Messages functionality will be added in future
+// import { ClientMessages } from "@/components/client-portal/ClientMessages";
 import { MandatoryConsentModal } from "@/components/client-portal/MandatoryConsentModal";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
@@ -81,6 +82,8 @@ interface ClientPortalData {
     meetingLink?: string;
     notes?: string;
   }>;
+  // MASKED FOR MVP - Messages functionality will be added in future
+  /*
   messages: Array<{
     id: string;
     content: string;
@@ -88,6 +91,7 @@ interface ClientPortalData {
     timestamp: string;
     read: boolean;
   }>;
+  */
 }
 
 function ClientPortalContent() {
@@ -429,12 +433,14 @@ function ClientPortalContent() {
                 >
                   Documents
                 </TabsTrigger>
+                {/* MASKED FOR MVP - Messages functionality will be added in future
                 <TabsTrigger
                   value="messages"
                   className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
                 >
                   Messages
                 </TabsTrigger>
+                */}
                 <TabsTrigger
                   value="privacy"
                   className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
@@ -472,11 +478,28 @@ function ClientPortalContent() {
                           <p className="text-3xl font-bold">
                             {portalData.profile.currentWeight || "N/A"} kg
                           </p>
-                          {portalData.weightHistory.length > 0 && (
-                            <p className="text-blue-200 text-xs">
-                              -2kg depuis le début
-                            </p>
-                          )}
+                          {(() => {
+                            const currentWeight =
+                              portalData.profile.currentWeight;
+                            const weightHistory =
+                              portalData.weightHistory || [];
+                            if (currentWeight && weightHistory.length > 0) {
+                              const initialWeight =
+                                weightHistory[weightHistory.length - 1]
+                                  ?.weight || currentWeight;
+                              const weightChange =
+                                currentWeight - initialWeight;
+                              if (weightChange !== 0) {
+                                return (
+                                  <p className="text-blue-200 text-xs">
+                                    {weightChange > 0 ? "+" : ""}
+                                    {weightChange.toFixed(1)}kg depuis le début
+                                  </p>
+                                );
+                              }
+                            }
+                            return null;
+                          })()}
                         </div>
                         <TrendingUp className="h-8 w-8 text-blue-200" />
                       </div>
@@ -488,13 +511,46 @@ function ClientPortalContent() {
                       <div className="flex items-center justify-between">
                         <div>
                           <p className="text-purple-100 text-sm font-medium">
-                            Objectifs atteints
+                            Progrès global
                           </p>
-                          <p className="text-3xl font-bold">2/3</p>
+                          {(() => {
+                            const progress = portalData.profile.progress || 0;
+                            const weightHistory =
+                              portalData.weightHistory || [];
+                            const hasData = weightHistory.length > 0;
+                            const achievementsCount = hasData
+                              ? Math.min(Math.floor(progress / 25), 4)
+                              : 0;
+
+                            return (
+                              <>
+                                <p className="text-3xl font-bold">
+                                  {progress.toFixed(0)}%
+                                </p>
+                                <div className="flex items-center gap-2 mt-1">
+                                  {progress >= 75 ? (
+                                    <Badge className="bg-purple-400 text-purple-900 border-0 text-xs">
+                                      Excellent
+                                    </Badge>
+                                  ) : progress >= 50 ? (
+                                    <Badge className="bg-purple-400 text-purple-900 border-0 text-xs">
+                                      Très bien
+                                    </Badge>
+                                  ) : progress >= 25 ? (
+                                    <Badge className="bg-purple-400 text-purple-900 border-0 text-xs">
+                                      Bon progrès
+                                    </Badge>
+                                  ) : (
+                                    <Badge className="bg-purple-400 text-purple-900 border-0 text-xs">
+                                      Début
+                                    </Badge>
+                                  )}
+                                </div>
+                              </>
+                            );
+                          })()}
                         </div>
-                        <Badge className="bg-purple-400 text-purple-900 border-0">
-                          Excellent
-                        </Badge>
+                        <Target className="h-8 w-8 text-purple-200" />
                       </div>
                     </CardContent>
                   </Card>
@@ -566,7 +622,7 @@ function ClientPortalContent() {
                       </Card>
                     )}
 
-                    {/* Achievements */}
+                    {/* Achievements - Real Data */}
                     <Card className="shadow-lg">
                       <CardHeader className="bg-gradient-to-r from-amber-50 to-orange-50 border-b border-amber-100">
                         <CardTitle className="text-xl text-amber-800">
@@ -578,53 +634,215 @@ function ClientPortalContent() {
                       </CardHeader>
                       <CardContent className="p-6">
                         <div className="space-y-4">
-                          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <div className="flex items-center gap-3">
-                              <div className="h-3 w-3 rounded-full bg-green-500" />
-                              <div className="flex-1">
-                                <h4 className="font-medium text-green-800">
-                                  Premier objectif atteint
-                                </h4>
-                                <p className="text-sm text-green-700">
-                                  Vous avez perdu vos premiers 2kg !
-                                </p>
-                                <p className="text-xs text-green-600 mt-1">
-                                  Atteint le 29/01/2024
-                                </p>
-                              </div>
-                            </div>
-                          </div>
+                          {(() => {
+                            const achievements = [];
+                            const weightHistory =
+                              portalData.weightHistory || [];
+                            const profile = portalData.profile || {};
+                            const joinDate = profile.joinDate
+                              ? new Date(profile.joinDate)
+                              : null;
+                            const currentWeight = profile.currentWeight;
+                            const goalWeight = profile.goalWeight;
 
-                          <div className="bg-green-50 border border-green-200 rounded-lg p-4">
-                            <div className="flex items-center gap-3">
-                              <div className="h-3 w-3 rounded-full bg-green-500" />
-                              <div className="flex-1">
-                                <h4 className="font-medium text-green-800">
-                                  Consistance alimentaire
-                                </h4>
-                                <p className="text-sm text-green-700">
-                                  Suivez votre plan 7 jours consécutifs
-                                </p>
-                                <p className="text-xs text-green-600 mt-1">
-                                  Atteint le 05/02/2024
-                                </p>
-                              </div>
-                            </div>
-                          </div>
+                            // Achievement 1: Weight loss milestones
+                            if (
+                              weightHistory.length >= 2 &&
+                              currentWeight &&
+                              goalWeight
+                            ) {
+                              const initialWeight =
+                                weightHistory[weightHistory.length - 1]
+                                  ?.weight || currentWeight;
+                              const weightLost = initialWeight - currentWeight;
 
-                          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-                            <div className="flex items-center gap-3">
-                              <div className="h-3 w-3 rounded-full bg-gray-300" />
-                              <div className="flex-1">
-                                <h4 className="font-medium text-gray-600">
-                                  Hydratation optimale
-                                </h4>
-                                <p className="text-sm text-gray-600">
-                                  Buvez 2L d'eau par jour pendant une semaine
-                                </p>
-                              </div>
-                            </div>
-                          </div>
+                              if (weightLost >= 1) {
+                                const latestWeightDate = weightHistory.find(
+                                  (w) => w.weight === currentWeight
+                                )?.date;
+                                achievements.push({
+                                  id: "weight-loss",
+                                  achieved: true,
+                                  title: `${weightLost.toFixed(1)}kg perdus`,
+                                  description: `Excellent progrès vers votre objectif !`,
+                                  date: latestWeightDate || "Récemment",
+                                });
+                              }
+                            }
+
+                            // Achievement 2: Program consistency (being tracked for more than 30 days)
+                            if (joinDate) {
+                              const daysSinceJoin = Math.floor(
+                                (new Date().getTime() - joinDate.getTime()) /
+                                  (1000 * 60 * 60 * 24)
+                              );
+                              if (daysSinceJoin >= 30) {
+                                achievements.push({
+                                  id: "consistency",
+                                  achieved: true,
+                                  title: "Engagement de 30 jours",
+                                  description: `${daysSinceJoin} jours de suivi nutritionnel`,
+                                  date: new Date(
+                                    joinDate.getTime() +
+                                      30 * 24 * 60 * 60 * 1000
+                                  ).toLocaleDateString(),
+                                });
+                              }
+                            }
+
+                            // Achievement 3: Weight tracking consistency
+                            if (weightHistory.length >= 5) {
+                              achievements.push({
+                                id: "weight-tracking",
+                                achieved: true,
+                                title: "Suivi régulier du poids",
+                                description: `${weightHistory.length} pesées enregistrées`,
+                                date: weightHistory[0]?.date || "Récemment",
+                              });
+                            }
+
+                            // Achievement 4: Progress milestone (25%, 50%, 75% of goal)
+                            if (
+                              currentWeight &&
+                              goalWeight &&
+                              profile.currentWeight
+                            ) {
+                              const initialWeight =
+                                weightHistory[weightHistory.length - 1]
+                                  ?.weight || currentWeight;
+                              const totalToLose = initialWeight - goalWeight;
+                              const currentProgress =
+                                ((initialWeight - currentWeight) /
+                                  totalToLose) *
+                                100;
+
+                              if (currentProgress >= 25) {
+                                let milestone = "";
+                                if (currentProgress >= 75) milestone = "75%";
+                                else if (currentProgress >= 50)
+                                  milestone = "50%";
+                                else milestone = "25%";
+
+                                achievements.push({
+                                  id: "progress",
+                                  achieved: true,
+                                  title: `${milestone} de l'objectif atteint`,
+                                  description: `${currentProgress.toFixed(
+                                    0
+                                  )}% de votre objectif final`,
+                                  date: "En cours",
+                                });
+                              }
+                            }
+
+                            // Achievement 5: Goal achieved
+                            if (
+                              currentWeight &&
+                              goalWeight &&
+                              currentWeight <= goalWeight
+                            ) {
+                              achievements.push({
+                                id: "goal-achieved",
+                                achieved: true,
+                                title: "Objectif de poids atteint !",
+                                description:
+                                  "Félicitations pour cette réussite exceptionnelle !",
+                                date: "Atteint !",
+                              });
+                            }
+
+                            // Future achievements (not yet achieved)
+                            const futureAchievements = [];
+
+                            if (
+                              achievements.length === 0 ||
+                              !achievements.find((a) => a.id === "weight-loss")
+                            ) {
+                              futureAchievements.push({
+                                id: "first-kg",
+                                achieved: false,
+                                title: "Premier kilogramme",
+                                description: "Perdez votre premier kilogramme",
+                              });
+                            }
+
+                            if (
+                              !achievements.find(
+                                (a) => a.id === "weight-tracking"
+                              ) &&
+                              weightHistory.length < 5
+                            ) {
+                              futureAchievements.push({
+                                id: "tracking-goal",
+                                achieved: false,
+                                title: "Suivi régulier",
+                                description: "Enregistrez 5 pesées",
+                              });
+                            }
+
+                            return (
+                              <>
+                                {achievements.map((achievement) => (
+                                  <div
+                                    key={achievement.id}
+                                    className="bg-green-50 border border-green-200 rounded-lg p-4"
+                                  >
+                                    <div className="flex items-center gap-3">
+                                      <div className="h-3 w-3 rounded-full bg-green-500" />
+                                      <div className="flex-1">
+                                        <h4 className="font-medium text-green-800">
+                                          {achievement.title}
+                                        </h4>
+                                        <p className="text-sm text-green-700">
+                                          {achievement.description}
+                                        </p>
+                                        <p className="text-xs text-green-600 mt-1">
+                                          Atteint le{" "}
+                                          {typeof achievement.date === "string"
+                                            ? achievement.date
+                                            : new Date(
+                                                achievement.date
+                                              ).toLocaleDateString()}
+                                        </p>
+                                      </div>
+                                    </div>
+                                  </div>
+                                ))}
+
+                                {futureAchievements
+                                  .slice(0, 2)
+                                  .map((achievement) => (
+                                    <div
+                                      key={achievement.id}
+                                      className="bg-gray-50 border border-gray-200 rounded-lg p-4"
+                                    >
+                                      <div className="flex items-center gap-3">
+                                        <div className="h-3 w-3 rounded-full bg-gray-300" />
+                                        <div className="flex-1">
+                                          <h4 className="font-medium text-gray-600">
+                                            {achievement.title}
+                                          </h4>
+                                          <p className="text-sm text-gray-600">
+                                            {achievement.description}
+                                          </p>
+                                        </div>
+                                      </div>
+                                    </div>
+                                  ))}
+
+                                {achievements.length === 0 &&
+                                  futureAchievements.length === 0 && (
+                                    <div className="text-center py-6 text-gray-500">
+                                      <Target className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                                      <p>
+                                        Continuez votre parcours pour débloquer
+                                        des réussites !
+                                      </p>
+                                    </div>
+                                  )}
+                              </>
+                            );
+                          })()}
                         </div>
                       </CardContent>
                     </Card>
@@ -1027,9 +1245,11 @@ function ClientPortalContent() {
                 </Card>
               </TabsContent>
 
+              {/* MASKED FOR MVP - Messages functionality will be added in future
               <TabsContent value="messages" className="mt-8">
                 <ClientMessages initialMessages={portalData.messages} />
               </TabsContent>
+              */}
 
               <TabsContent value="documents" className="mt-8">
                 <Card className="bg-white shadow-lg border-0">

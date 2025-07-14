@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
       `
       )
       .eq("client_id", clientId)
-      .eq("status", "Active")
+      .eq("status", "active")
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
@@ -140,6 +140,8 @@ export async function GET(request: NextRequest) {
       .order("appointment_date", { ascending: true })
       .limit(10);
 
+    // MASKED FOR MVP - Messages functionality will be added in future
+    /*
     // Fetch recent messages from conversations
     const { data: conversation, error: conversationError } = await supabase
       .from("conversations")
@@ -169,6 +171,8 @@ export async function GET(request: NextRequest) {
         )
         .slice(-20); // Get last 20 messages
     }
+    */
+    let conversationMessages: any[] = []; // Empty for MVP
 
     // Calculate progress based on weight history
     const calculateProgress = (
@@ -259,6 +263,8 @@ export async function GET(request: NextRequest) {
           meetingLink: a.meeting_link,
           notes: a.notes,
         })) || [],
+      // MASKED FOR MVP - Messages functionality will be added in future
+      /*
       messages:
         conversationMessages?.map((m: any) => ({
           id: m.id,
@@ -267,6 +273,7 @@ export async function GET(request: NextRequest) {
           timestamp: m.created_at,
           read: !!m.read_at,
         })) || [],
+      */
     };
 
     return NextResponse.json({

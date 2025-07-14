@@ -2,7 +2,7 @@
 
 ## Project Overview
 
-This is **NutriFlow**, a Next.js 15 SaaS platform for French dietitian-nutritionists using App Router, React 19, TypeScript, and Supabase. The UI is in French but code/comments are in English.
+This is **NutriFlow**, a Next.js 15 SaaS platform for French only market, french dietitian-nutritionists using App Router, React 19, TypeScript, and Supabase. The UI is in French but code/comments are in English.
 
 ## Architecture Patterns
 
