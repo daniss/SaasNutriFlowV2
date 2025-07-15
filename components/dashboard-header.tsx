@@ -55,7 +55,7 @@ export function DashboardHeader({
   searchPlaceholder = "Rechercher...",
   searchValue,
   onSearchChange,
-  showNotifications = true,
+  showNotifications = false, // Business decision: No fake notifications for nutritionist dashboard
   className = ""
 }: DashboardHeaderProps) {
   const [localSearchValue, setLocalSearchValue] = useState("")

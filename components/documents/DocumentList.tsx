@@ -87,7 +87,16 @@ export function DocumentList({ clientId, refreshTrigger }: DocumentListProps) {
 
       if (error) throw error;
 
-      setDocuments(data || []);
+      // Filter out progress photos - they should only appear in the progress photos section
+      const filteredDocuments = (data || []).filter(doc => {
+        if (doc.metadata && typeof doc.metadata === 'object' && 
+            'type' in doc.metadata && doc.metadata.type === 'progress_photo') {
+          return false;
+        }
+        return true;
+      });
+
+      setDocuments(filteredDocuments);
     } catch (error) {
       console.error("Error fetching documents:", error);
       toast({

@@ -1,32 +1,32 @@
 "use client"
 
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
+    AlertDialog,
+    AlertDialogAction,
+    AlertDialogCancel,
+    AlertDialogContent,
+    AlertDialogDescription,
+    AlertDialogFooter,
+    AlertDialogHeader,
+    AlertDialogTitle,
 } from "@/components/ui/alert-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog"
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuSeparator,
+    DropdownMenuTrigger
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -38,26 +38,31 @@ import { useAuth } from "@/hooks/useAuthNew"
 import { downloadMealPlanPDF, type MealPlanPDFData } from "@/lib/pdf-generator"
 import { supabase, type MealPlan } from "@/lib/supabase"
 import {
-  Activity,
-  ArrowLeft,
-  Calendar,
-  ChefHat,
-  Clock,
-  Copy,
-  Download,
-  Edit,
-  FileText,
-  Heart,
-  MoreHorizontal,
-  Share2,
-  Target,
-  Trash2,
-  TrendingUp,
-  Users,
-  Zap
+    Activity,
+    ArrowLeft,
+    Calendar,
+    ChefHat,
+    Clock,
+    Copy,
+    Download,
+    Edit,
+    FileText,
+    Heart,
+    MoreHorizontal,
+    Share2,
+    Target,
+    Trash2,
+    TrendingUp,
+    Users,
+    X,
+    Zap
 } from "lucide-react"
+import dynamic from "next/dynamic"
 import { useParams, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
+import { type GeneratedMealPlan } from "@/lib/gemini"
+import MacronutrientBreakdown from "@/components/nutrition/MacronutrientBreakdown"
+const FoodSearchModal = dynamic(() => import("@/components/dashboard/FoodSearchModal"), { ssr: false })
 
 interface MealPlanWithClient extends MealPlan {
   clients: { id: string; name: string; email: string } | null
@@ -90,6 +95,23 @@ interface EditDayForm {
 }
 
 export default function MealPlanDetailPage() {
+  // Food search modal state
+  const [foodSearchOpen, setFoodSearchOpen] = useState(false)
+  const [foodSearchSlot, setFoodSearchSlot] = useState<"breakfast"|"lunch"|"dinner"|"snacks">("breakfast")
+  const [foodSearchDay, setFoodSearchDay] = useState(1)
+  interface SelectedFood {
+    id: string
+    name_fr: string
+    quantity: number
+    portionSize: 'custom' | 'gemrcn' | 'pnns'
+    energy_kcal?: number
+    protein_g?: number
+    carbohydrate_g?: number
+    fat_g?: number
+    fiber_g?: number
+  }
+  
+  const [selectedFoods, setSelectedFoods] = useState<Record<number, { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }>>({})
   const params = useParams()
   const router = useRouter()
   const { user } = useAuth()
@@ -127,6 +149,23 @@ export default function MealPlanDetailPage() {
       fetchClients()
     }
   }, [user, params.id])
+
+  // Load selected foods from plan_content when meal plan loads
+  useEffect(() => {
+    if (mealPlan?.plan_content?.days) {
+      const loadedSelectedFoods: Record<number, { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }> = {}
+      
+      mealPlan.plan_content.days.forEach((day: any) => {
+        if (day.selectedFoods && Object.keys(day.selectedFoods).length > 0) {
+          loadedSelectedFoods[day.day] = day.selectedFoods
+        }
+      })
+      
+      if (Object.keys(loadedSelectedFoods).length > 0) {
+        setSelectedFoods(loadedSelectedFoods)
+      }
+    }
+  }, [mealPlan])
 
   const fetchMealPlan = async () => {
     try {
@@ -266,7 +305,7 @@ export default function MealPlanDetailPage() {
     if (!mealPlan) return
 
     try {
-      const dayPlans = generateSampleDays(mealPlan.duration_days || 7)
+      const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7)
       
       const pdfData: MealPlanPDFData = {
         id: mealPlan.id,
@@ -310,7 +349,7 @@ export default function MealPlanDetailPage() {
 
     try {
       // First generate and download the PDF
-      const dayPlans = generateSampleDays(mealPlan.duration_days || 7)
+      const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7)
       const pdfData: MealPlanPDFData = {
         id: mealPlan.id,
         name: mealPlan.name,
@@ -412,31 +451,106 @@ export default function MealPlanDetailPage() {
   }
 
   const handleEditDay = (dayNumber: number) => {
-    const dayPlans = generateSampleDays(mealPlan?.duration_days || 7)
-    const dayData = dayPlans.find(d => d.day === dayNumber)
+    // Try to get existing data from plan_content first
+    let existingDay = null
+    if (mealPlan?.plan_content?.days && Array.isArray(mealPlan.plan_content.days)) {
+      existingDay = mealPlan.plan_content.days.find((d: any) => d.day === dayNumber)
+    }
     
-    if (dayData) {
+    if (existingDay) {
+      // Use existing real data with normalization
+      const normalizedBreakfast = normalizeMealData(existingDay.meals?.breakfast)
+      const normalizedLunch = normalizeMealData(existingDay.meals?.lunch)
+      const normalizedDinner = normalizeMealData(existingDay.meals?.dinner)
+      const normalizedSnacks = normalizeMealData(existingDay.meals?.snacks)
+      
       setEditDayForm({
         day: dayNumber,
-        breakfast: dayData.meals.breakfast.join(', '),
-        lunch: dayData.meals.lunch.join(', '),
-        dinner: dayData.meals.dinner.join(', '),
-        snacks: dayData.meals.snacks.join(', '),
-        notes: dayData.notes || ""
+        breakfast: normalizedBreakfast.join(', '),
+        lunch: normalizedLunch.join(', '),
+        dinner: normalizedDinner.join(', '),
+        snacks: normalizedSnacks.join(', '),
+        notes: existingDay.notes || ""
       })
-      setIsEditDayOpen(true)
+    } else {
+      // Create new day with empty fields for editing
+      setEditDayForm({
+        day: dayNumber,
+        breakfast: "",
+        lunch: "",
+        dinner: "",
+        snacks: "",
+        notes: ""
+      })
     }
+    setIsEditDayOpen(true)
   }
 
   const handleSaveDay = async () => {
-    if (!mealPlan) return
+    if (!mealPlan || !user?.id) return
 
     try {
-      // In a real implementation, you would save the day data to the database
-      // For now, we'll just show a success message since the meal plans are generated
+      // Get current plan_content or create new structure
+      let planContent = mealPlan.plan_content || { days: [] }
+      
+      // Ensure days array exists
+      if (!planContent.days) {
+        planContent.days = []
+      }
+
+      // Find or create the day
+      let dayIndex = planContent.days.findIndex((d: any) => d.day === editDayForm.day)
+      
+      const updatedDay = {
+        day: editDayForm.day,
+        date: new Date(Date.now() + (editDayForm.day - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+        meals: {
+          breakfast: editDayForm.breakfast ? [editDayForm.breakfast] : [],
+          lunch: editDayForm.lunch ? [editDayForm.lunch] : [],
+          dinner: editDayForm.dinner ? [editDayForm.dinner] : [],
+          snacks: editDayForm.snacks ? [editDayForm.snacks] : []
+        },
+        notes: editDayForm.notes || "",
+        // Add any selected foods from ANSES-CIQUAL database
+        selectedFoods: selectedFoods[editDayForm.day] || {}
+      }
+
+      if (dayIndex >= 0) {
+        // Update existing day
+        planContent.days[dayIndex] = updatedDay
+      } else {
+        // Add new day
+        planContent.days.push(updatedDay)
+      }
+
+      // Sort days by day number
+      planContent.days.sort((a: any, b: any) => a.day - b.day)
+
+      // Save to database
+      const { data, error } = await supabase
+        .from("meal_plans")
+        .update({
+          plan_content: planContent,
+          updated_at: new Date().toISOString()
+        })
+        .eq("id", mealPlan.id)
+        .eq("dietitian_id", user.id)
+        .select(`
+          *,
+          clients (id, name, email)
+        `)
+        .single()
+
+      if (error) {
+        throw error
+      }
+
+      // Update local state
+      setMealPlan(data)
+      
       toast({
         title: "Jour modifié",
-        description: `Les repas du jour ${editDayForm.day} ont été mis à jour.`
+        description: `Les repas du jour ${editDayForm.day} ont été mis à jour et sauvegardés.`
       })
       setIsEditDayOpen(false)
     } catch (error) {
@@ -532,7 +646,99 @@ export default function MealPlanDetailPage() {
     }
   }
 
-  const generateSampleDays = (duration: number): DayPlan[] => {
+  // Helper function to normalize meal data to array format
+  const normalizeMealData = (mealData: any): string[] => {
+    if (!mealData) return []
+    
+    if (Array.isArray(mealData)) {
+      return mealData.map(item => {
+        if (typeof item === 'string') return item
+        if (typeof item === 'object' && item.name) return item.name
+        return 'Repas'
+      })
+    }
+    
+    if (typeof mealData === 'string') return [mealData]
+    if (typeof mealData === 'object' && mealData.name) return [mealData.name]
+    return []
+  }
+
+  // Helper function to calculate nutrition from selected foods for a specific day
+  const calculateDayNutrition = (dayNumber: number) => {
+    const dayFoods = selectedFoods[dayNumber]
+    if (!dayFoods) return { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    
+    let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0
+    
+    Object.values(dayFoods).forEach(mealFoods => {
+      mealFoods.forEach(food => {
+        const factor = food.quantity / 100
+        totalCalories += (food.energy_kcal || 0) * factor
+        totalProtein += (food.protein_g || 0) * factor
+        totalCarbs += (food.carbohydrate_g || 0) * factor
+        totalFat += (food.fat_g || 0) * factor
+      })
+    })
+    
+    return {
+      calories: Math.round(totalCalories),
+      protein: Math.round(totalProtein * 10) / 10,
+      carbs: Math.round(totalCarbs * 10) / 10,
+      fat: Math.round(totalFat * 10) / 10
+    }
+  }
+
+  const getRealMealPlanDays = (duration: number): DayPlan[] => {
+    
+    // First try to get data from plan_content
+    if (mealPlan?.plan_content?.days && Array.isArray(mealPlan.plan_content.days)) {
+      return mealPlan.plan_content.days.slice(0, duration).map((day: any, index: number) => {
+        const selectedFoodsNutrition = calculateDayNutrition(day.day || index + 1)
+        
+        return {
+          ...day,
+          day: day.day || index + 1,
+          meals: {
+            breakfast: normalizeMealData(day.meals?.breakfast),
+            lunch: normalizeMealData(day.meals?.lunch),
+            dinner: normalizeMealData(day.meals?.dinner),
+            snacks: normalizeMealData(day.meals?.snacks)
+          },
+          // Combine original nutrition with selected foods nutrition
+          totalCalories: (day.totalCalories || 0) + selectedFoodsNutrition.calories,
+          totalProtein: (day.totalProtein || 0) + selectedFoodsNutrition.protein,
+          totalCarbs: (day.totalCarbs || 0) + selectedFoodsNutrition.carbs,
+          totalFat: (day.totalFat || 0) + selectedFoodsNutrition.fat
+        }
+      })
+    }
+
+    // Check if plan_content has a different structure (AI generated format)
+    if (mealPlan?.plan_content && mealPlan.plan_content.days) {
+      const aiDays = mealPlan.plan_content.days.slice(0, duration)
+      return aiDays.map((day: any, index: number) => {
+        const selectedFoodsNutrition = calculateDayNutrition(day.day || index + 1)
+        
+        return {
+          day: day.day || day.day_number || index + 1,
+          date: day.date,
+          meals: {
+            breakfast: normalizeMealData(day.meals?.breakfast),
+            lunch: normalizeMealData(day.meals?.lunch), 
+            dinner: normalizeMealData(day.meals?.dinner),
+            snacks: normalizeMealData(day.meals?.snacks)
+          },
+          notes: day.notes,
+          // Combine original nutrition with selected foods nutrition
+          totalCalories: (day.totalCalories || 0) + selectedFoodsNutrition.calories,
+          totalProtein: (day.totalProtein || 0) + selectedFoodsNutrition.protein,
+          totalCarbs: (day.totalCarbs || 0) + selectedFoodsNutrition.carbs,
+          totalFat: (day.totalFat || 0) + selectedFoodsNutrition.fat
+        }
+      })
+    }
+
+    // Fallback: create placeholder days that will be replaced when user edits them
     const sampleMeals = {
       breakfast: [
         "Yaourt grec aux baies et granola",
@@ -572,7 +778,7 @@ export default function MealPlanDetailPage() {
         dinner: [sampleMeals.dinner[index % sampleMeals.dinner.length]],
         snacks: [sampleMeals.snacks[index % sampleMeals.snacks.length]]
       },
-      notes: index === 0 ? "Commencer avec des portions plus légères et ajuster au besoin" : undefined
+      notes: index === 0 ? "Cliquez sur 'Modifier le jour' pour personnaliser ce plan ou générez un nouveau plan avec l'IA" : undefined
     }))
   }
 
@@ -620,7 +826,7 @@ export default function MealPlanDetailPage() {
   }
 
   const IconComponent = getPlanTypeIcon(mealPlan.name)
-  const dayPlans = generateSampleDays(mealPlan.duration_days || 7)
+  const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7)
 
   return (
     <div className="space-y-6">
@@ -752,16 +958,53 @@ export default function MealPlanDetailPage() {
               </CardContent>
             </Card>
 
+            {/* AI-Generated Plan Nutritional Analysis */}
+            {mealPlan.plan_content && typeof mealPlan.plan_content === 'object' && 'days' in mealPlan.plan_content && (mealPlan.plan_content as GeneratedMealPlan).days && (
+              <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Activity className="h-5 w-5 text-purple-600" />
+                    Analyse Nutritionnelle IA
+                  </CardTitle>
+                  <CardDescription>
+                    Analyse détaillée des macronutriments et graphiques professionnels
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <MacronutrientBreakdown 
+                    mealPlan={mealPlan.plan_content as GeneratedMealPlan} 
+                    selectedFoods={selectedFoods}
+                  />
+                </CardContent>
+              </Card>
+            )}
+
             {/* Daily Meal Plans */}
             <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl">
               <CardHeader>
-                <CardTitle className="flex items-center gap-2">
-                  <ChefHat className="h-5 w-5 text-slate-600" />
-                  Plans repas quotidiens
-                </CardTitle>
-                <CardDescription>
-                  Détail des repas pour chaque jour du plan
-                </CardDescription>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle className="flex items-center gap-2">
+                      <ChefHat className="h-5 w-5 text-slate-600" />
+                      Plans repas quotidiens
+                    </CardTitle>
+                    <CardDescription>
+                      Détail des repas pour chaque jour du plan
+                    </CardDescription>
+                  </div>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                    onClick={() => {
+                      const nextDay = Math.max(...dayPlans.map(d => d.day), 0) + 1
+                      handleEditDay(nextDay)
+                    }}
+                  >
+                    <Target className="h-4 w-4 mr-2" />
+                    Ajouter un jour
+                  </Button>
+                </div>
               </CardHeader>
               <CardContent>
                 <div className="space-y-6">
@@ -787,7 +1030,7 @@ export default function MealPlanDetailPage() {
                             Petit-déjeuner
                           </h4>
                           <ul className="space-y-1 text-sm text-slate-600 ml-4">
-                            {day.meals.breakfast.map((meal, idx) => (
+                            {(day.meals?.breakfast || []).map((meal: any, idx: number) => (
                               <li key={idx}>• {meal}</li>
                             ))}
                           </ul>
@@ -799,7 +1042,7 @@ export default function MealPlanDetailPage() {
                             Déjeuner
                           </h4>
                           <ul className="space-y-1 text-sm text-slate-600 ml-4">
-                            {day.meals.lunch.map((meal, idx) => (
+                            {(day.meals?.lunch || []).map((meal: any, idx: number) => (
                               <li key={idx}>• {meal}</li>
                             ))}
                           </ul>
@@ -811,7 +1054,7 @@ export default function MealPlanDetailPage() {
                             Dîner
                           </h4>
                           <ul className="space-y-1 text-sm text-slate-600 ml-4">
-                            {day.meals.dinner.map((meal, idx) => (
+                            {(day.meals?.dinner || []).map((meal: any, idx: number) => (
                               <li key={idx}>• {meal}</li>
                             ))}
                           </ul>
@@ -823,7 +1066,7 @@ export default function MealPlanDetailPage() {
                             Collations
                           </h4>
                           <ul className="space-y-1 text-sm text-slate-600 ml-4">
-                            {day.meals.snacks.map((meal, idx) => (
+                            {(day.meals?.snacks || []).map((meal: any, idx: number) => (
                               <li key={idx}>• {meal}</li>
                             ))}
                           </ul>
@@ -1047,7 +1290,7 @@ export default function MealPlanDetailPage() {
 
         {/* Edit Day Dialog */}
         <Dialog open={isEditDayOpen} onOpenChange={setIsEditDayOpen}>
-          <DialogContent className="sm:max-w-[600px] rounded-xl">
+        <DialogContent className="sm:max-w-[600px] rounded-xl">
             <DialogHeader>
               <DialogTitle>Modifier le jour {editDayForm.day}</DialogTitle>
               <DialogDescription>
@@ -1055,57 +1298,102 @@ export default function MealPlanDetailPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-6 py-4">
-              <div className="space-y-2">
-                <Label htmlFor="day-breakfast">Petit-déjeuner</Label>
-                <Textarea
-                  id="day-breakfast"
-                  value={editDayForm.breakfast}
-                  onChange={(e) => setEditDayForm({ ...editDayForm, breakfast: e.target.value })}
-                  placeholder="Ex: Yaourt grec aux baies et granola"
-                  rows={2}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="day-lunch">Déjeuner</Label>
-                <Textarea
-                  id="day-lunch"
-                  value={editDayForm.lunch}
-                  onChange={(e) => setEditDayForm({ ...editDayForm, lunch: e.target.value })}
-                  placeholder="Ex: Salade de poulet grillé au quinoa"
-                  rows={2}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="day-dinner">Dîner</Label>
-                <Textarea
-                  id="day-dinner"
-                  value={editDayForm.dinner}
-                  onChange={(e) => setEditDayForm({ ...editDayForm, dinner: e.target.value })}
-                  placeholder="Ex: Saumon grillé aux légumes rôtis"
-                  rows={2}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="day-snacks">Collations</Label>
-                <Textarea
-                  id="day-snacks"
-                  value={editDayForm.snacks}
-                  onChange={(e) => setEditDayForm({ ...editDayForm, snacks: e.target.value })}
-                  placeholder="Ex: Tranches de pomme au beurre d'amande"
-                  rows={2}
-                />
-              </div>
+              {(["breakfast", "lunch", "dinner", "snacks"] as const).map(slot => (
+                <div key={slot} className="space-y-2">
+                  <Label htmlFor={`day-${slot}`}>{
+                    slot === "breakfast" ? "Petit-déjeuner" :
+                    slot === "lunch" ? "Déjeuner" :
+                    slot === "dinner" ? "Dîner" : "Collations"
+                  }</Label>
+                  <Textarea
+                    id={`day-${slot}`}
+                    value={editDayForm[slot]}
+                    onChange={e => setEditDayForm({ ...editDayForm, [slot]: e.target.value })}
+                    placeholder={
+                      slot === "breakfast" ? "Ex: Yaourt grec aux baies et granola" :
+                      slot === "lunch" ? "Ex: Salade de poulet grillé au quinoa" :
+                      slot === "dinner" ? "Ex: Saumon grillé aux légumes rôtis" : "Ex: Tranches de pomme au beurre d'amande"
+                    }
+                    rows={2}
+                  />
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="mt-2"
+                    onClick={() => {
+                      setFoodSearchSlot(slot)
+                      setFoodSearchDay(editDayForm.day)
+                      setFoodSearchOpen(true)
+                    }}
+                  >
+                    Rechercher et ajouter un aliment
+                  </Button>
+                  <div className="mt-2">
+                    {selectedFoods[editDayForm.day]?.[slot]?.length > 0 && (
+                      <div className="space-y-1">
+                        <div className="text-xs text-slate-600 font-medium">Aliments ANSES-CIQUAL ajoutés:</div>
+                        <div className="space-y-1">
+                          {selectedFoods[editDayForm.day][slot].map((food, foodIndex) => (
+                            <div key={foodIndex} className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
+                              <div className="text-xs">
+                                <span className="font-medium text-emerald-800">{food.name_fr}</span>
+                                <span className="text-emerald-600 ml-1">({food.quantity}g)</span>
+                                <span className="text-emerald-600 ml-1">• {Math.round((food.energy_kcal || 0) * food.quantity / 100)} kcal</span>
+                              </div>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                onClick={() => {
+                                  setSelectedFoods(prev => ({
+                                    ...prev,
+                                    [editDayForm.day]: {
+                                      ...prev[editDayForm.day],
+                                      [slot]: prev[editDayForm.day][slot].filter((_, i) => i !== foodIndex)
+                                    }
+                                  }))
+                                }}
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ))}
               <div className="space-y-2">
                 <Label htmlFor="day-notes">Notes (optionnel)</Label>
                 <Textarea
                   id="day-notes"
                   value={editDayForm.notes}
-                  onChange={(e) => setEditDayForm({ ...editDayForm, notes: e.target.value })}
+                  onChange={e => setEditDayForm({ ...editDayForm, notes: e.target.value })}
                   placeholder="Conseils ou instructions spécifiques pour ce jour"
                   rows={2}
                 />
               </div>
             </div>
+            <FoodSearchModal
+              open={foodSearchOpen}
+              onClose={() => setFoodSearchOpen(false)}
+              mealSlot={foodSearchSlot}
+              day={foodSearchDay}
+              onSelectFood={food => {
+                setSelectedFoods(prev => ({
+                  ...prev,
+                  [foodSearchDay]: {
+                    ...prev[foodSearchDay],
+                    [foodSearchSlot]: [
+                      ...(prev[foodSearchDay]?.[foodSearchSlot] || []),
+                      food
+                    ]
+                  }
+                }))
+                setFoodSearchOpen(false)
+              }}
+            />
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsEditDayOpen(false)}>
                 Annuler

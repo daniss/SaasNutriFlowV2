@@ -278,6 +278,7 @@ Transform NutriFlow from a generic CRM into THE reference platform for French di
 - Partnerships/events: 15K€
 
 ### **TOTAL MVP INVESTMENT: 60-80K€ (3 months)**
+
 ### **TOTAL FULL TRANSFORMATION: 170-230K€ (12 months)**
 
 ---
@@ -303,7 +304,7 @@ Transform NutriFlow from a generic CRM into THE reference platform for French di
 
 ---
 
-## 📋 **CURRENT PRODUCTION STATUS** 
+## 📋 **CURRENT PRODUCTION STATUS**
 
 **Note:** The following sections track the existing platform's current capabilities and technical debt.
 

@@ -77,28 +77,31 @@ export function ProgressPhotos({
           doc.metadata &&
           typeof doc.metadata === "object" &&
           "type" in doc.metadata &&
-          doc.metadata.type === "progress_photo"
+          doc.metadata.type === "progress_photo" &&
+          // Only show photos that are visible to nutritionist (shared by client)
+          (doc.metadata.visible_to_nutritionist === true || doc.metadata.uploaded_by === "nutritionist")
       );
 
       setPhotos(progressPhotos);
 
-      // Load photo URLs
+      // Create blob URLs for display using the same storage access pattern as download
       const urls: Record<string, string> = {};
       for (const photo of progressPhotos) {
         try {
-          const { data: urlData } = await supabase.storage
+          const { data, error } = await supabase.storage
             .from("documents")
-            .createSignedUrl(photo.file_path, 60 * 60); // 1 hour expiry
+            .download(photo.file_path);
 
-          if (urlData?.signedUrl) {
-            urls[photo.id] = urlData.signedUrl;
+          if (error) {
+            console.error("Error downloading photo for display:", photo.id, error);
+            continue;
           }
+
+          // Create object URL for display
+          const url = URL.createObjectURL(data);
+          urls[photo.id] = url;
         } catch (error) {
-          console.error(
-            "Error generating signed URL for photo:",
-            photo.id,
-            error
-          );
+          console.error("Error creating blob URL for photo:", photo.id, error);
         }
       }
       setPhotoUrls(urls);
@@ -308,6 +311,11 @@ export function ProgressPhotos({
                     <Calendar className="h-3 w-3 mr-1" />
                     {formatDate(photo.upload_date)}
                   </Badge>
+                  {photo.metadata?.uploaded_by === "client" && (
+                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                      Client
+                    </Badge>
+                  )}
                 </div>
                 {photo.description && (
                   <p className="text-xs text-gray-600 truncate">

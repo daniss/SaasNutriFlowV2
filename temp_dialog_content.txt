@@ -1,0 +1,377 @@
+              <div className="py-6">
+                {/* Step 1: Personal Information */}
+                {currentStep === 1 && (
+                  <div className="space-y-6 animate-slide-in">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="name"
+                          className="text-sm font-semibold text-gray-700"
+                        >
+                          Nom complet *
+                        </Label>
+                        <Input
+                          id="name"
+                          value={newClient.name}
+                          onChange={(e) => {
+                            setNewClient({ ...newClient, name: e.target.value });
+                            if (clientValidation.name.message) {
+                              setClientValidation({
+                                ...clientValidation,
+                                name: { isValid: true, message: "" },
+                              });
+                            }
+                          }}
+                          onBlur={() => {
+                            if (newClient.name) {
+                              const validation = validateClientName(newClient.name);
+                              setClientValidation({
+                                ...clientValidation,
+                                name: validation,
+                              });
+                            }
+                          }}
+                          placeholder="Marie Dupont"
+                          className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                            !clientValidation.name.isValid
+                              ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                              : ""
+                          }`}
+                        />
+                        {!clientValidation.name.isValid && (
+                          <p className="text-sm text-red-600 flex items-center gap-1">
+                            <span className="text-red-500">⚠</span>
+                            {clientValidation.name.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="email"
+                          className="text-sm font-semibold text-gray-700"
+                        >
+                          Email *
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={newClient.email}
+                          onChange={(e) => {
+                            setNewClient({ ...newClient, email: e.target.value });
+                            if (clientValidation.email.message) {
+                              setClientValidation({
+                                ...clientValidation,
+                                email: { isValid: true, message: "" },
+                              });
+                            }
+                          }}
+                          onBlur={async () => {
+                            if (newClient.email) {
+                              const validation = await validateClientEmail(
+                                newClient.email
+                              );
+                              setClientValidation({
+                                ...clientValidation,
+                                email: validation,
+                              });
+                            }
+                          }}
+                          placeholder="marie@exemple.fr"
+                          className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                            !clientValidation.email.isValid
+                              ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                              : ""
+                          }`}
+                        />
+                        {!clientValidation.email.isValid && (
+                          <p className="text-sm text-red-600 flex items-center gap-1">
+                            <span className="text-red-500">⚠</span>
+                            {clientValidation.email.message}
+                          </p>
+                        )}
+                        {emailValidationLoading && (
+                          <div className="text-sm text-blue-600 flex items-center gap-1">
+                            <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full"></div>
+                            Vérification de l'email...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="phone"
+                        className="text-sm font-semibold text-gray-700"
+                      >
+                        Téléphone
+                      </Label>
+                      <Input
+                        id="phone"
+                        value={newClient.phone}
+                        onChange={(e) => {
+                          setNewClient({ ...newClient, phone: e.target.value });
+                          if (clientValidation.phone.message) {
+                            setClientValidation({
+                              ...clientValidation,
+                              phone: { isValid: true, message: "" },
+                            });
+                          }
+                        }}
+                        onBlur={() => {
+                          if (newClient.phone) {
+                            const validation = validateClientPhone(
+                              newClient.phone
+                            );
+                            setClientValidation({
+                              ...clientValidation,
+                              phone: validation,
+                            });
+                          }
+                        }}
+                        placeholder="+33 1 23 45 67 89"
+                        className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                          !clientValidation.phone.isValid
+                            ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                            : ""
+                        }`}
+                      />
+                      {!clientValidation.phone.isValid && (
+                        <p className="text-sm text-red-600 flex items-center gap-1">
+                          <span className="text-red-500">⚠</span>
+                          {clientValidation.phone.message}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 2: Nutritional Goals */}
+                {currentStep === 2 && (
+                  <div className="space-y-6 animate-slide-in">
+                    <div className="text-center mb-6">
+                      <div className="mx-auto h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                        <Target className="h-8 w-8 text-emerald-600" />
+                      </div>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        Maintenant, définissons ensemble les objectifs nutritionnels pour créer un parcours personnalisé.
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="current_weight"
+                          className="text-sm font-semibold text-gray-700"
+                        >
+                          Poids actuel (kg)
+                        </Label>
+                        <Input
+                          id="current_weight"
+                          type="number"
+                          value={newClient.current_weight}
+                          onChange={(e) => {
+                            setNewClient({
+                              ...newClient,
+                              current_weight: e.target.value,
+                            });
+                            if (clientValidation.current_weight.message) {
+                              setClientValidation({
+                                ...clientValidation,
+                                current_weight: { isValid: true, message: "" },
+                              });
+                            }
+                          }}
+                          onBlur={() => {
+                            if (newClient.current_weight) {
+                              const validation = validateClientWeight(
+                                newClient.current_weight
+                              );
+                              setClientValidation({
+                                ...clientValidation,
+                                current_weight: validation,
+                              });
+                            }
+                          }}
+                          placeholder="70"
+                          className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                            !clientValidation.current_weight.isValid
+                              ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                              : ""
+                          }`}
+                        />
+                        {!clientValidation.current_weight.isValid && (
+                          <p className="text-sm text-red-600 flex items-center gap-1">
+                            <span className="text-red-500">⚠</span>
+                            {clientValidation.current_weight.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="goal_weight"
+                          className="text-sm font-semibold text-gray-700"
+                        >
+                          Poids objectif (kg)
+                        </Label>
+                        <Input
+                          id="goal_weight"
+                          type="number"
+                          value={newClient.goal_weight}
+                          onChange={(e) => {
+                            setNewClient({
+                              ...newClient,
+                              goal_weight: e.target.value,
+                            });
+                            if (clientValidation.goal_weight.message) {
+                              setClientValidation({
+                                ...clientValidation,
+                                goal_weight: { isValid: true, message: "" },
+                              });
+                            }
+                          }}
+                          onBlur={() => {
+                            if (newClient.goal_weight) {
+                              const validation = validateClientWeight(
+                                newClient.goal_weight
+                              );
+                              setClientValidation({
+                                ...clientValidation,
+                                goal_weight: validation,
+                              });
+                            }
+                          }}
+                          placeholder="65"
+                          className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                            !clientValidation.goal_weight.isValid
+                              ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                              : ""
+                          }`}
+                        />
+                        {!clientValidation.goal_weight.isValid && (
+                          <p className="text-sm text-red-600 flex items-center gap-1">
+                            <span className="text-red-500">⚠</span>
+                            {clientValidation.goal_weight.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="goal"
+                        className="text-sm font-semibold text-gray-700"
+                      >
+                        Objectif principal
+                      </Label>
+                      <Select
+                        value={newClient.goal}
+                        onValueChange={(value: string) =>
+                          setNewClient({ ...newClient, goal: value })
+                        }
+                      >
+                        <SelectTrigger className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20">
+                          <SelectValue placeholder="Choisir un objectif" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="weight_loss">
+                            Perte de poids
+                          </SelectItem>
+                          <SelectItem value="weight_gain">
+                            Prise de poids
+                          </SelectItem>
+                          <SelectItem value="muscle_gain">
+                            Prise de masse musculaire
+                          </SelectItem>
+                          <SelectItem value="maintenance">Maintien</SelectItem>
+                          <SelectItem value="health_improvement">
+                            Amélioration de la santé
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Account Configuration */}
+                {currentStep === 3 && (
+                  <div className="space-y-6 animate-slide-in">
+                    <div className="text-center mb-6">
+                      <div className="mx-auto h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                        <Users className="h-8 w-8 text-emerald-600" />
+                      </div>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        Dernière étape : configurons l'accès et les options de suivi pour votre client.
+                      </p>
+                    </div>
+
+                    {/* Client Account Creation Section */}
+                    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          id="create-account"
+                          checked={createClientAccount}
+                          onCheckedChange={(checked) => setCreateClientAccount(checked as boolean)}
+                          className="mt-1"
+                        />
+                        <div className="grid gap-2">
+                          <Label
+                            htmlFor="create-account"
+                            className="text-sm font-semibold text-gray-700 cursor-pointer"
+                          >
+                            Créer un compte client
+                          </Label>
+                          <p className="text-sm text-gray-600 leading-relaxed">
+                            Permettre au client d'accéder à son portail personnel pour consulter 
+                            ses plans alimentaires, suivre ses progrès et communiquer avec vous.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Summary Section */}
+                    <div className="space-y-4 p-4 bg-emerald-50 rounded-lg">
+                      <h4 className="text-sm font-semibold text-emerald-800 mb-3">Récapitulatif du profil</h4>
+                      <div className="grid gap-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Nom :</span>
+                          <span className="font-medium text-gray-900">{newClient.name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Email :</span>
+                          <span className="font-medium text-gray-900">{newClient.email}</span>
+                        </div>
+                        {newClient.phone && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Téléphone :</span>
+                            <span className="font-medium text-gray-900">{newClient.phone}</span>
+                          </div>
+                        )}
+                        {newClient.current_weight && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Poids actuel :</span>
+                            <span className="font-medium text-gray-900">{newClient.current_weight} kg</span>
+                          </div>
+                        )}
+                        {newClient.goal_weight && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Poids objectif :</span>
+                            <span className="font-medium text-gray-900">{newClient.goal_weight} kg</span>
+                          </div>
+                        )}
+                        {newClient.goal && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Objectif :</span>
+                            <span className="font-medium text-gray-900">
+                              {newClient.goal === 'weight_loss' && 'Perte de poids'}
+                              {newClient.goal === 'weight_gain' && 'Prise de poids'}
+                              {newClient.goal === 'muscle_gain' && 'Prise de masse musculaire'}
+                              {newClient.goal === 'maintenance' && 'Maintien'}
+                              {newClient.goal === 'health_improvement' && 'Amélioration de la santé'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>

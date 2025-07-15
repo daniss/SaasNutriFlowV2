@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // Fetch documents that are visible to the client
+    // Fetch documents that are visible to the client, excluding progress photos
     const { data: documents, error } = await supabase
       .from("documents")
       .select(
@@ -40,12 +40,22 @@ export async function GET(request: NextRequest) {
         description,
         upload_date,
         is_visible_to_client,
+        metadata,
         dietitian:profiles!dietitian_id(first_name, last_name)
       `
       )
       .eq("client_id", clientId)
       .eq("is_visible_to_client", true)
       .order("upload_date", { ascending: false });
+
+    // Filter out progress photos on the server side
+    const filteredDocuments = documents?.filter(doc => {
+      if (doc.metadata && typeof doc.metadata === 'object' && 
+          'type' in doc.metadata && doc.metadata.type === 'progress_photo') {
+        return false;
+      }
+      return true;
+    }) || [];
 
     if (error) {
       console.error("Database error:", error);
@@ -56,7 +66,7 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      documents: documents || [],
+      documents: filteredDocuments,
     });
   } catch (error) {
     console.error("API error:", error);

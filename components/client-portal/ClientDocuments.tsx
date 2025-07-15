@@ -35,6 +35,7 @@ interface ClientDocument {
   description?: string;
   upload_date: string;
   is_visible_to_client: boolean;
+  metadata?: any;
   dietitian?: {
     first_name: string;
     last_name: string;
@@ -195,7 +196,14 @@ export function ClientDocuments() {
     );
   }
 
-  const visibleDocuments = documents.filter((doc) => doc.is_visible_to_client);
+  const visibleDocuments = documents.filter((doc) => {
+    // Filter out progress photos - they should only appear in the progress photos section
+    if (doc.metadata && typeof doc.metadata === 'object' && 
+        'type' in doc.metadata && doc.metadata.type === 'progress_photo') {
+      return false;
+    }
+    return doc.is_visible_to_client;
+  });
 
   if (visibleDocuments.length === 0) {
     return (

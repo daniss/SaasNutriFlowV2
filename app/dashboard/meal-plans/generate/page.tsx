@@ -58,11 +58,14 @@ import { useEffect, useRef, useState } from "react"
 import { useAuth } from "@/hooks/useAuthNew"
 import { generateMealPlan, type GeneratedMealPlan, type Meal } from "@/lib/gemini"
 import { supabase, type Client } from "@/lib/supabase"
-import jsPDF from "jspdf"
+import { generateProfessionalPDF } from "@/lib/pdf-generator"
+import { useToast } from "@/hooks/use-toast"
+import MacronutrientBreakdown from "@/components/nutrition/MacronutrientBreakdown"
 
 export default function GenerateMealPlanPage() {
-  const router = useRouter()
   const { user } = useAuth()
+  const { toast } = useToast()
+  const router = useRouter()
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedMealPlan | null>(null)
   const [clients, setClients] = useState<Client[]>([])
@@ -71,9 +74,8 @@ export default function GenerateMealPlanPage() {
   const [lastSubmission, setLastSubmission] = useState<number>(0)
   const [validationError, setValidationError] = useState<string>("")
   const [planFeedback, setPlanFeedback] = useState<{ planId: string; rating: 'good' | 'bad' | null }>({ planId: '', rating: null })
-  const [viewMode, setViewMode] = useState<'cards' | 'timeline' | 'compact'>('cards')
+  const [viewMode, setViewMode] = useState<'cards' | 'timeline' | 'compact' | 'nutrition'>('cards')
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([1]))
-  const [quickPresets, setQuickPresets] = useState<string[]>([])
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Form state
@@ -81,40 +83,38 @@ export default function GenerateMealPlanPage() {
     prompt: "",
     planName: "",
     clientId: "",
-    duration: 7,
-    targetCalories: 2000,
-    dietType: "balanced",
-    goals: "",
-    restrictions: [] as string[],
   })
 
   // Quick preset prompts for inspiration
   const presetPrompts = [
-    "7-day Mediterranean diet plan for heart health with 1800 calories per day",
-    "Weight loss meal plan with intermittent fasting (16:8) and high protein",
-    "Plant-based athlete nutrition plan for muscle building (2500 calories)",
-    "Anti-inflammatory meal plan for joint health with omega-3 rich foods",
-    "Diabetic-friendly meal plan with low glycemic index foods (1600 calories)",
-    "Family-friendly meal prep plan with batch cooking options",
+    "Plan méditerranéen de 7 jours pour la santé cardiaque avec 1800 calories par jour",
+    "Plan de perte de poids avec jeûne intermittent (16:8) et riche en protéines",
+    "Plan nutritionnel végétalien pour sportif et développement musculaire (2500 calories)",
+    "Plan anti-inflammatoire pour la santé articulaire avec aliments riches en oméga-3",
+    "Plan adapté aux diabétiques avec aliments à faible index glycémique (1600 calories)",
+    "Plan familial de préparation de repas avec options de cuisson par lots",
+    "Plan sans gluten pour personne cœliaque avec alternatives nutritives et fibres",
+    "Plan végétarien équilibré riche en fer et vitamine B12 pour femme enceinte",
+    "Plan hypoallergénique sans lactose, œufs et noix pour enfant de 8 ans actif",
   ]
 
   // Anti-abuse validation
   const validatePrompt = (prompt: string): string | null => {
-    if (!prompt.trim()) return "Please enter a meal plan description"
-    if (prompt.length < 10) return "Please provide more details (at least 10 characters)"
-    if (prompt.length > 1000) return "Please keep your request under 1000 characters"
+    if (!prompt.trim()) return "Veuillez entrer une description de plan alimentaire"
+    if (prompt.length < 10) return "Veuillez fournir plus de détails (au moins 10 caractères)"
+    if (prompt.length > 1000) return "Veuillez garder votre demande sous 1000 caractères"
     
     // Check for offensive content (basic keywords)
     const offensiveWords = ['spam', 'hack', 'illegal', 'drug', 'weapon']
     const lowerPrompt = prompt.toLowerCase()
     if (offensiveWords.some(word => lowerPrompt.includes(word))) {
-      return "Please ensure your request is related to meal planning"
+      return "Veuillez vous assurer que votre demande concerne la planification de repas"
     }
     
     // Check if it's meal/nutrition related
-    const nutritionKeywords = ['meal', 'diet', 'food', 'nutrition', 'calorie', 'protein', 'carb', 'fat', 'vegetarian', 'vegan', 'keto', 'weight', 'healthy', 'breakfast', 'lunch', 'dinner', 'snack', 'plan']
+    const nutritionKeywords = ['meal', 'diet', 'food', 'nutrition', 'calorie', 'protéines', 'carb', 'fat', 'vegetarian', 'vegan', 'keto', 'weight', 'healthy', 'breakfast', 'lunch', 'dinner', 'snack', 'plan']
     if (!nutritionKeywords.some(keyword => lowerPrompt.includes(keyword))) {
-      return "Please describe a meal plan or nutrition-related request"
+      return "Veuillez décrire un plan alimentaire ou une demande liée à la nutrition"
     }
     
     return null
@@ -155,14 +155,6 @@ export default function GenerateMealPlanPage() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleRestrictionToggle = (restriction: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      restrictions: prev.restrictions.includes(restriction)
-        ? prev.restrictions.filter((r) => r !== restriction)
-        : [...prev.restrictions, restriction],
-    }))
-  }
 
   const handleGenerate = async () => {
     // Validation
@@ -175,7 +167,7 @@ export default function GenerateMealPlanPage() {
 
     // Cooldown check
     if (!canSubmit()) {
-      setValidationError(`Please wait ${getCooldownTimeLeft()} seconds before generating again`)
+      setValidationError(`Veuillez attendre ${getCooldownTimeLeft()} secondes avant de générer à nouveau`)
       return
     }
 
@@ -196,20 +188,18 @@ export default function GenerateMealPlanPage() {
       // Real AI generation with Google Gemini!
       const mealPlanRequest = {
         prompt: formData.prompt,
+        dietitianId: user?.id || '',
         clientId: formData.clientId || undefined,
-        duration: parseInt(formData.duration.toString()) || 7,
-        targetCalories: parseInt(formData.targetCalories.toString()) || 2000,
-        dietType: formData.dietType,
-        restrictions: formData.restrictions,
-        goals: formData.goals
       }
 
-      const plan: GeneratedMealPlan = await generateMealPlan(mealPlanRequest)
+      const { transformed: plan, raw: rawPlan } = await generateMealPlan(mealPlanRequest)
 
       setGenerationProgress(100)
       setTimeout(() => {
         setGeneratedPlan(plan)
-        setPlanFeedback({ planId: plan.name + Date.now(), rating: null })
+        // Store raw plan for saving to database
+        ;(plan as any).rawData = rawPlan
+        setPlanFeedback({ planId: plan.title + Date.now(), rating: null })
         clearInterval(progressInterval)
       }, 500)
       
@@ -230,6 +220,17 @@ export default function GenerateMealPlanPage() {
     // Here you could send feedback to analytics
   }
 
+  // Helper function to organize meals by type from array
+  const getMealsByType = (meals: Meal[]) => {
+    const organized = {
+      breakfast: meals.find(m => m.type === 'breakfast'),
+      lunch: meals.find(m => m.type === 'lunch'),
+      dinner: meals.find(m => m.type === 'dinner'),
+      snacks: meals.filter(m => m.type === 'snack')
+    }
+    return organized
+  }
+
   const handleEditMeal = (dayIndex: number, mealType: string, meal: Meal) => {
     setEditingMeal({ dayIndex, mealType, meal: { ...meal } })
   }
@@ -240,38 +241,28 @@ export default function GenerateMealPlanPage() {
     const updatedPlan = { ...generatedPlan }
     const dayPlan = updatedPlan.days[editingMeal.dayIndex]
 
-    if (editingMeal.mealType === "snacks") {
-      // For snacks, we'll update the first snack for simplicity
-      dayPlan.meals.snacks[0] = editingMeal.meal
-    } else {
-      // Type assertion to fix the type issue
-      (dayPlan.meals as any)[editingMeal.mealType] = editingMeal.meal
+    // Update the meal in the array structure
+    if (dayPlan && dayPlan.meals) {
+      const mealIndex = dayPlan.meals.findIndex((m) => {
+        if (editingMeal.mealType === 'snacks') {
+          // For snacks, match by type and index
+          const snacks = dayPlan.meals.filter(meal => meal.type === 'snack')
+          const snackIndex = snacks.findIndex(s => s.name === editingMeal.meal.name)
+          return m.type === 'snack' && snacks[snackIndex] === m
+        }
+        return m.type === editingMeal.mealType
+      })
+      
+      if (mealIndex !== -1) {
+        dayPlan.meals[mealIndex] = { ...editingMeal.meal }
+      }
     }
 
-    // Recalculate daily totals
-    const meals = dayPlan.meals
-    dayPlan.totalCalories =
-      meals.breakfast.calories +
-      meals.lunch.calories +
-      meals.dinner.calories +
-      meals.snacks.reduce((sum, snack) => sum + snack.calories, 0)
-    dayPlan.totalProtein =
-      meals.breakfast.protein +
-      meals.lunch.protein +
-      meals.dinner.protein +
-      meals.snacks.reduce((sum, snack) => sum + snack.protein, 0)
-    dayPlan.totalCarbs =
-      meals.breakfast.carbs +
-      meals.lunch.carbs +
-      meals.dinner.carbs +
-      meals.snacks.reduce((sum, snack) => sum + snack.carbs, 0)
-    dayPlan.totalFat =
-      meals.breakfast.fat + meals.lunch.fat + meals.dinner.fat + meals.snacks.reduce((sum, snack) => sum + snack.fat, 0)
-    dayPlan.totalFiber =
-      meals.breakfast.fiber +
-      meals.lunch.fiber +
-      meals.dinner.fiber +
-      meals.snacks.reduce((sum, snack) => sum + snack.fiber, 0)
+    // Recalculate daily totals from array structure
+    dayPlan.totalCalories = dayPlan.meals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
+    dayPlan.totalProtein = dayPlan.meals.reduce((sum, meal) => sum + (meal.protéines || 0), 0)
+    dayPlan.totalCarbs = dayPlan.meals.reduce((sum, meal) => sum + (meal.carbs || 0), 0)
+    dayPlan.totalFat = dayPlan.meals.reduce((sum, meal) => sum + (meal.fat || 0), 0)
 
     setGeneratedPlan(updatedPlan)
     setEditingMeal(null)
@@ -284,233 +275,120 @@ export default function GenerateMealPlanPage() {
       // Save to meal_plan_templates table
       const { error } = await supabase.from("meal_plan_templates").insert({
         dietitian_id: user.id,
-        name: formData.planName || generatedPlan.name,
+        name: formData.planName || generatedPlan.title,
         description: generatedPlan.description || '',
-        category: formData.goals || 'general',
+        category: 'general',
         duration_days: generatedPlan.duration,
-        template_data: generatedPlan,
-        tags: [formData.goals, ...formData.restrictions].filter(Boolean),
-        usage_count: 0,
-        is_favorite: false,
+        meal_structure: generatedPlan, // Changed from template_data to meal_structure
+        tags: ['ai-generated'],
+        difficulty: 'medium', // Required field with default value
+        // Removed usage_count and is_favorite as they have defaults
       })
 
       if (error) throw error
-      alert("Plan alimentaire sauvegardé comme modèle avec succès!")
+      
+      toast({
+        title: "Modèle sauvegardé",
+        description: "Le plan alimentaire a été sauvegardé comme modèle avec succès!",
+      })
     } catch (error) {
       console.error("Error saving template:", error)
-      alert("Échec de la sauvegarde du modèle. Veuillez réessayer.")
+      toast({
+        title: "Erreur de sauvegarde",
+        description: "Impossible de sauvegarder le modèle. Veuillez réessayer.",
+        variant: "destructive",
+      })
     }
   }
 
   const handleSendToClient = async () => {
     if (!generatedPlan || !formData.clientId) {
-      alert("Please select a client first")
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner un client d'abord",
+        variant: "destructive",
+      })
       return
     }
 
     try {
-      const { error } = await supabase.from("meal_plans").insert({
-        dietitian_id: user!.id,
-        client_id: formData.clientId,
-        name: formData.planName || generatedPlan.name,
-        description: generatedPlan.description,
-        duration_days: generatedPlan.duration,
-        plan_content: generatedPlan,
-        status: "Active",
+      // Get client information for notification
+      const { data: client, error: clientError } = await supabase
+        .from("clients")
+        .select("name, email")
+        .eq("id", formData.clientId)
+        .single()
+      
+      if (clientError) throw clientError
+      
+      // Save the meal plan
+      const { data: savedPlan, error: saveError } = await supabase
+        .from("meal_plans")
+        .insert({
+          dietitian_id: user!.id,
+          client_id: formData.clientId,
+          name: formData.planName || generatedPlan.title,
+          description: generatedPlan.description,
+          duration_days: generatedPlan.duration,
+          plan_content: (generatedPlan as any).rawData || generatedPlan,
+          status: "Active",
+        })
+        .select()
+        .single()
+      
+      if (saveError) throw saveError
+      
+      // Send notification to client
+      try {
+        const response = await fetch("/api/notifications/meal-plan", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            clientEmail: client.email,
+            mealPlanName: formData.planName || generatedPlan.title,
+            dietitianName: user?.email?.split('@')[0] || "Votre nutritionniste",
+          }),
+        })
+        
+        if (!response.ok) {
+          console.error("Failed to send notification")
+        }
+      } catch (notifError) {
+        console.error("Error sending notification:", notifError)
+        // Don't fail the whole operation if notification fails
+      }
+      
+      toast({
+        title: "Succès",
+        description: "Plan alimentaire envoyé au client avec succès!",
       })
-
-      if (error) throw error
-      alert("Meal plan sent to client successfully!")
+      
+      // Optionally redirect to meal plans list
+      router.push("/dashboard/meal-plans")
     } catch (error) {
       console.error("Error sending to client:", error)
-      alert("Failed to send to client. Please try again.")
+      toast({
+        title: "Erreur",
+        description: "Échec de l'envoi au client. Veuillez réessayer.",
+        variant: "destructive",
+      })
     }
   }
 
   const handleExportPdf = async () => {
-    if (!generatedPlan) return
+    if (!generatedPlan || !user) return
 
     try {
-      const pdf = new jsPDF('p', 'mm', 'a4')
-      const pageWidth = 210
-      const pageHeight = 297
-      const margin = 20
-      const contentWidth = pageWidth - (margin * 2)
-      let yPosition = margin
-
-      // Helper function to add text with word wrapping
-      const addText = (text: string, x: number, y: number, maxWidth: number, fontSize: number = 10) => {
-        pdf.setFontSize(fontSize)
-        const lines = pdf.splitTextToSize(text, maxWidth)
-        pdf.text(lines, x, y)
-        return y + (lines.length * fontSize * 0.4) // Return new Y position
-      }
-
-      // Header
-      pdf.setFontSize(24)
-      pdf.setFont('helvetica', 'bold')
-      yPosition = addText(generatedPlan.name, margin, yPosition, contentWidth, 24)
-      yPosition += 10
-
-      pdf.setFontSize(12)
-      pdf.setFont('helvetica', 'normal')
-      yPosition = addText(generatedPlan.description, margin, yPosition, contentWidth, 12)
-      yPosition += 15
-
-      // Summary stats
-      pdf.setFontSize(14)
-      pdf.setFont('helvetica', 'bold')
-      yPosition = addText('Plan Overview', margin, yPosition, contentWidth, 14)
-      yPosition += 5
-
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
-      const stats = [
-        `Duration: ${generatedPlan.duration} days`,
-        `Target Calories: ${generatedPlan.targetCalories}/day`,
-        `Average Protein: ${generatedPlan.nutritionSummary.avgProtein}g`,
-        `Average Fiber: ${generatedPlan.nutritionSummary.avgFiber}g`
-      ]
+      // Get dietitian's name from profile
+      const dietitianName = user.email?.split('@')[0] || 'Votre nutritionniste'
       
-      stats.forEach(stat => {
-        yPosition = addText(`• ${stat}`, margin, yPosition, contentWidth, 10)
-        yPosition += 2
-      })
-      yPosition += 10
-
-      // Days
-      for (const day of generatedPlan.days) {
-        // Check if we need a new page
-        if (yPosition > pageHeight - 60) {
-          pdf.addPage()
-          yPosition = margin
-        }
-
-        // Day header
-        pdf.setFontSize(16)
-        pdf.setFont('helvetica', 'bold')
-        yPosition = addText(`Day ${day.day} - ${day.date}`, margin, yPosition, contentWidth, 16)
-        yPosition += 3
-
-        pdf.setFontSize(10)
-        pdf.setFont('helvetica', 'normal')
-        yPosition = addText(`Total: ${day.totalCalories} cal, ${day.totalProtein}g protein`, margin, yPosition, contentWidth, 10)
-        yPosition += 8
-
-        // Meals
-        const meals = [
-          { name: 'Breakfast', data: day.meals.breakfast },
-          { name: 'Lunch', data: day.meals.lunch },
-          { name: 'Dinner', data: day.meals.dinner }
-        ]
-
-        meals.forEach(meal => {
-          if (yPosition > pageHeight - 40) {
-            pdf.addPage()
-            yPosition = margin
-          }
-
-          // Meal name
-          pdf.setFontSize(12)
-          pdf.setFont('helvetica', 'bold')
-          yPosition = addText(meal.name, margin + 5, yPosition, contentWidth - 5, 12)
-          yPosition += 2
-
-          // Meal details
-          pdf.setFontSize(9)
-          pdf.setFont('helvetica', 'bold')
-          yPosition = addText(meal.data.name, margin + 10, yPosition, contentWidth - 10, 9)
-          yPosition += 2
-
-          pdf.setFont('helvetica', 'normal')
-          yPosition = addText(meal.data.description, margin + 10, yPosition, contentWidth - 10, 9)
-          yPosition += 2
-
-          const nutrition = `${meal.data.calories} cal • ${meal.data.protein}g protein • ${meal.data.carbs}g carbs • ${meal.data.fat}g fat`
-          yPosition = addText(nutrition, margin + 10, yPosition, contentWidth - 10, 8)
-          yPosition += 6
-        })
-
-        // Snacks
-        if (day.meals.snacks && day.meals.snacks.length > 0) {
-          day.meals.snacks.forEach((snack, index) => {
-            if (yPosition > pageHeight - 30) {
-              pdf.addPage()
-              yPosition = margin
-            }
-
-            pdf.setFontSize(12)
-            pdf.setFont('helvetica', 'bold')
-            yPosition = addText(`Snack ${index + 1}`, margin + 5, yPosition, contentWidth - 5, 12)
-            yPosition += 2
-
-            pdf.setFontSize(9)
-            pdf.setFont('helvetica', 'bold')
-            yPosition = addText(snack.name, margin + 10, yPosition, contentWidth - 10, 9)
-            yPosition += 2
-
-            pdf.setFont('helvetica', 'normal')
-            yPosition = addText(snack.description, margin + 10, yPosition, contentWidth - 10, 9)
-            yPosition += 2
-
-            const nutrition = `${snack.calories} cal • ${snack.protein}g protein • ${snack.carbs}g carbs • ${snack.fat}g fat`
-            yPosition = addText(nutrition, margin + 10, yPosition, contentWidth - 10, 8)
-            yPosition += 6
-          })
-        }
-
-        yPosition += 5
-      }
-
-      // Shopping List
-      if (yPosition > pageHeight - 60) {
-        pdf.addPage()
-        yPosition = margin
-      }
-
-      pdf.setFontSize(16)
-      pdf.setFont('helvetica', 'bold')
-      yPosition = addText('Shopping List', margin, yPosition, contentWidth, 16)
-      yPosition += 8
-
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'normal')
-      generatedPlan.shoppingList.forEach(item => {
-        if (yPosition > pageHeight - 30) {
-          pdf.addPage()
-          yPosition = margin
-        }
-        yPosition = addText(`• ${item}`, margin, yPosition, contentWidth, 10)
-        yPosition += 3
-      })
-
-      // Notes
-      if (generatedPlan.notes && generatedPlan.notes.length > 0) {
-        yPosition += 10
-        if (yPosition > pageHeight - 60) {
-          pdf.addPage()
-          yPosition = margin
-        }
-
-        pdf.setFontSize(16)
-        pdf.setFont('helvetica', 'bold')
-        yPosition = addText('Tips & Notes', margin, yPosition, contentWidth, 16)
-        yPosition += 8
-
-        pdf.setFontSize(10)
-        pdf.setFont('helvetica', 'normal')
-        generatedPlan.notes.forEach(note => {
-          if (yPosition > pageHeight - 30) {
-            pdf.addPage()
-            yPosition = margin
-          }
-          yPosition = addText(`• ${note}`, margin, yPosition, contentWidth, 10)
-          yPosition += 5
-        })
-      }
-
+      // Generate professional PDF
+      const pdf = generateProfessionalPDF(generatedPlan, dietitianName)
+      
       // Save the PDF
-      const fileName = `${generatedPlan.name.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_meal_plan.pdf`
+      const fileName = `${generatedPlan.title.replace(/[^a-z0-9]/gi, '_').toLowerCase()}_meal_plan.pdf`
       pdf.save(fileName)
       
     } catch (error) {
@@ -519,27 +397,7 @@ export default function GenerateMealPlanPage() {
     }
   }
 
-  const commonRestrictions = [
-    "Vegetarian",
-    "Vegan",
-    "Gluten-Free",
-    "Dairy-Free",
-    "Nut-Free",
-    "Low-Sodium",
-    "Low-Carb",
-    "Keto",
-    "Paleo",
-    "Mediterranean",
-  ]
 
-  const dietTypes = [
-    { value: "balanced", label: "Équilibré" },
-    { value: "weight-loss", label: "Perte de poids" },
-    { value: "weight-gain", label: "Prise de poids" },
-    { value: "muscle-building", label: "Développement musculaire" },
-    { value: "heart-healthy", label: "Santé cardiaque" },
-    { value: "diabetic", label: "Adapté aux diabétiques" },
-  ]
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
@@ -647,7 +505,7 @@ export default function GenerateMealPlanPage() {
 
                 {/* Quick Prompts */}
                 <div className="space-y-3">
-                  <Label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Quick Start</Label>
+                  <Label className="text-xs font-medium text-gray-600 uppercase tracking-wide">Démarrage rapide</Label>
                   <div className="grid grid-cols-1 gap-2">
                     {presetPrompts.slice(0, 3).map((preset, index) => (
                       <button
@@ -667,7 +525,7 @@ export default function GenerateMealPlanPage() {
               </CardContent>
             </Card>
 
-            {/* Configuration Panel */}
+            {/* Essential Configuration */}
             <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-4">
                 <div className="flex items-center gap-2">
@@ -675,138 +533,42 @@ export default function GenerateMealPlanPage() {
                     <Settings className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Plan Configuration</CardTitle>
-                    <CardDescription className="text-sm">Fine-tune your requirements</CardDescription>
+                    <CardTitle className="text-lg">Configuration essentielle</CardTitle>
+                    <CardDescription className="text-sm">Informations d'organisation</CardDescription>
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-6">
-                <Tabs defaultValue="basic" className="w-full">
-                  <TabsList className="grid w-full grid-cols-2 bg-gray-100/50">
-                    <TabsTrigger value="basic" className="text-sm">Basic</TabsTrigger>
-                    <TabsTrigger value="advanced" className="text-sm">Advanced</TabsTrigger>
-                  </TabsList>
-                  
-                  <TabsContent value="basic" className="space-y-4 mt-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="planName" className="text-sm font-medium">Plan Name</Label>
-                        <Input
-                          id="planName"
-                          placeholder="e.g., Sarah's Plan"
-                          value={formData.planName}
-                          onChange={(e) => handleInputChange("planName", e.target.value)}
-                          className="mt-1 border-gray-200 focus:border-blue-500"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="client" className="text-sm font-medium">Client</Label>
-                        <Select value={formData.clientId} onValueChange={(value: string) => handleInputChange("clientId", value)}>
-                          <SelectTrigger className="mt-1 border-gray-200 focus:border-blue-500">
-                            <SelectValue placeholder="Select client" />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {clients.map((client) => (
-                              <SelectItem key={client.id} value={client.id}>
-                                <div className="flex items-center gap-2">
-                                  <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-xs text-white font-medium">
-                                    {client.name.charAt(0)}
-                                  </div>
-                                  {client.name}
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4">
-                      <div>
-                        <Label className="text-sm font-medium">Duration</Label>
-                        <Select
-                          value={formData.duration.toString()}
-                          onValueChange={(value: string) => handleInputChange("duration", Number.parseInt(value))}
-                        >
-                          <SelectTrigger className="mt-1 border-gray-200 focus:border-blue-500">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {[3, 7, 14, 21, 30].map((days) => (
-                              <SelectItem key={days} value={days.toString()}>
-                                <div className="flex items-center gap-2">
-                                  <Calendar className="h-4 w-4 text-gray-500" />
-                                  {days} Days
-                                </div>
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Calories/Day</Label>
-                        <div className="relative mt-1">
-                          <Input
-                            type="number"
-                            value={formData.targetCalories}
-                            onChange={(e) => handleInputChange("targetCalories", Number.parseInt(e.target.value))}
-                            min="1000"
-                            max="4000"
-                            step="50"
-                            className="border-gray-200 focus:border-blue-500 pr-12"
-                          />
-                          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">kcal</span>
-                        </div>
-                      </div>
-                      <div>
-                        <Label className="text-sm font-medium">Diet Type</Label>
-                        <Select value={formData.dietType} onValueChange={(value: string) => handleInputChange("dietType", value)}>
-                          <SelectTrigger className="mt-1 border-gray-200 focus:border-blue-500">
-                            <SelectValue />
-                          </SelectTrigger>
-                          <SelectContent>
-                            {dietTypes.map((type) => (
-                              <SelectItem key={type.value} value={type.value}>
-                                {type.label}
-                              </SelectItem>
-                            ))}
-                          </SelectContent>
-                        </Select>
-                      </div>
-                    </div>
-                  </TabsContent>
-                  
-                  <TabsContent value="advanced" className="space-y-4 mt-4">
-                    <div>
-                      <Label className="text-sm font-medium mb-3 block">Dietary Restrictions</Label>
-                      <div className="flex flex-wrap gap-2">
-                        {commonRestrictions.map((restriction) => (
-                          <Badge
-                            key={restriction}
-                            variant={formData.restrictions.includes(restriction) ? "default" : "outline"}
-                            className="cursor-pointer transition-all hover:scale-105 text-xs"
-                            onClick={() => handleRestrictionToggle(restriction)}
-                          >
-                            {formData.restrictions.includes(restriction) && <Check className="h-3 w-3 mr-1" />}
-                            {restriction}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <Label htmlFor="goals" className="text-sm font-medium">Additional Goals & Notes</Label>
-                      <Textarea
-                        id="goals"
-                        placeholder="e.g., Focus on anti-inflammatory foods, include meal prep options, avoid shellfish..."
-                        value={formData.goals}
-                        onChange={(e) => handleInputChange("goals", e.target.value)}
-                        rows={3}
-                        className="mt-1 border-gray-200 focus:border-blue-500 resize-none"
-                      />
-                    </div>
-                  </TabsContent>
-                </Tabs>
+              <CardContent className="space-y-4">
+                <div>
+                  <Label htmlFor="planName" className="text-sm font-medium">Nom du plan</Label>
+                  <Input
+                    id="planName"
+                    placeholder="ex: Plan de Marie - Janvier 2024"
+                    value={formData.planName}
+                    onChange={(e) => handleInputChange("planName", e.target.value)}
+                    className="mt-1 border-gray-200 focus:border-blue-500"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="client" className="text-sm font-medium">Client (optionnel)</Label>
+                  <Select value={formData.clientId} onValueChange={(value: string) => handleInputChange("clientId", value)}>
+                    <SelectTrigger className="mt-1 border-gray-200 focus:border-blue-500">
+                      <SelectValue placeholder="Sélectionner un client" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {clients.map((client) => (
+                        <SelectItem key={client.id} value={client.id}>
+                          <div className="flex items-center gap-2">
+                            <div className="w-6 h-6 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full flex items-center justify-center text-xs text-white font-medium">
+                              {client.name.charAt(0)}
+                            </div>
+                            {client.name}
+                          </div>
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
                 {/* Generation Button */}
                 <div className="pt-4 border-t border-gray-100">
@@ -894,8 +656,8 @@ export default function GenerateMealPlanPage() {
                           <Zap className="h-3 w-3 text-white" />
                         </div>
                       </div>
-                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Creating Your Perfect Meal Plan</h3>
-                      <p className="text-gray-600 mb-6">Our AI is analyzing your requirements and crafting personalized recipes...</p>
+                      <h3 className="text-xl font-semibold text-gray-900 mb-2">Création de votre plan alimentaire parfait</h3>
+                      <p className="text-gray-600 mb-6">Notre IA analyse vos exigences et crée des recettes personnalisées...</p>
                       
                       <div className="space-y-3 max-w-md mx-auto">
                         <div className="relative h-3 bg-gray-100 rounded-full overflow-hidden">
@@ -909,7 +671,7 @@ export default function GenerateMealPlanPage() {
                         <div className="flex justify-between items-center text-sm text-gray-500">
                           <div className="flex items-center gap-2">
                             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
-                            <span>Processing nutrition data</span>
+                            <span>Traitement des données nutritionnelles</span>
                           </div>
                           <span className="font-medium tabular-nums">{Math.round(generationProgress)}%</span>
                         </div>
@@ -919,10 +681,10 @@ export default function GenerateMealPlanPage() {
                     {/* Enhanced Loading skeleton */}
                     <div className="grid grid-cols-2 gap-4 mt-8">
                       {[
-                        { label: "Analyzing dietary preferences" },
-                        { label: "Calculating nutrition balance" },
-                        { label: "Generating meal combinations" },
-                        { label: "Creating shopping list" }
+                        { label: "Analyse des préférences alimentaires" },
+                        { label: "Calcul de l'équilibre nutritionnel" },
+                        { label: "Génération des combinaisons de repas" },
+                        { label: "Création de la liste de courses" }
                       ].map((item, i) => (
                         <div key={i} className="space-y-2" style={{ animationDelay: `${i * 100}ms` }}>
                           <Skeleton className="h-4 w-24 bg-gradient-to-r from-gray-200 to-gray-300 animate-pulse" />
@@ -949,7 +711,7 @@ export default function GenerateMealPlanPage() {
                         </div>
                         <div>
                           <CardTitle className="text-2xl font-bold text-gray-900 mb-1 bg-gradient-to-r from-gray-900 to-gray-700 bg-clip-text text-transparent">
-                            {generatedPlan.name}
+                            {generatedPlan.title}
                           </CardTitle>
                           <CardDescription className="text-base text-gray-600 leading-relaxed">
                             {generatedPlan.description}
@@ -966,7 +728,7 @@ export default function GenerateMealPlanPage() {
                           className="bg-white/80 hover:bg-white border-gray-200 hover:border-gray-300 hover:scale-105 transition-all duration-200"
                         >
                           <Save className="h-4 w-4 mr-2" />
-                          Save Template
+                          Sauvegarder le modèle
                         </Button>
                         <Button
                           variant="outline"
@@ -975,7 +737,7 @@ export default function GenerateMealPlanPage() {
                           className="bg-white/80 hover:bg-white border-gray-200 hover:border-gray-300 hover:scale-105 transition-all duration-200"
                         >
                           <Download className="h-4 w-4 mr-2" />
-                          Export PDF
+                          Exporter en PDF
                         </Button>
                         <Button
                           size="sm"
@@ -984,7 +746,7 @@ export default function GenerateMealPlanPage() {
                           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 transition-all duration-200 disabled:hover:scale-100"
                         >
                           <Send className="h-4 w-4 mr-2" />
-                          Send to Client
+                          Envoyer au client
                         </Button>
                       </div>
                     </div>
@@ -994,10 +756,10 @@ export default function GenerateMealPlanPage() {
                     {/* Nutrition Overview */}
                     <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                       {[
-                        { label: "Days", value: generatedPlan.duration, icon: Calendar, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
-                        { label: "Calories/Day", value: generatedPlan.targetCalories, icon: Flame, color: "text-red-600", bg: "bg-red-50", border: "border-red-200", suffix: "kcal" },
-                        { label: "Avg Protein", value: `${generatedPlan.nutritionSummary.avgProtein}g`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50", border: "border-green-200" },
-                        { label: "Avg Fiber", value: `${generatedPlan.nutritionSummary.avgFiber}g`, icon: Leaf, color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200" },
+                        { label: "Jours", value: generatedPlan.duration, icon: Calendar, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
+                        { label: "Calories/Jour", value: generatedPlan.nutritionalGoals?.dailyCalories || 'N/A', icon: Flame, color: "text-red-600", bg: "bg-red-50", border: "border-red-200", suffix: "kcal" },
+                        { label: "Protéines %", value: `${generatedPlan.nutritionalGoals?.protéinesPercentage || 'N/A'}%`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50", border: "border-green-200" },
+                        { label: "Glucides %", value: `${generatedPlan.nutritionalGoals?.carbPercentage || 'N/A'}%`, icon: Leaf, color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200" },
                       ].map((stat, index) => (
                         <div key={index} className={`${stat.bg} ${stat.border} border rounded-xl p-4 text-center transition-all hover:scale-105 cursor-pointer group`}>
                           <stat.icon className={`h-5 w-5 ${stat.color} mx-auto mb-2 group-hover:scale-110 transition-transform`} />
@@ -1012,12 +774,13 @@ export default function GenerateMealPlanPage() {
                     {/* View Controls */}
                     <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6 p-4 bg-gray-50/50 rounded-lg border border-gray-200/50">
                       <div className="flex items-center gap-4">
-                        <Label className="text-sm font-medium text-gray-700">View Mode:</Label>
+                        <Label className="text-sm font-medium text-gray-700">Mode d'affichage :</Label>
                         <div className="flex items-center bg-white rounded-lg border border-gray-200 p-1 shadow-sm">
                           {[
-                            { mode: 'cards', icon: Grid, label: 'Cards' },
-                            { mode: 'timeline', icon: List, label: 'Timeline' },
+                            { mode: 'cards', icon: Grid, label: 'Cartes' },
+                            { mode: 'timeline', icon: List, label: 'Chronologie' },
                             { mode: 'compact', icon: BarChart3, label: 'Compact' },
+                            { mode: 'nutrition', icon: PieChart, label: 'Nutrition' },
                           ].map((option) => (
                             <button
                               key={option.mode}
@@ -1038,7 +801,7 @@ export default function GenerateMealPlanPage() {
                       
                       {/* Feedback */}
                       <div className="flex items-center gap-3">
-                        <span className="text-sm text-gray-600">How is this plan?</span>
+                        <span className="text-sm text-gray-600">Comment est ce plan ?</span>
                         <div className="flex items-center gap-1">
                           <Button
                             variant={planFeedback.rating === 'good' ? 'default' : 'outline'}
@@ -1090,7 +853,7 @@ export default function GenerateMealPlanPage() {
                                       {day.day}
                                     </div>
                                     <div className="text-left">
-                                      <div className="font-semibold text-gray-900">Day {day.day}</div>
+                                      <div className="font-semibold text-gray-900">Jour {day.day}</div>
                                       <div className="text-sm text-gray-500">{day.date}</div>
                                     </div>
                                   </div>
@@ -1101,62 +864,75 @@ export default function GenerateMealPlanPage() {
                                     </div>
                                     <div className="text-center">
                                       <div className="font-semibold text-blue-600">{day.totalProtein}g</div>
-                                      <div className="text-gray-500">protein</div>
+                                      <div className="text-gray-500">protéines</div>
                                     </div>
                                     <div className="text-center">
-                                      <div className="font-semibold text-orange-600">{day.totalFiber}g</div>
-                                      <div className="text-gray-500">fiber</div>
+                                      <div className="font-semibold text-orange-600">{(day as any).totalFiber || 'N/A'}g</div>
+                                      <div className="text-gray-500">fibres</div>
                                     </div>
                                   </div>
                                   <div className="lg:hidden text-sm text-gray-600">
-                                    {day.totalCalories} cal • {day.totalProtein}g protein
+                                    {day.totalCalories} cal • {day.totalProtein}g protéines
                                   </div>
                                 </div>
                               </AccordionTrigger>
                               <AccordionContent className="px-4 pb-4">
                                 <div className="grid gap-4 mt-4">
-                                  {/* Breakfast */}
-                                  <MealCard
-                                    meal={day.meals.breakfast}
-                                    mealType="Breakfast"
-                                    icon={<Utensils className="h-4 w-4" />}
-                                    onEdit={() => handleEditMeal(dayIndex, "breakfast", day.meals.breakfast)}
-                                    gradientFrom="from-yellow-400"
-                                    gradientTo="to-orange-500"
-                                  />
-                                  
-                                  {/* Lunch */}
-                                  <MealCard
-                                    meal={day.meals.lunch}
-                                    mealType="Lunch"
-                                    icon={<Utensils className="h-4 w-4" />}
-                                    onEdit={() => handleEditMeal(dayIndex, "lunch", day.meals.lunch)}
-                                    gradientFrom="from-green-400"
-                                    gradientTo="to-emerald-500"
-                                  />
-                                  
-                                  {/* Dinner */}
-                                  <MealCard
-                                    meal={day.meals.dinner}
-                                    mealType="Dinner"
-                                    icon={<Utensils className="h-4 w-4" />}
-                                    onEdit={() => handleEditMeal(dayIndex, "dinner", day.meals.dinner)}
-                                    gradientFrom="from-purple-400"
-                                    gradientTo="to-pink-500"
-                                  />
-                                  
-                                  {/* Snacks */}
-                                  {day.meals.snacks.map((snack, snackIndex) => (
-                                    <MealCard
-                                      key={snackIndex}
-                                      meal={snack}
-                                      mealType={`Snack ${snackIndex + 1}`}
-                                      icon={<Utensils className="h-4 w-4" />}
-                                      onEdit={() => handleEditMeal(dayIndex, "snacks", snack)}
-                                      gradientFrom="from-cyan-400"
-                                      gradientTo="to-blue-500"
-                                    />
-                                  ))}
+                                  {(() => {
+                                    const organized = getMealsByType(day.meals)
+                                    return (
+                                      <>
+                                        {/* Breakfast */}
+                                        {organized.breakfast && (
+                                          <MealCard
+                                            meal={organized.breakfast}
+                                            mealType="Petit-déjeuner"
+                                            icon={<Utensils className="h-4 w-4" />}
+                                            onEdit={() => handleEditMeal(dayIndex, "breakfast", organized.breakfast!)}
+                                            gradientFrom="from-yellow-400"
+                                            gradientTo="to-orange-500"
+                                          />
+                                        )}
+                                        
+                                        {/* Lunch */}
+                                        {organized.lunch && (
+                                          <MealCard
+                                            meal={organized.lunch}
+                                            mealType="Déjeuner"
+                                            icon={<Utensils className="h-4 w-4" />}
+                                            onEdit={() => handleEditMeal(dayIndex, "lunch", organized.lunch!)}
+                                            gradientFrom="from-green-400"
+                                            gradientTo="to-emerald-500"
+                                          />
+                                        )}
+                                        
+                                        {/* Dinner */}
+                                        {organized.dinner && (
+                                          <MealCard
+                                            meal={organized.dinner}
+                                            mealType="Dîner"
+                                            icon={<Utensils className="h-4 w-4" />}
+                                            onEdit={() => handleEditMeal(dayIndex, "dinner", organized.dinner!)}
+                                            gradientFrom="from-purple-400"
+                                            gradientTo="to-pink-500"
+                                          />
+                                        )}
+                                        
+                                        {/* Snacks */}
+                                        {organized.snacks.map((snack, snackIndex) => (
+                                          <MealCard
+                                            key={snackIndex}
+                                            meal={snack}
+                                            mealType={`Collation ${snackIndex + 1}`}
+                                            icon={<Utensils className="h-4 w-4" />}
+                                            onEdit={() => handleEditMeal(dayIndex, "snacks", snack)}
+                                            gradientFrom="from-cyan-400"
+                                            gradientTo="to-blue-500"
+                                          />
+                                        ))}
+                                      </>
+                                    )
+                                  })()}
                                 </div>
                               </AccordionContent>
                             </AccordionItem>
@@ -1180,22 +956,32 @@ export default function GenerateMealPlanPage() {
                                 <div className="ml-16 space-y-4">
                                   <div className="flex items-center justify-between">
                                     <div>
-                                      <h3 className="text-lg font-semibold text-gray-900">Day {day.day}</h3>
+                                      <h3 className="text-lg font-semibold text-gray-900">Jour {day.day}</h3>
                                       <p className="text-sm text-gray-500">{day.date}</p>
                                     </div>
                                     <div className="flex items-center gap-4 text-sm">
                                       <span className="text-green-600 font-medium">{day.totalCalories} cal</span>
-                                      <span className="text-blue-600 font-medium">{day.totalProtein}g protein</span>
+                                      <span className="text-blue-600 font-medium">{day.totalProtein}g protéines</span>
                                     </div>
                                   </div>
                                   
                                   <div className="grid gap-3">
                                     {/* Meals in timeline format */}
-                                    {[
-                                      { meal: day.meals.breakfast, type: 'Breakfast', time: '8:00 AM', color: 'bg-yellow-100 border-yellow-300' },
-                                      { meal: day.meals.lunch, type: 'Lunch', time: '12:30 PM', color: 'bg-green-100 border-green-300' },
-                                      { meal: day.meals.dinner, type: 'Dinner', time: '7:00 PM', color: 'bg-purple-100 border-purple-300' },
-                                    ].map((mealData, mealIndex) => (
+                                    {(() => {
+                                      const organized = getMealsByType(day.meals)
+                                      const mealItems = []
+                                      
+                                      if (organized.breakfast) {
+                                        mealItems.push({ meal: organized.breakfast, type: 'Petit-déjeuner', time: '8:00', color: 'bg-yellow-100 border-yellow-300' })
+                                      }
+                                      if (organized.lunch) {
+                                        mealItems.push({ meal: organized.lunch, type: 'Déjeuner', time: '12:30', color: 'bg-green-100 border-green-300' })
+                                      }
+                                      if (organized.dinner) {
+                                        mealItems.push({ meal: organized.dinner, type: 'Dîner', time: '19:00', color: 'bg-purple-100 border-purple-300' })
+                                      }
+                                      
+                                      return mealItems.map((mealData, mealIndex) => (
                                       <div key={mealIndex} className={`p-4 rounded-lg border-2 ${mealData.color} group hover:shadow-md transition-all`}>
                                         <div className="flex items-center justify-between mb-2">
                                           <div className="flex items-center gap-3">
@@ -1215,19 +1001,20 @@ export default function GenerateMealPlanPage() {
                                         <div className="text-xs text-gray-600 mb-2">{mealData.meal.description}</div>
                                         <div className="flex items-center gap-4 text-xs text-gray-500">
                                           <span>{mealData.meal.calories} cal</span>
-                                          <span>{mealData.meal.protein}g protein</span>
-                                          <span>{mealData.meal.prepTime + mealData.meal.cookTime} min</span>
+                                          <span>{mealData.meal.protéines}g protéines</span>
+                                          <span>{(mealData.meal.prepTime || 0) + (mealData.meal.cookTime || 0)} min</span>
                                         </div>
                                       </div>
-                                    ))}
+                                    ))
+                                    })()}
                                     
                                     {/* Snacks */}
-                                    {day.meals.snacks.map((snack, snackIndex) => (
+                                    {getMealsByType(day.meals).snacks.map((snack, snackIndex) => (
                                       <div key={snackIndex} className="p-3 rounded-lg border-2 bg-cyan-50 border-cyan-200 group hover:shadow-md transition-all">
                                         <div className="flex items-center justify-between mb-2">
                                           <div className="flex items-center gap-3">
-                                            <div className="text-sm font-medium text-gray-700">{snackIndex === 0 ? '3:00 PM' : '9:00 PM'}</div>
-                                            <div className="text-sm font-semibold text-gray-900">Snack {snackIndex + 1}</div>
+                                            <div className="text-sm font-medium text-gray-700">{snackIndex === 0 ? '15:00' : '21:00'}</div>
+                                            <div className="text-sm font-semibold text-gray-900">Collation {snackIndex + 1}</div>
                                           </div>
                                           <Button
                                             variant="ghost"
@@ -1242,7 +1029,7 @@ export default function GenerateMealPlanPage() {
                                         <div className="text-xs text-gray-600 mb-2">{snack.description}</div>
                                         <div className="flex items-center gap-4 text-xs text-gray-500">
                                           <span>{snack.calories} cal</span>
-                                          <span>{snack.protein}g protein</span>
+                                          <span>{snack.protéines}g protéines</span>
                                         </div>
                                       </div>
                                     ))}
@@ -1266,23 +1053,35 @@ export default function GenerateMealPlanPage() {
                                     {day.day}
                                   </div>
                                   <div>
-                                    <div className="font-semibold text-gray-900">Day {day.day}</div>
+                                    <div className="font-semibold text-gray-900">Jour {day.day}</div>
                                     <div className="text-sm text-gray-500">{day.date}</div>
                                   </div>
                                 </div>
                                 <div className="flex items-center gap-4 text-sm">
                                   <span className="text-green-600 font-medium">{day.totalCalories} cal</span>
-                                  <span className="text-blue-600 font-medium">{day.totalProtein}g protein</span>
+                                  <span className="text-blue-600 font-medium">{day.totalProtein}g protéines</span>
                                 </div>
                               </div>
                               
                               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
-                                {[
-                                  { meal: day.meals.breakfast, type: 'Breakfast', color: 'border-l-yellow-500' },
-                                  { meal: day.meals.lunch, type: 'Lunch', color: 'border-l-green-500' },
-                                  { meal: day.meals.dinner, type: 'Dinner', color: 'border-l-purple-500' },
-                                  ...(day.meals.snacks.map((snack, idx) => ({ meal: snack, type: `Snack ${idx + 1}`, color: 'border-l-cyan-500' })))
-                                ].map((mealData, mealIndex) => (
+                                {(() => {
+                                  const organized = getMealsByType(day.meals)
+                                  const allMeals = []
+                                  
+                                  if (organized.breakfast) {
+                                    allMeals.push({ meal: organized.breakfast, type: 'Petit-déjeuner', color: 'border-l-yellow-500' })
+                                  }
+                                  if (organized.lunch) {
+                                    allMeals.push({ meal: organized.lunch, type: 'Déjeuner', color: 'border-l-green-500' })
+                                  }
+                                  if (organized.dinner) {
+                                    allMeals.push({ meal: organized.dinner, type: 'Dîner', color: 'border-l-purple-500' })
+                                  }
+                                  organized.snacks.forEach((snack, idx) => {
+                                    allMeals.push({ meal: snack, type: `Collation ${idx + 1}`, color: 'border-l-cyan-500' })
+                                  })
+                                  
+                                  return allMeals.map((mealData, mealIndex) => (
                                   <div key={mealIndex} className={`bg-white rounded-md p-3 border-l-4 ${mealData.color} group hover:shadow-sm transition-all`}>
                                     <div className="flex items-center justify-between mb-1">
                                       <div className="text-sm font-medium text-gray-900">{mealData.type}</div>
@@ -1299,14 +1098,21 @@ export default function GenerateMealPlanPage() {
                                     <div className="text-xs text-gray-600 mb-2 line-clamp-2">{mealData.meal.description}</div>
                                     <div className="flex items-center justify-between text-xs text-gray-500">
                                       <span>{mealData.meal.calories} cal</span>
-                                      <span>{mealData.meal.protein}g protein</span>
+                                      <span>{mealData.meal.protéines}g protéines</span>
                                     </div>
                                   </div>
-                                ))}
+                                ))
+                                })()}
                               </div>
                             </div>
                           ))}
                         </div>
+                      </div>
+                    )}
+
+                    {viewMode === 'nutrition' && (
+                      <div className="p-6">
+                        <MacronutrientBreakdown mealPlan={generatedPlan} />
                       </div>
                     )}
                   </CardContent>
@@ -1321,20 +1127,33 @@ export default function GenerateMealPlanPage() {
                         <div className="w-8 h-8 bg-gradient-to-br from-green-500 to-emerald-600 rounded-lg flex items-center justify-center">
                           <ShoppingCart className="h-4 w-4 text-white" />
                         </div>
-                        Shopping List
+                        Liste de courses
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ScrollArea className="h-64">
                         <div className="space-y-2">
-                          {generatedPlan.shoppingList.map((item, index) => (
-                            <div key={index} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
-                              <div className="w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center hover:border-green-500 transition-colors cursor-pointer">
-                                <Check className="h-3 w-3 text-green-500 opacity-0 hover:opacity-100" />
+                          {(() => {
+                            // Generate shopping list from ingredients
+                            const allIngredients: string[] = []
+                            generatedPlan.days.forEach(day => {
+                              if (Array.isArray(day.meals)) {
+                                day.meals.forEach(meal => {
+                                  if (meal.ingredients) {
+                                    allIngredients.push(...meal.ingredients)
+                                  }
+                                })
+                              }
+                            })
+                            return [...new Set(allIngredients)].sort().map((item, index) => (
+                              <div key={index} className="flex items-center gap-3 p-2 hover:bg-gray-50 rounded-lg transition-colors">
+                                <div className="w-5 h-5 border-2 border-gray-300 rounded flex items-center justify-center hover:border-green-500 transition-colors cursor-pointer">
+                                  <Check className="h-3 w-3 text-green-500 opacity-0 hover:opacity-100" />
+                                </div>
+                                <span className="text-sm text-gray-700">{item}</span>
                               </div>
-                              <span className="text-sm text-gray-700">{item}</span>
-                            </div>
-                          ))}
+                            ))
+                          })()}
                         </div>
                       </ScrollArea>
                     </CardContent>
@@ -1347,13 +1166,13 @@ export default function GenerateMealPlanPage() {
                         <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
                           <BookOpen className="h-4 w-4 text-white" />
                         </div>
-                        Tips & Notes
+                        Conseils et notes
                       </CardTitle>
                     </CardHeader>
                     <CardContent>
                       <ScrollArea className="h-64">
                         <div className="space-y-3">
-                          {generatedPlan.notes.map((note, index) => (
+                          {(generatedPlan.notes || []).map((note, index) => (
                             <div key={index} className="flex items-start gap-3 p-3 bg-blue-50/50 rounded-lg">
                               <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0">
                                 <span className="text-xs font-medium text-blue-600">{index + 1}</span>
@@ -1383,33 +1202,33 @@ export default function GenerateMealPlanPage() {
                       </div>
                     </div>
                     
-                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Ready to Create Magic?</h3>
+                    <h3 className="text-2xl font-bold text-gray-900 mb-3">Prêt à créer de la magie ?</h3>
                     <p className="text-gray-600 mb-8 leading-relaxed text-lg">
-                      Fill out your meal plan requirements and let our AI create a personalized nutrition plan tailored to your exact needs.
+                      Remplissez vos exigences de plan alimentaire et laissez notre IA créer un plan nutritionnel personnalisé adapté à vos besoins exacts.
                     </p>
                     
                     <div className="grid grid-cols-3 gap-6 mb-8">
                       {[
                         { 
                           icon: Target, 
-                          label: "AI-Powered", 
-                          description: "Smart nutrition analysis",
+                          label: "Alimenté par l'IA", 
+                          description: "Analyse nutritionnelle intelligente",
                           color: "text-blue-600",
                           bg: "bg-blue-50",
                           border: "border-blue-200"
                         },
                         { 
                           icon: Users, 
-                          label: "Personalized", 
-                          description: "Tailored to each client",
+                          label: "Personnalisé", 
+                          description: "Adapté à chaque client",
                           color: "text-green-600",
                           bg: "bg-green-50",
                           border: "border-green-200"
                         },
                         { 
                           icon: Clock, 
-                          label: "Instant Results", 
-                          description: "Generated in seconds",
+                          label: "Résultats instantanés", 
+                          description: "Généré en secondes",
                           color: "text-purple-600",
                           bg: "bg-purple-50",
                           border: "border-purple-200"
@@ -1430,10 +1249,10 @@ export default function GenerateMealPlanPage() {
                     <div className="flex items-center justify-center gap-2 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
                         <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-                        <span>Ready to generate</span>
+                        <span>Prêt à générer</span>
                       </div>
                       <Separator orientation="vertical" className="h-4" />
-                      <span>Start by describing your vision above ↖</span>
+                      <span>Commencez par décrire votre vision ci-dessus ↖</span>
                     </div>
                   </div>
                 </CardContent>
@@ -1450,8 +1269,8 @@ export default function GenerateMealPlanPage() {
             <CardHeader className="pb-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <CardTitle className="text-xl">Edit Meal</CardTitle>
-                  <CardDescription>Customize this meal to better fit your needs</CardDescription>
+                  <CardTitle className="text-xl">Modifier le repas</CardTitle>
+                  <CardDescription>Personnalisez ce repas pour mieux répondre à vos besoins</CardDescription>
                 </div>
                 <Button
                   variant="ghost"
@@ -1466,7 +1285,7 @@ export default function GenerateMealPlanPage() {
             <CardContent className="space-y-6">
               <div className="grid grid-cols-1 gap-4">
                 <div>
-                  <Label htmlFor="mealName" className="text-sm font-medium">Meal Name</Label>
+                  <Label htmlFor="mealName" className="text-sm font-medium">Nom du repas</Label>
                   <Input
                     id="mealName"
                     value={editingMeal.meal.name}
@@ -1509,9 +1328,9 @@ export default function GenerateMealPlanPage() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { key: 'calories', label: 'Calories', suffix: '' },
-                  { key: 'protein', label: 'Protein', suffix: 'g' },
-                  { key: 'carbs', label: 'Carbs', suffix: 'g' },
-                  { key: 'fat', label: 'Fat', suffix: 'g' },
+                  { key: 'protéines', label: 'Protéines', suffix: 'g' },
+                  { key: 'carbs', label: 'Glucides', suffix: 'g' },
+                  { key: 'fat', label: 'Lipides', suffix: 'g' },
                 ].map((field) => (
                   <div key={field.key}>
                     <Label className="text-sm font-medium">{field.label}</Label>
@@ -1542,16 +1361,16 @@ export default function GenerateMealPlanPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <Label className="text-sm font-medium">Prep Time (min)</Label>
+                  <Label className="text-sm font-medium">Temps de préparation (min)</Label>
                   <Input
                     type="number"
-                    value={editingMeal.meal.prepTime}
+                    value={(editingMeal.meal as any).prepTime || 0}
                     onChange={(e) =>
                       setEditingMeal((prev) =>
                         prev
                           ? {
                               ...prev,
-                              meal: { ...prev.meal, prepTime: Number.parseInt(e.target.value) || 0 },
+                              meal: { ...prev.meal, prepTime: Number.parseInt(e.target.value) || 0 } as any,
                             }
                           : null,
                       )
@@ -1560,16 +1379,16 @@ export default function GenerateMealPlanPage() {
                   />
                 </div>
                 <div>
-                  <Label className="text-sm font-medium">Cook Time (min)</Label>
+                  <Label className="text-sm font-medium">Temps de cuisson (min)</Label>
                   <Input
                     type="number"
-                    value={editingMeal.meal.cookTime}
+                    value={(editingMeal.meal as any).cookTime || 0}
                     onChange={(e) =>
                       setEditingMeal((prev) =>
                         prev
                           ? {
                               ...prev,
-                              meal: { ...prev.meal, cookTime: Number.parseInt(e.target.value) || 0 },
+                              meal: { ...prev.meal, cookTime: Number.parseInt(e.target.value) || 0 } as any,
                             }
                           : null,
                       )
@@ -1581,11 +1400,11 @@ export default function GenerateMealPlanPage() {
 
               <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
                 <Button variant="outline" onClick={() => setEditingMeal(null)}>
-                  Cancel
+                  Annuler
                 </Button>
                 <Button onClick={handleSaveEdit} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
                   <Check className="h-4 w-4 mr-2" />
-                  Save Changes
+                  Sauvegarder les modifications
                 </Button>
               </div>
             </CardContent>
@@ -1623,7 +1442,7 @@ function MealCard({
             <h4 className="font-semibold text-gray-900 group-hover:text-gray-800 transition-colors">{mealType}</h4>
             <div className="flex items-center gap-2 text-sm text-gray-500">
               <Clock className="h-3 w-3" />
-              <span>{meal.prepTime + meal.cookTime} min total</span>
+              <span>{((meal as any).prepTime || 0) + ((meal as any).cookTime || 0)} min total</span>
             </div>
           </div>
         </div>
@@ -1651,15 +1470,15 @@ function MealCard({
           </div>
           <div className="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
             <Activity className="h-3 w-3" />
-            <span className="font-medium">{meal.protein}g protein</span>
+            <span className="font-medium">{meal.protéines}g protéines</span>
           </div>
           <div className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-md">
             <PieChart className="h-3 w-3" />
-            <span className="font-medium">{meal.carbs}g carbs</span>
+            <span className="font-medium">{meal.carbs}g glucides</span>
           </div>
           <div className="flex items-center gap-1 text-purple-600 bg-purple-50 px-2 py-1 rounded-md">
             <Globe className="h-3 w-3" />
-            <span className="font-medium">{meal.fat}g fat</span>
+            <span className="font-medium">{meal.fat}g lipides</span>
           </div>
         </div>
       </div>

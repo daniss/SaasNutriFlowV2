@@ -1,0 +1,288 @@
+{
+  "templates": [
+    {
+      "name": "Plan Équilibré Débutant - 7 jours",
+      "description": "Plan alimentaire équilibré pour débuter une alimentation saine. Idéal pour les clients souhaitant améliorer leurs habitudes alimentaires sans objectif de perte de poids drastique.",
+      "category": "maintenance",
+      "duration_days": 7,
+      "target_calories": "1800-2000",
+      "target_macros": {
+        "protein": 25,
+        "carbs": 45,
+        "fat": 30
+      },
+      "difficulty": "easy",
+      "tags": ["débutant", "équilibré", "familial", "flexible"],
+      "meal_structure": [
+        {
+          "day": 1,
+          "meals": [
+            {
+              "name": "Petit-déjeuner",
+              "time": "07:30",
+              "calories_target": 400,
+              "description": "Repas énergétique pour bien commencer la journée"
+            },
+            {
+              "name": "Collation matin",
+              "time": "10:00",
+              "calories_target": 150,
+              "description": "Fruits frais ou yaourt nature"
+            },
+            {
+              "name": "Déjeuner",
+              "time": "12:30",
+              "calories_target": 600,
+              "description": "Repas complet avec protéines, légumes et féculents"
+            },
+            {
+              "name": "Collation après-midi",
+              "time": "16:00",
+              "calories_target": 150,
+              "description": "Option légère pour éviter les fringales"
+            },
+            {
+              "name": "Dîner",
+              "time": "19:30",
+              "calories_target": 500,
+              "description": "Repas léger mais nutritif"
+            }
+          ]
+        }
+      ],
+      "use_case": "Parfait pour les nouveaux clients sans pathologie particulière qui souhaitent adopter une alimentation plus saine et équilibrée."
+    },
+    {
+      "name": "Perte de Poids Progressive Femme - 14 jours",
+      "description": "Programme de perte de poids douce et progressive, adapté aux besoins nutritionnels féminins avec un déficit calorique modéré.",
+      "category": "weight_loss",
+      "duration_days": 14,
+      "target_calories": "1400-1600",
+      "target_macros": {
+        "protein": 30,
+        "carbs": 40,
+        "fat": 30
+      },
+      "difficulty": "medium",
+      "tags": ["perte de poids", "femme", "progressif", "satiété", "varié"],
+      "meal_structure": [
+        {
+          "day": 1,
+          "meals": [
+            {
+              "name": "Petit-déjeuner",
+              "time": "08:00",
+              "calories_target": 300,
+              "description": "Petit-déjeuner protéiné pour favoriser la satiété"
+            },
+            {
+              "name": "Collation matin",
+              "time": "10:30",
+              "calories_target": 100,
+              "description": "Fruits à faible index glycémique"
+            },
+            {
+              "name": "Déjeuner",
+              "time": "12:30",
+              "calories_target": 450,
+              "description": "Repas équilibré riche en fibres"
+            },
+            {
+              "name": "Collation après-midi",
+              "time": "16:00",
+              "calories_target": 150,
+              "description": "Protéines maigres ou légumes crus"
+            },
+            {
+              "name": "Dîner",
+              "time": "19:00",
+              "calories_target": 400,
+              "description": "Repas léger favorisant un bon sommeil"
+            }
+          ]
+        }
+      ],
+      "use_case": "Idéal pour les femmes actives souhaitant perdre du poids de manière durable sans frustration ni fatigue."
+    },
+    {
+      "name": "Performance Sportive Endurance - 7 jours",
+      "description": "Plan optimisé pour les athlètes d'endurance nécessitant un apport énergétique élevé et une récupération optimale.",
+      "category": "sports",
+      "duration_days": 7,
+      "target_calories": "2800-3200",
+      "target_macros": {
+        "protein": 20,
+        "carbs": 55,
+        "fat": 25
+      },
+      "difficulty": "hard",
+      "tags": ["sport", "endurance", "performance", "récupération", "énergie"],
+      "meal_structure": [
+        {
+          "day": 1,
+          "meals": [
+            {
+              "name": "Petit-déjeuner",
+              "time": "07:00",
+              "calories_target": 700,
+              "description": "Repas copieux riche en glucides complexes"
+            },
+            {
+              "name": "Pré-entraînement",
+              "time": "09:30",
+              "calories_target": 200,
+              "description": "Collation énergétique facile à digérer"
+            },
+            {
+              "name": "Post-entraînement",
+              "time": "11:00",
+              "calories_target": 300,
+              "description": "Récupération avec protéines et glucides"
+            },
+            {
+              "name": "Déjeuner",
+              "time": "13:00",
+              "calories_target": 800,
+              "description": "Repas complet pour reconstituer les réserves"
+            },
+            {
+              "name": "Collation après-midi",
+              "time": "16:00",
+              "calories_target": 300,
+              "description": "Maintien de l'énergie"
+            },
+            {
+              "name": "Dîner",
+              "time": "19:00",
+              "calories_target": 700,
+              "description": "Repas équilibré favorisant la récupération nocturne"
+            }
+          ]
+        }
+      ],
+      "use_case": "Conçu pour les coureurs, cyclistes, nageurs et autres athlètes d'endurance en période d'entraînement intensif."
+    },
+    {
+      "name": "Diabète Type 2 - Contrôle Glycémique",
+      "description": "Plan alimentaire spécialement conçu pour aider à stabiliser la glycémie avec des repas à faible charge glycémique.",
+      "category": "medical",
+      "duration_days": 21,
+      "target_calories": "1600-1800",
+      "target_macros": {
+        "protein": 25,
+        "carbs": 40,
+        "fat": 35
+      },
+      "difficulty": "medium",
+      "tags": ["diabète", "glycémie", "médical", "fibres", "index glycémique bas"],
+      "meal_structure": [
+        {
+          "day": 1,
+          "meals": [
+            {
+              "name": "Petit-déjeuner",
+              "time": "07:30",
+              "calories_target": 350,
+              "description": "Petit-déjeuner riche en fibres et protéines"
+            },
+            {
+              "name": "Collation matin",
+              "time": "10:00",
+              "calories_target": 120,
+              "description": "Collation stabilisatrice avec protéines"
+            },
+            {
+              "name": "Déjeuner",
+              "time": "12:30",
+              "calories_target": 500,
+              "description": "Repas équilibré avec glucides complexes"
+            },
+            {
+              "name": "Collation après-midi",
+              "time": "15:30",
+              "calories_target": 130,
+              "description": "Option à faible impact glycémique"
+            },
+            {
+              "name": "Dîner",
+              "time": "18:30",
+              "calories_target": 450,
+              "description": "Repas léger en glucides, riche en légumes"
+            },
+            {
+              "name": "Collation soir",
+              "time": "21:00",
+              "calories_target": 100,
+              "description": "Petite collation protéinée si nécessaire"
+            }
+          ]
+        }
+      ],
+      "use_case": "Essentiel pour les clients diabétiques nécessitant un contrôle strict de leur glycémie tout en maintenant une alimentation variée et savoureuse."
+    },
+    {
+      "name": "Prise de Masse Musculaire Homme - 28 jours",
+      "description": "Programme hypercalorique optimisé pour la construction musculaire avec répartition stratégique des macronutriments.",
+      "category": "muscle_gain",
+      "duration_days": 28,
+      "target_calories": "3000-3500",
+      "target_macros": {
+        "protein": 30,
+        "carbs": 45,
+        "fat": 25
+      },
+      "difficulty": "hard",
+      "tags": ["prise de masse", "musculation", "homme", "hypercalorique", "protéines"],
+      "meal_structure": [
+        {
+          "day": 1,
+          "meals": [
+            {
+              "name": "Petit-déjeuner",
+              "time": "07:00",
+              "calories_target": 700,
+              "description": "Repas copieux pour démarrer l'anabolisme"
+            },
+            {
+              "name": "Collation matin",
+              "time": "10:00",
+              "calories_target": 400,
+              "description": "Shaker protéiné avec glucides"
+            },
+            {
+              "name": "Déjeuner",
+              "time": "12:30",
+              "calories_target": 900,
+              "description": "Repas principal riche en protéines"
+            },
+            {
+              "name": "Pré-entraînement",
+              "time": "15:30",
+              "calories_target": 300,
+              "description": "Énergie rapide pour l'entraînement"
+            },
+            {
+              "name": "Post-entraînement",
+              "time": "17:30",
+              "calories_target": 400,
+              "description": "Fenêtre anabolique - protéines et glucides"
+            },
+            {
+              "name": "Dîner",
+              "time": "19:30",
+              "calories_target": 800,
+              "description": "Repas complet pour la récupération"
+            }
+          ]
+        }
+      ],
+      "use_case": "Parfait pour les hommes en phase de prise de masse cherchant à maximiser leurs gains musculaires avec un entraînement de musculation régulier."
+    }
+  ],
+  "usage_guidelines": {
+    "selection": "Choisissez le modèle qui correspond le mieux aux objectifs et au profil de votre client",
+    "customization": "Adaptez toujours le modèle aux préférences alimentaires et contraintes spécifiques du client",
+    "progression": "Utilisez les modèles comme base et ajustez progressivement selon les résultats",
+    "combination": "N'hésitez pas à combiner des éléments de différents modèles pour créer un plan unique"
+  }
+}

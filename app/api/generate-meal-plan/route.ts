@@ -73,27 +73,40 @@ export async function POST(request: NextRequest) {
     // In production, you'd want to use a more sophisticated rate limiting solution
 
     // Generate meal plan using Gemini
-    const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
     const enhancedPrompt = `
 Tu es un diététicien-nutritionniste professionnel expert. Crée un plan alimentaire détaillé en français.
 
 DEMANDE: ${prompt}
 
-CONTRAINTES:
-- Durée: ${duration} jours
-- Objectif calorique: ${targetCalories} calories par jour
+CONTRAINTES ABSOLUES:
+- Durée: EXACTEMENT ${duration} jours (tous les jours obligatoires)
+- Objectif calorique: ${targetCalories} calories par jour (±100 calories maximum)
 - Type de régime: ${dietType}
 - Objectifs: ${goals || "Équilibre nutritionnel général"}
 - Restrictions: ${restrictions.length > 0 ? restrictions.join(", ") : "Aucune"}
 
-CONSIGNES STRICTES:
-1. Réponds UNIQUEMENT en JSON valide
-2. Structure EXACTE requise (voir exemple)
-3. Tous les champs sont obligatoires
-4. Calories précises pour chaque aliment
-5. Instructions détaillées en français
-6. Ingrédients avec quantités exactes
+🚨 RÈGLES CRITIQUES - ÉCHEC = REJET COMPLET:
+1. RÉPONSE UNIQUEMENT EN JSON VALIDE - AUCUN TEXTE AVANT OU APRÈS
+2. ⚠️ OBLIGATION ABSOLUE: GÉNÈRE EXACTEMENT ${duration} JOURS COMPLETS - JAMAIS MOINS ⚠️
+3. LE TABLEAU "days" DOIT CONTENIR EXACTEMENT ${duration} ÉLÉMENTS
+4. CHAQUE JOUR DOIT AVOIR day: 1, day: 2, ... jusqu'à day: ${duration}
+5. CALCULS NUTRITIONNELS EXACTS:
+   - Protéines: 4 calories par gramme
+   - Glucides: 4 calories par gramme
+   - Lipides: 9 calories par gramme
+   - Vérifier que protéines(g)×4 + glucides(g)×4 + lipides(g)×9 = calories totales
+6. POURCENTAGES NUTRITIONNELS COHÉRENTS:
+   - Si 100g protéines = 400 calories sur 2000 calories totales = 20%
+   - Vérifier: protéines% + glucides% + lipides% = 100%
+7. TOUS LES CHAMPS OBLIGATOIRES - AUCUN CHAMP VIDE
+
+⚠️ VÉRIFICATION OBLIGATOIRE AVANT ENVOI:
+- Compter les jours dans le tableau: doit être exactement ${duration}
+- Si moins de ${duration} jours: RECOMMENCER ENTIÈREMENT
+- Si plus de ${duration} jours: GARDER SEULEMENT LES ${duration} PREMIERS
+- SNACKS DOIT TOUJOURS ÊTRE UN TABLEAU: "snacks": [...] - JAMAIS UN OBJET SIMPLE
 
 EXEMPLE DE STRUCTURE JSON:
 {
@@ -219,37 +232,105 @@ EXEMPLE DE STRUCTURE JSON:
   ]
 }
 
-Génère maintenant le plan alimentaire complet selon ces spécifications.`;
+Génère maintenant le plan alimentaire complet selon ces spécifications.
 
-    const result = await model.generateContent(enhancedPrompt);
-    const response = await result.response;
-    const text = response.text();
+COMMENCE TA RÉPONSE DIRECTEMENT PAR { ET TERMINE PAR }`;
 
-    // Try to parse JSON from the response
-    let jsonStart = text.indexOf("{");
-    let jsonEnd = text.lastIndexOf("}") + 1;
-
-    if (jsonStart === -1 || jsonEnd === 0) {
-      throw new Error("No JSON found in response");
-    }
-
-    const jsonText = text.substring(jsonStart, jsonEnd);
+    // Retry logic for incomplete generations
     let generatedPlan;
+    let attempts = 0;
+    const maxAttempts = 3;
 
-    try {
-      generatedPlan = JSON.parse(jsonText);
-    } catch (parseError) {
-      console.error("JSON parsing error:", parseError);
-      throw new Error("Invalid JSON response from AI");
-    }
+    while (attempts < maxAttempts) {
+      attempts++;
+      console.log(`🤖 Attempt ${attempts}/${maxAttempts} to generate ${duration}-day meal plan...`);
 
-    // Validate the structure
-    if (
-      !generatedPlan.name ||
-      !generatedPlan.days ||
-      !Array.isArray(generatedPlan.days)
-    ) {
-      throw new Error("Invalid meal plan structure");
+      try {
+        const result = await model.generateContent(enhancedPrompt);
+        const response = await result.response;
+        const text = response.text().trim();
+
+        // Try to extract and clean JSON from the response
+        let jsonText = text;
+        
+        // Remove any text before first {
+        let jsonStart = text.indexOf("{");
+        if (jsonStart > 0) {
+          jsonText = text.substring(jsonStart);
+        }
+        
+        // Remove any text after last }
+        let jsonEnd = jsonText.lastIndexOf("}");
+        if (jsonEnd !== -1 && jsonEnd < jsonText.length - 1) {
+          jsonText = jsonText.substring(0, jsonEnd + 1);
+        }
+
+        if (jsonStart === -1) {
+          console.error(`Attempt ${attempts}: No JSON found in AI response:`, text);
+          if (attempts === maxAttempts) throw new Error("No JSON found in response after all attempts");
+          continue;
+        }
+
+        try {
+          generatedPlan = JSON.parse(jsonText);
+        } catch (parseError) {
+          console.error(`Attempt ${attempts}: JSON parsing error:`, parseError);
+          console.error("Attempted to parse:", jsonText);
+          if (attempts === maxAttempts) throw new Error("Invalid JSON response from AI after all attempts");
+          continue;
+        }
+
+        // Enhanced validation
+        if (
+          !generatedPlan.name ||
+          !generatedPlan.days ||
+          !Array.isArray(generatedPlan.days) ||
+          generatedPlan.days.length !== duration
+        ) {
+          console.error(`Attempt ${attempts}: Invalid structure:`, {
+            hasName: !!generatedPlan.name,
+            hasDays: !!generatedPlan.days,
+            isArray: Array.isArray(generatedPlan.days),
+            daysCount: generatedPlan.days?.length,
+            expectedDays: duration
+          });
+          
+          if (attempts === maxAttempts) {
+            throw new Error(`Invalid meal plan structure after ${maxAttempts} attempts - AI generated ${generatedPlan.days?.length || 0} days instead of ${duration}`);
+          }
+          continue;
+        }
+
+        // Validate each day has the required structure
+        let dayValidationFailed = false;
+        for (let i = 0; i < generatedPlan.days.length; i++) {
+          const day = generatedPlan.days[i];
+          if (!day.meals || !day.meals.breakfast || !day.meals.lunch || !day.meals.dinner) {
+            console.error(`Attempt ${attempts}: Day ${i + 1} is missing required meals`);
+            dayValidationFailed = true;
+            break;
+          }
+        }
+
+        if (dayValidationFailed) {
+          if (attempts === maxAttempts) {
+            throw new Error(`Day structure validation failed after ${maxAttempts} attempts`);
+          }
+          continue;
+        }
+
+        // If we reach here, generation was successful
+        console.log(`✅ Successfully generated ${duration}-day meal plan on attempt ${attempts}`);
+        break;
+
+      } catch (error) {
+        console.error(`Attempt ${attempts} failed:`, error);
+        if (attempts === maxAttempts) {
+          throw error;
+        }
+        // Wait a bit before retry
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
 
     return NextResponse.json({

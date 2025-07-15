@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
       `
       )
       .eq("client_id", clientId)
-      .eq("status", "active")
+      .eq("status", "Active")
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
@@ -139,6 +139,22 @@ export async function GET(request: NextRequest) {
       .gte("appointment_date", new Date().toISOString().split("T")[0])
       .order("appointment_date", { ascending: true })
       .limit(10);
+
+    // Fetch progress photos
+    const { data: progressPhotos, error: photosError } = await supabase
+      .from("documents")
+      .select(`
+        id,
+        name,
+        upload_date,
+        file_path,
+        metadata
+      `)
+      .eq("client_id", clientId)
+      .eq("category", "photo")
+      .eq("metadata->>type", "progress_photo")
+      .order("upload_date", { ascending: false })
+      .limit(50);
 
     // MASKED FOR MVP - Messages functionality will be added in future
     /*
@@ -262,6 +278,14 @@ export async function GET(request: NextRequest) {
           isVirtual: a.is_virtual,
           meetingLink: a.meeting_link,
           notes: a.notes,
+        })) || [],
+      progressPhotos:
+        progressPhotos?.map((p) => ({
+          id: p.id,
+          name: p.name,
+          upload_date: p.upload_date,
+          file_path: p.file_path,
+          metadata: p.metadata,
         })) || [],
       // MASKED FOR MVP - Messages functionality will be added in future
       /*

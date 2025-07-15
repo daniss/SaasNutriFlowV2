@@ -52,18 +52,19 @@ export default function ClientsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [createClientAccount, setCreateClientAccount] = useState(false);
+  const [currentStep, setCurrentStep] = useState(1);
+  const [formSteps] = useState({
+    1: { title: "Informations personnelles", subtitle: "Commençons par les bases" },
+    2: { title: "Objectifs nutritionnels", subtitle: "Définissons ensemble le parcours" },
+    3: { title: "Configuration du compte", subtitle: "Options d'accès et de suivi" }
+  });
   const [newClient, setNewClient] = useState({
     name: "",
     email: "",
     phone: "",
-    address: "",
-    age: "",
-    height: "",
     current_weight: "",
     goal_weight: "",
     goal: "",
-    plan_type: "",
-    notes: "",
   });
 
   // Form validation states for new client
@@ -71,11 +72,44 @@ export default function ClientsPage() {
     name: { isValid: true, message: "" },
     email: { isValid: true, message: "" },
     phone: { isValid: true, message: "" },
-    age: { isValid: true, message: "" },
-    height: { isValid: true, message: "" },
     current_weight: { isValid: true, message: "" },
     goal_weight: { isValid: true, message: "" },
   });
+
+  const canProceedToStep2 = () => {
+    return newClient.name && 
+           newClient.email && 
+           clientValidation.name.isValid && 
+           clientValidation.email.isValid && 
+           clientValidation.phone.isValid && 
+           !emailValidationLoading;
+  };
+
+  const canProceedToStep3 = () => {
+    return canProceedToStep2() && 
+           clientValidation.current_weight.isValid && 
+           clientValidation.goal_weight.isValid;
+  };
+
+  const resetForm = () => {
+    setCurrentStep(1);
+    setNewClient({
+      name: "",
+      email: "",
+      phone: "",
+      current_weight: "",
+      goal_weight: "",
+      goal: "",
+    });
+    setClientValidation({
+      name: { isValid: true, message: "" },
+      email: { isValid: true, message: "" },
+      phone: { isValid: true, message: "" },
+      current_weight: { isValid: true, message: "" },
+      goal_weight: { isValid: true, message: "" },
+    });
+    setCreateClientAccount(false);
+  };
 
   useEffect(() => {
     if (user) {
@@ -170,8 +204,6 @@ export default function ClientsPage() {
       name: validateClientName(newClient.name),
       email: await validateClientEmail(newClient.email),
       phone: validateClientPhone(newClient.phone),
-      age: validateClientAge(newClient.age),
-      height: validateClientHeight(newClient.height),
       current_weight: validateClientWeight(newClient.current_weight),
       goal_weight: validateClientWeight(newClient.goal_weight),
     };
@@ -192,20 +224,20 @@ export default function ClientsPage() {
         name: newClient.name,
         email: newClient.email,
         phone: newClient.phone || null,
-        address: newClient.address || null,
-        age: newClient.age ? Number.parseInt(newClient.age) : null,
-        height: newClient.height || null,
+        address: null,
+        age: null,
+        height: null,
         current_weight: newClient.current_weight
           ? Number.parseFloat(newClient.current_weight)
           : null,
         goal_weight: newClient.goal_weight
           ? Number.parseFloat(newClient.goal_weight)
           : null,
-        goal: newClient.goal,
-        plan_type: newClient.plan_type,
+        goal: newClient.goal || null,
+        plan_type: null,
         status: "active",
         tags: [],
-        notes: newClient.notes || null,
+        notes: null,
         emergency_contact: null,
         join_date: new Date().toISOString().split("T")[0],
         last_session: null,
@@ -276,40 +308,62 @@ export default function ClientsPage() {
             console.log("📧 Login Email:", accountEmail);
             console.log("🔑 Temporary Password:", tempPassword);
             console.log("🔒 Password Hash:", hashedPassword);
-            // TODO: In production, send this password via email to the client
+            
+            // Send welcome email with account credentials
+            try {
+              const response = await fetch("/api/notifications/welcome", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  clientEmail: newClient.email,
+                  clientName: newClient.name,
+                  dietitianName: user.email?.split('@')[0] || "Votre nutritionniste",
+                  accountEmail: accountEmail,
+                  tempPassword: tempPassword,
+                }),
+              })
+              
+              if (!response.ok) {
+                console.error("Failed to send welcome notification")
+              }
+            } catch (notifError) {
+              console.error("Error sending welcome notification:", notifError)
+            }
           }
         } catch (accountError) {
           console.error("⚠️ Unexpected error creating client account:", accountError);
           // Don't fail the client creation if account creation fails
         }
+      } else {
+        // Even without an account, send a simple welcome email
+        try {
+          const response = await fetch("/api/notifications/welcome", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              clientEmail: newClient.email,
+              clientName: newClient.name,
+              dietitianName: user.email?.split('@')[0] || "Votre nutritionniste",
+              accountEmail: null,
+              tempPassword: null,
+            }),
+          })
+          
+          if (!response.ok) {
+            console.error("Failed to send welcome notification")
+          }
+        } catch (notifError) {
+          console.error("Error sending welcome notification:", notifError)
+        }
       }
 
       setClients([data, ...clients]);
       setIsAddDialogOpen(false);
-      setCreateClientAccount(false);
-      // Reset form and validation
-      setNewClient({
-        name: "",
-        email: "",
-        phone: "",
-        address: "",
-        age: "",
-        height: "",
-        current_weight: "",
-        goal_weight: "",
-        goal: "",
-        plan_type: "",
-        notes: "",
-      });
-      setClientValidation({
-        name: { isValid: true, message: "" },
-        email: { isValid: true, message: "" },
-        phone: { isValid: true, message: "" },
-        age: { isValid: true, message: "" },
-        height: { isValid: true, message: "" },
-        current_weight: { isValid: true, message: "" },
-        goal_weight: { isValid: true, message: "" },
-      });
+      resetForm();
     } catch (error) {
       console.error("❌ Unexpected error adding client:", error);
     }
@@ -396,35 +450,18 @@ export default function ClientsPage() {
       return { isValid: true, message: "" }; // Phone is optional
     }
 
-    const phoneRegex = /^(?:(?:\+|00)33|0)\s*[1-9](?:[\s.-]*\d{2}){4}$/;
-    if (!phoneRegex.test(phone.replace(/\s/g, ""))) {
+    // Simple phone validation - just check if it contains digits
+    const phoneRegex = /^[\d\s\+\-\(\)\.]+$/;
+    if (!phoneRegex.test(phone) || phone.replace(/\D/g, '').length < 8) {
       return {
         isValid: false,
-        message: "Veuillez entrer un numéro de téléphone français valide",
+        message: "Veuillez entrer un numéro de téléphone valide",
       };
     }
 
     return { isValid: true, message: "" };
   };
 
-  const validateClientAge = (
-    age: string
-  ): { isValid: boolean; message: string } => {
-    if (!age.trim()) {
-      return { isValid: true, message: "" }; // Age is optional
-    }
-
-    const ageNum = parseInt(age);
-    if (isNaN(ageNum)) {
-      return { isValid: false, message: "Veuillez entrer un âge valide" };
-    }
-
-    if (ageNum < 1 || ageNum > 120) {
-      return { isValid: false, message: "L'âge doit être entre 1 et 120 ans" };
-    }
-
-    return { isValid: true, message: "" };
-  };
 
   const validateClientWeight = (
     weight: string
@@ -448,42 +485,6 @@ export default function ClientsPage() {
     return { isValid: true, message: "" };
   };
 
-  const validateClientHeight = (
-    height: string
-  ): { isValid: boolean; message: string } => {
-    if (!height.trim()) {
-      return { isValid: true, message: "" }; // Height is optional
-    }
-
-    // Remove any non-numeric characters except decimal point and "m"
-    const cleanHeight = height.replace(/[^\d.m]/g, "");
-
-    // If it contains "m", convert to cm
-    let heightValue = cleanHeight;
-    if (cleanHeight.includes("m")) {
-      const meters = parseFloat(cleanHeight.replace("m", ""));
-      if (!isNaN(meters)) {
-        heightValue = (meters * 100).toString();
-      }
-    }
-
-    const heightNum = parseFloat(heightValue);
-    if (isNaN(heightNum)) {
-      return {
-        isValid: false,
-        message: "Veuillez entrer une taille valide (ex: 175)",
-      };
-    }
-
-    if (heightNum < 50 || heightNum > 300) {
-      return {
-        isValid: false,
-        message: "La taille doit être entre 50 et 300 cm",
-      };
-    }
-
-    return { isValid: true, message: "" };
-  };
 
   // ...existing code...
 
@@ -508,486 +509,456 @@ export default function ClientsPage() {
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto shadow-soft-lg border-0">
-              <DialogHeader className="space-y-3">
-                <DialogTitle className="text-xl font-semibold text-gray-900">
-                  Ajouter un nouveau client
-                </DialogTitle>
-                <DialogDescription className="text-gray-600 leading-relaxed">
-                  Créez un nouveau profil client pour commencer à gérer son
-                  parcours nutritionnel.
-                </DialogDescription>
-              </DialogHeader>
-              <div className="grid gap-6 py-6">
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="name"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Nom complet *
-                    </Label>
-                    <Input
-                      id="name"
-                      value={newClient.name}
-                      onChange={(e) => {
-                        setNewClient({ ...newClient, name: e.target.value });
-                        if (clientValidation.name.message) {
-                          setClientValidation({
-                            ...clientValidation,
-                            name: { isValid: true, message: "" },
-                          });
-                        }
-                      }}
-                      onBlur={() => {
-                        if (newClient.name) {
-                          const validation = validateClientName(newClient.name);
-                          setClientValidation({
-                            ...clientValidation,
-                            name: validation,
-                          });
-                        }
-                      }}
-                      placeholder="Marie Dupont"
-                      className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
-                        !clientValidation.name.isValid
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
-                          : ""
-                      }`}
-                    />
-                    {!clientValidation.name.isValid && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <span className="text-red-500">⚠</span>
-                        {clientValidation.name.message}
-                      </p>
-                    )}
+              <DialogHeader className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="space-y-1">
+                    <DialogTitle className="text-xl font-semibold text-gray-900">
+                      {formSteps[currentStep as keyof typeof formSteps].title}
+                    </DialogTitle>
+                    <DialogDescription className="text-gray-600 leading-relaxed">
+                      {formSteps[currentStep as keyof typeof formSteps].subtitle}
+                    </DialogDescription>
                   </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="email"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Email *
-                    </Label>
-                    <Input
-                      id="email"
-                      type="email"
-                      value={newClient.email}
-                      onChange={(e) => {
-                        setNewClient({ ...newClient, email: e.target.value });
-                        if (clientValidation.email.message) {
-                          setClientValidation({
-                            ...clientValidation,
-                            email: { isValid: true, message: "" },
-                          });
-                        }
-                      }}
-                      onBlur={async () => {
-                        if (newClient.email) {
-                          const validation = await validateClientEmail(
-                            newClient.email
-                          );
-                          setClientValidation({
-                            ...clientValidation,
-                            email: validation,
-                          });
-                        }
-                      }}
-                      placeholder="marie@exemple.fr"
-                      className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
-                        !clientValidation.email.isValid
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
-                          : ""
-                      }`}
-                    />
-                    {!clientValidation.email.isValid && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <span className="text-red-500">⚠</span>
-                        {clientValidation.email.message}
-                      </p>
-                    )}
-                    {emailValidationLoading && (
-                      <div className="text-sm text-blue-600 flex items-center gap-1">
-                        <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full"></div>
-                        Vérification de l'email...
-                      </div>
-                    )}
+                  <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
+                    {currentStep}/3
                   </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="phone"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Téléphone
-                    </Label>
-                    <Input
-                      id="phone"
-                      value={newClient.phone}
-                      onChange={(e) => {
-                        setNewClient({ ...newClient, phone: e.target.value });
-                        if (clientValidation.phone.message) {
-                          setClientValidation({
-                            ...clientValidation,
-                            phone: { isValid: true, message: "" },
-                          });
-                        }
-                      }}
-                      onBlur={() => {
-                        if (newClient.phone) {
-                          const validation = validateClientPhone(
-                            newClient.phone
-                          );
-                          setClientValidation({
-                            ...clientValidation,
-                            phone: validation,
-                          });
-                        }
-                      }}
-                      placeholder="+33 1 23 45 67 89"
-                      className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
-                        !clientValidation.phone.isValid
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
-                          : ""
-                      }`}
-                    />
-                    {!clientValidation.phone.isValid && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <span className="text-red-500">⚠</span>
-                        {clientValidation.phone.message}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="age"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Âge
-                    </Label>
-                    <Input
-                      id="age"
-                      type="number"
-                      value={newClient.age}
-                      onChange={(e) => {
-                        setNewClient({ ...newClient, age: e.target.value });
-                        if (clientValidation.age.message) {
-                          setClientValidation({
-                            ...clientValidation,
-                            age: { isValid: true, message: "" },
-                          });
-                        }
-                      }}
-                      onBlur={() => {
-                        if (newClient.age) {
-                          const validation = validateClientAge(newClient.age);
-                          setClientValidation({
-                            ...clientValidation,
-                            age: validation,
-                          });
-                        }
-                      }}
-                      placeholder="30"
-                      className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
-                        !clientValidation.age.isValid
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
-                          : ""
-                      }`}
-                    />
-                    {!clientValidation.age.isValid && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <span className="text-red-500">⚠</span>
-                        {clientValidation.age.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="address"
-                    className="text-sm font-semibold text-gray-700"
-                  >
-                    Adresse
-                  </Label>
-                  <Input
-                    id="address"
-                    value={newClient.address}
-                    onChange={(e) =>
-                      setNewClient({ ...newClient, address: e.target.value })
-                    }
-                    placeholder="123 Rue de la Paix, 75001 Paris"
-                    className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
-                  />
-                </div>
-                <div className="grid grid-cols-3 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="height"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Taille
-                    </Label>
-                    <Input
-                      id="height"
-                      value={newClient.height}
-                      onChange={(e) => {
-                        setNewClient({ ...newClient, height: e.target.value });
-                        if (clientValidation.height.message) {
-                          setClientValidation({
-                            ...clientValidation,
-                            height: { isValid: true, message: "" },
-                          });
-                        }
-                      }}
-                      onBlur={() => {
-                        if (newClient.height) {
-                          const validation = validateClientHeight(
-                            newClient.height
-                          );
-                          setClientValidation({
-                            ...clientValidation,
-                            height: validation,
-                          });
-                        }
-                      }}
-                      placeholder="175"
-                      className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
-                        !clientValidation.height.isValid
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
-                          : ""
-                      }`}
-                    />
-                    {!clientValidation.height.isValid && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <span className="text-red-500">⚠</span>
-                        {clientValidation.height.message}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="current_weight"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Poids actuel (kg)
-                    </Label>
-                    <Input
-                      id="current_weight"
-                      type="number"
-                      value={newClient.current_weight}
-                      onChange={(e) => {
-                        setNewClient({
-                          ...newClient,
-                          current_weight: e.target.value,
-                        });
-                        if (clientValidation.current_weight.message) {
-                          setClientValidation({
-                            ...clientValidation,
-                            current_weight: { isValid: true, message: "" },
-                          });
-                        }
-                      }}
-                      onBlur={() => {
-                        if (newClient.current_weight) {
-                          const validation = validateClientWeight(
-                            newClient.current_weight
-                          );
-                          setClientValidation({
-                            ...clientValidation,
-                            current_weight: validation,
-                          });
-                        }
-                      }}
-                      placeholder="70"
-                      className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
-                        !clientValidation.current_weight.isValid
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
-                          : ""
-                      }`}
-                    />
-                    {!clientValidation.current_weight.isValid && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <span className="text-red-500">⚠</span>
-                        {clientValidation.current_weight.message}
-                      </p>
-                    )}
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="goal_weight"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Poids objectif (kg)
-                    </Label>
-                    <Input
-                      id="goal_weight"
-                      type="number"
-                      value={newClient.goal_weight}
-                      onChange={(e) => {
-                        setNewClient({
-                          ...newClient,
-                          goal_weight: e.target.value,
-                        });
-                        if (clientValidation.goal_weight.message) {
-                          setClientValidation({
-                            ...clientValidation,
-                            goal_weight: { isValid: true, message: "" },
-                          });
-                        }
-                      }}
-                      onBlur={() => {
-                        if (newClient.goal_weight) {
-                          const validation = validateClientWeight(
-                            newClient.goal_weight
-                          );
-                          setClientValidation({
-                            ...clientValidation,
-                            goal_weight: validation,
-                          });
-                        }
-                      }}
-                      placeholder="65"
-                      className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
-                        !clientValidation.goal_weight.isValid
-                          ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
-                          : ""
-                      }`}
-                    />
-                    {!clientValidation.goal_weight.isValid && (
-                      <p className="text-sm text-red-600 flex items-center gap-1">
-                        <span className="text-red-500">⚠</span>
-                        {clientValidation.goal_weight.message}
-                      </p>
-                    )}
-                  </div>
-                </div>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="goal"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Objectif principal
-                    </Label>
-                    <Select
-                      value={newClient.goal}
-                      onValueChange={(value: string) =>
-                        setNewClient({ ...newClient, goal: value })
-                      }
-                    >
-                      <SelectTrigger className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20">
-                        <SelectValue placeholder="Choisir un objectif" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="weight_loss">
-                          Perte de poids
-                        </SelectItem>
-                        <SelectItem value="weight_gain">
-                          Prise de poids
-                        </SelectItem>
-                        <SelectItem value="muscle_gain">
-                          Prise de masse musculaire
-                        </SelectItem>
-                        <SelectItem value="maintenance">Maintien</SelectItem>
-                        <SelectItem value="health_improvement">
-                          Amélioration de la santé
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="plan_type"
-                      className="text-sm font-semibold text-gray-700"
-                    >
-                      Type de plan
-                    </Label>
-                    <Select
-                      value={newClient.plan_type}
-                      onValueChange={(value: string) =>
-                        setNewClient({ ...newClient, plan_type: value })
-                      }
-                    >
-                      <SelectTrigger className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20">
-                        <SelectValue placeholder="Choisir un plan" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="basic">Basique</SelectItem>
-                        <SelectItem value="premium">Premium</SelectItem>
-                        <SelectItem value="custom">Personnalisé</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="notes"
-                    className="text-sm font-semibold text-gray-700"
-                  >
-                    Notes
-                  </Label>
-                  <Textarea
-                    id="notes"
-                    value={newClient.notes}
-                    onChange={(e) =>
-                      setNewClient({ ...newClient, notes: e.target.value })
-                    }
-                    placeholder="Notes supplémentaires concernant le client..."
-                    rows={3}
-                    className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 resize-none"
-                  />
                 </div>
                 
-                {/* Client Account Creation Section */}
-                <div className="space-y-3 pt-4 border-t border-gray-100">
-                  <div className="flex items-start space-x-3">
-                    <Checkbox
-                      id="create-account"
-                      checked={createClientAccount}
-                      onCheckedChange={(checked) => setCreateClientAccount(checked as boolean)}
-                      className="mt-1"
-                    />
-                    <div className="grid gap-1">
+                {/* Progress indicator */}
+                <div className="flex items-center space-x-2">
+                  {[1, 2, 3].map((step) => (
+                    <div key={step} className="flex items-center">
+                      <div className={`h-2 w-8 rounded-full transition-colors duration-200 ${
+                        step <= currentStep ? 'bg-emerald-500' : 'bg-gray-200'
+                      }`} />
+                      {step < 3 && <div className="w-2" />}
+                    </div>
+                  ))}
+                </div>
+              </DialogHeader>
+              <div className="py-6">
+                {/* Step 1: Personal Information */}
+                {currentStep === 1 && (
+                  <div className="space-y-6 animate-slide-in">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="name"
+                          className="text-sm font-semibold text-gray-700"
+                        >
+                          Nom complet *
+                        </Label>
+                        <Input
+                          id="name"
+                          value={newClient.name}
+                          onChange={(e) => {
+                            setNewClient({ ...newClient, name: e.target.value });
+                            if (clientValidation.name.message) {
+                              setClientValidation({
+                                ...clientValidation,
+                                name: { isValid: true, message: "" },
+                              });
+                            }
+                          }}
+                          onBlur={() => {
+                            if (newClient.name) {
+                              const validation = validateClientName(newClient.name);
+                              setClientValidation({
+                                ...clientValidation,
+                                name: validation,
+                              });
+                            }
+                          }}
+                          placeholder="Marie Dupont"
+                          className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                            !clientValidation.name.isValid
+                              ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                              : ""
+                          }`}
+                        />
+                        {!clientValidation.name.isValid && (
+                          <p className="text-sm text-red-600 flex items-center gap-1">
+                            <span className="text-red-500">⚠</span>
+                            {clientValidation.name.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="email"
+                          className="text-sm font-semibold text-gray-700"
+                        >
+                          Email *
+                        </Label>
+                        <Input
+                          id="email"
+                          type="email"
+                          value={newClient.email}
+                          onChange={(e) => {
+                            setNewClient({ ...newClient, email: e.target.value });
+                            if (clientValidation.email.message) {
+                              setClientValidation({
+                                ...clientValidation,
+                                email: { isValid: true, message: "" },
+                              });
+                            }
+                          }}
+                          onBlur={async () => {
+                            if (newClient.email) {
+                              const validation = await validateClientEmail(
+                                newClient.email
+                              );
+                              setClientValidation({
+                                ...clientValidation,
+                                email: validation,
+                              });
+                            }
+                          }}
+                          placeholder="marie@exemple.fr"
+                          className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                            !clientValidation.email.isValid
+                              ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                              : ""
+                          }`}
+                        />
+                        {!clientValidation.email.isValid && (
+                          <p className="text-sm text-red-600 flex items-center gap-1">
+                            <span className="text-red-500">⚠</span>
+                            {clientValidation.email.message}
+                          </p>
+                        )}
+                        {emailValidationLoading && (
+                          <div className="text-sm text-blue-600 flex items-center gap-1">
+                            <div className="animate-spin h-3 w-3 border border-blue-500 border-t-transparent rounded-full"></div>
+                            Vérification de l'email...
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
                       <Label
-                        htmlFor="create-account"
-                        className="text-sm font-semibold text-gray-700 cursor-pointer"
+                        htmlFor="phone"
+                        className="text-sm font-semibold text-gray-700"
                       >
-                        Créer un compte client
+                        Téléphone
                       </Label>
-                      <p className="text-xs text-gray-500 leading-relaxed">
-                        Permettre au client d'accéder à son portail personnel pour consulter 
-                        ses plans alimentaires, suivre ses progrès et communiquer avec vous.
-                      </p>
+                      <Input
+                        id="phone"
+                        value={newClient.phone}
+                        onChange={(e) => {
+                          setNewClient({ ...newClient, phone: e.target.value });
+                          if (clientValidation.phone.message) {
+                            setClientValidation({
+                              ...clientValidation,
+                              phone: { isValid: true, message: "" },
+                            });
+                          }
+                        }}
+                        onBlur={() => {
+                          if (newClient.phone) {
+                            const validation = validateClientPhone(
+                              newClient.phone
+                            );
+                            setClientValidation({
+                              ...clientValidation,
+                              phone: validation,
+                            });
+                          }
+                        }}
+                        placeholder="+33 1 23 45 67 89"
+                        className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                          !clientValidation.phone.isValid
+                            ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                            : ""
+                        }`}
+                      />
+                      {!clientValidation.phone.isValid && (
+                        <p className="text-sm text-red-600 flex items-center gap-1">
+                          <span className="text-red-500">⚠</span>
+                          {clientValidation.phone.message}
+                        </p>
+                      )}
                     </div>
                   </div>
-                </div>
+                )}
+
+                {/* Step 2: Nutritional Goals */}
+                {currentStep === 2 && (
+                  <div className="space-y-6 animate-slide-in">
+                    <div className="text-center mb-6">
+                      <div className="mx-auto h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                        <Target className="h-8 w-8 text-emerald-600" />
+                      </div>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        Maintenant, définissons ensemble les objectifs nutritionnels pour créer un parcours personnalisé.
+                      </p>
+                    </div>
+                    
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="current_weight"
+                          className="text-sm font-semibold text-gray-700"
+                        >
+                          Poids actuel (kg)
+                        </Label>
+                        <Input
+                          id="current_weight"
+                          type="number"
+                          value={newClient.current_weight}
+                          onChange={(e) => {
+                            setNewClient({
+                              ...newClient,
+                              current_weight: e.target.value,
+                            });
+                            if (clientValidation.current_weight.message) {
+                              setClientValidation({
+                                ...clientValidation,
+                                current_weight: { isValid: true, message: "" },
+                              });
+                            }
+                          }}
+                          onBlur={() => {
+                            if (newClient.current_weight) {
+                              const validation = validateClientWeight(
+                                newClient.current_weight
+                              );
+                              setClientValidation({
+                                ...clientValidation,
+                                current_weight: validation,
+                              });
+                            }
+                          }}
+                          placeholder="70"
+                          className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                            !clientValidation.current_weight.isValid
+                              ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                              : ""
+                          }`}
+                        />
+                        {!clientValidation.current_weight.isValid && (
+                          <p className="text-sm text-red-600 flex items-center gap-1">
+                            <span className="text-red-500">⚠</span>
+                            {clientValidation.current_weight.message}
+                          </p>
+                        )}
+                      </div>
+                      <div className="space-y-2">
+                        <Label
+                          htmlFor="goal_weight"
+                          className="text-sm font-semibold text-gray-700"
+                        >
+                          Poids objectif (kg)
+                        </Label>
+                        <Input
+                          id="goal_weight"
+                          type="number"
+                          value={newClient.goal_weight}
+                          onChange={(e) => {
+                            setNewClient({
+                              ...newClient,
+                              goal_weight: e.target.value,
+                            });
+                            if (clientValidation.goal_weight.message) {
+                              setClientValidation({
+                                ...clientValidation,
+                                goal_weight: { isValid: true, message: "" },
+                              });
+                            }
+                          }}
+                          onBlur={() => {
+                            if (newClient.goal_weight) {
+                              const validation = validateClientWeight(
+                                newClient.goal_weight
+                              );
+                              setClientValidation({
+                                ...clientValidation,
+                                goal_weight: validation,
+                              });
+                            }
+                          }}
+                          placeholder="65"
+                          className={`border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 ${
+                            !clientValidation.goal_weight.isValid
+                              ? "border-red-300 focus:border-red-400 focus:ring-red-400/20"
+                              : ""
+                          }`}
+                        />
+                        {!clientValidation.goal_weight.isValid && (
+                          <p className="text-sm text-red-600 flex items-center gap-1">
+                            <span className="text-red-500">⚠</span>
+                            {clientValidation.goal_weight.message}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                    
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="goal"
+                        className="text-sm font-semibold text-gray-700"
+                      >
+                        Objectif principal
+                      </Label>
+                      <Select
+                        value={newClient.goal}
+                        onValueChange={(value: string) =>
+                          setNewClient({ ...newClient, goal: value })
+                        }
+                      >
+                        <SelectTrigger className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20">
+                          <SelectValue placeholder="Choisir un objectif" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="weight_loss">
+                            Perte de poids
+                          </SelectItem>
+                          <SelectItem value="weight_gain">
+                            Prise de poids
+                          </SelectItem>
+                          <SelectItem value="muscle_gain">
+                            Prise de masse musculaire
+                          </SelectItem>
+                          <SelectItem value="maintenance">Maintien</SelectItem>
+                          <SelectItem value="health_improvement">
+                            Amélioration de la santé
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+                )}
+
+                {/* Step 3: Account Configuration */}
+                {currentStep === 3 && (
+                  <div className="space-y-6 animate-slide-in">
+                    <div className="text-center mb-6">
+                      <div className="mx-auto h-16 w-16 bg-emerald-100 rounded-full flex items-center justify-center mb-4">
+                        <Users className="h-8 w-8 text-emerald-600" />
+                      </div>
+                      <p className="text-gray-600 text-sm leading-relaxed">
+                        Dernière étape : configurons l'accès et les options de suivi pour votre client.
+                      </p>
+                    </div>
+
+                    {/* Client Account Creation Section */}
+                    <div className="space-y-4 p-4 bg-gray-50 rounded-lg">
+                      <div className="flex items-start space-x-3">
+                        <Checkbox
+                          id="create-account"
+                          checked={createClientAccount}
+                          onCheckedChange={(checked) => setCreateClientAccount(checked as boolean)}
+                          className="mt-1"
+                        />
+                        <div className="grid gap-2">
+                          <Label
+                            htmlFor="create-account"
+                            className="text-sm font-semibold text-gray-700 cursor-pointer"
+                          >
+                            Créer un compte client
+                          </Label>
+                          <p className="text-sm text-gray-600 leading-relaxed">
+                            Permettre au client d'accéder à son portail personnel pour consulter 
+                            ses plans alimentaires, suivre ses progrès et communiquer avec vous.
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Summary Section */}
+                    <div className="space-y-4 p-4 bg-emerald-50 rounded-lg">
+                      <h4 className="text-sm font-semibold text-emerald-800 mb-3">Récapitulatif du profil</h4>
+                      <div className="grid gap-3 text-sm">
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Nom :</span>
+                          <span className="font-medium text-gray-900">{newClient.name}</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Email :</span>
+                          <span className="font-medium text-gray-900">{newClient.email}</span>
+                        </div>
+                        {newClient.phone && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Téléphone :</span>
+                            <span className="font-medium text-gray-900">{newClient.phone}</span>
+                          </div>
+                        )}
+                        {newClient.current_weight && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Poids actuel :</span>
+                            <span className="font-medium text-gray-900">{newClient.current_weight} kg</span>
+                          </div>
+                        )}
+                        {newClient.goal_weight && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Poids objectif :</span>
+                            <span className="font-medium text-gray-900">{newClient.goal_weight} kg</span>
+                          </div>
+                        )}
+                        {newClient.goal && (
+                          <div className="flex justify-between">
+                            <span className="text-gray-600">Objectif :</span>
+                            <span className="font-medium text-gray-900">
+                              {newClient.goal === 'weight_loss' && 'Perte de poids'}
+                              {newClient.goal === 'weight_gain' && 'Prise de poids'}
+                              {newClient.goal === 'muscle_gain' && 'Prise de masse musculaire'}
+                              {newClient.goal === 'maintenance' && 'Maintien'}
+                              {newClient.goal === 'health_improvement' && 'Amélioration de la santé'}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
               <DialogFooter className="gap-3">
                 <Button
                   variant="outline"
-                  onClick={() => setIsAddDialogOpen(false)}
+                  onClick={() => {
+                    if (currentStep === 1) {
+                      setIsAddDialogOpen(false);
+                      resetForm();
+                    } else {
+                      setCurrentStep(currentStep - 1);
+                    }
+                  }}
                   className="border-gray-200 hover:bg-gray-50"
                 >
-                  Annuler
+                  {currentStep === 1 ? 'Annuler' : 'Précédent'}
                 </Button>
-                <Button
-                  onClick={handleAddClient}
-                  disabled={
-                    !newClient.name ||
-                    !newClient.email ||
-                    !clientValidation.name.isValid ||
-                    !clientValidation.email.isValid ||
-                    !clientValidation.phone.isValid ||
-                    !clientValidation.age.isValid ||
-                    !clientValidation.height.isValid ||
-                    !clientValidation.current_weight.isValid ||
-                    !clientValidation.goal_weight.isValid ||
-                    emailValidationLoading
-                  }
-                  className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft disabled:opacity-50 font-medium"
-                >
-                  Ajouter client
-                </Button>
+                
+                {currentStep < 3 ? (
+                  <Button
+                    onClick={() => setCurrentStep(currentStep + 1)}
+                    disabled={
+                      (currentStep === 1 && !canProceedToStep2()) ||
+                      (currentStep === 2 && !canProceedToStep3())
+                    }
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft disabled:opacity-50 font-medium"
+                  >
+                    Continuer
+                    <ChevronRight className="ml-2 h-4 w-4" />
+                  </Button>
+                ) : (
+                  <Button
+                    onClick={handleAddClient}
+                    disabled={
+                      !newClient.name ||
+                      !newClient.email ||
+                      !clientValidation.name.isValid ||
+                      !clientValidation.email.isValid ||
+                      !clientValidation.phone.isValid ||
+                      !clientValidation.current_weight.isValid ||
+                      !clientValidation.goal_weight.isValid ||
+                      emailValidationLoading
+                    }
+                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft disabled:opacity-50 font-medium"
+                  >
+                    Commencer l'accompagnement
+                  </Button>
+                )}
               </DialogFooter>
             </DialogContent>
           </Dialog>

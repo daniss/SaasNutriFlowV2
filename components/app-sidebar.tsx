@@ -1,18 +1,15 @@
 "use client";
 
 import {
-  BarChart3,
   Calendar,
-  ChefHat,
   FileText,
   Home,
   LogOut,
   Plus,
   Receipt,
   Settings,
-  Shield,
-  TestTube,
   Users,
+  Zap,
 } from "lucide-react";
 import type * as React from "react";
 
@@ -37,7 +34,6 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { useAuth } from "@/hooks/useAuthNew";
-import { useRoleBasedAccess } from "@/hooks/useRoleBasedAccess";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 
@@ -58,74 +54,15 @@ const data = {
       url: "/dashboard/meal-plans",
       icon: FileText,
     },
-    /* MASKED FOR MVP - Analyse nutritionnelle functionality will be added in future
     {
-      title: "Analyse nutritionnelle",
-      url: "/dashboard/nutrition-analysis",
-      icon: Calculator,
-    },
-    */
-    /* MASKED FOR MVP - Messages functionality will be added in future
-    {
-      title: "Messages",
-      url: "/dashboard/messages",
-      icon: MessageCircle,
-    },
-    */
-    {
-      title: "Bibliothèque de recettes",
-      url: "/dashboard/templates",
-      icon: ChefHat,
-    },
-    {
-      title: "Rendez-vous & Calendrier",
+      title: "Rendez-vous",
       url: "/dashboard/appointments",
       icon: Calendar,
     },
-    /* MASKED FOR MVP - Rappels functionality will be added in future
-    {
-      title: "Rappels",
-      url: "/dashboard/reminders",
-      icon: Bell,
-    },
-    */
-    {
-      title: "Analyses & Rapports",
-      url: "/dashboard/analytics",
-      icon: BarChart3,
-    },
-    /* MASKED FOR MVP - Portail Client will be added in future
-    {
-      title: "Portail Client",
-      url: "/client-portal",
-      icon: Users,
-      badge: "Portal",
-    },
-    */
     {
       title: "Factures",
       url: "/dashboard/invoices",
       icon: Receipt,
-    },
-    {
-      title: "Journaux d'audit",
-      url: "/dashboard/audit",
-      icon: Shield,
-    },
-    {
-      title: "Tests E2E",
-      url: "/dashboard/testing",
-      icon: TestTube,
-    },
-    {
-      title: "Conformité RGPD",
-      url: "/dashboard/gdpr",
-      icon: Shield,
-    },
-    {
-      title: "Gestion Admin",
-      url: "/dashboard/admin",
-      icon: Shield,
     },
     {
       title: "Paramètres",
@@ -139,29 +76,14 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const pathname = usePathname();
   const router = useRouter();
   const { profile, signOut } = useAuth();
-  const { hasPermission, isSuperAdmin } = useRoleBasedAccess();
 
   const handleSignOut = async () => {
     await signOut();
     router.push("/");
   };
 
-  // Filter navigation items based on permissions
-  const filteredNavItems = data.navMain.filter((item) => {
-    if (item.url === "/dashboard/audit") {
-      return hasPermission("canAccessAuditLogs");
-    }
-    if (item.url === "/dashboard/testing") {
-      return hasPermission("canAccessTesting");
-    }
-    if (item.url === "/dashboard/gdpr") {
-      return hasPermission("canAccessAuditLogs"); // GDPR requires same admin access as audit logs
-    }
-    if (item.url === "/dashboard/admin") {
-      return isSuperAdmin;
-    }
-    return true; // Show all other items
-  });
+  // All navigation items are now accessible to all users
+  const filteredNavItems = data.navMain;
 
   return (
     <Sidebar collapsible="icon" {...props}>
@@ -208,15 +130,23 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
                 <SidebarMenuButton asChild>
                   <Link href="/dashboard/clients">
                     <Plus />
-                    <span>Ajouter un client</span>
+                    <span>Nouveau client</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link href="/dashboard/meal-plans/generate">
+                    <Zap />
+                    <span>Plan avec IA</span>
+                  </Link>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <Link href="/dashboard/meal-plans">
                     <FileText />
-                    <span>Générer un plan</span>
+                    <span>Créer un plan</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

@@ -1,19 +1,19 @@
 "use client"
 
-import { useState } from "react"
+import FoodSearchModal from "@/components/dashboard/FoodSearchModal"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
-import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Badge } from "@/components/ui/badge"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { Separator } from "@/components/ui/separator"
-import { X, Plus, Clock, ChefHat } from "lucide-react"
+import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
-import { supabase, type RecipeTemplate } from "@/lib/supabase"
 import { useAuth } from "@/hooks/useAuthNew"
+import { supabase, type RecipeTemplate } from "@/lib/supabase"
+import { ChefHat, Plus, X } from "lucide-react"
+import { useState } from "react"
 
 interface RecipeTemplateDialogProps {
   isOpen: boolean
@@ -32,6 +32,8 @@ interface Instruction {
   step: number
   text: string
 }
+
+
 
 export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template }: RecipeTemplateDialogProps) {
   const { user } = useAuth()
@@ -75,7 +77,50 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
     "g", "kg", "ml", "l", "tasse", "cuillère à soupe", "cuillère à café", 
     "pièce", "tranche", "pincée", "dose", "sachet", "boîte", "paquet"
   ]
+    // Nutrition summary calculation
+  function getNutritionSummary() {
+    let calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0
+    let micronutrients: Record<string, number> = {}
+    formData.ingredients.forEach((ing: any) => {
+      calories += ing.energy_kcal ? Number(ing.energy_kcal) : 0
+      protein += ing.protein_g ? Number(ing.protein_g) : 0
+      carbs += ing.carbohydrate_g ? Number(ing.carbohydrate_g) : 0
+      fat += ing.fat_g ? Number(ing.fat_g) : 0
+      fiber += ing.fiber_g ? Number(ing.fiber_g) : 0
+      // Example micronutrients
+      if (ing.calcium_mg) micronutrients.calcium_mg = (micronutrients.calcium_mg || 0) + Number(ing.calcium_mg)
+      if (ing.iron_mg) micronutrients.iron_mg = (micronutrients.iron_mg || 0) + Number(ing.iron_mg)
+      if (ing.magnesium_mg) micronutrients.magnesium_mg = (micronutrients.magnesium_mg || 0) + Number(ing.magnesium_mg)
+      if (ing.vitamin_c_mg) micronutrients.vitamin_c_mg = (micronutrients.vitamin_c_mg || 0) + Number(ing.vitamin_c_mg)
+      // ...add more as needed
+    })
+    return { calories, protein, carbs, fat, fiber, micronutrients }
+  }
 
+  const nutrition = getNutritionSummary()
+          {/* Nutrition Summary */}
+          <Card className="mb-4">
+            <CardHeader>
+              <CardTitle className="text-lg">Résumé nutritionnel</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="flex flex-wrap gap-4">
+                <div><b>Calories:</b> {nutrition.calories} kcal</div>
+                <div><b>Protéines:</b> {nutrition.protein} g</div>
+                <div><b>Glucides:</b> {nutrition.carbs} g</div>
+                <div><b>Lipides:</b> {nutrition.fat} g</div>
+                <div><b>Fibres:</b> {nutrition.fiber} g</div>
+              </div>
+              <div className="mt-2">
+                <b>Micronutriments clés:</b>
+                <ul className="list-disc ml-6">
+                  {Object.entries(nutrition.micronutrients).map(([key, value]) => (
+                    <li key={key}>{key.replace(/_/g, ' ')}: {value}</li>
+                  ))}
+                </ul>
+              </div>
+            </CardContent>
+          </Card>
   const handleSubmit = async () => {
     if (!user || !formData.name || !formData.category) {
       toast({
@@ -220,6 +265,31 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
         : [...prev.dietary_type, type]
     }))
   }
+
+  const handleAddFoodFromDb = (food: any) => {
+    const newIngredient: Ingredient = {
+      name: food.name_fr,
+      amount: "",
+      unit: "g" // Default unit, can be changed by user
+    }
+    setFormData((prev: typeof formData) => {
+      const macros = {
+        protein: (prev.macros?.protein || 0) + (food.protein_g || 0),
+        carbs: (prev.macros?.carbs || 0) + (food.carbohydrate_g || 0),
+        fat: (prev.macros?.fat || 0) + (food.fat_g || 0),
+        fiber: (prev.macros?.fiber || 0) + (food.fiber_g || 0),
+      }
+      const calories = (prev.calories_per_serving || 0) + (food.energy_kcal || 0)
+      return {
+        ...prev,
+        ingredients: [...prev.ingredients, newIngredient],
+        macros,
+        calories_per_serving: calories
+      }
+    })
+  }
+
+  const [foodSearchOpen, setFoodSearchOpen] = useState(false)
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -446,7 +516,17 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
               ))}
               <Button variant="outline" size="sm" onClick={addIngredient}>
                 <Plus className="h-4 w-4 mr-2" />
-                Ajouter un ingrédient
+                Ajouter un ingrédient manuellement
+              </Button>
+              <FoodSearchModal
+                open={foodSearchOpen}
+                onClose={() => setFoodSearchOpen(false)}
+                onSelectFood={handleAddFoodFromDb}
+                mealSlot="lunch"
+                day={0}
+              />
+              <Button variant="default" size="sm" onClick={() => setFoodSearchOpen(true)}>
+                Rechercher et ajouter un aliment (ANSES-CIQUAL)
               </Button>
             </CardContent>
           </Card>

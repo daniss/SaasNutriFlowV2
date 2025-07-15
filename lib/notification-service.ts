@@ -82,6 +82,18 @@ class ResendProvider implements EmailProvider {
   }
 }
 
+// Mock Email Provider for Development
+class MockEmailProvider implements EmailProvider {
+  async send(to: string, subject: string, content: string, html?: string): Promise<boolean> {
+    console.log('📧 Mock Email Sent:')
+    console.log(`To: ${to}`)
+    console.log(`Subject: ${subject}`)
+    console.log(`Content: ${content}`)
+    if (html) console.log(`HTML: ${html}`)
+    return true // Always succeed in development
+  }
+}
+
 // SMS Providers
 class TwilioProvider implements SMSProvider {
   private accountSid: string
@@ -178,6 +190,10 @@ export class NotificationService {
       this.emailProvider = new SendGridProvider(process.env.SENDGRID_API_KEY, fromEmail)
     } else if (emailProvider === 'resend' && process.env.RESEND_API_KEY) {
       this.emailProvider = new ResendProvider(process.env.RESEND_API_KEY, fromEmail)
+    } else {
+      // Use mock provider for development
+      this.emailProvider = new MockEmailProvider()
+      console.log('🔧 Using mock email provider for development')
     }
 
     // Initialize SMS provider
@@ -201,7 +217,7 @@ export class NotificationService {
 
   async sendEmail(to: string, subject: string, content: string, html?: string): Promise<boolean> {
     if (!this.emailProvider) {
-      console.warn('No email provider configured')
+      console.warn('No email provider configured - this should not happen')
       return false
     }
 

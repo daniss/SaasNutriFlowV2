@@ -28,12 +28,15 @@ import {
   Bell,
   Calendar,
   CalendarDays,
+  Camera,
   Download,
   FileText,
   MessageCircle,
   Settings,
+  Shield,
   Target,
   TrendingUp,
+  X,
 } from "lucide-react";
 import { useEffect, useState } from "react";
 import {
@@ -82,6 +85,17 @@ interface ClientPortalData {
     meetingLink?: string;
     notes?: string;
   }>;
+  progressPhotos: Array<{
+    id: string;
+    name: string;
+    upload_date: string;
+    file_path: string;
+    metadata?: {
+      visible_to_nutritionist: boolean;
+      type: string;
+      uploaded_by: string;
+    };
+  }>;
   // MASKED FOR MVP - Messages functionality will be added in future
   /*
   messages: Array<{
@@ -95,16 +109,21 @@ interface ClientPortalData {
 }
 
 function ClientPortalContent() {
-  const { client: sessionClient, logout, isAuthenticated } = useClientAuth();
+  const { client: sessionClient, logout, isAuthenticated, getAuthToken } = useClientAuth();
   const { toast } = useToast();
   const [loading, setLoading] = useState(true);
   const [client, setClient] = useState<any>(null);
   const [portalData, setPortalData] = useState<ClientPortalData | null>(null);
   const [newWeight, setNewWeight] = useState("");
   const [weightNote, setWeightNote] = useState("");
+  const [selectedPhoto, setSelectedPhoto] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string | null>(null);
+  const [sharePhotoWithNutritionist, setSharePhotoWithNutritionist] = useState(true);
   const [showConsentModal, setShowConsentModal] = useState(false);
   const [consentsChecked, setConsentsChecked] = useState(false);
   const [dataLoaded, setDataLoaded] = useState(false); // Track if data has been loaded
+  const [photoUrls, setPhotoUrls] = useState<Record<string, string>>({});
+  const [selectedProgressPhoto, setSelectedProgressPhoto] = useState<any>(null);
 
   // Load client data on component mount - only once per session
   useEffect(() => {
@@ -190,6 +209,24 @@ function ClientPortalContent() {
     checkConsents();
   }, [sessionClient?.id, portalData, consentsChecked]); // Add consentsChecked to prevent duplicate checks
 
+  // Load progress photo URLs when portal data changes
+  useEffect(() => {
+    if (portalData?.progressPhotos && portalData.progressPhotos.length > 0) {
+      loadProgressPhotoUrls();
+    }
+  }, [portalData?.progressPhotos]);
+
+  // Cleanup photo URLs on unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      Object.values(photoUrls).forEach(url => {
+        if (url.startsWith('blob:')) {
+          URL.revokeObjectURL(url);
+        }
+      });
+    };
+  }, []);
+
   const handleConsentGiven = () => {
     setShowConsentModal(false);
     setConsentsChecked(true);
@@ -272,13 +309,33 @@ function ClientPortalContent() {
           setClient(updatedProfile);
         }
 
-        toast({
-          title: "Poids mis à jour",
-          description: "Votre nouveau poids a été enregistré avec succès",
-        });
+        // Handle photo upload if a photo is selected
+        if (selectedPhoto) {
+          try {
+            await uploadProgressPhoto();
+            toast({
+              title: "Poids et photo mis à jour",
+              description: "Votre nouveau poids et photo de progrès ont été enregistrés avec succès",
+            });
+          } catch (photoError) {
+            console.error("Error uploading photo:", photoError);
+            toast({
+              title: "Poids mis à jour",
+              description: "Poids enregistré mais erreur lors du téléchargement de la photo",
+              variant: "destructive",
+            });
+          }
+        } else {
+          toast({
+            title: "Poids mis à jour",
+            description: "Votre nouveau poids a été enregistré avec succès",
+          });
+        }
 
         setNewWeight("");
         setWeightNote("");
+        setSelectedPhoto(null);
+        setPhotoPreview(null);
       } else {
         throw new Error(response.error || "Failed to update weight");
       }
@@ -290,6 +347,102 @@ function ClientPortalContent() {
         variant: "destructive",
       });
     }
+  };
+
+  const handlePhotoSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!['image/jpeg', 'image/png', 'image/webp'].includes(file.type)) {
+      toast({
+        title: "Format non supporté",
+        description: "Veuillez choisir une image au format JPEG, PNG ou WebP",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      toast({
+        title: "Fichier trop volumineux",
+        description: "La taille de l'image ne doit pas dépasser 5MB",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setSelectedPhoto(file);
+    
+    // Create preview
+    const reader = new FileReader();
+    reader.onload = (e) => {
+      setPhotoPreview(e.target?.result as string);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const uploadProgressPhoto = async () => {
+    if (!selectedPhoto || !sessionClient) return;
+
+    const formData = new FormData();
+    formData.append('photo', selectedPhoto);
+    formData.append('isVisibleToNutritionist', sharePhotoWithNutritionist.toString());
+    formData.append('notes', weightNote || '');
+
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Token d\'authentification manquant');
+    }
+
+    const response = await fetch('/api/client-auth/progress-photo', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+      },
+      body: formData,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json();
+      throw new Error(errorData.error || 'Failed to upload photo');
+    }
+
+    const result = await response.json();
+    return result;
+  };
+
+  const loadProgressPhotoUrls = async () => {
+    if (!portalData?.progressPhotos) return;
+
+    const token = getAuthToken();
+    if (!token) return;
+
+    const urls: Record<string, string> = {};
+    
+    for (const photo of portalData.progressPhotos) {
+      try {
+        const response = await fetch(`/api/client-auth/documents/download/${photo.id}`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
+        
+        if (response.ok) {
+          const blob = await response.blob();
+          urls[photo.id] = URL.createObjectURL(blob);
+        }
+      } catch (error) {
+        console.error('Error loading photo:', photo.id, error);
+      }
+    }
+    
+    setPhotoUrls(urls);
+  };
+
+  const openProgressPhotoViewer = (photo: any) => {
+    setSelectedProgressPhoto(photo);
   };
 
   const downloadMealPlan = () => {
@@ -1057,6 +1210,87 @@ function ClientPortalContent() {
                             />
                           </div>
                         </div>
+                        
+                        {/* Photo de Progrès Upload */}
+                        <div className="border-t pt-4">
+                          <div className="flex items-center justify-between mb-3">
+                            <Label className="text-sm font-medium">
+                              Photo de progrès (optionnelle)
+                            </Label>
+                            <div className="flex items-center space-x-2">
+                              <input
+                                type="checkbox"
+                                id="sharePhoto"
+                                checked={sharePhotoWithNutritionist}
+                                onChange={(e) => setSharePhotoWithNutritionist(e.target.checked)}
+                                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                              />
+                              <Label
+                                htmlFor="sharePhoto"
+                                className="text-xs text-gray-600"
+                              >
+                                Partager avec mon nutritionniste
+                              </Label>
+                            </div>
+                          </div>
+                          
+                          <div className="border-2 border-dashed border-gray-300 rounded-lg p-4 text-center hover:border-blue-400 transition-colors">
+                            <input
+                              type="file"
+                              id="progressPhoto"
+                              accept="image/jpeg,image/png,image/webp"
+                              onChange={handlePhotoSelect}
+                              className="hidden"
+                            />
+                            
+                            {selectedPhoto ? (
+                              <div className="space-y-3">
+                                <div className="relative inline-block">
+                                  <img
+                                    src={photoPreview!}
+                                    alt="Aperçu photo de progrès"
+                                    className="w-32 h-32 object-cover rounded-lg mx-auto"
+                                  />
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      setSelectedPhoto(null)
+                                      setPhotoPreview(null)
+                                    }}
+                                    className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                  >
+                                    <X className="h-3 w-3" />
+                                  </button>
+                                </div>
+                                <p className="text-sm text-gray-600">
+                                  {selectedPhoto.name} ({Math.round(selectedPhoto.size / 1024)}KB)
+                                </p>
+                              </div>
+                            ) : (
+                              <div className="space-y-2">
+                                <Camera className="h-8 w-8 text-gray-400 mx-auto" />
+                                <div>
+                                  <Label
+                                    htmlFor="progressPhoto"
+                                    className="cursor-pointer text-blue-600 hover:text-blue-700 font-medium"
+                                  >
+                                    Choisir une photo
+                                  </Label>
+                                  <p className="text-xs text-gray-500 mt-1">
+                                    JPEG, PNG, WebP - Max 5MB
+                                  </p>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          
+                          {!sharePhotoWithNutritionist && selectedPhoto && (
+                            <p className="text-xs text-amber-600 mt-2 flex items-center">
+                              <Shield className="h-3 w-3 mr-1" />
+                              Cette photo restera privée et ne sera pas partagée
+                            </p>
+                          )}
+                        </div>
                         <Button
                           onClick={handleWeightUpdate}
                           className="w-full bg-blue-600 hover:bg-blue-700"
@@ -1168,6 +1402,71 @@ function ClientPortalContent() {
                       </div>
                     </CardContent>
                   </Card>
+                  
+                  {/* Progress Photos */}
+                  <Card className="lg:col-span-2 shadow-lg">
+                    <CardHeader className="bg-gradient-to-r from-purple-50 to-pink-50 border-b border-purple-100">
+                      <CardTitle className="text-xl text-purple-800 flex items-center">
+                        <Camera className="h-6 w-6 mr-2" />
+                        Mes Photos de Progrès
+                      </CardTitle>
+                      <CardDescription className="text-purple-600">
+                        Visualisez vos transformations au fil du temps
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="p-6">
+                      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+                        {portalData.progressPhotos && portalData.progressPhotos.length > 0 ? (
+                          portalData.progressPhotos.map((photo: any, index: number) => (
+                            <div key={photo.id} className="relative group">
+                              <div 
+                                className="aspect-square bg-gray-100 rounded-lg overflow-hidden shadow-sm cursor-pointer"
+                                onClick={() => openProgressPhotoViewer(photo)}
+                              >
+                                {photoUrls[photo.id] ? (
+                                  <img
+                                    src={photoUrls[photo.id]}
+                                    alt={`Photo de progrès ${index + 1}`}
+                                    className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-200"
+                                  />
+                                ) : (
+                                  <div className="w-full h-full flex items-center justify-center">
+                                    <Camera className="h-8 w-8 text-gray-400" />
+                                  </div>
+                                )}
+                              </div>
+                              <div className="mt-2 text-center">
+                                <p className="text-xs text-gray-500">
+                                  {new Date(photo.upload_date).toLocaleDateString('fr-FR')}
+                                </p>
+                                <div className="flex justify-center mt-1">
+                                  {photo.metadata?.visible_to_nutritionist ? (
+                                    <Badge variant="secondary" className="text-xs bg-green-100 text-green-700">
+                                      Partagée
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="secondary" className="text-xs bg-amber-100 text-amber-700">
+                                      Privée
+                                    </Badge>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          ))
+                        ) : (
+                          <div className="col-span-full text-center py-12 text-gray-500">
+                            <Camera className="h-16 w-16 mx-auto mb-4 text-gray-300" />
+                            <h3 className="text-lg font-medium mb-2">
+                              Aucune photo de progrès
+                            </h3>
+                            <p className="text-sm">
+                              Ajoutez votre première photo lors de l'enregistrement de votre poids
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                    </CardContent>
+                  </Card>
                 </div>
               </TabsContent>
 
@@ -1273,6 +1572,56 @@ function ClientPortalContent() {
                 <ClientGDPRRights />
               </TabsContent>
             </Tabs>
+
+            {/* Progress Photo Viewer Modal */}
+            {selectedProgressPhoto && (
+              <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setSelectedProgressPhoto(null)}>
+                <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                  <div className="absolute top-4 right-4 z-10">
+                    <Button
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setSelectedProgressPhoto(null)}
+                      className="bg-white/80 hover:bg-white"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="p-6">
+                    <div className="mb-4">
+                      <h3 className="text-lg font-semibold text-gray-900">
+                        Photo de progrès
+                      </h3>
+                      <p className="text-sm text-gray-500">
+                        {new Date(selectedProgressPhoto.upload_date).toLocaleDateString('fr-FR')}
+                      </p>
+                    </div>
+                    <div className="flex justify-center">
+                      {photoUrls[selectedProgressPhoto.id] ? (
+                        <img
+                          src={photoUrls[selectedProgressPhoto.id]}
+                          alt="Photo de progrès agrandie"
+                          className="max-w-full max-h-[60vh] object-contain rounded-lg"
+                        />
+                      ) : (
+                        <div className="w-96 h-96 bg-gray-200 flex items-center justify-center rounded-lg">
+                          <Camera className="h-16 w-16 text-gray-400" />
+                        </div>
+                      )}
+                    </div>
+                    <div className="mt-4 flex justify-center">
+                      <Badge 
+                        variant="secondary" 
+                        className={selectedProgressPhoto.metadata?.visible_to_nutritionist ? 
+                          "bg-green-100 text-green-700" : "bg-amber-100 text-amber-700"}
+                      >
+                        {selectedProgressPhoto.metadata?.visible_to_nutritionist ? "Partagée" : "Privée"}
+                      </Badge>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
