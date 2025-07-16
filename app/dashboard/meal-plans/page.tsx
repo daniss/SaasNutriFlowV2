@@ -38,7 +38,9 @@ import {
   BarChart3,
   User,
   Sparkles,
-  BookOpen
+  BookOpen,
+  Heart,
+  Filter
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type MealPlan } from "@/lib/supabase"
@@ -72,6 +74,13 @@ interface ClientOption {
   name: string
 }
 
+interface StatsData {
+  totalPlans: number
+  activePlans: number
+  clientsServed: number
+  plansThisMonth: number
+}
+
 export default function MealPlansPage() {
   const { user } = useAuth()
   const [mealPlans, setMealPlans] = useState<MealPlanWithClient[]>([])
@@ -82,6 +91,12 @@ export default function MealPlansPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [planToDelete, setPlanToDelete] = useState<MealPlanWithClient | null>(null)
+  const [stats, setStats] = useState<StatsData>({
+    totalPlans: 0,
+    activePlans: 0,
+    clientsServed: 0,
+    plansThisMonth: 0
+  })
   const [newMealPlan, setNewMealPlan] = useState({
     name: "",
     description: "",
@@ -118,6 +133,23 @@ export default function MealPlansPage() {
         throw mealPlanError
       } else {
         setMealPlans(mealPlanData || [])
+        
+        // Calculate stats
+        const totalPlans = mealPlanData?.length || 0
+        const activePlans = mealPlanData?.filter(plan => plan.status === 'active').length || 0
+        const uniqueClients = new Set(mealPlanData?.map(plan => plan.client_id)).size
+        const thisMonth = new Date()
+        thisMonth.setDate(1)
+        const plansThisMonth = mealPlanData?.filter(plan => 
+          new Date(plan.created_at || '') >= thisMonth
+        ).length || 0
+
+        setStats({
+          totalPlans,
+          activePlans,
+          clientsServed: uniqueClients,
+          plansThisMonth
+        })
       }
 
       // Fetch clients for the dropdown
@@ -229,6 +261,15 @@ export default function MealPlansPage() {
     }
   }
 
+  const getPlanTypeIcon = (plan: MealPlanWithClient) => {
+    const goal = plan.description?.toLowerCase() || plan.name?.toLowerCase() || ""
+    if (goal.includes("perte") || goal.includes("minceur")) return Target
+    if (goal.includes("muscle") || goal.includes("prise")) return TrendingUp
+    if (goal.includes("cardio") || goal.includes("endurance")) return Heart
+    if (goal.includes("sport") || goal.includes("performance")) return Activity
+    return ChefHat
+  }
+
   // Filter meal plans
   const filteredMealPlans = mealPlans.filter(plan => {
     const matchesSearch = plan.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -248,7 +289,7 @@ export default function MealPlansPage() {
     <div className="space-y-6">
       <DashboardHeader 
         title="Plans alimentaires"
-        subtitle={`${filteredMealPlans.length} plans disponibles pour vos clients`}
+        subtitle={`Gérez les plans alimentaires de vos ${stats.clientsServed} clients`}
         searchPlaceholder="Rechercher des plans..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
@@ -286,20 +327,116 @@ export default function MealPlansPage() {
       />
 
       <div className="px-6 space-y-6">
+        {/* Stats Cards */}
+        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+          <Card className="border-0 shadow-soft bg-gradient-to-br from-blue-50 to-blue-100/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-blue-900">Total Plans</CardTitle>
+              <FileText className="h-4 w-4 text-blue-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-blue-900">{stats.totalPlans}</div>
+              <p className="text-xs text-blue-700">Plans créés au total</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-soft bg-gradient-to-br from-emerald-50 to-emerald-100/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-emerald-900">Plans Actifs</CardTitle>
+              <Activity className="h-4 w-4 text-emerald-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-emerald-900">{stats.activePlans}</div>
+              <p className="text-xs text-emerald-700">En cours d'exécution</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-soft bg-gradient-to-br from-purple-50 to-purple-100/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-purple-900">Clients</CardTitle>
+              <Users className="h-4 w-4 text-purple-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-purple-900">{stats.clientsServed}</div>
+              <p className="text-xs text-purple-700">Clients avec plans</p>
+            </CardContent>
+          </Card>
+
+          <Card className="border-0 shadow-soft bg-gradient-to-br from-orange-50 to-orange-100/50 backdrop-blur-sm">
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <CardTitle className="text-sm font-medium text-orange-900">Ce Mois</CardTitle>
+              <Calendar className="h-4 w-4 text-orange-600" />
+            </CardHeader>
+            <CardContent>
+              <div className="text-2xl font-bold text-orange-900">{stats.plansThisMonth}</div>
+              <p className="text-xs text-orange-700">Nouveaux plans</p>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* AI Generation Highlight */}
+        <Card className="border-0 shadow-soft bg-gradient-to-r from-emerald-500 via-teal-500 to-cyan-500 text-white overflow-hidden relative">
+          <div className="absolute inset-0 bg-black/10 backdrop-blur-sm"></div>
+          <CardHeader className="relative">
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="text-xl font-bold mb-2">Génération IA de Plans Alimentaires</CardTitle>
+                <CardDescription className="text-emerald-50 text-base">
+                  Créez des plans personnalisés en quelques secondes avec l'intelligence artificielle
+                </CardDescription>
+              </div>
+              <div className="hidden md:block">
+                <div className="w-16 h-16 bg-white/20 rounded-full flex items-center justify-center backdrop-blur-sm">
+                  <Sparkles className="h-8 w-8 text-white" />
+                </div>
+              </div>
+            </div>
+          </CardHeader>
+          <CardContent className="relative">
+            <div className="flex flex-wrap gap-3 mb-4">
+              <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                <Zap className="h-3 w-3 mr-1" />
+                Génération rapide
+              </Badge>
+              <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                <Target className="h-3 w-3 mr-1" />
+                Objectifs personnalisés
+              </Badge>
+              <Badge className="bg-white/20 text-white border-white/30 hover:bg-white/30">
+                <BarChart3 className="h-3 w-3 mr-1" />
+                Analyse nutritionnelle
+              </Badge>
+            </div>
+            <Button 
+              asChild
+              size="lg" 
+              className="bg-white text-emerald-600 hover:bg-emerald-50 font-semibold shadow-lg"
+            >
+              <Link href="/dashboard/meal-plans/generate">
+                <Sparkles className="mr-2 h-5 w-5" />
+                Essayer maintenant
+              </Link>
+            </Button>
+          </CardContent>
+        </Card>
+
         {/* Filters */}
         <div className="flex items-center gap-4">
-          <Select value={filterStatus} onValueChange={setFilterStatus}>
-            <SelectTrigger className="w-48">
-              <SelectValue placeholder="Filtrer par statut" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Tous les statuts</SelectItem>
-              <SelectItem value="draft">Brouillon</SelectItem>
-              <SelectItem value="active">Actif</SelectItem>
-              <SelectItem value="completed">Terminé</SelectItem>
-              <SelectItem value="paused">En pause</SelectItem>
-            </SelectContent>
-          </Select>
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-500" />
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filtrer par statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="draft">Brouillon</SelectItem>
+                <SelectItem value="active">Actif</SelectItem>
+                <SelectItem value="completed">Terminé</SelectItem>
+                <SelectItem value="paused">En pause</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
 
         {/* Meal Plans Grid */}
@@ -331,92 +468,117 @@ export default function MealPlansPage() {
             </div>
           </div>
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-            {filteredMealPlans.map((plan) => (
-              <Card key={plan.id} className="border-0 shadow-soft bg-white/80 backdrop-blur-sm hover:shadow-soft-md transition-all duration-200 group">
-                <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between">
-                    <div className="flex-1">
-                      <CardTitle className="text-base font-semibold text-gray-900 mb-1 line-clamp-1">
-                        {plan.name}
-                      </CardTitle>
-                      <CardDescription className="text-sm text-gray-600 line-clamp-2">
-                        {plan.description || "Aucune description"}
-                      </CardDescription>
-                    </div>
-                    <DropdownMenu>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                      <DropdownMenuContent align="end">
-                        <DropdownMenuItem asChild>
-                          <Link href={`/dashboard/meal-plans/${plan.id}`}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Voir
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Edit className="mr-2 h-4 w-4" />
-                          Modifier
-                        </DropdownMenuItem>
-                        <DropdownMenuItem>
-                          <Copy className="mr-2 h-4 w-4" />
-                          Dupliquer
-                        </DropdownMenuItem>
-                        <DropdownMenuSeparator />
-                        <DropdownMenuItem 
-                          onClick={() => {
-                            setPlanToDelete(plan)
-                            setDeleteDialogOpen(true)
-                          }}
-                          className="text-red-600 hover:text-red-700"
-                        >
-                          <Trash2 className="mr-2 h-4 w-4" />
-                          Supprimer
-                        </DropdownMenuItem>
-                      </DropdownMenuContent>
-                    </DropdownMenu>
-                  </div>
-                </CardHeader>
-                
-                <CardContent className="space-y-3">
-                  {/* Client */}
-                  <div className="flex items-center gap-2 text-sm text-gray-600">
-                    <User className="h-3 w-3" />
-                    <span>{plan.clients?.name || "Client non assigné"}</span>
-                  </div>
-
-                  {/* Status and Duration */}
-                  <div className="flex items-center justify-between">
-                    <Badge className={`${getStatusVariant(plan.status || 'draft')} border-0 font-medium px-3 py-1`}>
-                      {getStatusDisplay(plan.status || 'draft')}
-                    </Badge>
-                    {plan.duration_days && (
-                      <div className="flex items-center gap-1 text-sm text-gray-600">
-                        <Calendar className="h-3 w-3" />
-                        <span>{plan.duration_days} jours</span>
+          <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
+            {filteredMealPlans.map((plan) => {
+              const PlanIcon = getPlanTypeIcon(plan)
+              return (
+                <Card key={plan.id} className="border-0 shadow-soft bg-white/80 backdrop-blur-sm hover:shadow-soft-lg transition-all duration-200 group hover:-translate-y-1">
+                  <CardHeader className="pb-3">
+                    <div className="flex items-start justify-between">
+                      <div className="flex items-start gap-3 flex-1">
+                        <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-emerald-500 to-teal-500 flex items-center justify-center flex-shrink-0">
+                          <PlanIcon className="h-5 w-5 text-white" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <CardTitle className="text-base font-semibold text-gray-900 mb-1 line-clamp-1">
+                            {plan.name}
+                          </CardTitle>
+                          <CardDescription className="text-sm text-gray-600 line-clamp-2">
+                            {plan.description || "Aucune description"}
+                          </CardDescription>
+                        </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Calories range */}
-                  {plan.calories_range && (
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Activity className="h-3 w-3" />
-                      <span>{plan.calories_range} kcal</span>
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                          <Button variant="ghost" size="sm" className="opacity-0 group-hover:opacity-100 transition-opacity">
+                            <MoreHorizontal className="h-4 w-4" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem asChild>
+                            <Link href={`/dashboard/meal-plans/${plan.id}`}>
+                              <Eye className="mr-2 h-4 w-4" />
+                              Voir le détail
+                            </Link>
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Edit className="mr-2 h-4 w-4" />
+                            Modifier
+                          </DropdownMenuItem>
+                          <DropdownMenuItem>
+                            <Copy className="mr-2 h-4 w-4" />
+                            Dupliquer
+                          </DropdownMenuItem>
+                          <DropdownMenuSeparator />
+                          <DropdownMenuItem 
+                            onClick={() => {
+                              setPlanToDelete(plan)
+                              setDeleteDialogOpen(true)
+                            }}
+                            className="text-red-600 hover:text-red-700"
+                          >
+                            <Trash2 className="mr-2 h-4 w-4" />
+                            Supprimer
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
                     </div>
-                  )}
+                  </CardHeader>
+                  
+                  <CardContent className="space-y-4">
+                    {/* Client */}
+                    <div className="flex items-center gap-2 text-sm">
+                      <div className="w-6 h-6 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center">
+                        <User className="h-3 w-3 text-white" />
+                      </div>
+                      <span className="font-medium text-gray-900">{plan.clients?.name || "Client non assigné"}</span>
+                    </div>
 
-                  {/* Created date */}
-                  <div className="flex items-center gap-2 text-sm text-gray-500">
-                    <Clock className="h-3 w-3" />
-                    <span>Créé le {new Date(plan.created_at || '').toLocaleDateString('fr-FR')}</span>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
+                    {/* Status and metrics */}
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Badge className={`${getStatusVariant(plan.status || 'draft')} border-0 font-medium px-3 py-1`}>
+                          {getStatusDisplay(plan.status || 'draft')}
+                        </Badge>
+                        {plan.duration_days && (
+                          <div className="flex items-center gap-1 text-sm text-gray-600 bg-gray-100 px-2 py-1 rounded-md">
+                            <Calendar className="h-3 w-3" />
+                            <span>{plan.duration_days} jours</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Calories range */}
+                      {plan.calories_range && (
+                        <div className="flex items-center gap-2 text-sm bg-gradient-to-r from-orange-100 to-red-100 px-3 py-2 rounded-lg">
+                          <Activity className="h-3 w-3 text-orange-600" />
+                          <span className="font-medium text-orange-800">{plan.calories_range} kcal/jour</span>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Created date */}
+                    <div className="flex items-center gap-2 text-sm text-gray-500 pt-2 border-t border-gray-100">
+                      <Clock className="h-3 w-3" />
+                      <span>Créé le {new Date(plan.created_at || '').toLocaleDateString('fr-FR')}</span>
+                    </div>
+
+                    {/* Action Button */}
+                    <div className="pt-2">
+                      <Button 
+                        asChild
+                        className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium shadow-sm hover:shadow-md transition-all"
+                      >
+                        <Link href={`/dashboard/meal-plans/${plan.id}`}>
+                          <Eye className="mr-2 h-4 w-4" />
+                          Voir le plan
+                        </Link>
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              )
+            })}
           </div>
         )}
       </div>
