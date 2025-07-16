@@ -5,13 +5,12 @@ import {
   FileText,
   Home,
   LogOut,
+  MessageSquare,
   Plus,
   Receipt,
   Settings,
   Users,
   Zap,
-  CalendarDays,
-  ShoppingCart,
 } from "lucide-react";
 import type * as React from "react";
 
@@ -57,14 +56,14 @@ const data = {
       icon: FileText,
     },
     {
-      title: "Plannings",
-      url: "/dashboard/meal-plans/schedules",
-      icon: CalendarDays,
+      title: "Modèles",
+      url: "/dashboard/templates",
+      icon: FileText,
     },
     {
-      title: "Listes de courses",
-      url: "/dashboard/shopping-lists",
-      icon: ShoppingCart,
+      title: "Commentaires clients",
+      url: "/dashboard/feedback",
+      icon: MessageSquare,
     },
     {
       title: "Rendez-vous",

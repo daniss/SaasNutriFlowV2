@@ -26,7 +26,10 @@ import {
   ChefHat,
   Clock,
   Users,
-  BarChart3
+  BarChart3,
+  Share2,
+  ShoppingBag,
+  BookOpen
 } from "lucide-react"
 import { 
   DropdownMenu, 
@@ -43,6 +46,8 @@ import { supabase, type RecipeTemplate, type MealPlanTemplate } from "@/lib/supa
 import RecipeTemplateDialog from "@/components/templates/RecipeTemplateDialog"
 import MealPlanTemplateDialog from "@/components/templates/MealPlanTemplateDialog"
 import TemplateEffectivenessWidget from "@/components/templates/TemplateEffectivenessWidget"
+import ShareTemplateDialog from "@/components/templates/ShareTemplateDialog"
+import MealPrepInstructionsDialog from "@/components/meal-prep/MealPrepInstructionsDialog"
 import { useRouter } from "next/navigation"
 
 type TemplateType = 'recipe' | 'meal_plan'
@@ -60,6 +65,10 @@ export default function TemplatesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<RecipeTemplate | MealPlanTemplate | null>(null)
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
+  const [sharingTemplate, setSharingTemplate] = useState<RecipeTemplate | MealPlanTemplate | null>(null)
+  const [isMealPrepDialogOpen, setIsMealPrepDialogOpen] = useState(false)
+  const [mealPrepTemplate, setMealPrepTemplate] = useState<RecipeTemplate | MealPlanTemplate | null>(null)
 
   useEffect(() => {
     if (user) {
@@ -163,6 +172,14 @@ export default function TemplatesPage() {
           <div className="flex items-center gap-3">
             <Button 
               variant="outline"
+              onClick={() => router.push('/dashboard/templates/marketplace')}
+              className="text-blue-600 border-blue-600 hover:bg-blue-50"
+            >
+              <ShoppingBag className="mr-2 h-4 w-4" />
+              Marketplace
+            </Button>
+            <Button 
+              variant="outline"
               onClick={() => router.push('/dashboard/templates/analytics')}
               className="text-emerald-600 border-emerald-600 hover:bg-emerald-50"
             >
@@ -225,6 +242,14 @@ export default function TemplatesPage() {
                       setIsEditDialogOpen(true)
                     }}
                     onDelete={(id: string) => handleDeleteTemplate(id, 'recipe')}
+                    onShare={(template: RecipeTemplate | MealPlanTemplate) => {
+                      setSharingTemplate(template)
+                      setIsShareDialogOpen(true)
+                    }}
+                    onMealPrep={(template: RecipeTemplate | MealPlanTemplate) => {
+                      setMealPrepTemplate(template)
+                      setIsMealPrepDialogOpen(true)
+                    }}
                   />
                 ))}
               </div>
@@ -262,6 +287,14 @@ export default function TemplatesPage() {
                       setIsEditDialogOpen(true)
                     }}
                     onDelete={(id: string) => handleDeleteTemplate(id, 'meal_plan')}
+                    onShare={(template: RecipeTemplate | MealPlanTemplate) => {
+                      setSharingTemplate(template)
+                      setIsShareDialogOpen(true)
+                    }}
+                    onMealPrep={(template: RecipeTemplate | MealPlanTemplate) => {
+                      setMealPrepTemplate(template)
+                      setIsMealPrepDialogOpen(true)
+                    }}
                   />
                 ))}
               </div>
@@ -323,6 +356,42 @@ export default function TemplatesPage() {
           />
         )
       )}
+
+      {/* Share Dialog */}
+      {sharingTemplate && (
+        <ShareTemplateDialog
+          isOpen={isShareDialogOpen}
+          onClose={() => {
+            setIsShareDialogOpen(false)
+            setSharingTemplate(null)
+          }}
+          template={sharingTemplate}
+          templateType={activeTab}
+          onShared={() => {
+            setIsShareDialogOpen(false)
+            setSharingTemplate(null)
+            fetchTemplates()
+          }}
+        />
+      )}
+
+      {/* Meal Prep Instructions Dialog */}
+      {mealPrepTemplate && (
+        <MealPrepInstructionsDialog
+          isOpen={isMealPrepDialogOpen}
+          onClose={() => {
+            setIsMealPrepDialogOpen(false)
+            setMealPrepTemplate(null)
+          }}
+          recipeId={activeTab === 'recipe' ? mealPrepTemplate.id : undefined}
+          mealPlanId={activeTab === 'meal_plan' ? mealPrepTemplate.id : undefined}
+          onSaved={() => {
+            setIsMealPrepDialogOpen(false)
+            setMealPrepTemplate(null)
+            fetchTemplates()
+          }}
+        />
+      )}
     </div>
   )
 }
@@ -332,12 +401,16 @@ function TemplateCard({
   template, 
   type, 
   onEdit, 
-  onDelete 
+  onDelete,
+  onShare,
+  onMealPrep 
 }: { 
   template: RecipeTemplate | MealPlanTemplate
   type: TemplateType
   onEdit: (template: RecipeTemplate | MealPlanTemplate) => void
   onDelete: (id: string) => void
+  onShare: (template: RecipeTemplate | MealPlanTemplate) => void
+  onMealPrep: (template: RecipeTemplate | MealPlanTemplate) => void
 }) {
   const getCategoryColor = (category: string) => {
     const colors = {
@@ -396,6 +469,14 @@ function TemplateCard({
               <DropdownMenuItem>
                 <Copy className="mr-2 h-4 w-4" />
                 Dupliquer
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onShare(template)}>
+                <Share2 className="mr-2 h-4 w-4" />
+                Partager
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => onMealPrep(template)}>
+                <BookOpen className="mr-2 h-4 w-4" />
+                Instructions de préparation
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 

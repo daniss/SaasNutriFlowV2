@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-import { ProgressIntegrationService } from "@/lib/progress-integration"
 
 export async function GET(request: Request) {
   try {
@@ -12,161 +11,194 @@ export async function GET(request: Request) {
     }
 
     const { searchParams } = new URL(request.url)
-    const timeframe = searchParams.get('timeframe') || '30days'
+    const period = searchParams.get('period') || '30' // days
     const category = searchParams.get('category')
 
     // Calculate date range
     const endDate = new Date()
     const startDate = new Date()
-    
-    switch (timeframe) {
-      case '7days':
-        startDate.setDate(endDate.getDate() - 7)
-        break
-      case '30days':
-        startDate.setDate(endDate.getDate() - 30)
-        break
-      case '90days':
-        startDate.setDate(endDate.getDate() - 90)
-        break
-      case '1year':
-        startDate.setFullYear(endDate.getFullYear() - 1)
-        break
-      default:
-        startDate.setDate(endDate.getDate() - 30)
-    }
+    startDate.setDate(endDate.getDate() - parseInt(period))
 
-    // Get template effectiveness data
-    const effectiveness = await ProgressIntegrationService.getTemplateEffectiveness(user.id)
-
-    // Get templates with basic info
-    let templatesQuery = supabase
+    // Get template analytics data
+    const { data: templates, error: templatesError } = await supabase
       .from('meal_plan_templates')
-      .select('id, name, category, client_type, goal_type, created_at, usage_count, rating')
+      .select(`
+        id,
+        name,
+        category,
+        usage_count,
+        created_at,
+        updated_at
+      `)
+      .eq('dietitian_id', user.id)
+      .order('usage_count', { ascending: false })
+
+    if (templatesError) throw templatesError
+
+    // Get meal plans created from templates in the period
+    const { data: mealPlans, error: mealPlansError } = await supabase
+      .from('meal_plans')
+      .select(`
+        id,
+        name,
+        template_id,
+        client_id,
+        created_at,
+        status,
+        clients!inner(
+          id,
+          name,
+          current_weight,
+          goal_weight
+        )
+      `)
+      .eq('dietitian_id', user.id)
+      .not('template_id', 'is', null)
+      .gte('created_at', startDate.toISOString())
+      .lte('created_at', endDate.toISOString())
+
+    if (mealPlansError) throw mealPlansError
+
+    // Get feedback data for these meal plans
+    const { data: feedback, error: feedbackError } = await supabase
+      .from('meal_plan_feedback')
+      .select(`
+        id,
+        meal_plan_id,
+        rating,
+        satisfaction_rating,
+        difficulty_rating,
+        would_recommend,
+        created_at
+      `)
       .eq('dietitian_id', user.id)
       .gte('created_at', startDate.toISOString())
       .lte('created_at', endDate.toISOString())
 
-    if (category) {
-      templatesQuery = templatesQuery.eq('category', category)
-    }
+    if (feedbackError) throw feedbackError
 
-    const { data: templates, error: templatesError } = await templatesQuery
-
-    if (templatesError) throw templatesError
-
-    // Calculate overall analytics
-    const totalTemplates = templates?.length || 0
-    const totalUsage = templates?.reduce((sum, t) => sum + (t.usage_count || 0), 0) || 0
-    const averageRating = templates?.length > 0 
-      ? templates.reduce((sum, t) => sum + (t.rating || 0), 0) / templates.length 
-      : 0
-
-    // Calculate effectiveness metrics
-    const effectivenessMetrics = effectiveness.reduce((acc, eff) => {
-      acc.totalClients += eff.client_count
-      acc.totalSuccesses += (eff.success_rate / 100) * eff.client_count
-      acc.totalWeightLoss += eff.average_weight_loss * eff.client_count
-      acc.totalDuration += eff.average_duration * eff.client_count
-      return acc
-    }, { totalClients: 0, totalSuccesses: 0, totalWeightLoss: 0, totalDuration: 0 })
-
-    const overallSuccessRate = effectivenessMetrics.totalClients > 0 
-      ? (effectivenessMetrics.totalSuccesses / effectivenessMetrics.totalClients) * 100 
-      : 0
-
-    const averageWeightLoss = effectivenessMetrics.totalClients > 0 
-      ? effectivenessMetrics.totalWeightLoss / effectivenessMetrics.totalClients 
-      : 0
-
-    const averageDuration = effectivenessMetrics.totalClients > 0 
-      ? effectivenessMetrics.totalDuration / effectivenessMetrics.totalClients 
-      : 0
-
-    // Get category breakdown
-    const categoryBreakdown = templates?.reduce((acc, template) => {
-      const category = template.category || 'general'
-      if (!acc[category]) {
-        acc[category] = {
-          count: 0,
-          usage: 0,
-          rating: 0,
-          templates: []
-        }
-      }
-      acc[category].count++
-      acc[category].usage += template.usage_count || 0
-      acc[category].rating += template.rating || 0
-      acc[category].templates.push(template.id)
-      return acc
-    }, {} as Record<string, any>) || {}
-
-    // Calculate category averages
-    Object.keys(categoryBreakdown).forEach(cat => {
-      const catData = categoryBreakdown[cat]
-      catData.averageRating = catData.count > 0 ? catData.rating / catData.count : 0
-      catData.averageUsage = catData.count > 0 ? catData.usage / catData.count : 0
-      
-      // Get effectiveness for this category
-      const categoryEffectiveness = effectiveness.filter(eff => 
-        catData.templates.includes(eff.template_id)
+    // Calculate analytics for each template
+    const templateAnalytics = templates.map(template => {
+      const templateMealPlans = mealPlans.filter(mp => mp.template_id === template.id)
+      const templateFeedback = feedback.filter(f => 
+        templateMealPlans.some(mp => mp.id === f.meal_plan_id)
       )
-      
-      if (categoryEffectiveness.length > 0) {
-        catData.successRate = categoryEffectiveness.reduce((sum, eff) => 
-          sum + eff.success_rate, 0) / categoryEffectiveness.length
-        catData.averageWeightLoss = categoryEffectiveness.reduce((sum, eff) => 
-          sum + eff.average_weight_loss, 0) / categoryEffectiveness.length
-      } else {
-        catData.successRate = 0
-        catData.averageWeightLoss = 0
+
+      // Basic usage metrics
+      const usageCount = templateMealPlans.length
+      const uniqueClients = new Set(templateMealPlans.map(mp => mp.client_id)).size
+      const completionRate = templateMealPlans.filter(mp => mp.status === 'completed').length / 
+                            Math.max(templateMealPlans.length, 1) * 100
+
+      // Feedback metrics
+      const totalFeedback = templateFeedback.length
+      const averageRating = totalFeedback > 0 ? 
+        templateFeedback.reduce((sum, f) => sum + (f.rating || 0), 0) / totalFeedback : 0
+      const averageSatisfaction = totalFeedback > 0 ? 
+        templateFeedback.reduce((sum, f) => sum + (f.satisfaction_rating || 0), 0) / totalFeedback : 0
+      const averageDifficulty = totalFeedback > 0 ? 
+        templateFeedback.reduce((sum, f) => sum + (f.difficulty_rating || 0), 0) / totalFeedback : 0
+      const recommendationRate = totalFeedback > 0 ? 
+        templateFeedback.filter(f => f.would_recommend).length / totalFeedback * 100 : 0
+
+      // Calculate effectiveness score
+      const effectivenessScore = totalFeedback > 0 ? (
+        (averageRating * 0.3) +
+        (averageSatisfaction * 0.3) +
+        ((6 - averageDifficulty) * 0.2) + // Invert difficulty
+        ((recommendationRate / 100) * 5 * 0.2)
+      ) : 0
+
+      // Performance trends (mock data for now)
+      const performanceTrend = usageCount > template.usage_count * 0.7 ? 'improving' : 
+                              usageCount < template.usage_count * 0.3 ? 'declining' : 'stable'
+
+      return {
+        template_id: template.id,
+        template_name: template.name,
+        category: template.category,
+        usage_count: usageCount,
+        total_usage: template.usage_count,
+        unique_clients: uniqueClients,
+        completion_rate: Math.round(completionRate * 10) / 10,
+        total_feedback: totalFeedback,
+        average_rating: Math.round(averageRating * 10) / 10,
+        average_satisfaction: Math.round(averageSatisfaction * 10) / 10,
+        average_difficulty: Math.round(averageDifficulty * 10) / 10,
+        recommendation_rate: Math.round(recommendationRate * 10) / 10,
+        effectiveness_score: Math.round(effectivenessScore * 10) / 10,
+        performance_trend: performanceTrend,
+        created_at: template.created_at,
+        updated_at: template.updated_at
       }
     })
 
-    // Get top performing templates
-    const topTemplates = effectiveness
-      .sort((a, b) => b.success_rate - a.success_rate)
-      .slice(0, 10)
-      .map(eff => {
-        const template = templates?.find(t => t.id === eff.template_id)
-        return {
-          ...eff,
-          template_name: template?.name || 'Unknown',
-          template_category: template?.category || 'general',
-          template_rating: template?.rating || 0
-        }
-      })
+    // Filter by category if provided
+    let filteredAnalytics = templateAnalytics
+    if (category) {
+      filteredAnalytics = templateAnalytics.filter(t => t.category === category)
+    }
 
-    // Get usage trends (mock data for now - would need time-series data)
-    const usageTrends = Array.from({ length: 7 }, (_, i) => {
+    // Sort by effectiveness score
+    filteredAnalytics.sort((a, b) => b.effectiveness_score - a.effectiveness_score)
+
+    // Calculate summary statistics
+    const totalTemplates = filteredAnalytics.length
+    const totalUsage = filteredAnalytics.reduce((sum, t) => sum + t.usage_count, 0)
+    const averageEffectiveness = totalTemplates > 0 ? 
+      filteredAnalytics.reduce((sum, t) => sum + t.effectiveness_score, 0) / totalTemplates : 0
+    const topPerformers = filteredAnalytics.filter(t => t.effectiveness_score >= 4.0)
+    const needsImprovement = filteredAnalytics.filter(t => t.effectiveness_score < 3.0)
+
+    // Category breakdown
+    const categoryBreakdown = templates.reduce((acc, template) => {
+      const category = template.category || 'uncategorized'
+      if (!acc[category]) {
+        acc[category] = {
+          category,
+          count: 0,
+          total_usage: 0,
+          average_effectiveness: 0
+        }
+      }
+      
+      const analytics = filteredAnalytics.find(a => a.template_id === template.id)
+      acc[category].count++
+      acc[category].total_usage += analytics?.usage_count || 0
+      acc[category].average_effectiveness += analytics?.effectiveness_score || 0
+      
+      return acc
+    }, {} as Record<string, any>)
+
+    // Calculate averages for categories
+    Object.values(categoryBreakdown).forEach((cat: any) => {
+      cat.average_effectiveness = cat.count > 0 ? 
+        Math.round((cat.average_effectiveness / cat.count) * 10) / 10 : 0
+    })
+
+    // Performance over time (mock data - could be enhanced with real time series)
+    const performanceOverTime = Array.from({ length: 7 }, (_, i) => {
       const date = new Date()
-      date.setDate(date.getDate() - i)
+      date.setDate(date.getDate() - (6 - i))
       return {
         date: date.toISOString().split('T')[0],
-        usage: Math.floor(Math.random() * 20) + 5, // Mock data
-        success_rate: Math.floor(Math.random() * 30) + 70 // Mock data
+        usage: Math.floor(Math.random() * 20) + 5,
+        effectiveness: Math.random() * 2 + 3 // 3-5 range
       }
-    }).reverse()
+    })
 
     return NextResponse.json({
+      analytics: filteredAnalytics,
       summary: {
         total_templates: totalTemplates,
         total_usage: totalUsage,
-        average_rating: Math.round(averageRating * 10) / 10,
-        overall_success_rate: Math.round(overallSuccessRate * 10) / 10,
-        average_weight_loss: Math.round(averageWeightLoss * 10) / 10,
-        average_duration: Math.round(averageDuration),
-        total_clients: effectivenessMetrics.totalClients,
-        timeframe
+        average_effectiveness: Math.round(averageEffectiveness * 10) / 10,
+        top_performers: topPerformers.length,
+        needs_improvement: needsImprovement.length,
+        period_days: parseInt(period)
       },
-      category_breakdown: categoryBreakdown,
-      top_templates: topTemplates,
-      usage_trends: usageTrends,
-      effectiveness_distribution: {
-        high_performers: effectiveness.filter(e => e.success_rate >= 80).length,
-        medium_performers: effectiveness.filter(e => e.success_rate >= 60 && e.success_rate < 80).length,
-        low_performers: effectiveness.filter(e => e.success_rate < 60).length
-      }
+      category_breakdown: Object.values(categoryBreakdown),
+      performance_over_time: performanceOverTime
     })
   } catch (error) {
     console.error("Error fetching template analytics:", error)

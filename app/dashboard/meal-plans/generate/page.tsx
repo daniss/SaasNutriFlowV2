@@ -301,79 +301,6 @@ export default function GenerateMealPlanPage() {
     }
   }
 
-  const handleGenerateShoppingList = async () => {
-    if (!generatedPlan) {
-      toast({
-        title: "Erreur",
-        description: "Veuillez d'abord générer un plan alimentaire",
-        variant: "destructive",
-      })
-      return
-    }
-
-    try {
-      // First save the meal plan
-      const { data: savedPlan, error: saveError } = await supabase
-        .from("meal_plans")
-        .insert({
-          dietitian_id: user?.id,
-          client_id: formData.clientId || null,
-          name: generatedPlan.title,
-          description: `Plan généré automatiquement le ${new Date().toLocaleDateString('fr-FR')}`,
-          plan_data: {
-            days: generatedPlan.days,
-            nutritionalGoals: generatedPlan.nutritionalGoals,
-            targetCalories: generatedPlan.targetCalories,
-            nutritionSummary: generatedPlan.nutritionSummary
-          },
-          shopping_list: generatedPlan.shoppingList || [],
-          duration_days: generatedPlan.duration,
-          status: "active"
-        })
-        .select()
-        .single()
-      
-      if (saveError || !savedPlan) {
-        throw new Error('Failed to save meal plan')
-      }
-
-      // Generate shopping list from the saved meal plan
-      const response = await fetch('/api/shopping-lists', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          type: 'from_meal_plan',
-          mealPlanId: savedPlan.id,
-          options: {
-            clientId: formData.clientId || undefined,
-            name: `Liste pour ${generatedPlan.title}`,
-            excludeIngredients: []
-          }
-        })
-      })
-
-      if (response.ok) {
-        const data = await response.json()
-        toast({
-          title: "Succès",
-          description: "Liste de courses générée avec succès",
-        })
-        
-        // Redirect to shopping lists page
-        router.push('/dashboard/shopping-lists')
-      } else {
-        throw new Error('Failed to generate shopping list')
-      }
-    } catch (error) {
-      console.error('Error generating shopping list:', error)
-      toast({
-        title: "Erreur",
-        description: "Impossible de générer la liste de courses",
-        variant: "destructive",
-      })
-    }
-  }
-
   const handleSendToClient = async () => {
     if (!generatedPlan || !formData.clientId) {
       toast({
@@ -811,15 +738,6 @@ export default function GenerateMealPlanPage() {
                         >
                           <Download className="h-4 w-4 mr-2" />
                           Exporter en PDF
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleGenerateShoppingList}
-                          className="bg-white/80 hover:bg-white border-gray-200 hover:border-gray-300 hover:scale-105 transition-all duration-200"
-                        >
-                          <ShoppingCart className="h-4 w-4 mr-2" />
-                          Générer la liste de courses
                         </Button>
                         <Button
                           size="sm"

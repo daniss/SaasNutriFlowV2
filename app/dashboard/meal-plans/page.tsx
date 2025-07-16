@@ -79,7 +79,6 @@ import { DashboardHeader } from "@/components/dashboard-header"
 import Link from "next/link"
 import RecipeTemplateDialog from "@/components/templates/RecipeTemplateDialog"
 import MealPlanTemplateDialog from "@/components/templates/MealPlanTemplateDialog"
-import PlanSchedulingDialog from "@/components/meal-plans/PlanSchedulingDialog"
 
 interface MealPlanWithClient extends MealPlan {
   clients: { name: string } | null
@@ -111,8 +110,6 @@ export default function MealPlansPage() {
   const [editingTemplate, setEditingTemplate] = useState<RecipeTemplate | MealPlanTemplate | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [planToDelete, setPlanToDelete] = useState<MealPlanWithClient | null>(null)
-  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false)
-  const [schedulingPlan, setSchedulingPlan] = useState<MealPlanWithClient | null>(null)
   const [newMealPlan, setNewMealPlan] = useState({
     name: "",
     description: "",
@@ -760,16 +757,6 @@ export default function MealPlansPage() {
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem 
-                              onClick={() => {
-                                setSchedulingPlan(plan)
-                                setIsScheduleDialogOpen(true)
-                              }}
-                              className="rounded-md"
-                            >
-                              <Calendar className="mr-2 h-4 w-4" />
-                              Programmer livraison
-                            </DropdownMenuItem>
-                            <DropdownMenuItem 
                               onClick={() => handleDuplicate(plan)}
                               className="rounded-md"
                             >
@@ -1038,26 +1025,7 @@ export default function MealPlansPage() {
           />
         ) : null}
         
-        {/* Schedule Dialog */}
-        {schedulingPlan && (
-          <PlanSchedulingDialog
-            isOpen={isScheduleDialogOpen}
-            onClose={() => {
-              setIsScheduleDialogOpen(false)
-              setSchedulingPlan(null)
-            }}
-            onSuccess={() => {
-              fetchData()
-              toast({
-                title: "Succès",
-                description: "Planning créé avec succès"
-              })
-            }}
-            mealPlan={schedulingPlan}
-            client={schedulingPlan.clients ? { id: schedulingPlan.client_id, name: schedulingPlan.clients.name } : undefined}
-            clients={clients}
-          />
-        )}
+        {/* Schedule Dialog removed */}
 
         {/* Edit Template Dialogs */}
         {editingTemplate && (

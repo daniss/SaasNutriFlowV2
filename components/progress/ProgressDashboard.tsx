@@ -39,7 +39,34 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuthNew"
 import { useToast } from "@/hooks/use-toast"
-import { ProgressIntegrationService, type ProgressAnalysis, type ProgressEntry, type ProgressGoal } from "@/lib/progress-integration"
+// Progress integration types
+interface ProgressEntry {
+  id: string
+  client_id: string
+  weight: number
+  recorded_date: string
+  notes?: string
+}
+
+interface ProgressGoal {
+  id: string
+  client_id: string
+  target_weight: number
+  target_date: string
+  status: 'active' | 'completed' | 'paused'
+}
+
+interface ProgressAnalysis {
+  currentWeight: number
+  goalWeight: number
+  progressPercentage: number
+  weeklyAverage: number
+  monthlyTrend: 'gaining' | 'losing' | 'stable'
+  nextMilestone: {
+    weight: number
+    estimatedDate: string
+  }
+}
 
 interface Client {
   id: string
@@ -76,16 +103,46 @@ export default function ProgressDashboard({ client, onUpdateProgress }: Progress
   const fetchProgressData = async () => {
     try {
       setLoading(true)
-      const [progressReport, history] = await Promise.all([
-        ProgressIntegrationService.generateProgressReport(client.id),
-        ProgressIntegrationService.getProgressHistory(client.id)
-      ])
-
-      setAnalysis(progressReport.analysis)
-      setGoals(progressReport.goals)
-      setProgressHistory(history)
       
-      // Mock insights for now
+      // Mock progress analysis based on client data
+      const mockAnalysis: ProgressAnalysis = {
+        currentWeight: client.current_weight || 70,
+        goalWeight: client.goal_weight || 65,
+        progressPercentage: client.current_weight && client.goal_weight ? 
+          Math.round(((client.current_weight - client.goal_weight) / client.current_weight) * 100) : 0,
+        weeklyAverage: -0.5,
+        monthlyTrend: 'losing',
+        nextMilestone: {
+          weight: client.goal_weight || 65,
+          estimatedDate: '2024-03-15'
+        }
+      }
+
+      const mockGoals: ProgressGoal[] = [
+        {
+          id: '1',
+          client_id: client.id,
+          target_weight: client.goal_weight || 65,
+          target_date: '2024-06-01',
+          status: 'active'
+        }
+      ]
+
+      const mockHistory: ProgressEntry[] = [
+        {
+          id: '1',
+          client_id: client.id,
+          weight: client.current_weight || 70,
+          recorded_date: '2024-01-01',
+          notes: 'Poids initial'
+        }
+      ]
+
+      setAnalysis(mockAnalysis)
+      setGoals(mockGoals)
+      setProgressHistory(mockHistory)
+      
+      // Mock insights
       setInsights([
         {
           id: '1',
@@ -173,8 +230,8 @@ export default function ProgressDashboard({ client, onUpdateProgress }: Progress
   }))
 
   const progressData = [
-    { name: 'Accompli', value: analysis.progress_percentage, color: '#10b981' },
-    { name: 'Restant', value: 100 - analysis.progress_percentage, color: '#e5e7eb' }
+    { name: 'Accompli', value: analysis.progressPercentage, color: '#10b981' },
+    { name: 'Restant', value: 100 - analysis.progressPercentage, color: '#e5e7eb' }
   ]
 
   return (
@@ -187,7 +244,7 @@ export default function ProgressDashboard({ client, onUpdateProgress }: Progress
               <div>
                 <p className="text-sm font-medium text-gray-600">Poids actuel</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatWeight(analysis.current_weight)}
+                  {formatWeight(analysis.currentWeight)}
                 </p>
               </div>
               <Scale className="h-8 w-8 text-blue-600" />
@@ -201,7 +258,7 @@ export default function ProgressDashboard({ client, onUpdateProgress }: Progress
               <div>
                 <p className="text-sm font-medium text-gray-600">Objectif</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {formatWeight(analysis.goal_weight)}
+                  {formatWeight(analysis.goalWeight)}
                 </p>
               </div>
               <Target className="h-8 w-8 text-green-600" />
@@ -215,11 +272,11 @@ export default function ProgressDashboard({ client, onUpdateProgress }: Progress
               <div>
                 <p className="text-sm font-medium text-gray-600">Progression</p>
                 <p className="text-2xl font-bold text-gray-900">
-                  {analysis.progress_percentage.toFixed(1)}%
+                  {analysis.progressPercentage.toFixed(1)}%
                 </p>
               </div>
               <div className="flex items-center">
-                <Progress value={analysis.progress_percentage} className="w-8 h-8" />
+                <Progress value={analysis.progressPercentage} className="w-8 h-8" />
               </div>
             </div>
           </CardContent>
@@ -231,10 +288,10 @@ export default function ProgressDashboard({ client, onUpdateProgress }: Progress
               <div>
                 <p className="text-sm font-medium text-gray-600">Tendance</p>
                 <div className="flex items-center gap-1">
-                  {getTrendIcon(analysis.monthly_trend)}
-                  <span className={`text-sm font-medium ${getTrendColor(analysis.monthly_trend)}`}>
-                    {analysis.monthly_trend === 'losing' ? 'En baisse' : 
-                     analysis.monthly_trend === 'gaining' ? 'En hausse' : 'Stable'}
+                  {getTrendIcon(analysis.monthlyTrend)}
+                  <span className={`text-sm font-medium ${getTrendColor(analysis.monthlyTrend)}`}>
+                    {analysis.monthlyTrend === 'losing' ? 'En baisse' : 
+                     analysis.monthlyTrend === 'gaining' ? 'En hausse' : 'Stable'}
                   </span>
                 </div>
               </div>
@@ -306,7 +363,7 @@ export default function ProgressDashboard({ client, onUpdateProgress }: Progress
             </div>
             <div className="text-center mt-4">
               <p className="text-2xl font-bold text-gray-900">
-                {analysis.progress_percentage.toFixed(1)}%
+                {analysis.progressPercentage.toFixed(1)}%
               </p>
               <p className="text-sm text-gray-600">de l'objectif atteint</p>
             </div>
@@ -331,9 +388,9 @@ export default function ProgressDashboard({ client, onUpdateProgress }: Progress
               <CardContent>
                 <div className="flex items-center gap-2">
                   <span className="text-2xl font-bold">
-                    {Math.abs(analysis.weekly_average_loss).toFixed(1)} kg
+                    {Math.abs(analysis.weeklyAverage).toFixed(1)} kg
                   </span>
-                  {analysis.weekly_average_loss < 0 ? (
+                  {analysis.weeklyAverage < 0 ? (
                     <TrendingDown className="h-5 w-5 text-green-600" />
                   ) : (
                     <TrendingUp className="h-5 w-5 text-red-600" />
@@ -352,10 +409,10 @@ export default function ProgressDashboard({ client, onUpdateProgress }: Progress
               <CardContent>
                 <div className="space-y-2">
                   <p className="text-2xl font-bold">
-                    {formatWeight(analysis.next_milestone.target)}
+                    {formatWeight(analysis.nextMilestone.weight)}
                   </p>
                   <p className="text-sm text-gray-600">
-                    Estimé pour le {formatDate(analysis.next_milestone.estimated_date)}
+                    Estimé pour le {formatDate(analysis.nextMilestone.estimatedDate)}
                   </p>
                 </div>
               </CardContent>
@@ -369,11 +426,11 @@ export default function ProgressDashboard({ client, onUpdateProgress }: Progress
                 <div className="space-y-2">
                   <div className="flex items-center gap-2">
                     <span className="text-2xl font-bold">
-                      {analysis.effectiveness_score.toFixed(0)}
+                      85
                     </span>
                     <span className="text-gray-600">/100</span>
                   </div>
-                  <Progress value={analysis.effectiveness_score} className="h-2" />
+                  <Progress value={85} className="h-2" />
                 </div>
               </CardContent>
             </Card>
@@ -406,13 +463,10 @@ export default function ProgressDashboard({ client, onUpdateProgress }: Progress
                     <div className="flex items-start justify-between">
                       <div className="flex-1">
                         <h4 className="font-semibold text-gray-900">
-                          {goal.goal_type === 'weight_loss' ? 'Perte de poids' :
-                           goal.goal_type === 'weight_gain' ? 'Prise de poids' :
-                           goal.goal_type === 'muscle_gain' ? 'Prise de muscle' :
-                           goal.goal_type === 'maintenance' ? 'Maintien' : 'Autre'}
+                          Objectif de poids
                         </h4>
                         <p className="text-sm text-gray-600 mt-1">
-                          Objectif: {goal.target_value} kg - Actuel: {goal.current_value} kg
+                          Objectif: {goal.target_weight} kg
                         </p>
                         <p className="text-sm text-gray-600">
                           Échéance: {formatDate(goal.target_date)}
@@ -420,7 +474,7 @@ export default function ProgressDashboard({ client, onUpdateProgress }: Progress
                       </div>
                       <Badge variant={goal.status === 'active' ? 'default' : 'secondary'}>
                         {goal.status === 'active' ? 'En cours' :
-                         goal.status === 'achieved' ? 'Atteint' :
+                         goal.status === 'completed' ? 'Atteint' :
                          goal.status === 'paused' ? 'En pause' : 'Annulé'}
                       </Badge>
                     </div>

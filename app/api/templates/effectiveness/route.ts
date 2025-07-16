@@ -1,6 +1,5 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
-import { ProgressIntegrationService } from "@/lib/progress-integration"
 
 export async function GET(request: Request) {
   try {
@@ -13,66 +12,121 @@ export async function GET(request: Request) {
 
     const { searchParams } = new URL(request.url)
     const templateId = searchParams.get('template_id')
-    const category = searchParams.get('category')
-    const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined
 
-    // Get template effectiveness metrics
-    const effectiveness = await ProgressIntegrationService.getTemplateEffectiveness(user.id)
-    
-    let filteredEffectiveness = effectiveness
+    // Get template effectiveness data
+    const { data: templates, error: templatesError } = await supabase
+      .from('meal_plan_templates')
+      .select(`
+        id,
+        name,
+        category,
+        usage_count,
+        created_at,
+        updated_at
+      `)
+      .eq('dietitian_id', user.id)
+      .order('usage_count', { ascending: false })
 
-    // Filter by template if specified
-    if (templateId) {
-      filteredEffectiveness = effectiveness.filter(e => e.template_id === templateId)
-    }
+    if (templatesError) throw templatesError
 
-    // Filter by category if specified
-    if (category) {
-      // Get templates in the specified category
-      const { data: templates } = await supabase
-        .from('meal_plan_templates')
-        .select('id')
-        .eq('dietitian_id', user.id)
-        .eq('category', category)
+    // Get feedback data for templates
+    const { data: feedback, error: feedbackError } = await supabase
+      .from('meal_plan_feedback')
+      .select(`
+        id,
+        meal_plan_id,
+        rating,
+        satisfaction_rating,
+        difficulty_rating,
+        would_recommend,
+        created_at,
+        meal_plans!inner(
+          id,
+          name,
+          template_id,
+          client_id,
+          created_at
+        )
+      `)
+      .eq('dietitian_id', user.id)
+      .not('meal_plans.template_id', 'is', null)
 
-      const templateIds = templates?.map(t => t.id) || []
-      filteredEffectiveness = filteredEffectiveness.filter(e => 
-        templateIds.includes(e.template_id)
-      )
-    }
+    if (feedbackError) throw feedbackError
 
-    // Apply limit if specified
-    if (limit) {
-      filteredEffectiveness = filteredEffectiveness.slice(0, limit)
-    }
-
-    // Get additional template information for context
-    const enrichedEffectiveness = await Promise.all(
-      filteredEffectiveness.map(async (eff) => {
-        const { data: template } = await supabase
-          .from('meal_plan_templates')
-          .select('name, category, client_type, goal_type, created_at, rating, usage_count')
-          .eq('id', eff.template_id)
-          .single()
-
-        return {
-          ...eff,
-          template_name: template?.name || 'Unknown',
-          template_category: template?.category || 'general',
-          template_client_type: template?.client_type,
-          template_goal_type: template?.goal_type,
-          template_created_at: template?.created_at,
-          template_rating: template?.rating || 0,
-          template_usage_count: template?.usage_count || 0
-        }
+    // Calculate effectiveness metrics for each template
+    const effectivenessData = templates.map(template => {
+      const templateFeedback = feedback.filter(f => {
+        const mealPlan = Array.isArray(f.meal_plans) ? f.meal_plans[0] : f.meal_plans
+        return mealPlan && mealPlan.template_id === template.id
       })
-    )
+      
+      if (templateFeedback.length === 0) {
+        return {
+          template_id: template.id,
+          template_name: template.name,
+          category: template.category,
+          usage_count: template.usage_count,
+          total_feedback: 0,
+          average_rating: 0,
+          average_satisfaction: 0,
+          average_difficulty: 0,
+          recommendation_rate: 0,
+          effectiveness_score: 0,
+          performance_category: 'Needs Improvement',
+          created_at: template.created_at,
+          updated_at: template.updated_at
+        }
+      }
 
-    return NextResponse.json({ 
-      effectiveness: enrichedEffectiveness,
-      total: effectiveness.length,
-      filtered: filteredEffectiveness.length
+      const totalFeedback = templateFeedback.length
+      const averageRating = templateFeedback.reduce((sum, f) => sum + (f.rating || 0), 0) / totalFeedback
+      const averageSatisfaction = templateFeedback.reduce((sum, f) => sum + (f.satisfaction_rating || 0), 0) / totalFeedback
+      const averageDifficulty = templateFeedback.reduce((sum, f) => sum + (f.difficulty_rating || 0), 0) / totalFeedback
+      const recommendationRate = templateFeedback.filter(f => f.would_recommend).length / totalFeedback * 100
+      
+      // Calculate effectiveness score (weighted average)
+      const effectivenessScore = (
+        (averageRating * 0.3) +
+        (averageSatisfaction * 0.3) +
+        ((6 - averageDifficulty) * 0.2) + // Invert difficulty (lower is better)
+        ((recommendationRate / 100) * 5 * 0.2)
+      )
+
+      // Determine performance category
+      let performanceCategory = 'Needs Improvement'
+      if (effectivenessScore >= 4.0) {
+        performanceCategory = 'Excellent'
+      } else if (effectivenessScore >= 3.0) {
+        performanceCategory = 'Good'
+      }
+
+      return {
+        template_id: template.id,
+        template_name: template.name,
+        category: template.category,
+        usage_count: template.usage_count,
+        total_feedback: totalFeedback,
+        average_rating: Math.round(averageRating * 10) / 10,
+        average_satisfaction: Math.round(averageSatisfaction * 10) / 10,
+        average_difficulty: Math.round(averageDifficulty * 10) / 10,
+        recommendation_rate: Math.round(recommendationRate * 10) / 10,
+        effectiveness_score: Math.round(effectivenessScore * 10) / 10,
+        performance_category: performanceCategory,
+        created_at: template.created_at,
+        updated_at: template.updated_at
+      }
     })
+
+    // Filter by template_id if provided
+    if (templateId) {
+      const singleTemplate = effectivenessData.find(e => e.template_id === templateId)
+      if (!singleTemplate) {
+        return NextResponse.json({ error: "Template not found" }, { status: 404 })
+      }
+      return NextResponse.json({ effectiveness: singleTemplate })
+    }
+
+    return NextResponse.json({ effectiveness: effectivenessData })
   } catch (error) {
     console.error("Error fetching template effectiveness:", error)
     return NextResponse.json(
@@ -91,45 +145,41 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const { template_id } = await request.json()
+    const { template_id, effectiveness_score, notes } = await request.json()
 
-    if (!template_id) {
-      return NextResponse.json({ error: "Template ID is required" }, { status: 400 })
+    // Validate input
+    if (!template_id || effectiveness_score === undefined) {
+      return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
     // Verify template ownership
-    const { data: template } = await supabase
+    const { data: template, error: templateError } = await supabase
       .from('meal_plan_templates')
       .select('id')
       .eq('id', template_id)
       .eq('dietitian_id', user.id)
       .single()
 
-    if (!template) {
+    if (templateError || !template) {
       return NextResponse.json({ error: "Template not found" }, { status: 404 })
     }
 
-    // Trigger effectiveness calculation
-    const { error: updateError } = await supabase.rpc('update_template_effectiveness', {
-      p_template_id: template_id
-    })
+    // Insert or update effectiveness tracking
+    const { data, error } = await supabase
+      .from('template_effectiveness')
+      .upsert({
+        template_id,
+        dietitian_id: user.id,
+        effectiveness_score,
+        notes,
+        updated_at: new Date().toISOString()
+      })
+      .select()
+      .single()
 
-    if (updateError) {
-      console.error("Error updating template effectiveness:", updateError)
-      return NextResponse.json(
-        { error: "Failed to update template effectiveness" },
-        { status: 500 }
-      )
-    }
+    if (error) throw error
 
-    // Get updated effectiveness data
-    const effectiveness = await ProgressIntegrationService.getTemplateEffectiveness(user.id)
-    const templateEffectiveness = effectiveness.find(e => e.template_id === template_id)
-
-    return NextResponse.json({ 
-      effectiveness: templateEffectiveness,
-      message: "Template effectiveness updated successfully"
-    })
+    return NextResponse.json({ effectiveness: data }, { status: 201 })
   } catch (error) {
     console.error("Error updating template effectiveness:", error)
     return NextResponse.json(
