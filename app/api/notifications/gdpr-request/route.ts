@@ -1,8 +1,34 @@
 import { EmailService } from "@/lib/email";
 import { NextRequest, NextResponse } from "next/server";
+import { createClient } from "@/lib/supabase/server";
 
 export async function POST(request: NextRequest) {
   try {
+    // Authentication check
+    const supabase = await createClient();
+    const { data: { user }, error: authError } = await supabase.auth.getUser();
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
+    // Get dietitian profile to verify user is a dietitian
+    const { data: dietitian, error: dietitianError } = await supabase
+      .from('dietitians')
+      .select('id, name, email')
+      .eq('auth_user_id', user.id)
+      .single();
+
+    if (dietitianError || !dietitian) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      );
+    }
+
     const body = await request.json();
     const { type, clientName, clientEmail, requestId, requestType, urgent } =
       body;

@@ -1,12 +1,38 @@
 import { NextRequest, NextResponse } from "next/server"
 import { notificationService } from "@/lib/notification-service"
+import { createClient } from "@/lib/supabase/server"
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
-    const { clientEmail, clientName, dietitianName, accountEmail, tempPassword } = body
+    // Authentication check
+    const supabase = await createClient()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    
+    if (authError || !user) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
 
-    if (!clientEmail || !clientName || !dietitianName) {
+    // Get dietitian profile to verify user is a dietitian
+    const { data: dietitian, error: dietitianError } = await supabase
+      .from('dietitians')
+      .select('id, name')
+      .eq('auth_user_id', user.id)
+      .single()
+
+    if (dietitianError || !dietitian) {
+      return NextResponse.json(
+        { error: "Unauthorized" },
+        { status: 401 }
+      )
+    }
+
+    const body = await request.json()
+    const { clientEmail, clientName, accountEmail, tempPassword } = body
+
+    if (!clientEmail || !clientName) {
       return NextResponse.json(
         { error: "Missing required fields" },
         { status: 400 }
@@ -16,7 +42,7 @@ export async function POST(request: NextRequest) {
     let emailContent = `
 Bonjour ${clientName},
 
-Bienvenue sur NutriFlow ! Vous avez été ajouté(e) comme client(e) de ${dietitianName}.
+Bienvenue sur NutriFlow ! Vous avez été ajouté(e) comme client(e) de ${dietitian.name}.
 
 Grâce à cette plateforme, vous pourrez :
 • Consulter vos plans de repas personnalisés
@@ -31,7 +57,7 @@ Grâce à cette plateforme, vous pourrez :
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
     <h2 style="color: #10b981;">Bienvenue sur NutriFlow !</h2>
     <p>Bonjour ${clientName},</p>
-    <p>Vous avez été ajouté(e) comme client(e) de <strong>${dietitianName}</strong>.</p>
+    <p>Vous avez été ajouté(e) comme client(e) de <strong>${dietitian.name}</strong>.</p>
     
     <p>Grâce à cette plateforme, vous pourrez :</p>
     <ul>

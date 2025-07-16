@@ -13,20 +13,21 @@ export function generateTemporaryPassword(clientName: string): string {
 }
 
 /**
- * Simple password hashing function for client accounts
- * Note: In production, you would use bcrypt or similar
- * For now, we'll use a simple hash for demonstration
+ * Secure password hashing function for client accounts
+ * Uses bcryptjs for cryptographically secure hashing
  */
-export function hashPassword(password: string): string {
-  // Simple hash implementation for demo purposes
-  // In production, use bcrypt on the server side
-  let hash = 0;
-  for (let i = 0; i < password.length; i++) {
-    const char = password.charCodeAt(i);
-    hash = ((hash << 5) - hash) + char;
-    hash = hash & hash; // Convert to 32-bit integer
-  }
-  return `demo_hash_${Math.abs(hash).toString(16)}`;
+export async function hashPassword(password: string): Promise<string> {
+  const bcrypt = await import('bcryptjs');
+  const saltRounds = 10;
+  return bcrypt.hash(password, saltRounds);
+}
+
+/**
+ * Compares a plain text password with a hashed password
+ */
+export async function comparePassword(password: string, hash: string): Promise<boolean> {
+  const bcrypt = await import('bcryptjs');
+  return bcrypt.compare(password, hash);
 }
 
 /**

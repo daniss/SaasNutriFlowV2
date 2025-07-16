@@ -25,13 +25,20 @@ NutriFlow is a production-ready SaaS platform for French dietitian-nutritionists
 ```bash
 # Development
 npm run dev          # Start development server with Turbo
+npm run dev:webpack  # Start development server with Webpack (fallback)
 npm run build        # Production build
-npm test             # Run Jest tests
+npm run start        # Start production server
 npm run type-check   # TypeScript validation
 npm run lint         # ESLint checking
 
+# Testing
+npm test             # Run Jest tests
+npm run test:watch   # Run Jest tests in watch mode
+npm run test:coverage # Run Jest tests with coverage report (70% threshold)
+
 # Database
 # Use Supabase dashboard or scripts in /scripts directory for migrations
+# Run specific test: npm test -- --testPathPattern="specific-test-name"
 ```
 
 ## Architecture
@@ -43,28 +50,60 @@ npm run lint         # ESLint checking
 - **React Hook Form** + **Zod** validation
 - **Google Gemini AI** for meal plans
 - **Stripe** for payments
+- **bcryptjs** for client password hashing
+- **jsPDF** for PDF generation
+- **Recharts** for data visualization
 
 ### Directory Structure
 ```
 app/              # Next.js App Router pages
-├── api/          # API routes
+├── api/          # API routes (multi-tenant secure)
 ├── dashboard/    # Protected nutritionist pages
-└── client-portal/# Client authentication & pages
+├── client-portal/# Client authentication & pages
+├── login/        # Authentication pages
+└── globals.css   # Global styles
 
 components/       # React components
 ├── ui/          # shadcn/ui base components
-├── auth/        # Authentication components
+├── auth/        # Authentication components (dual system)
 ├── dashboard/   # Dashboard features
-└── templates/   # Reusable templates
+├── templates/   # Reusable templates (recipes, meal plans)
+└── shared/      # Shared components
 
 lib/             # Utilities and services
-├── supabase/    # Database clients
-└── *.ts         # Service files
+├── supabase/    # Database clients (client.ts, server.ts)
+├── supabase.ts  # Main database types & exports
+├── gemini.ts    # AI meal plan generation
+├── payment-service.ts # Stripe integration
+├── client-auth-security.ts # Client authentication
+└── *.ts         # Other service files
 
 hooks/           # Custom React hooks
-scripts/         # SQL migrations
-__tests__/       # Jest tests
+scripts/         # SQL migrations and database setup
+__tests__/       # Jest tests with 70% coverage threshold
+middleware.ts    # Route protection & auth handling
 ```
+
+### Core Architecture Patterns
+
+#### Multi-Tenant Data Model
+- **Dietitians**: Primary tenant entities (Row Level Security anchor)
+- **Clients**: Belong to dietitians, isolated by `dietitian_id`
+- **All data**: Filtered by `dietitian_id` in queries and RLS policies
+- **Templates**: Reusable meal plan/recipe structures per dietitian
+
+#### Authentication Architecture
+```typescript
+// Dual authentication system
+Nutritionists: Supabase Auth → AuthProviderNew → useAuth()
+Clients: Custom JWT → ClientAuthProvider → useClientAuth()
+```
+
+#### Database Layer
+- **Supabase Client**: `/lib/supabase/client.ts` (client-side)
+- **Supabase Server**: `/lib/supabase/server.ts` (server-side)
+- **Type Safety**: Generated TypeScript types in `/lib/supabase.ts`
+- **RLS Policies**: Enforce tenant isolation at database level
 
 ## Development Guidelines
 
@@ -84,27 +123,55 @@ __tests__/       # Jest tests
 
 ### API Routes
 ```typescript
-// Standard pattern
+// Standard nutritionist API pattern
 export async function POST(request: Request) {
   try {
-    const supabase = createServerComponentClient({ cookies })
+    const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     
     if (!user) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
     
-    // Get dietitian_id
-    const { data: profile } = await supabase
+    // Get dietitian_id for tenant isolation
+    const { data: dietitian } = await supabase
       .from('dietitians')
       .select('id')
       .eq('auth_user_id', user.id)
       .single()
     
-    // Your logic here with dietitian_id filter
+    if (!dietitian) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+    
+    // Your logic here with dietitian.id filter
     
     return NextResponse.json({ success: true, data })
   } catch (error) {
+    console.error('API Error:', error)
+    return NextResponse.json({ error: 'Server error' }, { status: 500 })
+  }
+}
+
+// Client API pattern (uses custom authentication)
+export async function POST(request: Request) {
+  try {
+    const authResult = await validateClientAuth(request)
+    
+    if ('error' in authResult) {
+      return NextResponse.json(
+        { error: authResult.error },
+        { status: authResult.status }
+      )
+    }
+    
+    const { clientId } = authResult
+    
+    // Your logic here with clientId filter
+    
+    return NextResponse.json({ success: true, data })
+  } catch (error) {
+    console.error('Client API Error:', error)
     return NextResponse.json({ error: 'Server error' }, { status: 500 })
   }
 }
@@ -176,15 +243,31 @@ npm run type-check && npm run lint && npm test
 5. **Never** bypass RLS policies
 6. **Never** commit .env files
 
-## Recent Updates
+## Key Features & Business Logic
 
-- Production deployment completed (January 2025)
-- Two-factor authentication implemented
-- Client portal with separate auth
-- GDPR compliance features
-- French foods database integration (ANSES-CIQUAL)
-- Weight tracking with visualizations
-- Progress photo management
+### Meal Planning System
+- **AI Generation**: `/dashboard/meal-plans/generate` - Advanced AI meal planning with Google Gemini
+- **Template System**: Reusable meal plan and recipe templates per dietitian
+- **Three-Tier Structure**: Plans → Recipes → Templates (for efficiency and consistency)
+- **PDF Export**: Professional meal plan exports with nutritional analysis
+
+### Client Management
+- **Dual Portal System**: Nutritionist dashboard + separate client portal
+- **Progress Tracking**: Weight, measurements, photos with visual charts
+- **Document Management**: File upload with visibility controls
+- **GDPR Compliance**: Data export, deletion, and consent management
+
+### Authentication Security
+- **Password Hashing**: bcryptjs with salt for client accounts
+- **Session Management**: Secure HMAC tokens with expiration
+- **Rate Limiting**: Prevents brute force attacks
+- **Two-Factor Auth**: Email-based 2FA for nutritionists
+
+### Database Security
+- **Row Level Security**: All tables have RLS policies
+- **Multi-Tenant Isolation**: Every query filters by `dietitian_id`
+- **Service Role Protection**: Limited use with proper validation
+- **Data Encryption**: Sensitive data properly encrypted
 
 ## Environment Variables
 
@@ -192,29 +275,40 @@ Required in `.env.local`:
 ```
 NEXT_PUBLIC_SUPABASE_URL=
 NEXT_PUBLIC_SUPABASE_ANON_KEY=
-SUPABASE_SERVICE_ROLE_KEY=
-GOOGLE_GEMINI_API_KEY=
-STRIPE_SECRET_KEY=
-STRIPE_WEBHOOK_SECRET=
+SUPABASE_SERVICE_ROLE_KEY=          # Used sparingly, bypasses RLS
+CLIENT_AUTH_SECRET=                 # For client JWT tokens (must be set)
+GOOGLE_GEMINI_API_KEY=             # For AI meal plan generation
+STRIPE_SECRET_KEY=                 # For payment processing
+STRIPE_WEBHOOK_SECRET=             # For payment webhooks
 ```
 
 ## Common Tasks
 
 ### Adding a New Feature
 1. Create feature folder in `/components`
-2. Add route in `/app/dashboard`
+2. Add route in `/app/dashboard` or `/app/client-portal`
 3. Update navigation in `DashboardNav`
-4. Add database tables with RLS
-5. Create API routes if needed
-6. Add tests in `__tests__`
+4. Add database tables with RLS policies
+5. Create API routes with proper authentication
+6. Add tests in `__tests__` (maintain 70% coverage)
+7. Update TypeScript types in `/lib/supabase.ts`
 
 ### Database Changes
 1. Create SQL script in `/scripts`
 2. Apply via Supabase dashboard
-3. Update TypeScript types
-4. Test RLS policies
+3. Update TypeScript types in `/lib/supabase.ts`
+4. Test RLS policies thoroughly
+5. Verify tenant isolation works correctly
+
+### Security Considerations
+- **Client Authentication**: Use `validateClientAuth()` for client APIs
+- **Password Handling**: Always use `hashPassword()` and `comparePassword()`
+- **Environment Variables**: Never expose service role key to client
+- **Input Validation**: Use Zod schemas for all inputs
+- **Error Handling**: Don't expose internal error details
 
 ### Deployment
 - Automated via Vercel
 - Environment variables in Vercel dashboard
 - Database migrations via Supabase dashboard
+- Monitor for RLS policy violations

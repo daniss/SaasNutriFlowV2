@@ -14,6 +14,15 @@ import { X, Plus, Calendar, Utensils } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { supabase, type MealPlanTemplate } from "@/lib/supabase"
 import { useAuth } from "@/hooks/useAuthNew"
+import { 
+  MEAL_PLAN_CATEGORIES, 
+  CLIENT_TYPES, 
+  GOAL_TYPES,
+  getCategoryInfo,
+  getClientTypeInfo,
+  getGoalTypeInfo,
+  suggestCategoriesForClient
+} from "@/lib/template-categories"
 
 interface MealPlanTemplateDialogProps {
   isOpen: boolean
@@ -44,12 +53,14 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
     name: template?.name || "",
     description: template?.description || "",
     category: template?.category || "",
+    client_type: template?.client_type || "general",
+    goal_type: template?.goal_type || "general",
     duration_days: template?.duration_days || 7,
     target_calories: template?.target_calories || "",
     target_macros: template?.target_macros || { protein: null, carbs: null, fat: null },
     difficulty: template?.difficulty || "medium",
     tags: template?.tags || [],
-    meal_structure: template?.meal_structure || [
+    meal_structure: (Array.isArray(template?.meal_structure) ? template.meal_structure : [
       {
         day: 1,
         meals: [
@@ -60,17 +71,26 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
           { name: "Dîner", time: "19:00", calories_target: null, description: "" }
         ]
       }
-    ]
+    ])
   })
 
-  const categories = [
-    { value: "weight_loss", label: "Perte de poids" },
-    { value: "muscle_gain", label: "Prise de masse" },
-    { value: "maintenance", label: "Maintien" },
-    { value: "medical", label: "Médical" },
-    { value: "sports", label: "Sport" },
-    { value: "wellness", label: "Bien-être" }
-  ]
+  const categories = Object.entries(MEAL_PLAN_CATEGORIES).map(([key, value]) => ({
+    value: key,
+    label: value.label,
+    description: value.description
+  }))
+
+  const clientTypes = Object.entries(CLIENT_TYPES).map(([key, value]) => ({
+    value: key,
+    label: value.label,
+    description: value.description
+  }))
+
+  const goalTypes = Object.entries(GOAL_TYPES).map(([key, value]) => ({
+    value: key,
+    label: value.label,
+    description: value.description
+  }))
 
   const mealTypes = [
     "Petit-déjeuner", "Collation matin", "Déjeuner", "Collation après-midi", 
@@ -94,6 +114,8 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
         name: formData.name,
         description: formData.description || null,
         category: formData.category,
+        client_type: formData.client_type,
+        goal_type: formData.goal_type,
         duration_days: formData.duration_days,
         target_calories: formData.target_calories || null,
         target_macros: formData.target_macros,
@@ -160,44 +182,54 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
   const removeDay = (dayIndex: number) => {
     setFormData(prev => ({
       ...prev,
-      meal_structure: prev.meal_structure.filter((_: DayStructure, i: number) => i !== dayIndex)
-        .map((day: DayStructure, i: number) => ({ ...day, day: i + 1 }))
+      meal_structure: Array.isArray(prev.meal_structure) 
+        ? prev.meal_structure.filter((_: DayStructure, i: number) => i !== dayIndex)
+            .map((day: DayStructure, i: number) => ({ ...day, day: i + 1 }))
+        : []
     }))
   }
 
   const addMeal = (dayIndex: number) => {
     setFormData(prev => ({
       ...prev,
-      meal_structure: prev.meal_structure.map((day: DayStructure, i: number) => 
-        i === dayIndex 
-          ? { ...day, meals: [...day.meals, { name: "", time: "", calories_target: null, description: "" }] }
-          : day
-      )
+      meal_structure: Array.isArray(prev.meal_structure) 
+        ? prev.meal_structure.map((day: DayStructure, i: number) => 
+            i === dayIndex 
+              ? { ...day, meals: [...(day.meals || []), { name: "", time: "", calories_target: null, description: "" }] }
+              : day
+          )
+        : []
     }))
   }
 
   const removeMeal = (dayIndex: number, mealIndex: number) => {
     setFormData(prev => ({
-      ...prev,      meal_structure: prev.meal_structure.map((day: DayStructure, i: number) =>
+      ...prev,
+      meal_structure: Array.isArray(prev.meal_structure) 
+        ? prev.meal_structure.map((day: DayStructure, i: number) =>
         i === dayIndex 
-          ? { ...day, meals: day.meals.filter((_: MealSlot, j: number) => j !== mealIndex) }
+          ? { ...day, meals: (day.meals || []).filter((_: MealSlot, j: number) => j !== mealIndex) }
           : day
       )
+        : []
     }))
   }
 
   const updateMeal = (dayIndex: number, mealIndex: number, field: keyof MealSlot, value: string | number | null) => {
     setFormData(prev => ({
-      ...prev,      meal_structure: prev.meal_structure.map((day: DayStructure, i: number) =>
-        i === dayIndex 
-          ? {
-              ...day,
-              meals: day.meals.map((meal: MealSlot, j: number) =>
-                j === mealIndex ? { ...meal, [field]: value } : meal
-              )
-            }
-          : day
-      )
+      ...prev,
+      meal_structure: Array.isArray(prev.meal_structure) 
+        ? prev.meal_structure.map((day: DayStructure, i: number) =>
+            i === dayIndex 
+              ? {
+                  ...day,
+                  meals: (day.meals || []).map((meal: MealSlot, j: number) =>
+                    j === mealIndex ? { ...meal, [field]: value } : meal
+                  )
+                }
+              : day
+          )
+        : []
     }))
   }
 
@@ -219,13 +251,18 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
   }
 
   const duplicateDay = (dayIndex: number) => {
+    if (!Array.isArray(formData.meal_structure) || !formData.meal_structure[dayIndex]) {
+      return
+    }
     const dayToCopy = formData.meal_structure[dayIndex]
     setFormData(prev => ({
       ...prev,
-      meal_structure: [...prev.meal_structure, {
-        ...dayToCopy,
-        day: prev.meal_structure.length + 1
-      }]
+      meal_structure: Array.isArray(prev.meal_structure) 
+        ? [...prev.meal_structure, {
+            ...dayToCopy,
+            day: prev.meal_structure.length + 1
+          }]
+        : []
     }))
   }
 
@@ -269,7 +306,50 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                   <SelectContent>
                     {categories.map(cat => (
                       <SelectItem key={cat.value} value={cat.value}>
-                        {cat.label}
+                        <div className="flex flex-col">
+                          <span className="font-medium">{cat.label}</span>
+                          <span className="text-sm text-gray-500">{cat.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="client_type">Type de client</Label>
+                <Select value={formData.client_type} onValueChange={(value) => setFormData(prev => ({ ...prev, client_type: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un type" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {clientTypes.map(type => (
+                      <SelectItem key={type.value} value={type.value}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{type.label}</span>
+                          <span className="text-sm text-gray-500">{type.description}</span>
+                        </div>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              
+              <div className="space-y-2">
+                <Label htmlFor="goal_type">Type d'objectif</Label>
+                <Select value={formData.goal_type} onValueChange={(value) => setFormData(prev => ({ ...prev, goal_type: value }))}>
+                  <SelectTrigger>
+                    <SelectValue placeholder="Sélectionner un objectif" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {goalTypes.map(goal => (
+                      <SelectItem key={goal.value} value={goal.value}>
+                        <div className="flex flex-col">
+                          <span className="font-medium">{goal.label}</span>
+                          <span className="text-sm text-gray-500">{goal.description}</span>
+                        </div>
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -355,7 +435,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
 
           <TabsContent value="structure" className="space-y-4">
             <div className="flex items-center justify-between">
-              <h3 className="text-lg font-semibold">Structure du plan ({formData.meal_structure.length} jours)</h3>
+              <h3 className="text-lg font-semibold">Structure du plan ({Array.isArray(formData.meal_structure) ? formData.meal_structure.length : 0} jours)</h3>
               <Button variant="outline" size="sm" onClick={addDay}>
                 <Plus className="h-4 w-4 mr-2" />
                 Ajouter un jour
@@ -363,7 +443,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
             </div>
 
             <div className="space-y-6">
-              {formData.meal_structure.map((day: DayStructure, dayIndex: number) => (
+              {Array.isArray(formData.meal_structure) && formData.meal_structure.map((day: DayStructure, dayIndex: number) => (
                 <Card key={dayIndex}>
                   <CardHeader>
                     <div className="flex items-center justify-between">
@@ -380,7 +460,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                           variant="outline"
                           size="sm"
                           onClick={() => removeDay(dayIndex)}
-                          disabled={formData.meal_structure.length === 1}
+                          disabled={!Array.isArray(formData.meal_structure) || formData.meal_structure.length === 1}
                         >
                           <X className="h-4 w-4" />
                         </Button>

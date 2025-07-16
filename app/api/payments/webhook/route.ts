@@ -19,7 +19,22 @@ export async function POST(request: NextRequest) {
         const metadata = result.event.data?.object?.metadata || {}
         
         if (metadata.invoice_id) {
-          // Update invoice status to paid
+          // First verify the invoice exists and get its dietitian_id
+          const { data: invoice, error: fetchError } = await supabase
+            .from('invoices')
+            .select('id, dietitian_id')
+            .eq('id', metadata.invoice_id)
+            .single()
+
+          if (fetchError || !invoice) {
+            console.error('Invoice not found or error fetching:', fetchError)
+            return NextResponse.json(
+              { error: 'Invalid invoice ID' },
+              { status: 400 }
+            )
+          }
+
+          // Update invoice status to paid with dietitian_id check
           const { error } = await supabase
             .from('invoices')
             .update({ 
@@ -28,6 +43,7 @@ export async function POST(request: NextRequest) {
               updated_at: new Date().toISOString()
             })
             .eq('id', metadata.invoice_id)
+            .eq('dietitian_id', invoice.dietitian_id) // Multi-tenant safety
 
           if (error) {
             console.error('Error updating invoice status:', error)

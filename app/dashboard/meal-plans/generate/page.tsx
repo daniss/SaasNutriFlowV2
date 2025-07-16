@@ -260,7 +260,7 @@ export default function GenerateMealPlanPage() {
 
     // Recalculate daily totals from array structure
     dayPlan.totalCalories = dayPlan.meals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
-    dayPlan.totalProtein = dayPlan.meals.reduce((sum, meal) => sum + (meal.protéines || 0), 0)
+    dayPlan.totalProtein = dayPlan.meals.reduce((sum, meal) => sum + (meal.protein || 0), 0)
     dayPlan.totalCarbs = dayPlan.meals.reduce((sum, meal) => sum + (meal.carbs || 0), 0)
     dayPlan.totalFat = dayPlan.meals.reduce((sum, meal) => sum + (meal.fat || 0), 0)
 
@@ -296,6 +296,79 @@ export default function GenerateMealPlanPage() {
       toast({
         title: "Erreur de sauvegarde",
         description: "Impossible de sauvegarder le modèle. Veuillez réessayer.",
+        variant: "destructive",
+      })
+    }
+  }
+
+  const handleGenerateShoppingList = async () => {
+    if (!generatedPlan) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez d'abord générer un plan alimentaire",
+        variant: "destructive",
+      })
+      return
+    }
+
+    try {
+      // First save the meal plan
+      const { data: savedPlan, error: saveError } = await supabase
+        .from("meal_plans")
+        .insert({
+          dietitian_id: user?.id,
+          client_id: formData.clientId || null,
+          name: generatedPlan.title,
+          description: `Plan généré automatiquement le ${new Date().toLocaleDateString('fr-FR')}`,
+          plan_data: {
+            days: generatedPlan.days,
+            nutritionalGoals: generatedPlan.nutritionalGoals,
+            targetCalories: generatedPlan.targetCalories,
+            nutritionSummary: generatedPlan.nutritionSummary
+          },
+          shopping_list: generatedPlan.shoppingList || [],
+          duration_days: generatedPlan.duration,
+          status: "active"
+        })
+        .select()
+        .single()
+      
+      if (saveError || !savedPlan) {
+        throw new Error('Failed to save meal plan')
+      }
+
+      // Generate shopping list from the saved meal plan
+      const response = await fetch('/api/shopping-lists', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'from_meal_plan',
+          mealPlanId: savedPlan.id,
+          options: {
+            clientId: formData.clientId || undefined,
+            name: `Liste pour ${generatedPlan.title}`,
+            excludeIngredients: []
+          }
+        })
+      })
+
+      if (response.ok) {
+        const data = await response.json()
+        toast({
+          title: "Succès",
+          description: "Liste de courses générée avec succès",
+        })
+        
+        // Redirect to shopping lists page
+        router.push('/dashboard/shopping-lists')
+      } else {
+        throw new Error('Failed to generate shopping list')
+      }
+    } catch (error) {
+      console.error('Error generating shopping list:', error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer la liste de courses",
         variant: "destructive",
       })
     }
@@ -740,6 +813,15 @@ export default function GenerateMealPlanPage() {
                           Exporter en PDF
                         </Button>
                         <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleGenerateShoppingList}
+                          className="bg-white/80 hover:bg-white border-gray-200 hover:border-gray-300 hover:scale-105 transition-all duration-200"
+                        >
+                          <ShoppingCart className="h-4 w-4 mr-2" />
+                          Générer la liste de courses
+                        </Button>
+                        <Button
                           size="sm"
                           onClick={handleSendToClient}
                           disabled={!formData.clientId}
@@ -758,7 +840,7 @@ export default function GenerateMealPlanPage() {
                       {[
                         { label: "Jours", value: generatedPlan.duration, icon: Calendar, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
                         { label: "Calories/Jour", value: generatedPlan.nutritionalGoals?.dailyCalories || 'N/A', icon: Flame, color: "text-red-600", bg: "bg-red-50", border: "border-red-200", suffix: "kcal" },
-                        { label: "Protéines %", value: `${generatedPlan.nutritionalGoals?.protéinesPercentage || 'N/A'}%`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50", border: "border-green-200" },
+                        { label: "Protéines %", value: `${generatedPlan.nutritionalGoals?.proteinPercentage || 'N/A'}%`, icon: TrendingUp, color: "text-green-600", bg: "bg-green-50", border: "border-green-200" },
                         { label: "Glucides %", value: `${generatedPlan.nutritionalGoals?.carbPercentage || 'N/A'}%`, icon: Leaf, color: "text-purple-600", bg: "bg-purple-50", border: "border-purple-200" },
                       ].map((stat, index) => (
                         <div key={index} className={`${stat.bg} ${stat.border} border rounded-xl p-4 text-center transition-all hover:scale-105 cursor-pointer group`}>
@@ -1001,7 +1083,7 @@ export default function GenerateMealPlanPage() {
                                         <div className="text-xs text-gray-600 mb-2">{mealData.meal.description}</div>
                                         <div className="flex items-center gap-4 text-xs text-gray-500">
                                           <span>{mealData.meal.calories} cal</span>
-                                          <span>{mealData.meal.protéines}g protéines</span>
+                                          <span>{mealData.meal.protein}g protéines</span>
                                           <span>{(mealData.meal.prepTime || 0) + (mealData.meal.cookTime || 0)} min</span>
                                         </div>
                                       </div>
@@ -1029,7 +1111,7 @@ export default function GenerateMealPlanPage() {
                                         <div className="text-xs text-gray-600 mb-2">{snack.description}</div>
                                         <div className="flex items-center gap-4 text-xs text-gray-500">
                                           <span>{snack.calories} cal</span>
-                                          <span>{snack.protéines}g protéines</span>
+                                          <span>{snack.protein}g protéines</span>
                                         </div>
                                       </div>
                                     ))}
@@ -1098,7 +1180,7 @@ export default function GenerateMealPlanPage() {
                                     <div className="text-xs text-gray-600 mb-2 line-clamp-2">{mealData.meal.description}</div>
                                     <div className="flex items-center justify-between text-xs text-gray-500">
                                       <span>{mealData.meal.calories} cal</span>
-                                      <span>{mealData.meal.protéines}g protéines</span>
+                                      <span>{mealData.meal.protein}g protéines</span>
                                     </div>
                                   </div>
                                 ))
@@ -1328,7 +1410,7 @@ export default function GenerateMealPlanPage() {
               <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { key: 'calories', label: 'Calories', suffix: '' },
-                  { key: 'protéines', label: 'Protéines', suffix: 'g' },
+                  { key: 'protein', label: 'Protéines', suffix: 'g' },
                   { key: 'carbs', label: 'Glucides', suffix: 'g' },
                   { key: 'fat', label: 'Lipides', suffix: 'g' },
                 ].map((field) => (
@@ -1470,7 +1552,7 @@ function MealCard({
           </div>
           <div className="flex items-center gap-1 text-blue-600 bg-blue-50 px-2 py-1 rounded-md">
             <Activity className="h-3 w-3" />
-            <span className="font-medium">{meal.protéines}g protéines</span>
+            <span className="font-medium">{meal.protein}g protéines</span>
           </div>
           <div className="flex items-center gap-1 text-orange-600 bg-orange-50 px-2 py-1 rounded-md">
             <PieChart className="h-3 w-3" />

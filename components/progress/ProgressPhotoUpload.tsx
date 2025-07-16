@@ -16,7 +16,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuthNew";
 import { supabase } from "@/lib/supabase";
 import { Camera, X } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 interface ProgressPhotoUploadProps {
   clientId: string;
@@ -39,6 +39,15 @@ export function ProgressPhotoUpload({
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [notes, setNotes] = useState("");
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+
+  // Cleanup object URL on component unmount to prevent memory leaks
+  useEffect(() => {
+    return () => {
+      if (previewUrl) {
+        URL.revokeObjectURL(previewUrl);
+      }
+    };
+  }, [previewUrl]);
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];

@@ -25,7 +25,8 @@ import {
   Utensils, 
   ChefHat,
   Clock,
-  Users
+  Users,
+  BarChart3
 } from "lucide-react"
 import { 
   DropdownMenu, 
@@ -41,12 +42,15 @@ import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type RecipeTemplate, type MealPlanTemplate } from "@/lib/supabase"
 import RecipeTemplateDialog from "@/components/templates/RecipeTemplateDialog"
 import MealPlanTemplateDialog from "@/components/templates/MealPlanTemplateDialog"
+import TemplateEffectivenessWidget from "@/components/templates/TemplateEffectivenessWidget"
+import { useRouter } from "next/navigation"
 
 type TemplateType = 'recipe' | 'meal_plan'
 
 export default function TemplatesPage() {
   const { user } = useAuth()
   const { toast } = useToast()
+  const router = useRouter()
   
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
@@ -156,13 +160,23 @@ export default function TemplatesPage() {
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
-          <Button 
-            onClick={() => setIsAddDialogOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
-          >
-            <Plus className="mr-2 h-4 w-4" />
-            Nouveau modèle
-          </Button>
+          <div className="flex items-center gap-3">
+            <Button 
+              variant="outline"
+              onClick={() => router.push('/dashboard/templates/analytics')}
+              className="text-emerald-600 border-emerald-600 hover:bg-emerald-50"
+            >
+              <BarChart3 className="mr-2 h-4 w-4" />
+              Analytics
+            </Button>
+            <Button 
+              onClick={() => setIsAddDialogOpen(true)}
+              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Nouveau modèle
+            </Button>
+          </div>
         }
       />
 
@@ -432,6 +446,17 @@ function TemplateCard({
                 +{template.tags.length - 3}
               </Badge>
             )}
+          </div>
+        )}
+
+        {/* Template Effectiveness Widget for Meal Plan Templates */}
+        {type === 'meal_plan' && (
+          <div className="mt-4">
+            <TemplateEffectivenessWidget 
+              templateId={template.id}
+              templateName={template.name}
+              compact={true}
+            />
           </div>
         )}
       </CardContent>

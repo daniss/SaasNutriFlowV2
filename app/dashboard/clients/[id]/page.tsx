@@ -4,6 +4,7 @@ import { DocumentList } from "@/components/documents/DocumentList";
 import { DocumentUpload } from "@/components/documents/DocumentUpload";
 import { ProgressPhotoUpload } from "@/components/progress/ProgressPhotoUpload";
 import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
+import ProgressDashboard from "@/components/progress/ProgressDashboard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -725,12 +726,14 @@ export default function ClientDetailPage() {
     // If goal is weight loss (goal < initial)
     if (goalWeight < initialWeight) {
       const totalWeightToLose = initialWeight - goalWeight;
+      if (totalWeightToLose === 0) return 100; // Handle edge case where goal equals initial
       const weightLost = Math.max(0, initialWeight - currentWeight); // Ensure non-negative
       return Math.min(100, Math.round((weightLost / totalWeightToLose) * 100));
     }
     // If goal is weight gain (goal > initial)
     else if (goalWeight > initialWeight) {
       const totalWeightToGain = goalWeight - initialWeight;
+      if (totalWeightToGain === 0) return 100; // Handle edge case where goal equals initial
       const weightGained = Math.max(0, currentWeight - initialWeight); // Ensure non-negative
       return Math.min(
         100,
@@ -984,6 +987,13 @@ export default function ClientDetailPage() {
             >
               <Camera className="h-4 w-4 mr-2" />
               Photos de progrès
+            </TabsTrigger>
+            <TabsTrigger
+              value="analytics"
+              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600"
+            >
+              <Target className="h-4 w-4 mr-2" />
+              Analytics
             </TabsTrigger>
           </TabsList>
 
@@ -1703,6 +1713,14 @@ export default function ClientDetailPage() {
                 />
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Analytics Tab */}
+          <TabsContent value="analytics" className="space-y-6">
+            <ProgressDashboard 
+              client={client} 
+              onUpdateProgress={fetchClientData}
+            />
           </TabsContent>
         </Tabs>
       </div>

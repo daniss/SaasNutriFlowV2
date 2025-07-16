@@ -38,10 +38,25 @@ import {
   Activity,
   Target,
   ChefHat,
-  BarChart3
+  BarChart3,
+  Leaf,
+  Shield,
+  Stethoscope,
+  Dumbbell,
+  User,
+  Sparkles
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type MealPlan, type RecipeTemplate, type MealPlanTemplate } from "@/lib/supabase"
+import { 
+  MEAL_PLAN_CATEGORIES, 
+  CLIENT_TYPES, 
+  GOAL_TYPES,
+  getCategoryInfo,
+  getClientTypeInfo,
+  getGoalTypeInfo,
+  filterTemplatesByCategory
+} from "@/lib/template-categories"
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -64,6 +79,7 @@ import { DashboardHeader } from "@/components/dashboard-header"
 import Link from "next/link"
 import RecipeTemplateDialog from "@/components/templates/RecipeTemplateDialog"
 import MealPlanTemplateDialog from "@/components/templates/MealPlanTemplateDialog"
+import PlanSchedulingDialog from "@/components/meal-plans/PlanSchedulingDialog"
 
 interface MealPlanWithClient extends MealPlan {
   clients: { name: string } | null
@@ -83,6 +99,9 @@ export default function MealPlansPage() {
   const [loading, setLoading] = useState(true)
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
+  const [filterCategory, setFilterCategory] = useState<string>("all")
+  const [filterClientType, setFilterClientType] = useState<string>("all")
+  const [filterGoalType, setFilterGoalType] = useState<string>("all")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [activeTab, setActiveTab] = useState<'meal_plans' | TemplateType>('meal_plans')
   const [recipeTemplates, setRecipeTemplates] = useState<RecipeTemplate[]>([])
@@ -92,6 +111,8 @@ export default function MealPlansPage() {
   const [editingTemplate, setEditingTemplate] = useState<RecipeTemplate | MealPlanTemplate | null>(null)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [planToDelete, setPlanToDelete] = useState<MealPlanWithClient | null>(null)
+  const [isScheduleDialogOpen, setIsScheduleDialogOpen] = useState(false)
+  const [schedulingPlan, setSchedulingPlan] = useState<MealPlanWithClient | null>(null)
   const [newMealPlan, setNewMealPlan] = useState({
     name: "",
     description: "",
@@ -648,6 +669,13 @@ export default function MealPlansPage() {
               <SelectItem value="paused" className="rounded-md">En pause</SelectItem>
             </SelectContent>
           </Select>
+          
+          <Button variant="outline" asChild>
+            <Link href="/dashboard/meal-plans/schedules">
+              <Calendar className="h-4 w-4 mr-2" />
+              Plannings
+            </Link>
+          </Button>
         </div>
 
         {/* Meal Plans Grid */}
@@ -730,6 +758,16 @@ export default function MealPlansPage() {
                                 <Edit className="mr-2 h-4 w-4" />
                                 Modifier le plan
                               </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem 
+                              onClick={() => {
+                                setSchedulingPlan(plan)
+                                setIsScheduleDialogOpen(true)
+                              }}
+                              className="rounded-md"
+                            >
+                              <Calendar className="mr-2 h-4 w-4" />
+                              Programmer livraison
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               onClick={() => handleDuplicate(plan)}
@@ -879,6 +917,54 @@ export default function MealPlansPage() {
           </TabsContent>
 
           <TabsContent value="meal_plan" className="space-y-6 mt-6">
+            {/* Template Filters */}
+            <div className="flex flex-wrap items-center gap-4">
+              <Select value={filterCategory} onValueChange={setFilterCategory}>
+                <SelectTrigger className="w-48 h-11 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm">
+                  <Filter className="h-4 w-4 mr-2 text-slate-500" />
+                  <SelectValue placeholder="Catégorie" />
+                </SelectTrigger>
+                <SelectContent className="rounded-lg">
+                  <SelectItem value="all" className="rounded-md">Toutes les catégories</SelectItem>
+                  {Object.entries(MEAL_PLAN_CATEGORIES).map(([key, value]) => (
+                    <SelectItem key={key} value={key} className="rounded-md">
+                      {value.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select value={filterClientType} onValueChange={setFilterClientType}>
+                <SelectTrigger className="w-48 h-11 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm">
+                  <User className="h-4 w-4 mr-2 text-slate-500" />
+                  <SelectValue placeholder="Type de client" />
+                </SelectTrigger>
+                <SelectContent className="rounded-lg">
+                  <SelectItem value="all" className="rounded-md">Tous les types</SelectItem>
+                  {Object.entries(CLIENT_TYPES).map(([key, value]) => (
+                    <SelectItem key={key} value={key} className="rounded-md">
+                      {value.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              
+              <Select value={filterGoalType} onValueChange={setFilterGoalType}>
+                <SelectTrigger className="w-48 h-11 border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20 bg-white/90 backdrop-blur-sm rounded-lg shadow-sm">
+                  <Target className="h-4 w-4 mr-2 text-slate-500" />
+                  <SelectValue placeholder="Type d'objectif" />
+                </SelectTrigger>
+                <SelectContent className="rounded-lg">
+                  <SelectItem value="all" className="rounded-md">Tous les objectifs</SelectItem>
+                  {Object.entries(GOAL_TYPES).map(([key, value]) => (
+                    <SelectItem key={key} value={key} className="rounded-md">
+                      {value.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            
             {mealPlanTemplates.length === 0 ? (
               <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm rounded-xl">
                 <CardContent className="pt-20 pb-20">
@@ -903,10 +989,17 @@ export default function MealPlansPage() {
               </Card>
             ) : (
               <div className="grid gap-6 md:grid-cols-2 xl:grid-cols-3">
-                {mealPlanTemplates.filter(template => 
-                  template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  template.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                  template.category?.toLowerCase().includes(searchTerm.toLowerCase())
+                {filterTemplatesByCategory(
+                  mealPlanTemplates.filter(template => 
+                    template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    template.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                    template.category?.toLowerCase().includes(searchTerm.toLowerCase())
+                  ),
+                  {
+                    category: filterCategory !== 'all' ? filterCategory as any : undefined,
+                    clientType: filterClientType !== 'all' ? filterClientType as any : undefined,
+                    goalType: filterGoalType !== 'all' ? filterGoalType as any : undefined
+                  }
                 ).map((template) => (
                   <TemplateCard 
                     key={template.id} 
@@ -944,6 +1037,27 @@ export default function MealPlansPage() {
             }}
           />
         ) : null}
+        
+        {/* Schedule Dialog */}
+        {schedulingPlan && (
+          <PlanSchedulingDialog
+            isOpen={isScheduleDialogOpen}
+            onClose={() => {
+              setIsScheduleDialogOpen(false)
+              setSchedulingPlan(null)
+            }}
+            onSuccess={() => {
+              fetchData()
+              toast({
+                title: "Succès",
+                description: "Planning créé avec succès"
+              })
+            }}
+            mealPlan={schedulingPlan}
+            client={schedulingPlan.clients ? { id: schedulingPlan.client_id, name: schedulingPlan.clients.name } : undefined}
+            clients={clients}
+          />
+        )}
 
         {/* Edit Template Dialogs */}
         {editingTemplate && (
@@ -996,21 +1110,25 @@ function TemplateCard({
 }) {
   const getCategoryColor = (category: string) => {
     const colors = {
+      'weight_loss': 'bg-red-100 text-red-800',
+      'muscle_gain': 'bg-green-100 text-green-800',
+      'diabetes': 'bg-blue-100 text-blue-800',
+      'cardiovascular': 'bg-pink-100 text-pink-800',
+      'detox': 'bg-emerald-100 text-emerald-800',
+      'maintenance': 'bg-gray-100 text-gray-800',
+      'general': 'bg-slate-100 text-slate-800',
+      // Recipe categories
       'breakfast': 'bg-orange-100 text-orange-800',
       'lunch': 'bg-blue-100 text-blue-800',
       'dinner': 'bg-purple-100 text-purple-800',
       'snack': 'bg-green-100 text-green-800',
       'dessert': 'bg-pink-100 text-pink-800',
+      'main': 'bg-blue-100 text-blue-800',
       'vegetarian': 'bg-emerald-100 text-emerald-800',
       'vegan': 'bg-teal-100 text-teal-800',
       'gluten-free': 'bg-yellow-100 text-yellow-800',
       'low-carb': 'bg-red-100 text-red-800',
       'high-protein': 'bg-indigo-100 text-indigo-800',
-      'weekly': 'bg-blue-100 text-blue-800',
-      'monthly': 'bg-purple-100 text-purple-800',
-      'weight-loss': 'bg-red-100 text-red-800',
-      'muscle-gain': 'bg-green-100 text-green-800',
-      'maintenance': 'bg-gray-100 text-gray-800',
     }
     return colors[category as keyof typeof colors] || 'bg-gray-100 text-gray-800'
   }
@@ -1067,8 +1185,18 @@ function TemplateCard({
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-2">
           <Badge className={`${getCategoryColor(template.category)} border-0 font-medium px-3 py-1`}>
-            {template.category}
+            {getCategoryInfo(template.category as any)?.label || template.category}
           </Badge>
+          {'client_type' in template && template.client_type && (
+            <Badge className="bg-blue-100 text-blue-800 border-0 font-medium px-3 py-1">
+              {getClientTypeInfo(template.client_type as any)?.label || template.client_type}
+            </Badge>
+          )}
+          {'goal_type' in template && template.goal_type && (
+            <Badge className="bg-purple-100 text-purple-800 border-0 font-medium px-3 py-1">
+              {getGoalTypeInfo(template.goal_type as any)?.label || template.goal_type}
+            </Badge>
+          )}
           {'difficulty' in template && template.difficulty && (
             <Badge className={`${getDifficultyColor(template.difficulty)} border-0 font-medium px-3 py-1`}>
               {template.difficulty}

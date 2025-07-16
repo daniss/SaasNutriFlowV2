@@ -6,9 +6,14 @@
 import { createClient } from "@supabase/supabase-js";
 import { createHmac } from "crypto";
 
-const SECRET_KEY =
-  process.env.CLIENT_AUTH_SECRET ||
-  "fallback-secret-change-in-production-immediately";
+const SECRET_KEY = process.env.CLIENT_AUTH_SECRET;
+
+if (!SECRET_KEY) {
+  throw new Error(
+    "CLIENT_AUTH_SECRET environment variable must be configured. " +
+    "Generate a secure random string and set it in your .env file."
+  );
+}
 
 export interface ClientSession {
   clientId: string;
@@ -21,7 +26,7 @@ export interface ClientSession {
  */
 function createSecureToken(data: ClientSession): string {
   const payload = JSON.stringify(data);
-  const signature = createHmac("sha256", SECRET_KEY)
+  const signature = createHmac("sha256", SECRET_KEY!)
     .update(payload)
     .digest("hex");
   const token = Buffer.from(JSON.stringify({ payload, signature })).toString(
@@ -39,7 +44,7 @@ function validateSecureToken(token: string): ClientSession | null {
     const { payload, signature } = decoded;
 
     // Verify signature
-    const expectedSignature = createHmac("sha256", SECRET_KEY)
+    const expectedSignature = createHmac("sha256", SECRET_KEY!)
       .update(payload)
       .digest("hex");
     if (signature !== expectedSignature) {

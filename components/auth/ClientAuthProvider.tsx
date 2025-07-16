@@ -42,6 +42,7 @@ export function ClientAuthProvider({
   const [client, setClient] = useState<ClientData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [hasCheckedSession, setHasCheckedSession] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
 
   const isAuthenticated = !!client && hasCheckedSession;
 
@@ -51,6 +52,9 @@ export function ClientAuthProvider({
   }, []);
 
   const checkClientSession = async () => {
+    // Prevent concurrent session validation calls
+    if (isValidating) return;
+    setIsValidating(true);
     try {
       // Check if there's a valid client session and token
       const sessionData = localStorage.getItem("client-session");
@@ -108,6 +112,7 @@ export function ClientAuthProvider({
       localStorage.removeItem("client-token");
     } finally {
       setIsLoading(false);
+      setIsValidating(false);
     }
   };
 

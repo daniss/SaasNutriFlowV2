@@ -319,6 +319,9 @@ export interface Database {
           name: string;
           description: string | null;
           category: string;
+          meal_type: string;
+          cuisine_type: string;
+          health_benefits: string[] | null;
           dietary_type: string[];
           preparation_time: number | null;
           cooking_time: number | null;
@@ -343,6 +346,9 @@ export interface Database {
           name: string;
           description?: string | null;
           category: string;
+          meal_type?: string;
+          cuisine_type?: string;
+          health_benefits?: string[] | null;
           dietary_type?: string[];
           preparation_time?: number | null;
           cooking_time?: number | null;
@@ -367,6 +373,9 @@ export interface Database {
           name?: string;
           description?: string | null;
           category?: string;
+          meal_type?: string;
+          cuisine_type?: string;
+          health_benefits?: string[] | null;
           dietary_type?: string[];
           preparation_time?: number | null;
           cooking_time?: number | null;
@@ -393,6 +402,9 @@ export interface Database {
           name: string;
           description: string | null;
           category: string;
+          client_type: string;
+          health_condition: string | null;
+          goal_type: string;
           duration_days: number;
           target_calories: string | null;
           target_macros: any | null;
@@ -412,6 +424,9 @@ export interface Database {
           name: string;
           description?: string | null;
           category: string;
+          client_type?: string;
+          health_condition?: string | null;
+          goal_type?: string;
           duration_days?: number;
           target_calories?: string | null;
           target_macros?: any | null;
@@ -431,6 +446,9 @@ export interface Database {
           name?: string;
           description?: string | null;
           category?: string;
+          client_type?: string;
+          health_condition?: string | null;
+          goal_type?: string;
           duration_days?: number;
           target_calories?: string | null;
           target_macros?: any | null;

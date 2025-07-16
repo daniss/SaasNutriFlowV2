@@ -10,6 +10,8 @@ import {
   Settings,
   Users,
   Zap,
+  CalendarDays,
+  ShoppingCart,
 } from "lucide-react";
 import type * as React from "react";
 
@@ -53,6 +55,16 @@ const data = {
       title: "Plans alimentaires",
       url: "/dashboard/meal-plans",
       icon: FileText,
+    },
+    {
+      title: "Plannings",
+      url: "/dashboard/meal-plans/schedules",
+      icon: CalendarDays,
+    },
+    {
+      title: "Listes de courses",
+      url: "/dashboard/shopping-lists",
+      icon: ShoppingCart,
     },
     {
       title: "Rendez-vous",

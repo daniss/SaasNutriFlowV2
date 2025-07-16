@@ -199,6 +199,7 @@ export async function GET(request: NextRequest) {
       if (goalWeight < initialWeight) {
         // Weight loss goal
         const totalWeightToLose = initialWeight - goalWeight;
+        if (totalWeightToLose === 0) return 100; // Handle edge case where goal equals initial
         const weightLost = Math.max(0, initialWeight - currentWeight);
         return Math.min(
           100,
@@ -207,6 +208,7 @@ export async function GET(request: NextRequest) {
       } else if (goalWeight > initialWeight) {
         // Weight gain goal
         const totalWeightToGain = goalWeight - initialWeight;
+        if (totalWeightToGain === 0) return 100; // Handle edge case where goal equals initial
         const weightGained = Math.max(0, currentWeight - initialWeight);
         return Math.min(
           100,

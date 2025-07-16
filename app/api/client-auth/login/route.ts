@@ -1,4 +1,4 @@
-import { hashPassword } from "@/lib/client-account-utils";
+import { comparePassword } from "@/lib/client-account-utils";
 import { createClientToken } from "@/lib/client-auth-security";
 import {
   checkRateLimit,
@@ -91,19 +91,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Verify password (simple hash comparison for demo)
-    const providedPasswordHash = hashPassword(password);
+    // Verify password using bcrypt
+    const isPasswordValid = await comparePassword(password, clientAccount.password_hash);
 
-    // Debug logging
+    // Debug logging (without exposing sensitive data)
     console.log("🔍 Login Debug:", {
       email: email.toLowerCase(),
-      providedPassword: password,
-      providedPasswordHash,
-      storedPasswordHash: clientAccount.password_hash,
-      hashesMatch: providedPasswordHash === clientAccount.password_hash,
+      isPasswordValid,
     });
 
-    if (providedPasswordHash !== clientAccount.password_hash) {
+    if (!isPasswordValid) {
       return NextResponse.json(
         { error: "Email ou mot de passe incorrect" },
         { status: 401 }

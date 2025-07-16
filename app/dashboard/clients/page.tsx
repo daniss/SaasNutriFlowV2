@@ -125,12 +125,14 @@ export default function ClientsPage() {
     // If goal is weight loss (goal < initial)
     if (goalWeight < initialWeight) {
       const totalWeightToLose = initialWeight - goalWeight;
+      if (totalWeightToLose === 0) return 100; // Handle edge case where goal equals initial
       const weightLost = Math.max(0, initialWeight - currentWeight); // Ensure non-negative
       return Math.min(100, Math.round((weightLost / totalWeightToLose) * 100));
     }
     // If goal is weight gain (goal > initial)
     else if (goalWeight > initialWeight) {
       const totalWeightToGain = goalWeight - initialWeight;
+      if (totalWeightToGain === 0) return 100; // Handle edge case where goal equals initial
       const weightGained = Math.max(0, currentWeight - initialWeight); // Ensure non-negative
       return Math.min(
         100,
@@ -280,7 +282,7 @@ export default function ClientsPage() {
       if (createClientAccount) {
         try {
           const tempPassword = generateTemporaryPassword(newClient.name);
-          const hashedPassword = hashPassword(tempPassword);
+          const hashedPassword = await hashPassword(tempPassword);
           const accountEmail = formatClientAccountEmail(newClient.email, newClient.name);
 
           console.log("🔧 Creating client account:", {
