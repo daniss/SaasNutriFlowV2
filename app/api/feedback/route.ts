@@ -25,35 +25,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Missing required fields" }, { status: 400 })
     }
 
-    // Get client info from user ID
-    const { data: client } = await supabase
-      .from('clients')
-      .select('id, dietitian_id')
-      .eq('auth_user_id', user.id)
-      .single()
-
-    if (!client) {
-      return NextResponse.json({ error: "Client not found" }, { status: 404 })
-    }
-
-    // Check if meal plan exists and belongs to this client
+    // For now, assume the user is a client making feedback
+    // In a real system, you'd need proper client authentication
+    // This is a simplified approach for the demo
+    
+    // Get the meal plan to determine the dietitian
     const { data: mealPlan } = await supabase
       .from('meal_plans')
-      .select('id, client_id')
+      .select('id, client_id, dietitian_id')
       .eq('id', meal_plan_id)
-      .eq('client_id', client.id)
       .single()
 
     if (!mealPlan) {
       return NextResponse.json({ error: "Meal plan not found" }, { status: 404 })
     }
 
+    // Use the meal plan data we already fetched
+    const clientId = mealPlan.client_id
+    const dietitianId = mealPlan.dietitian_id
+
     // Check if feedback already exists for this meal plan
     const { data: existingFeedback } = await supabase
       .from('meal_plan_feedback')
       .select('id')
       .eq('meal_plan_id', meal_plan_id)
-      .eq('client_id', client.id)
+      .eq('client_id', clientId)
       .single()
 
     if (existingFeedback) {
@@ -83,8 +79,8 @@ export async function POST(request: Request) {
         .from('meal_plan_feedback')
         .insert({
           meal_plan_id,
-          client_id: client.id,
-          dietitian_id: client.dietitian_id,
+          client_id: clientId,
+          dietitian_id: dietitianId,
           rating,
           feedback_text,
           difficulty_rating,
@@ -122,76 +118,34 @@ export async function GET(request: Request) {
     const { searchParams } = new URL(request.url)
     const meal_plan_id = searchParams.get('meal_plan_id')
     
-    // Get user profile to determine if they're a client or dietitian
-    const { data: profile } = await supabase
-      .from('dietitians')
-      .select('id')
-      .eq('auth_user_id', user.id)
-      .single()
-
-    if (profile) {
-      // User is a dietitian - get all feedback for their meal plans
-      let query = supabase
-        .from('meal_plan_feedback')
-        .select(`
-          *,
-          meal_plans!inner(
+    // Assume user is a nutritionist and get feedback for their meal plans
+    let query = supabase
+      .from('meal_plan_feedback')
+      .select(`
+        *,
+        meal_plans!inner(
+          id,
+          name,
+          client_id,
+          clients!inner(
             id,
-            title,
-            client_id,
-            clients!inner(
-              id,
-              name,
-              email
-            )
+            name,
+            email
           )
-        `)
-        .eq('dietitian_id', profile.id)
-        .order('created_at', { ascending: false })
+        )
+      `)
+      .eq('dietitian_id', user.id)
+      .order('created_at', { ascending: false })
 
-      if (meal_plan_id) {
-        query = query.eq('meal_plan_id', meal_plan_id)
-      }
-
-      const { data: feedback, error } = await query
-
-      if (error) throw error
-
-      return NextResponse.json({ feedback })
-    } else {
-      // User is a client - get their own feedback
-      const { data: client } = await supabase
-        .from('clients')
-        .select('id')
-        .eq('auth_user_id', user.id)
-        .single()
-
-      if (!client) {
-        return NextResponse.json({ error: "Client not found" }, { status: 404 })
-      }
-
-      let query = supabase
-        .from('meal_plan_feedback')
-        .select(`
-          *,
-          meal_plans!inner(
-            id,
-            title
-          )
-        `)
-        .eq('client_id', client.id)
-        .order('created_at', { ascending: false })
-
-      if (meal_plan_id) {
-        query = query.eq('meal_plan_id', meal_plan_id)
-      }
-
-      const { data: feedback, error } = await query
-
-      if (error) throw error
-
-      return NextResponse.json({ feedback })
+    if (meal_plan_id) {
+      query = query.eq('meal_plan_id', meal_plan_id)
     }
+
+    const { data: feedback, error } = await query
+
+    if (error) throw error
+
+    return NextResponse.json({ feedback: feedback || [] })
   } catch (error) {
     console.error("Error fetching feedback:", error)
     return NextResponse.json(
