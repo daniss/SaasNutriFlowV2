@@ -1290,16 +1290,16 @@ export default function MealPlanDetailPage() {
 
         {/* Edit Day Dialog */}
         <Dialog open={isEditDayOpen} onOpenChange={setIsEditDayOpen}>
-        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto rounded-xl">
+        <DialogContent className="sm:max-w-[800px] rounded-xl">
             <DialogHeader>
               <DialogTitle>Modifier le jour {editDayForm.day}</DialogTitle>
               <DialogDescription>
                 Personnaliser les repas et collations pour ce jour spécifique.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-6 py-4">
+            <div className="grid gap-3 py-2">
               {(["breakfast", "lunch", "dinner", "snacks"] as const).map(slot => (
-                <div key={slot} className="space-y-2">
+                <div key={slot} className="space-y-1">
                   <Label htmlFor={`day-${slot}`}>{
                     slot === "breakfast" ? "Petit-déjeuner" :
                     slot === "lunch" ? "Déjeuner" :
@@ -1314,27 +1314,27 @@ export default function MealPlanDetailPage() {
                       slot === "lunch" ? "Ex: Salade de poulet grillé au quinoa" :
                       slot === "dinner" ? "Ex: Saumon grillé aux légumes rôtis" : "Ex: Tranches de pomme au beurre d'amande"
                     }
-                    rows={2}
+                    rows={1}
                   />
                   <Button
                     size="sm"
                     variant="outline"
-                    className="mt-2"
+                    className="mt-1 text-xs h-7"
                     onClick={() => {
                       setFoodSearchSlot(slot)
                       setFoodSearchDay(editDayForm.day)
                       setFoodSearchOpen(true)
                     }}
                   >
-                    Rechercher et ajouter un aliment
+                    + Ajouter aliment
                   </Button>
-                  <div className="mt-2">
+                  <div className="mt-1">
                     {selectedFoods[editDayForm.day]?.[slot]?.length > 0 && (
-                      <div className="space-y-1">
-                        <div className="text-xs text-slate-600 font-medium">Aliments ANSES-CIQUAL ajoutés:</div>
-                        <div className="space-y-1">
+                      <div className="space-y-0.5">
+                        <div className="text-xs text-slate-600 font-medium mb-1">Aliments ajoutés:</div>
+                        <div className="space-y-0.5 max-h-16 overflow-y-auto">
                           {selectedFoods[editDayForm.day][slot].map((food, foodIndex) => (
-                            <div key={foodIndex} className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded px-2 py-1">
+                            <div key={foodIndex} className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5">
                               <div className="text-xs">
                                 <span className="font-medium text-emerald-800">{food.name_fr}</span>
                                 <span className="text-emerald-600 ml-1">({food.quantity}g)</span>
@@ -1364,7 +1364,7 @@ export default function MealPlanDetailPage() {
                   </div>
                 </div>
               ))}
-              <div className="space-y-2">
+              <div className="space-y-1">
                 <Label htmlFor="day-notes">Notes (optionnel)</Label>
                 <Textarea
                   id="day-notes"
