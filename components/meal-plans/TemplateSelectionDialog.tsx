@@ -88,28 +88,24 @@ export default function TemplateSelectionDialog({
   }, [selectedTemplate])
 
   const fetchTemplatesAndClients = async () => {
-    if (!user) return
+    if (!user) {
+      console.log('No user found')
+      return
+    }
 
     try {
       setLoading(true)
 
-      // Get dietitian profile
-      const { data: dietitian, error: dietitianError } = await supabase
-        .from('dietitians')
-        .select('id')
-        .eq('auth_user_id', user.id)
-        .single()
-
-      if (dietitianError || !dietitian) {
-        throw new Error('Dietitian profile not found')
-      }
+      console.log('Fetching data for dietitian:', user.id)
 
       // Fetch templates
       const { data: templatesData, error: templatesError } = await supabase
         .from('meal_plan_templates')
         .select('*')
-        .eq('dietitian_id', dietitian.id)
+        .eq('dietitian_id', user.id)
         .order('usage_count', { ascending: false })
+
+      console.log('Templates query result:', { templatesData, templatesError })
 
       if (templatesError) throw templatesError
       setTemplates(templatesData || [])
@@ -118,18 +114,21 @@ export default function TemplateSelectionDialog({
       const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
         .select('id, name')
-        .eq('dietitian_id', dietitian.id)
+        .eq('dietitian_id', user.id)
         .eq('status', 'active')
         .order('name')
+
+      console.log('Clients query result:', { clientsData, clientsError })
 
       if (clientsError) throw clientsError
       setClients(clientsData || [])
 
     } catch (error) {
       console.error('Error fetching data:', error)
+      const errorMessage = error instanceof Error ? error.message : 'Erreur inconnue'
       toast({
         title: "Erreur",
-        description: "Impossible de charger les données",
+        description: `Impossible de charger les données: ${errorMessage}`,
         variant: "destructive"
       })
     } finally {
