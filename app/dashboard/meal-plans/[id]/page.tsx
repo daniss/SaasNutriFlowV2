@@ -84,6 +84,14 @@ interface DayPlan {
     snacks: string[]
   }
   notes?: string
+  breakfastHour?: string
+  lunchHour?: string
+  dinnerHour?: string
+  snacksHour?: string
+  breakfastEnabled?: boolean
+  lunchEnabled?: boolean
+  dinnerEnabled?: boolean
+  snacksEnabled?: boolean
 }
 
 interface EditDayForm {
@@ -1086,8 +1094,8 @@ export default function MealPlanDetailPage() {
                                   </span>
                                 </h4>
                                 <ul className="space-y-1 text-sm text-slate-600 ml-4">
-                                  {(day.meals?.[meal.key] || []).map((meal: any, idx: number) => (
-                                    <li key={idx}>• {meal}</li>
+                                  {(day.meals?.[meal.key as keyof typeof day.meals] || []).map((mealItem: any, idx: number) => (
+                                    <li key={idx}>• {mealItem}</li>
                                   ))}
                                 </ul>
                               </div>
