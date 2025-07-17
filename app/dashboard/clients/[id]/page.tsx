@@ -952,48 +952,54 @@ export default function ClientDetailPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="progress" className="space-y-6">
-          <TabsList className="bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm">
+          <TabsList className="bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm w-full justify-start overflow-x-auto no-scrollbar">
             <TabsTrigger
               value="progress"
-              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600"
+              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600 whitespace-nowrap"
             >
-              <Activity className="h-4 w-4 mr-2" />
-              Progrès
+              <Activity className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Progrès</span>
+              <span className="sm:hidden text-xs">Prog.</span>
             </TabsTrigger>
             <TabsTrigger
               value="profile"
-              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600"
+              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600 whitespace-nowrap"
             >
-              <User className="h-4 w-4 mr-2" />
-              Profil complet
+              <User className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Profil complet</span>
+              <span className="sm:hidden text-xs">Profil</span>
             </TabsTrigger>
             <TabsTrigger
               value="notes"
-              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600"
+              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600 whitespace-nowrap"
             >
-              <FileText className="h-4 w-4 mr-2" />
-              Notes privées
+              <FileText className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Notes privées</span>
+              <span className="sm:hidden text-xs">Notes</span>
             </TabsTrigger>
             <TabsTrigger
               value="documents"
-              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600"
+              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600 whitespace-nowrap"
             >
-              <FileText className="h-4 w-4 mr-2" />
-              Documents
+              <FileText className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Documents</span>
+              <span className="sm:hidden text-xs">Docs</span>
             </TabsTrigger>
             <TabsTrigger
               value="photos"
-              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600"
+              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600 whitespace-nowrap"
             >
-              <Camera className="h-4 w-4 mr-2" />
-              Photos de progrès
+              <Camera className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Photos de progrès</span>
+              <span className="sm:hidden text-xs">Photos</span>
             </TabsTrigger>
             <TabsTrigger
               value="analytics"
-              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600"
+              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600 whitespace-nowrap"
             >
-              <Target className="h-4 w-4 mr-2" />
-              Analytics
+              <Target className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
+              <span className="hidden sm:inline">Analytics</span>
+              <span className="sm:hidden text-xs">Stats</span>
             </TabsTrigger>
           </TabsList>
 
