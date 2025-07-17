@@ -2,6 +2,7 @@
 
 import type React from "react";
 
+import { DashboardHeader } from "@/components/dashboard-header";
 import { PasswordSettings } from "@/components/security/PasswordSettings";
 import { SessionManagement } from "@/components/security/SessionManagement";
 import { TwoFactorSettings } from "@/components/security/TwoFactorSettings";
@@ -127,16 +128,14 @@ export default function SettingsPage() {
   }
 
   return (
-    <div className="flex-1 space-y-8 p-6 lg:p-8 bg-gradient-to-br from-gray-50/50 via-white to-emerald-50/20 min-h-screen">
-      {/* Header Section */}
-      <div className="space-y-2 animate-fade-in">
-        <h1 className="text-2xl lg:text-3xl font-semibold tracking-tight text-gray-900">
-          Paramètres
-        </h1>
-        <p className="text-gray-600 text-sm lg:text-base font-medium">
-          Gérez les paramètres de votre compte et vos préférences
-        </p>
-      </div>
+    <div className="space-y-6">
+      <DashboardHeader
+        title="Paramètres"
+        subtitle="Gérez les paramètres de votre compte et vos préférences"
+        showSearch={false}
+      />
+      
+      <div className="flex-1 space-y-8 p-6 lg:p-8 bg-gradient-to-br from-gray-50/50 via-white to-emerald-50/20 min-h-screen">
 
       {success && (
         <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800 animate-scale-in">
@@ -476,6 +475,7 @@ export default function SettingsPage() {
           <SessionManagement />
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }

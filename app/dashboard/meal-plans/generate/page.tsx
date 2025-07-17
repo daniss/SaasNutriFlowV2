@@ -1,5 +1,6 @@
 "use client"
 
+import { DashboardHeader } from "@/components/dashboard-header"
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Badge } from "@/components/ui/badge"
@@ -418,30 +419,19 @@ export default function GenerateMealPlanPage() {
 
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
-      {/* Hero Section */}
-      <div className="relative overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5" />
-        <div className="relative container mx-auto px-6 pt-12 pb-8">
-          <div className="max-w-3xl">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="relative">
-                <div className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-xl flex items-center justify-center shadow-lg">
-                  <Sparkles className="h-6 w-6 text-white" />
-                </div>
-                <div className="absolute -top-1 -right-1 w-5 h-5 bg-green-500 rounded-full flex items-center justify-center">
-                  <Zap className="h-3 w-3 text-white" />
-                </div>
-              </div>
-              <div>
-                <h1 className="text-4xl font-bold bg-gradient-to-r from-gray-900 via-gray-800 to-gray-700 bg-clip-text text-transparent">
-                  Générateur de plans alimentaires IA
-                </h1>
-                <p className="text-lg text-gray-600 mt-1">
-                  Créez des plans nutritionnels personnalisés en quelques secondes avec l'IA intelligente
-                </p>
-              </div>
-            </div>
+    <div className="space-y-6">
+      <DashboardHeader
+        title="Générateur de plans alimentaires IA"
+        subtitle="Créez des plans nutritionnels personnalisés en quelques secondes avec l'IA intelligente"
+        showSearch={false}
+      />
+      
+      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
+        {/* Hero Section */}
+        <div className="relative overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5" />
+          <div className="relative container mx-auto px-6 pt-12 pb-8">
+            <div className="max-w-3xl">
             
             {/* Key Features */}
             <div className="flex flex-wrap gap-4 mt-6">
@@ -1430,6 +1420,7 @@ export default function GenerateMealPlanPage() {
           </Card>
         </div>
       )}
+      </div>
     </div>
   )
 }
