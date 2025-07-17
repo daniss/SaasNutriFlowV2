@@ -269,7 +269,7 @@ export default function DashboardPage() {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="space-y-8">
+              <div className="space-y-4 md:space-y-8">
                 {stats.recentClients.length === 0 ? (
                   <div className="text-center py-6 md:py-8">
                     <Users className="mx-auto h-10 w-10 md:h-12 md:w-12 text-gray-400" />
@@ -299,9 +299,9 @@ export default function DashboardPage() {
                     <Link
                       key={client.id}
                       href={`/dashboard/clients/${client.id}`}
-                      className="flex items-center p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+                      className="flex items-center p-2 md:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
                     >
-                      <Avatar className="h-9 w-9">
+                      <Avatar className="h-8 w-8 md:h-9 md:w-9 flex-shrink-0">
                         <AvatarImage
                           src={`https://avatar.vercel.sh/${client.email}`}
                           alt="Avatar"
@@ -313,16 +313,19 @@ export default function DashboardPage() {
                             .join("")}
                         </AvatarFallback>
                       </Avatar>
-                      <div className="ml-4 space-y-1">
-                        <p className="text-sm font-medium leading-none">
+                      <div className="ml-3 md:ml-4 space-y-1 flex-1 min-w-0">
+                        <p className="text-sm font-medium leading-none truncate">
                           {client.name}
                         </p>
-                        <p className="text-sm text-muted-foreground">
+                        <p className="text-xs md:text-sm text-muted-foreground truncate">
                           {client.email}
                         </p>
                       </div>
-                      <div className="ml-auto font-medium">
-                        <Badge variant="default">En parcours</Badge>
+                      <div className="ml-2 font-medium flex-shrink-0">
+                        <Badge variant="default" className="text-xs">
+                          <span className="hidden sm:inline">En parcours</span>
+                          <span className="sm:hidden">Actif</span>
+                        </Badge>
                       </div>
                     </Link>
                   ))
@@ -375,7 +378,7 @@ export default function DashboardPage() {
                     <Link
                       key={plan.id}
                       href={`/dashboard/meal-plans/${plan.id}`}
-                      className="flex items-center space-x-4 p-2 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
+                      className="flex items-center gap-3 md:gap-4 p-2 md:p-3 rounded-lg hover:bg-gray-50 transition-colors duration-200 cursor-pointer"
                     >
                       <div className="flex-shrink-0">
                         <div className="h-2 w-2 bg-green-600 rounded-full" />
@@ -384,12 +387,24 @@ export default function DashboardPage() {
                         <p className="text-sm font-medium text-gray-900 truncate">
                           {plan.name}
                         </p>
-                        <p className="text-sm text-gray-500 truncate">
-                          {plan.duration_days} jours de parcours •{" "}
-                          {plan.calories_range || "Nutrition personnalisée"}
+                        <p className="text-xs md:text-sm text-gray-500 truncate">
+                          <span className="hidden sm:inline">
+                            {plan.duration_days} jours de parcours •{" "}
+                            {plan.calories_range || "Nutrition personnalisée"}
+                          </span>
+                          <span className="sm:hidden">
+                            {plan.duration_days}j • {plan.calories_range || "Perso"}
+                          </span>
                         </p>
                       </div>
-                      <Badge variant="outline">{plan.status}</Badge>
+                      <div className="flex-shrink-0">
+                        <Badge variant="outline" className="text-xs">
+                          <span className="hidden sm:inline">{plan.status}</span>
+                          <span className="sm:hidden">
+                            {plan.status === "Active" ? "Actif" : plan.status === "Draft" ? "Brouillon" : plan.status}
+                          </span>
+                        </Badge>
+                      </div>
                     </Link>
                   ))
                 )}
