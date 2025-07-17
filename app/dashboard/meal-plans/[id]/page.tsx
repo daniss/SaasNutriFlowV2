@@ -13,6 +13,7 @@ import {
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
     Dialog,
     DialogContent,
@@ -92,6 +93,14 @@ interface EditDayForm {
   dinner: string
   snacks: string
   notes: string
+  breakfastHour: string
+  lunchHour: string
+  dinnerHour: string
+  snacksHour: string
+  breakfastEnabled: boolean
+  lunchEnabled: boolean
+  dinnerEnabled: boolean
+  snacksEnabled: boolean
 }
 
 export default function MealPlanDetailPage() {
@@ -128,7 +137,15 @@ export default function MealPlanDetailPage() {
     lunch: "",
     dinner: "",
     snacks: "",
-    notes: ""
+    notes: "",
+    breakfastHour: "08:00",
+    lunchHour: "12:00",
+    dinnerHour: "19:00",
+    snacksHour: "16:00",
+    breakfastEnabled: true,
+    lunchEnabled: true,
+    dinnerEnabled: true,
+    snacksEnabled: false
   })
   const [editForm, setEditForm] = useState({
     name: "",
@@ -470,7 +487,15 @@ export default function MealPlanDetailPage() {
         lunch: normalizedLunch.join(', '),
         dinner: normalizedDinner.join(', '),
         snacks: normalizedSnacks.join(', '),
-        notes: existingDay.notes || ""
+        notes: existingDay.notes || "",
+        breakfastHour: existingDay.breakfastHour || "08:00",
+        lunchHour: existingDay.lunchHour || "12:00",
+        dinnerHour: existingDay.dinnerHour || "19:00",
+        snacksHour: existingDay.snacksHour || "16:00",
+        breakfastEnabled: existingDay.breakfastEnabled !== undefined ? existingDay.breakfastEnabled : true,
+        lunchEnabled: existingDay.lunchEnabled !== undefined ? existingDay.lunchEnabled : true,
+        dinnerEnabled: existingDay.dinnerEnabled !== undefined ? existingDay.dinnerEnabled : true,
+        snacksEnabled: existingDay.snacksEnabled !== undefined ? existingDay.snacksEnabled : false
       })
     } else {
       // Create new day with empty fields for editing
@@ -480,7 +505,15 @@ export default function MealPlanDetailPage() {
         lunch: "",
         dinner: "",
         snacks: "",
-        notes: ""
+        notes: "",
+        breakfastHour: "08:00",
+        lunchHour: "12:00",
+        dinnerHour: "19:00",
+        snacksHour: "16:00",
+        breakfastEnabled: true,
+        lunchEnabled: true,
+        dinnerEnabled: true,
+        snacksEnabled: false
       })
     }
     setIsEditDayOpen(true)
@@ -505,12 +538,20 @@ export default function MealPlanDetailPage() {
         day: editDayForm.day,
         date: new Date(Date.now() + (editDayForm.day - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
         meals: {
-          breakfast: editDayForm.breakfast ? [editDayForm.breakfast] : [],
-          lunch: editDayForm.lunch ? [editDayForm.lunch] : [],
-          dinner: editDayForm.dinner ? [editDayForm.dinner] : [],
-          snacks: editDayForm.snacks ? [editDayForm.snacks] : []
+          breakfast: editDayForm.breakfastEnabled && editDayForm.breakfast ? [editDayForm.breakfast] : [],
+          lunch: editDayForm.lunchEnabled && editDayForm.lunch ? [editDayForm.lunch] : [],
+          dinner: editDayForm.dinnerEnabled && editDayForm.dinner ? [editDayForm.dinner] : [],
+          snacks: editDayForm.snacksEnabled && editDayForm.snacks ? [editDayForm.snacks] : []
         },
         notes: editDayForm.notes || "",
+        breakfastHour: editDayForm.breakfastHour,
+        lunchHour: editDayForm.lunchHour,
+        dinnerHour: editDayForm.dinnerHour,
+        snacksHour: editDayForm.snacksHour,
+        breakfastEnabled: editDayForm.breakfastEnabled,
+        lunchEnabled: editDayForm.lunchEnabled,
+        dinnerEnabled: editDayForm.dinnerEnabled,
+        snacksEnabled: editDayForm.snacksEnabled,
         // Add any selected foods from ANSES-CIQUAL database
         selectedFoods: selectedFoods[editDayForm.day] || {}
       }
@@ -1298,72 +1339,101 @@ export default function MealPlanDetailPage() {
               </DialogDescription>
             </DialogHeader>
             <div className="grid gap-3 py-2">
-              {(["breakfast", "lunch", "dinner", "snacks"] as const).map(slot => (
-                <div key={slot} className="space-y-1">
-                  <Label htmlFor={`day-${slot}`}>{
-                    slot === "breakfast" ? "Petit-déjeuner" :
-                    slot === "lunch" ? "Déjeuner" :
-                    slot === "dinner" ? "Dîner" : "Collations"
-                  }</Label>
-                  <Textarea
-                    id={`day-${slot}`}
-                    value={editDayForm[slot]}
-                    onChange={e => setEditDayForm({ ...editDayForm, [slot]: e.target.value })}
-                    placeholder={
-                      slot === "breakfast" ? "Ex: Yaourt grec aux baies et granola" :
-                      slot === "lunch" ? "Ex: Salade de poulet grillé au quinoa" :
-                      slot === "dinner" ? "Ex: Saumon grillé aux légumes rôtis" : "Ex: Tranches de pomme au beurre d'amande"
-                    }
-                    rows={1}
-                  />
-                  <Button
-                    size="sm"
-                    variant="outline"
-                    className="mt-1 text-xs h-7"
-                    onClick={() => {
-                      setFoodSearchSlot(slot)
-                      setFoodSearchDay(editDayForm.day)
-                      setFoodSearchOpen(true)
-                    }}
-                  >
-                    + Ajouter aliment
-                  </Button>
-                  <div className="mt-1">
-                    {selectedFoods[editDayForm.day]?.[slot]?.length > 0 && (
-                      <div className="space-y-0.5">
-                        <div className="text-xs text-slate-600 font-medium mb-1">Aliments ajoutés:</div>
-                        <div className="space-y-0.5 max-h-16 overflow-y-auto">
-                          {selectedFoods[editDayForm.day][slot].map((food, foodIndex) => (
-                            <div key={foodIndex} className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5">
-                              <div className="text-xs">
-                                <span className="font-medium text-emerald-800">{food.name_fr}</span>
-                                <span className="text-emerald-600 ml-1">({food.quantity}g)</span>
-                                <span className="text-emerald-600 ml-1">• {Math.round((food.energy_kcal || 0) * food.quantity / 100)} kcal</span>
+              {(["breakfast", "lunch", "dinner", "snacks"] as const).map(slot => {
+                const hourField = `${slot}Hour` as keyof EditDayForm
+                const enabledField = `${slot}Enabled` as keyof EditDayForm
+                return (
+                  <div key={slot} className="space-y-1">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox
+                          id={`${slot}-enabled`}
+                          checked={editDayForm[enabledField] as boolean}
+                          onCheckedChange={(checked) => 
+                            setEditDayForm({ ...editDayForm, [enabledField]: checked })
+                          }
+                        />
+                        <Label htmlFor={`${slot}-enabled`} className="text-sm font-medium">
+                          {slot === "breakfast" ? "Petit-déjeuner" :
+                           slot === "lunch" ? "Déjeuner" :
+                           slot === "dinner" ? "Dîner" : "Collations"}
+                        </Label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-gray-500" />
+                        <Input
+                          type="time"
+                          value={editDayForm[hourField] as string}
+                          onChange={(e) => setEditDayForm({ ...editDayForm, [hourField]: e.target.value })}
+                          className="w-20 h-7 text-xs"
+                          disabled={!editDayForm[enabledField]}
+                        />
+                      </div>
+                    </div>
+                    {editDayForm[enabledField] && (
+                      <div className="space-y-1">
+                        <Textarea
+                          id={`day-${slot}`}
+                          value={editDayForm[slot]}
+                          onChange={e => setEditDayForm({ ...editDayForm, [slot]: e.target.value })}
+                          placeholder={
+                            slot === "breakfast" ? "Ex: Yaourt grec aux baies et granola" :
+                            slot === "lunch" ? "Ex: Salade de poulet grillé au quinoa" :
+                            slot === "dinner" ? "Ex: Saumon grillé aux légumes rôtis" : "Ex: Tranches de pomme au beurre d'amande"
+                          }
+                          rows={1}
+                        />
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          className="mt-1 text-xs h-7"
+                          onClick={() => {
+                            setFoodSearchSlot(slot)
+                            setFoodSearchDay(editDayForm.day)
+                            setFoodSearchOpen(true)
+                          }}
+                        >
+                          + Ajouter aliment
+                        </Button>
+                        <div className="mt-1">
+                          {selectedFoods[editDayForm.day]?.[slot]?.length > 0 && (
+                            <div className="space-y-0.5">
+                              <div className="text-xs text-slate-600 font-medium mb-1">Aliments ajoutés:</div>
+                              <div className="space-y-0.5 max-h-16 overflow-y-auto">
+                                {selectedFoods[editDayForm.day][slot].map((food, foodIndex) => (
+                                  <div key={foodIndex} className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded px-2 py-0.5">
+                                    <div className="text-xs">
+                                      <span className="font-medium text-emerald-800">{food.name_fr}</span>
+                                      <span className="text-emerald-600 ml-1">({food.quantity}g)</span>
+                                      <span className="text-emerald-600 ml-1">• {Math.round((food.energy_kcal || 0) * food.quantity / 100)} kcal</span>
+                                    </div>
+                                    <Button
+                                      variant="ghost"
+                                      size="sm"
+                                      className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                      onClick={() => {
+                                        setSelectedFoods(prev => ({
+                                          ...prev,
+                                          [editDayForm.day]: {
+                                            ...prev[editDayForm.day],
+                                            [slot]: prev[editDayForm.day][slot].filter((_, i) => i !== foodIndex)
+                                          }
+                                        }))
+                                      }}
+                                    >
+                                      <X className="h-3 w-3" />
+                                    </Button>
+                                  </div>
+                                ))}
                               </div>
-                              <Button
-                                variant="ghost"
-                                size="sm"
-                                className="h-6 w-6 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
-                                onClick={() => {
-                                  setSelectedFoods(prev => ({
-                                    ...prev,
-                                    [editDayForm.day]: {
-                                      ...prev[editDayForm.day],
-                                      [slot]: prev[editDayForm.day][slot].filter((_, i) => i !== foodIndex)
-                                    }
-                                  }))
-                                }}
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
                             </div>
-                          ))}
+                          )}
                         </div>
                       </div>
                     )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
               <div className="space-y-1">
                 <Label htmlFor="day-notes">Notes (optionnel)</Label>
                 <Textarea
