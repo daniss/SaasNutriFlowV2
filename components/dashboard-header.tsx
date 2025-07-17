@@ -75,15 +75,15 @@ export function DashboardHeader({
       <div className="flex h-14 md:h-16 items-center gap-2 md:gap-4 px-4 sm:px-6">
         <SidebarTrigger className="-ml-1 h-8 w-8 md:h-9 md:w-9 rounded-lg hover:bg-slate-100 transition-colors" />
 
-        <div className="flex flex-1 items-center justify-between gap-2 md:gap-4">
+        <div className="flex flex-1 items-center justify-between gap-1 sm:gap-2 md:gap-4">
           <div className="min-w-0 flex-1">
-            <h1 className="text-lg md:text-xl font-bold text-slate-900 truncate">{title}</h1>
+            <h1 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 truncate">{title}</h1>
             {subtitle && (
               <p className="text-xs md:text-sm text-slate-600 mt-0.5 truncate hidden sm:block">{subtitle}</p>
             )}
           </div>
 
-          <div className="flex items-center gap-1 md:gap-2">
+          <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
             {showSearch && (
               <div className="relative hidden lg:block">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
