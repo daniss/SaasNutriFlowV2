@@ -58,12 +58,67 @@ export async function POST(request: Request) {
       )
     }
 
+    // Transform template meal_structure to meal plan format
+    function transformTemplateToPlanContent(templateStructure: any, duration: number): any {
+      const days = []
+      
+      // Convert template day structure to meal plan day structure
+      for (let dayNum = 1; dayNum <= duration; dayNum++) {
+        const templateDay = templateStructure[`day_${dayNum}`] || templateStructure[`jour_${dayNum}`]
+        
+        if (templateDay) {
+          // Convert rich template meals to meal plan format
+          const dayPlan = {
+            day: dayNum,
+            date: new Date(Date.now() + (dayNum - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            meals: {
+              breakfast: templateDay.breakfast ? [
+                `${templateDay.breakfast.name} (${templateDay.breakfast.calories || 'N/A'} kcal${templateDay.breakfast.prep_time ? ` - ${templateDay.breakfast.prep_time}` : ''})`
+              ] : [],
+              lunch: templateDay.lunch ? [
+                `${templateDay.lunch.name} (${templateDay.lunch.calories || 'N/A'} kcal${templateDay.lunch.prep_time ? ` - ${templateDay.lunch.prep_time}` : ''})`
+              ] : [],
+              dinner: templateDay.dinner ? [
+                `${templateDay.dinner.name} (${templateDay.dinner.calories || 'N/A'} kcal${templateDay.dinner.prep_time ? ` - ${templateDay.dinner.prep_time}` : ''})`
+              ] : [],
+              snacks: templateDay.snack ? [
+                `${templateDay.snack.name} (${templateDay.snack.calories || 'N/A'} kcal${templateDay.snack.prep_time ? ` - ${templateDay.snack.prep_time}` : ''})`
+              ] : []
+            },
+            notes: templateDay.notes || '',
+            // Preserve rich template data for advanced features
+            templateData: templateDay
+          }
+          days.push(dayPlan)
+        } else {
+          // Create placeholder for missing days
+          days.push({
+            day: dayNum,
+            date: new Date(Date.now() + (dayNum - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+            meals: {
+              breakfast: [],
+              lunch: [],
+              dinner: [],
+              snacks: []
+            },
+            notes: '',
+            templateData: null
+          })
+        }
+      }
+      
+      return { days }
+    }
+
     // Convert template structure to meal plan content
+    const duration = customizations?.duration_days || template.duration_days || 7
+    const transformedMealData = transformTemplateToPlanContent(template.meal_structure, duration)
+    
     const planContent: any = {
       generated_by: 'template',
       template_id: templateId,
       template_name: template.name,
-      meal_structure: template.meal_structure,
+      ...transformedMealData, // Include the transformed days
       target_macros: template.target_macros,
       difficulty: template.difficulty,
       notes: customizations?.notes || template.description || '',
