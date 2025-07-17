@@ -58,8 +58,8 @@ export async function POST(request: Request) {
       )
     }
 
-    // Transform template meal_structure to meal plan format
-    function transformTemplateToPlanContent(templateStructure: any, duration: number): any {
+    // Transform template meal_structure to meal plan format with recipe lookup
+    async function transformTemplateToPlanContent(templateStructure: any, duration: number): Promise<any> {
       const days = []
       
       // Convert template day structure to meal plan day structure
@@ -67,23 +67,15 @@ export async function POST(request: Request) {
         const templateDay = templateStructure[`day_${dayNum}`] || templateStructure[`jour_${dayNum}`]
         
         if (templateDay) {
-          // Convert rich template meals to meal plan format
+          // Enhanced meal transformation with recipe lookup
           const dayPlan = {
             day: dayNum,
             date: new Date(Date.now() + (dayNum - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             meals: {
-              breakfast: templateDay.breakfast ? [
-                `${templateDay.breakfast.name} (${templateDay.breakfast.calories || 'N/A'} kcal${templateDay.breakfast.prep_time ? ` - ${templateDay.breakfast.prep_time}` : ''})`
-              ] : [],
-              lunch: templateDay.lunch ? [
-                `${templateDay.lunch.name} (${templateDay.lunch.calories || 'N/A'} kcal${templateDay.lunch.prep_time ? ` - ${templateDay.lunch.prep_time}` : ''})`
-              ] : [],
-              dinner: templateDay.dinner ? [
-                `${templateDay.dinner.name} (${templateDay.dinner.calories || 'N/A'} kcal${templateDay.dinner.prep_time ? ` - ${templateDay.dinner.prep_time}` : ''})`
-              ] : [],
-              snacks: templateDay.snack ? [
-                `${templateDay.snack.name} (${templateDay.snack.calories || 'N/A'} kcal${templateDay.snack.prep_time ? ` - ${templateDay.snack.prep_time}` : ''})`
-              ] : []
+              breakfast: await transformMealWithRecipes(templateDay.breakfast, 'breakfast'),
+              lunch: await transformMealWithRecipes(templateDay.lunch, 'lunch'),
+              dinner: await transformMealWithRecipes(templateDay.dinner, 'dinner'),
+              snacks: await transformMealWithRecipes(templateDay.snack, 'snack')
             },
             notes: templateDay.notes || '',
             // Preserve rich template data for advanced features
@@ -110,9 +102,72 @@ export async function POST(request: Request) {
       return { days }
     }
 
+    // Helper function to transform meal with recipe lookup
+    async function transformMealWithRecipes(mealData: any, mealType: string): Promise<string[]> {
+      if (!mealData) return []
+      
+      // If mealData has a recipe_id, try to fetch the recipe
+      if (mealData.recipe_id) {
+        try {
+          const { data: recipe, error } = await supabase
+            .from('recipes')
+            .select(`
+              name, 
+              calories_per_serving, 
+              prep_time, 
+              cook_time, 
+              protein_per_serving,
+              carbs_per_serving,
+              fat_per_serving
+            `)
+            .eq('id', mealData.recipe_id)
+            .eq('dietitian_id', user!.id)
+            .single()
+
+          if (!error && recipe) {
+            const totalTime = (recipe.prep_time || 0) + (recipe.cook_time || 0)
+            const nutritionInfo = []
+            
+            if (recipe.calories_per_serving) nutritionInfo.push(`${recipe.calories_per_serving} kcal`)
+            if (recipe.protein_per_serving) nutritionInfo.push(`P: ${recipe.protein_per_serving}g`)
+            if (recipe.carbs_per_serving) nutritionInfo.push(`G: ${recipe.carbs_per_serving}g`)
+            if (recipe.fat_per_serving) nutritionInfo.push(`L: ${recipe.fat_per_serving}g`)
+            
+            const timeInfo = totalTime > 0 ? ` - ${totalTime} min` : ''
+            const nutritionText = nutritionInfo.length > 0 ? ` (${nutritionInfo.join(', ')})` : ''
+            
+            return [`${recipe.name}${nutritionText}${timeInfo}`]
+          }
+        } catch (error) {
+          console.error('Error fetching recipe:', error)
+        }
+      }
+      
+      // Fallback to original template structure
+      if (mealData.name) {
+        const calories = mealData.calories ? ` (${mealData.calories} kcal` : ''
+        const time = mealData.prep_time ? ` - ${mealData.prep_time}` : ''
+        const closing = (calories || time) ? ')' : ''
+        
+        return [`${mealData.name}${calories}${time}${closing}`]
+      }
+      
+      // Handle array of meal items
+      if (Array.isArray(mealData)) {
+        const transformedMeals = []
+        for (const item of mealData) {
+          const transformed = await transformMealWithRecipes(item, mealType)
+          transformedMeals.push(...transformed)
+        }
+        return transformedMeals
+      }
+      
+      return []
+    }
+
     // Convert template structure to meal plan content
     const duration = customizations?.duration_days || template.duration_days || 7
-    const transformedMealData = transformTemplateToPlanContent(template.meal_structure, duration)
+    const transformedMealData = await transformTemplateToPlanContent(template.meal_structure, duration)
     
     const planContent: any = {
       generated_by: 'template',

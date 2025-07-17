@@ -62,6 +62,11 @@ const data = {
       icon: FileText,
     },
     {
+      title: "Recettes",
+      url: "/dashboard/recipes",
+      icon: ChefHat,
+    },
+    {
       title: "Commentaires clients",
       url: "/dashboard/feedback",
       icon: MessageSquare,
