@@ -522,9 +522,10 @@ export default function AppointmentsPage() {
         action={
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
-                <Plus className="mr-2 h-4 w-4" />
-                Nouveau rendez-vous
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium text-xs sm:text-sm px-3 sm:px-4">
+                <Plus className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Nouveau rendez-vous</span>
+                <span className="sm:hidden">Nouveau</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="sm:max-w-[500px] shadow-soft-lg border-0 max-h-[90vh] overflow-y-auto">
@@ -962,25 +963,38 @@ export default function AppointmentsPage() {
       </Dialog>
 
       {/* Unified Calendar & Appointments Interface */}
-      <div className="grid gap-6 lg:grid-cols-4">
-        <div className="lg:col-span-3">
+      <div className="grid gap-4 lg:gap-6 lg:grid-cols-4">
+        <div className="lg:col-span-3 space-y-4 lg:space-y-6">
           <Tabs
             value={viewMode}
             onValueChange={(value: any) => setViewMode(value)}
             className="space-y-6"
           >
-            <div className="flex items-center justify-between">
-              <TabsList className="grid w-full grid-cols-4 lg:w-[400px]">
-                <TabsTrigger value="today">Aujourd'hui</TabsTrigger>
-                <TabsTrigger value="week">Semaine</TabsTrigger>
-                <TabsTrigger value="month">Mois</TabsTrigger>
-                <TabsTrigger value="list">Liste</TabsTrigger>
+            <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
+              <TabsList className="grid w-full grid-cols-4 sm:w-auto bg-muted p-1 rounded-lg h-auto gap-1">
+                <TabsTrigger value="today" className="text-xs sm:text-sm data-[state=active]:bg-background">
+                  <span className="hidden sm:inline">Aujourd'hui</span>
+                  <span className="sm:hidden">Jour</span>
+                </TabsTrigger>
+                <TabsTrigger value="week" className="text-xs sm:text-sm data-[state=active]:bg-background">
+                  <span className="hidden sm:inline">Semaine</span>
+                  <span className="sm:hidden">Sem</span>
+                </TabsTrigger>
+                <TabsTrigger value="month" className="text-xs sm:text-sm data-[state=active]:bg-background">
+                  <span className="hidden sm:inline">Mois</span>
+                  <span className="sm:hidden">Mois</span>
+                </TabsTrigger>
+                <TabsTrigger value="list" className="text-xs sm:text-sm data-[state=active]:bg-background">
+                  <span className="hidden sm:inline">Liste</span>
+                  <span className="sm:hidden">Liste</span>
+                </TabsTrigger>
               </TabsList>
 
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={fetchData}>
-                  <RefreshCw className="h-4 w-4 mr-2" />
-                  Actualiser
+              <div className="flex gap-2 justify-end">
+                <Button variant="outline" size="sm" onClick={fetchData} className="text-xs sm:text-sm px-3 sm:px-4">
+                  <RefreshCw className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                  <span className="hidden sm:inline">Actualiser</span>
+                  <span className="sm:hidden">Sync</span>
                 </Button>
               </div>
             </div>
@@ -1115,7 +1129,7 @@ export default function AppointmentsPage() {
         </div>
 
         {/* Context Sidebar */}
-        <div className="space-y-6">
+        <div className="space-y-4 lg:space-y-6">
           {/* Selected Date Info */}
           <Card>
             <CardHeader>
@@ -1205,11 +1219,12 @@ export default function AppointmentsPage() {
               <Button
                 variant="outline"
                 size="sm"
-                className="w-full justify-start"
+                className="w-full justify-start text-xs sm:text-sm px-3"
                 onClick={() => setIsAddDialogOpen(true)}
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Nouveau rendez-vous
+                <Plus className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="hidden sm:inline">Nouveau rendez-vous</span>
+                <span className="sm:hidden">Nouveau RDV</span>
               </Button>
               <Button
                 variant="outline"
@@ -1496,16 +1511,18 @@ function AppointmentCard({
       <CardContent className="p-4">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
           <div className="flex-1">
-            <div className="flex items-center gap-2 mb-2">
-              <h3 className="font-semibold text-gray-900">
+            <div className="flex flex-col sm:flex-row sm:items-center gap-2 mb-2">
+              <h3 className="font-semibold text-gray-900 min-w-0 flex-1">
                 {appointment.title}
               </h3>
-              <Badge variant="outline" className="text-xs">
-                {getTypeLabel(appointment.type)}
-              </Badge>
-              <Badge variant={getStatusVariant(appointment.status)}>
-                {getStatusDisplay(appointment.status)}
-              </Badge>
+              <div className="flex flex-wrap gap-1 sm:gap-2">
+                <Badge variant="outline" className="text-xs">
+                  {getTypeLabel(appointment.type)}
+                </Badge>
+                <Badge variant={getStatusVariant(appointment.status)} className="text-xs">
+                  {getStatusDisplay(appointment.status)}
+                </Badge>
+              </div>
             </div>
             <div className="space-y-1 text-sm text-gray-600">
               <div className="flex items-center gap-2">
@@ -1542,9 +1559,9 @@ function AppointmentCard({
           <div className="flex items-center gap-2">
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" disabled={isLoading}>
-                  <MoreHorizontal className="h-4 w-4 mr-1" />
-                  Actions
+                <Button variant="outline" size="sm" disabled={isLoading} className="text-xs sm:text-sm px-2 sm:px-3">
+                  <MoreHorizontal className="h-4 w-4 mr-1 flex-shrink-0" />
+                  <span className="hidden sm:inline">Actions</span>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
