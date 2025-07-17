@@ -185,6 +185,8 @@ export interface Database {
           calories_range: string | null;
           duration_days: number;
           status: string;
+          template_id: string | null;
+          generation_method: string;
           created_at: string;
           updated_at: string;
         };
@@ -198,6 +200,8 @@ export interface Database {
           calories_range?: string | null;
           duration_days?: number;
           status?: string;
+          template_id?: string | null;
+          generation_method?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -211,6 +215,8 @@ export interface Database {
           calories_range?: string | null;
           duration_days?: number;
           status?: string;
+          template_id?: string | null;
+          generation_method?: string;
           created_at?: string;
           updated_at?: string;
         };
@@ -415,6 +421,7 @@ export interface Database {
           usage_count: number;
           is_favorite: boolean;
           is_public: boolean;
+          last_used_at: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -437,6 +444,7 @@ export interface Database {
           usage_count?: number;
           is_favorite?: boolean;
           is_public?: boolean;
+          last_used_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -459,6 +467,7 @@ export interface Database {
           usage_count?: number;
           is_favorite?: boolean;
           is_public?: boolean;
+          last_used_at?: string | null;
           created_at?: string;
           updated_at?: string;
         };

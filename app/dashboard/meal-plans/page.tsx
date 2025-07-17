@@ -63,10 +63,12 @@ import {
 } from "@/components/ui/alert-dialog"
 import { toast } from "@/hooks/use-toast"
 import { DashboardHeader } from "@/components/dashboard-header"
+import TemplateSelectionDialog from "@/components/meal-plans/TemplateSelectionDialog"
 import Link from "next/link"
 
 interface MealPlanWithClient extends MealPlan {
   clients: { name: string } | null
+  meal_plan_templates: { name: string } | null
 }
 
 interface ClientOption {
@@ -89,6 +91,7 @@ export default function MealPlansPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [filterStatus, setFilterStatus] = useState<string>("all")
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const [isTemplateDialogOpen, setIsTemplateDialogOpen] = useState(false)
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
   const [planToDelete, setPlanToDelete] = useState<MealPlanWithClient | null>(null)
   const [stats, setStats] = useState<StatsData>({
@@ -118,12 +121,13 @@ export default function MealPlansPage() {
     try {
       setLoading(true)
 
-      // Fetch meal plans with client names
+      // Fetch meal plans with client names and template info
       const { data: mealPlanData, error: mealPlanError } = await supabase
         .from("meal_plans")
         .select(`
           *,
-          clients (name)
+          clients (name),
+          meal_plan_templates (name)
         `)
         .eq("dietitian_id", user.id)
         .order("created_at", { ascending: false })
@@ -296,15 +300,13 @@ export default function MealPlansPage() {
         action={
           <div className="flex items-center gap-1 sm:gap-2 lg:gap-3">
             <Button 
-              asChild
+              onClick={() => setIsTemplateDialogOpen(true)}
               variant="outline"
               size="sm"
               className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs sm:text-sm"
             >
-              <Link href="/dashboard/templates">
-                <BookOpen className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden sm:inline">Utiliser un </span>modèle
-              </Link>
+              <BookOpen className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Utiliser un </span>modèle
             </Button>
             <Button 
               asChild
@@ -561,6 +563,22 @@ export default function MealPlansPage() {
                       )}
                     </div>
 
+                    {/* Template info */}
+                    {plan.meal_plan_templates && (
+                      <div className="flex items-center gap-2 text-sm bg-blue-50 px-3 py-2 rounded-lg">
+                        <BookOpen className="h-3 w-3 text-blue-600" />
+                        <span className="font-medium text-blue-800">
+                          Modèle: {plan.meal_plan_templates.name}
+                        </span>
+                        {plan.generation_method === 'template' && (
+                          <Badge className="bg-blue-100 text-blue-700 text-xs">Direct</Badge>
+                        )}
+                        {plan.generation_method === 'ai' && (
+                          <Badge className="bg-purple-100 text-purple-700 text-xs">IA</Badge>
+                        )}
+                      </div>
+                    )}
+
                     {/* Created date */}
                     <div className="flex items-center gap-2 text-sm text-gray-500 pt-2 border-t border-gray-100">
                       <Clock className="h-3 w-3" />
@@ -691,6 +709,15 @@ export default function MealPlansPage() {
           </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
+
+      {/* Template Selection Dialog */}
+      <TemplateSelectionDialog
+        isOpen={isTemplateDialogOpen}
+        onClose={() => setIsTemplateDialogOpen(false)}
+        onSuccess={() => {
+          fetchData() // Refresh meal plans list
+        }}
+      />
     </div>
   )
 }
