@@ -47,6 +47,7 @@ import {
   Trash2,
   TrendingDown,
   TrendingUp,
+  Upload,
   User,
   Weight,
 } from "lucide-react";
@@ -1005,7 +1006,7 @@ export default function ClientDetailPage() {
 
           {/* Progress Tab */}
           <TabsContent value="progress" className="space-y-6">
-            <div className="grid gap-6 lg:grid-cols-2">
+            <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
               <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-slate-900 flex items-center gap-2">
@@ -1661,23 +1662,32 @@ export default function ClientDetailPage() {
           <TabsContent value="documents" className="space-y-6">
             <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="min-w-0 flex-1">
                     <CardTitle className="text-slate-900 flex items-center gap-2">
                       <FileText className="h-5 w-5 text-emerald-600" />
                       Documents
                     </CardTitle>
                     <CardDescription className="text-slate-600">
-                      Gérez les documents du client (analyses, prescriptions,
-                      photos...)
+                      <span className="hidden sm:inline">Gérez les documents du client (analyses, prescriptions, photos...)</span>
+                      <span className="sm:hidden">Gérez les documents du client</span>
                     </CardDescription>
                   </div>
-                  <DocumentUpload
-                    clientId={client.id}
-                    onUploadComplete={() =>
-                      setDocumentRefresh((prev) => prev + 1)
-                    }
-                  />
+                  <div className="flex-shrink-0">
+                    <DocumentUpload
+                      clientId={client.id}
+                      onUploadComplete={() =>
+                        setDocumentRefresh((prev) => prev + 1)
+                      }
+                      trigger={
+                        <Button className="w-full sm:w-auto">
+                          <Upload className="h-4 w-4 mr-2" />
+                          <span className="hidden sm:inline">Télécharger un document</span>
+                          <span className="sm:hidden">Télécharger</span>
+                        </Button>
+                      }
+                    />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
@@ -1693,23 +1703,32 @@ export default function ClientDetailPage() {
           <TabsContent value="photos" className="space-y-6">
             <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm">
               <CardHeader>
-                <div className="flex items-center justify-between">
-                  <div>
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                  <div className="min-w-0 flex-1">
                     <CardTitle className="text-slate-900 flex items-center gap-2">
                       <Camera className="h-5 w-5 text-emerald-600" />
                       Photos de progrès
                     </CardTitle>
                     <CardDescription className="text-slate-600">
-                      Suivez l'évolution visuelle de votre client avec des
-                      photos avant/après
+                      <span className="hidden sm:inline">Suivez l'évolution visuelle de votre client avec des photos avant/après</span>
+                      <span className="sm:hidden">Suivez l'évolution visuelle du client</span>
                     </CardDescription>
                   </div>
-                  <ProgressPhotoUpload
-                    clientId={client.id}
-                    onUploadComplete={() =>
-                      setDocumentRefresh((prev) => prev + 1)
-                    }
-                  />
+                  <div className="flex-shrink-0">
+                    <ProgressPhotoUpload
+                      clientId={client.id}
+                      onUploadComplete={() =>
+                        setDocumentRefresh((prev) => prev + 1)
+                      }
+                      trigger={
+                        <Button className="w-full sm:w-auto">
+                          <Camera className="h-4 w-4 mr-2" />
+                          <span className="hidden sm:inline">Ajouter une photo de progrès</span>
+                          <span className="sm:hidden">Ajouter photo</span>
+                        </Button>
+                      }
+                    />
+                  </div>
                 </div>
               </CardHeader>
               <CardContent>
