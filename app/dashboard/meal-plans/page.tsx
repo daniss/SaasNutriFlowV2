@@ -294,33 +294,36 @@ export default function MealPlansPage() {
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-1 sm:gap-2 lg:gap-3">
             <Button 
               asChild
               variant="outline"
-              className="text-blue-600 border-blue-600 hover:bg-blue-50"
+              size="sm"
+              className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs sm:text-sm"
             >
               <Link href="/dashboard/templates">
-                <BookOpen className="mr-2 h-4 w-4" />
-                Utiliser un modèle
+                <BookOpen className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Utiliser un </span>modèle
               </Link>
             </Button>
             <Button 
               asChild
               variant="outline"
-              className="text-emerald-600 border-emerald-600 hover:bg-emerald-50"
+              size="sm"
+              className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 text-xs sm:text-sm"
             >
               <Link href="/dashboard/meal-plans/generate">
-                <Sparkles className="mr-2 h-4 w-4" />
-                Génération IA
+                <Sparkles className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden lg:inline">Génération </span>IA
               </Link>
             </Button>
             <Button 
               onClick={() => setIsAddDialogOpen(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white"
+              size="sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm"
             >
-              <Plus className="mr-2 h-4 w-4" />
-              Nouveau plan
+              <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="hidden sm:inline">Nouveau </span>plan
             </Button>
           </div>
         }
