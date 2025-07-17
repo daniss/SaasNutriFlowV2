@@ -1065,53 +1065,34 @@ export default function MealPlanDetailPage() {
                       </div>
 
                       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-                        <div>
-                          <h4 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
-                            <div className="h-2 w-2 bg-orange-400 rounded-full"></div>
-                            Petit-déjeuner
-                          </h4>
-                          <ul className="space-y-1 text-sm text-slate-600 ml-4">
-                            {(day.meals?.breakfast || []).map((meal: any, idx: number) => (
-                              <li key={idx}>• {meal}</li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div>
-                          <h4 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
-                            <div className="h-2 w-2 bg-blue-400 rounded-full"></div>
-                            Déjeuner
-                          </h4>
-                          <ul className="space-y-1 text-sm text-slate-600 ml-4">
-                            {(day.meals?.lunch || []).map((meal: any, idx: number) => (
-                              <li key={idx}>• {meal}</li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div>
-                          <h4 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
-                            <div className="h-2 w-2 bg-purple-400 rounded-full"></div>
-                            Dîner
-                          </h4>
-                          <ul className="space-y-1 text-sm text-slate-600 ml-4">
-                            {(day.meals?.dinner || []).map((meal: any, idx: number) => (
-                              <li key={idx}>• {meal}</li>
-                            ))}
-                          </ul>
-                        </div>
-
-                        <div>
-                          <h4 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
-                            <div className="h-2 w-2 bg-emerald-400 rounded-full"></div>
-                            Collations
-                          </h4>
-                          <ul className="space-y-1 text-sm text-slate-600 ml-4">
-                            {(day.meals?.snacks || []).map((meal: any, idx: number) => (
-                              <li key={idx}>• {meal}</li>
-                            ))}
-                          </ul>
-                        </div>
+                        {(() => {
+                          const mealConfig = [
+                            { key: 'breakfast', name: 'Petit-déjeuner', color: 'bg-orange-400', hour: day.breakfastHour || '08:00', enabled: day.breakfastEnabled !== false },
+                            { key: 'lunch', name: 'Déjeuner', color: 'bg-blue-400', hour: day.lunchHour || '12:00', enabled: day.lunchEnabled !== false },
+                            { key: 'dinner', name: 'Dîner', color: 'bg-purple-400', hour: day.dinnerHour || '19:00', enabled: day.dinnerEnabled !== false },
+                            { key: 'snacks', name: 'Collations', color: 'bg-emerald-400', hour: day.snacksHour || '16:00', enabled: day.snacksEnabled === true }
+                          ]
+                          
+                          return mealConfig
+                            .filter(meal => meal.enabled)
+                            .map(meal => (
+                              <div key={meal.key}>
+                                <h4 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
+                                  <div className={`h-2 w-2 ${meal.color} rounded-full`}></div>
+                                  <span>{meal.name}</span>
+                                  <span className="text-xs text-slate-500 ml-auto flex items-center gap-1">
+                                    <Clock className="h-3 w-3" />
+                                    {meal.hour}
+                                  </span>
+                                </h4>
+                                <ul className="space-y-1 text-sm text-slate-600 ml-4">
+                                  {(day.meals?.[meal.key] || []).map((meal: any, idx: number) => (
+                                    <li key={idx}>• {meal}</li>
+                                  ))}
+                                </ul>
+                              </div>
+                            ))
+                        })()}
                       </div>
 
                       {day.notes && (
