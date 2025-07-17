@@ -1338,9 +1338,19 @@ export default function MealPlanDetailPage() {
                         <Checkbox
                           id={`${slot}-enabled`}
                           checked={editDayForm[enabledField] as boolean}
-                          onCheckedChange={(checked) => 
+                          onCheckedChange={(checked) => {
                             setEditDayForm({ ...editDayForm, [enabledField]: checked })
-                          }
+                            // Clear selected foods when meal is unchecked
+                            if (!checked) {
+                              setSelectedFoods(prev => ({
+                                ...prev,
+                                [editDayForm.day]: {
+                                  ...prev[editDayForm.day],
+                                  [slot]: []
+                                }
+                              }))
+                            }
+                          }}
                         />
                         <Label htmlFor={`${slot}-enabled`} className="text-sm font-medium">
                           {slot === "breakfast" ? "Petit-déjeuner" :
