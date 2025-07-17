@@ -190,10 +190,11 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
         action={
           <Button 
             onClick={() => setIsAddDialogOpen(true)}
-            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
+            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium text-xs sm:text-sm px-3 sm:px-4"
           >
-            <Plus className="mr-2 h-4 w-4" />
-            Nouveau modèle
+            <Plus className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Nouveau modèle</span>
+            <span className="sm:hidden">Nouveau</span>
           </Button>
         }
       />
@@ -210,10 +211,11 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
             action={!searchTerm ? (
               <Button 
                 onClick={() => setIsAddDialogOpen(true)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium text-xs sm:text-sm px-3 sm:px-4"
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Créer votre premier modèle
+                <Plus className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Créer votre premier modèle</span>
+                <span className="sm:hidden">Créer modèle</span>
               </Button>
             ) : undefined}
           />
