@@ -115,6 +115,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
         description: formData.description || null,
         category: formData.category,
         client_type: formData.client_type,
+        health_condition: null, // Optional field, can be added to form later
         goal_type: formData.goal_type,
         duration_days: formData.duration_days,
         target_calories: formData.target_calories || null,
