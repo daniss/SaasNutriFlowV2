@@ -832,29 +832,29 @@ export default function MealPlanDetailPage() {
     <div className="space-y-6">
       <div className="px-4 sm:px-6 space-y-6">
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
+          <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
             <Button
               variant="ghost"
               size="sm"
               onClick={() => router.push("/dashboard/meal-plans")}
-              className="h-10 w-10 rounded-lg"
+              className="h-10 w-10 rounded-lg flex-shrink-0"
             >
               <ArrowLeft className="h-5 w-5" />
             </Button>
-            <div className="flex items-center gap-3">
-              <div className="h-12 w-12 bg-emerald-100 rounded-xl flex items-center justify-center">
-                <IconComponent className="h-6 w-6 text-emerald-600" />
+            <div className="flex items-center gap-3 min-w-0 flex-1">
+              <div className="h-10 w-10 sm:h-12 sm:w-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <IconComponent className="h-5 w-5 sm:h-6 sm:w-6 text-emerald-600" />
               </div>
-              <div>
-                <h1 className="text-2xl font-bold text-slate-900">{mealPlan.name}</h1>
-                <p className="text-slate-600">Pour {mealPlan.clients?.name}</p>
+              <div className="min-w-0 flex-1">
+                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">{mealPlan.name}</h1>
+                <p className="text-sm sm:text-base text-slate-600 truncate">Pour {mealPlan.clients?.name}</p>
               </div>
             </div>
           </div>
 
-          <div className="flex items-center gap-3">
-            <Badge className={`${getStatusColor(mealPlan.status)} border font-medium px-3 py-1.5`}>
+          <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+            <Badge className={`${getStatusColor(mealPlan.status)} border font-medium px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm`}>
               {getStatusText(mealPlan.status)}
             </Badge>
             <DropdownMenu>
@@ -899,9 +899,9 @@ export default function MealPlanDetailPage() {
           </div>
         </div>
 
-        <div className="grid gap-8 lg:grid-cols-3">
+        <div className="grid gap-6 lg:gap-8 lg:grid-cols-3">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-8">
+          <div className="lg:col-span-2 space-y-6 lg:space-y-8">
             {/* Plan Overview */}
             <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl">
               <CardHeader>
@@ -918,7 +918,7 @@ export default function MealPlanDetailPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                   <div className="bg-slate-50/80 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Clock className="h-4 w-4 text-slate-500" />
@@ -1023,7 +1023,7 @@ export default function MealPlanDetailPage() {
                         </Button>
                       </div>
 
-                      <div className="grid gap-4 md:grid-cols-2">
+                      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                         <div>
                           <h4 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
                             <div className="h-2 w-2 bg-orange-400 rounded-full"></div>
@@ -1088,7 +1088,7 @@ export default function MealPlanDetailPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-6">
+          <div className="space-y-4 lg:space-y-6">
             {/* Client Info */}
             <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl">
               <CardHeader>
@@ -1187,7 +1187,7 @@ export default function MealPlanDetailPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="edit-calories">Gamme de calories</Label>
                   <Input
