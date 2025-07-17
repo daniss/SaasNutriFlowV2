@@ -2,6 +2,7 @@
 
 import {
   Calendar,
+  ChefHat,
   FileText,
   Home,
   LogOut,
@@ -49,6 +50,11 @@ const data = {
       title: "Clients",
       url: "/dashboard/clients",
       icon: Users,
+    },
+    {
+      title: "Recettes",
+      url: "/dashboard/recipes",
+      icon: ChefHat,
     },
     {
       title: "Plans alimentaires",
@@ -139,9 +145,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <SidebarMenu>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/dashboard/clients">
-                    <Plus />
-                    <span>Nouveau client</span>
+                  <Link href="/dashboard/recipes">
+                    <ChefHat />
+                    <span>Nouvelle recette</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>
@@ -155,9 +161,9 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
-                  <Link href="/dashboard/meal-plans">
-                    <FileText />
-                    <span>Créer un plan</span>
+                  <Link href="/dashboard/clients">
+                    <Plus />
+                    <span>Nouveau client</span>
                   </Link>
                 </SidebarMenuButton>
               </SidebarMenuItem>

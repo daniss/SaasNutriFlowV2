@@ -29,7 +29,9 @@ import {
   BarChart3,
   Share2,
   ShoppingBag,
-  BookOpen
+  BookOpen,
+  Zap,
+  Play
 } from "lucide-react"
 import { 
   DropdownMenu, 
@@ -69,6 +71,7 @@ export default function TemplatesPage() {
   const [sharingTemplate, setSharingTemplate] = useState<RecipeTemplate | MealPlanTemplate | null>(null)
   const [isMealPrepDialogOpen, setIsMealPrepDialogOpen] = useState(false)
   const [mealPrepTemplate, setMealPrepTemplate] = useState<RecipeTemplate | MealPlanTemplate | null>(null)
+  const [isGeneratingFromTemplate, setIsGeneratingFromTemplate] = useState(false)
 
   useEffect(() => {
     if (user) {
@@ -111,6 +114,46 @@ export default function TemplatesPage() {
       })
     } finally {
       setLoading(false)
+    }
+  }
+
+  const handleGenerateFromTemplate = async (template: MealPlanTemplate) => {
+    if (!user) return
+    
+    setIsGeneratingFromTemplate(true)
+    try {
+      // Create a smart prompt from the template
+      const prompt = `Créez un plan alimentaire basé sur ce modèle professionnel:
+      
+Nom: ${template.name}
+Description: ${template.description || ''}
+Durée: ${template.duration_days} jours
+Catégorie: ${template.category}
+Type de client: ${template.client_type}
+Objectif: ${template.goal_type}
+Calories cibles: ${template.target_calories || 'Non spécifiées'}
+Difficulté: ${template.difficulty}
+
+Utilisez cette structure comme guide et adaptez-la avec des recettes appropriées pour créer un plan complet et personnalisé.`
+
+      // Navigate to generation page with the template data
+      const searchParams = new URLSearchParams({
+        prompt: prompt,
+        planName: `Plan basé sur: ${template.name}`,
+        templateId: template.id
+      })
+      
+      router.push(`/dashboard/meal-plans/generate?${searchParams.toString()}`)
+      
+    } catch (error) {
+      console.error('Error generating from template:', error)
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer à partir du modèle",
+        variant: "destructive"
+      })
+    } finally {
+      setIsGeneratingFromTemplate(false)
     }
   }
 
@@ -295,6 +338,7 @@ export default function TemplatesPage() {
                       setMealPrepTemplate(template)
                       setIsMealPrepDialogOpen(true)
                     }}
+                    onGenerate={(template: MealPlanTemplate) => handleGenerateFromTemplate(template)}
                   />
                 ))}
               </div>
@@ -403,7 +447,8 @@ function TemplateCard({
   onEdit, 
   onDelete,
   onShare,
-  onMealPrep 
+  onMealPrep,
+  onGenerate 
 }: { 
   template: RecipeTemplate | MealPlanTemplate
   type: TemplateType
@@ -411,6 +456,7 @@ function TemplateCard({
   onDelete: (id: string) => void
   onShare: (template: RecipeTemplate | MealPlanTemplate) => void
   onMealPrep: (template: RecipeTemplate | MealPlanTemplate) => void
+  onGenerate?: (template: MealPlanTemplate) => void
 }) {
   const getCategoryColor = (category: string) => {
     const colors = {
@@ -466,6 +512,12 @@ function TemplateCard({
                 <Edit className="mr-2 h-4 w-4" />
                 Modifier
               </DropdownMenuItem>
+              {type === 'meal_plan' && onGenerate && (
+                <DropdownMenuItem onClick={() => onGenerate(template as MealPlanTemplate)}>
+                  <Zap className="mr-2 h-4 w-4 text-emerald-600" />
+                  <span className="text-emerald-600 font-medium">Générer un plan</span>
+                </DropdownMenuItem>
+              )}
               <DropdownMenuItem>
                 <Copy className="mr-2 h-4 w-4" />
                 Dupliquer

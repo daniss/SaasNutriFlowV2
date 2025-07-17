@@ -660,6 +660,138 @@ export interface Database {
           created_at?: string;
         };
       };
+      recipes: {
+        Row: {
+          id: string;
+          dietitian_id: string;
+          name: string;
+          description: string | null;
+          category: string;
+          prep_time: number | null;
+          cook_time: number | null;
+          servings: number;
+          difficulty: string;
+          calories_per_serving: number | null;
+          protein_per_serving: number | null;
+          carbs_per_serving: number | null;
+          fat_per_serving: number | null;
+          fiber_per_serving: number | null;
+          image_url: string | null;
+          instructions: string[];
+          tags: string[];
+          is_favorite: boolean;
+          usage_count: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          dietitian_id: string;
+          name: string;
+          description?: string | null;
+          category?: string;
+          prep_time?: number | null;
+          cook_time?: number | null;
+          servings?: number;
+          difficulty?: string;
+          calories_per_serving?: number | null;
+          protein_per_serving?: number | null;
+          carbs_per_serving?: number | null;
+          fat_per_serving?: number | null;
+          fiber_per_serving?: number | null;
+          image_url?: string | null;
+          instructions?: string[];
+          tags?: string[];
+          is_favorite?: boolean;
+          usage_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          dietitian_id?: string;
+          name?: string;
+          description?: string | null;
+          category?: string;
+          prep_time?: number | null;
+          cook_time?: number | null;
+          servings?: number;
+          difficulty?: string;
+          calories_per_serving?: number | null;
+          protein_per_serving?: number | null;
+          carbs_per_serving?: number | null;
+          fat_per_serving?: number | null;
+          fiber_per_serving?: number | null;
+          image_url?: string | null;
+          instructions?: string[];
+          tags?: string[];
+          is_favorite?: boolean;
+          usage_count?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      recipe_ingredients: {
+        Row: {
+          id: string;
+          recipe_id: string;
+          name: string;
+          quantity: number | null;
+          unit: string | null;
+          notes: string | null;
+          order_index: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          recipe_id: string;
+          name: string;
+          quantity?: number | null;
+          unit?: string | null;
+          notes?: string | null;
+          order_index?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          recipe_id?: string;
+          name?: string;
+          quantity?: number | null;
+          unit?: string | null;
+          notes?: string | null;
+          order_index?: number;
+          created_at?: string;
+        };
+      };
+      meal_plan_recipes: {
+        Row: {
+          id: string;
+          meal_plan_id: string;
+          recipe_id: string;
+          day_number: number;
+          meal_type: string;
+          servings_used: number;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          meal_plan_id: string;
+          recipe_id: string;
+          day_number: number;
+          meal_type: string;
+          servings_used?: number;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          meal_plan_id?: string;
+          recipe_id?: string;
+          day_number?: number;
+          meal_type?: string;
+          servings_used?: number;
+          created_at?: string;
+        };
+      };
     };
   };
 }
@@ -678,6 +810,9 @@ export type MealPlanTemplate =
 export type Appointment = Database["public"]["Tables"]["appointments"]["Row"];
 export type Conversation = Database["public"]["Tables"]["conversations"]["Row"];
 export type Message = Database["public"]["Tables"]["messages"]["Row"];
+export type Recipe = Database["public"]["Tables"]["recipes"]["Row"];
+export type RecipeIngredient = Database["public"]["Tables"]["recipe_ingredients"]["Row"];
+export type MealPlanRecipe = Database["public"]["Tables"]["meal_plan_recipes"]["Row"];
 
 export interface Document {
   id: string;
