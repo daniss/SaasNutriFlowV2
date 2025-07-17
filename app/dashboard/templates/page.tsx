@@ -26,12 +26,9 @@ import {
   ChefHat,
   Clock,
   Users,
-  BarChart3,
   Share2,
-  ShoppingBag,
   BookOpen,
-  Zap,
-  Play
+  Zap
 } from "lucide-react"
 import { 
   DropdownMenu, 
@@ -46,7 +43,6 @@ import { DashboardSkeleton, EmptyStateWithSkeleton } from "@/components/shared/s
 import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type MealPlanTemplate } from "@/lib/supabase"
 import MealPlanTemplateDialog from "@/components/templates/MealPlanTemplateDialog"
-import TemplateEffectivenessWidget from "@/components/templates/TemplateEffectivenessWidget"
 import ShareTemplateDialog from "@/components/templates/ShareTemplateDialog"
 import MealPrepInstructionsDialog from "@/components/meal-prep/MealPrepInstructionsDialog"
 import { useRouter } from "next/navigation"
@@ -192,31 +188,13 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
-          <div className="flex items-center gap-3">
-            <Button 
-              variant="outline"
-              onClick={() => router.push('/dashboard/templates/marketplace')}
-              className="text-blue-600 border-blue-600 hover:bg-blue-50"
-            >
-              <ShoppingBag className="mr-2 h-4 w-4" />
-              Marketplace
-            </Button>
-            <Button 
-              variant="outline"
-              onClick={() => router.push('/dashboard/templates/analytics')}
-              className="text-emerald-600 border-emerald-600 hover:bg-emerald-50"
-            >
-              <BarChart3 className="mr-2 h-4 w-4" />
-              Analytics
-            </Button>
-            <Button 
-              onClick={() => setIsAddDialogOpen(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Nouveau modèle
-            </Button>
-          </div>
+          <Button 
+            onClick={() => setIsAddDialogOpen(true)}
+            className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
+          >
+            <Plus className="mr-2 h-4 w-4" />
+            Nouveau modèle
+          </Button>
         }
       />
 
@@ -466,14 +444,6 @@ function TemplateCard({
           </div>
         )}
 
-        {/* Template Effectiveness Widget */}
-        <div className="mt-4">
-          <TemplateEffectivenessWidget 
-            templateId={template.id}
-            templateName={template.name}
-            compact={true}
-          />
-        </div>
       </CardContent>
     </Card>
   )
