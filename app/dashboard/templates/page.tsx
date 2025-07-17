@@ -44,15 +44,13 @@ import { useToast } from "@/hooks/use-toast"
 import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardSkeleton, EmptyStateWithSkeleton } from "@/components/shared/skeletons"
 import { useAuth } from "@/hooks/useAuthNew"
-import { supabase, type RecipeTemplate, type MealPlanTemplate } from "@/lib/supabase"
-import RecipeTemplateDialog from "@/components/templates/RecipeTemplateDialog"
+import { supabase, type MealPlanTemplate } from "@/lib/supabase"
 import MealPlanTemplateDialog from "@/components/templates/MealPlanTemplateDialog"
 import TemplateEffectivenessWidget from "@/components/templates/TemplateEffectivenessWidget"
 import ShareTemplateDialog from "@/components/templates/ShareTemplateDialog"
 import MealPrepInstructionsDialog from "@/components/meal-prep/MealPrepInstructionsDialog"
 import { useRouter } from "next/navigation"
 
-type TemplateType = 'recipe' | 'meal_plan'
 
 export default function TemplatesPage() {
   const { user } = useAuth()
@@ -61,16 +59,14 @@ export default function TemplatesPage() {
   
   const [searchTerm, setSearchTerm] = useState("")
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState<TemplateType>('recipe')
-  const [recipeTemplates, setRecipeTemplates] = useState<RecipeTemplate[]>([])
   const [mealPlanTemplates, setMealPlanTemplates] = useState<MealPlanTemplate[]>([])
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
-  const [editingTemplate, setEditingTemplate] = useState<RecipeTemplate | MealPlanTemplate | null>(null)
+  const [editingTemplate, setEditingTemplate] = useState<MealPlanTemplate | null>(null)
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
-  const [sharingTemplate, setSharingTemplate] = useState<RecipeTemplate | MealPlanTemplate | null>(null)
+  const [sharingTemplate, setSharingTemplate] = useState<MealPlanTemplate | null>(null)
   const [isMealPrepDialogOpen, setIsMealPrepDialogOpen] = useState(false)
-  const [mealPrepTemplate, setMealPrepTemplate] = useState<RecipeTemplate | MealPlanTemplate | null>(null)
+  const [mealPrepTemplate, setMealPrepTemplate] = useState<MealPlanTemplate | null>(null)
   const [isGeneratingFromTemplate, setIsGeneratingFromTemplate] = useState(false)
 
   useEffect(() => {
@@ -85,16 +81,7 @@ export default function TemplatesPage() {
     try {
       setLoading(true)
       
-      // Fetch recipe templates
-      const { data: recipes, error: recipeError } = await supabase
-        .from('recipe_templates')
-        .select('*')
-        .eq('dietitian_id', user.id)
-        .order('created_at', { ascending: false })
-      
-      if (recipeError) throw recipeError
-      
-      // Fetch meal plan templates
+      // Fetch meal plan templates only
       const { data: mealPlans, error: mealPlanError } = await supabase
         .from('meal_plan_templates')
         .select('*')
@@ -103,7 +90,6 @@ export default function TemplatesPage() {
       
       if (mealPlanError) throw mealPlanError
       
-      setRecipeTemplates(recipes || [])
       setMealPlanTemplates(mealPlans || [])
     } catch (error) {
       console.error('Error fetching templates:', error)
@@ -157,13 +143,12 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
     }
   }
 
-  const handleDeleteTemplate = async (templateId: string, type: TemplateType) => {
+  const handleDeleteTemplate = async (templateId: string) => {
     if (!user) return
     
     try {
-      const table = type === 'recipe' ? 'recipe_templates' : 'meal_plan_templates'
       const { error } = await supabase
-        .from(table)
+        .from('meal_plan_templates')
         .delete()
         .eq('id', templateId)
         .eq('dietitian_id', user.id)
@@ -171,11 +156,7 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
       if (error) throw error
       
       // Update local state
-      if (type === 'recipe') {
-        setRecipeTemplates(prev => prev.filter(t => t.id !== templateId))
-      } else {
-        setMealPlanTemplates(prev => prev.filter(t => t.id !== templateId))
-      }
+      setMealPlanTemplates(prev => prev.filter(t => t.id !== templateId))
       
       toast({
         title: "Succès",
@@ -191,8 +172,7 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
     }
   }
 
-  const currentTemplates = activeTab === 'recipe' ? recipeTemplates : mealPlanTemplates
-  const filteredTemplates = currentTemplates.filter(
+  const filteredTemplates = mealPlanTemplates.filter(
     (template) =>
       template.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       template.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -206,8 +186,8 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
   return (
     <div className="space-y-6">
       <DashboardHeader 
-        title="Bibliothèque de modèles"
-        subtitle={`${currentTemplates.length} modèles disponibles pour votre pratique`}
+        title="Modèles de plans alimentaires"
+        subtitle={`${mealPlanTemplates.length} modèles disponibles pour votre pratique`}
         searchPlaceholder="Rechercher des modèles..."
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
@@ -241,164 +221,75 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
       />
 
       <div className="px-6 space-y-6">
-        {/* Tab Navigation */}
-        <Tabs value={activeTab} onValueChange={(value) => setActiveTab(value as TemplateType)}>
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="recipe" className="flex items-center gap-2">
-              <ChefHat className="h-4 w-4" />
-              Recettes ({recipeTemplates.length})
-            </TabsTrigger>
-            <TabsTrigger value="meal_plan" className="flex items-center gap-2">
-              <Calendar className="h-4 w-4" />
-              Plans alimentaires ({mealPlanTemplates.length})
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="recipe" className="space-y-4 mt-6">
-            {filteredTemplates.length === 0 ? (
-              <EmptyStateWithSkeleton 
-                icon={ChefHat}
-                title={searchTerm ? "Aucune recette trouvée" : "Aucune recette"}
-                description={searchTerm 
-                  ? "Essayez d'ajuster vos termes de recherche." 
-                  : "Créez votre première recette pour commencer."
-                }
-                action={!searchTerm ? (
-                  <Button 
-                    onClick={() => setIsAddDialogOpen(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Créer votre première recette
-                  </Button>
-                ) : undefined}
+        {filteredTemplates.length === 0 ? (
+          <EmptyStateWithSkeleton 
+            icon={Calendar}
+            title={searchTerm ? "Aucun modèle trouvé" : "Aucun modèle"}
+            description={searchTerm 
+              ? "Essayez d'ajuster vos termes de recherche." 
+              : "Créez votre premier modèle de plan alimentaire pour commencer."
+            }
+            action={!searchTerm ? (
+              <Button 
+                onClick={() => setIsAddDialogOpen(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Créer votre premier modèle
+              </Button>
+            ) : undefined}
+          />
+        ) : (
+          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {filteredTemplates.map((template) => (
+              <TemplateCard 
+                key={template.id} 
+                template={template}
+                onEdit={(template: MealPlanTemplate) => {
+                  setEditingTemplate(template)
+                  setIsEditDialogOpen(true)
+                }}
+                onDelete={(id: string) => handleDeleteTemplate(id)}
+                onShare={(template: MealPlanTemplate) => {
+                  setSharingTemplate(template)
+                  setIsShareDialogOpen(true)
+                }}
+                onMealPrep={(template: MealPlanTemplate) => {
+                  setMealPrepTemplate(template)
+                  setIsMealPrepDialogOpen(true)
+                }}
+                onGenerate={(template: MealPlanTemplate) => handleGenerateFromTemplate(template)}
               />
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredTemplates.map((template) => (
-                  <TemplateCard 
-                    key={template.id} 
-                    template={template} 
-                    type="recipe"
-                    onEdit={(template: RecipeTemplate | MealPlanTemplate) => {
-                      setEditingTemplate(template)
-                      setIsEditDialogOpen(true)
-                    }}
-                    onDelete={(id: string) => handleDeleteTemplate(id, 'recipe')}
-                    onShare={(template: RecipeTemplate | MealPlanTemplate) => {
-                      setSharingTemplate(template)
-                      setIsShareDialogOpen(true)
-                    }}
-                    onMealPrep={(template: RecipeTemplate | MealPlanTemplate) => {
-                      setMealPrepTemplate(template)
-                      setIsMealPrepDialogOpen(true)
-                    }}
-                  />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-
-          <TabsContent value="meal_plan" className="space-y-4 mt-6">
-            {filteredTemplates.length === 0 ? (
-              <EmptyStateWithSkeleton 
-                icon={Calendar}
-                title={searchTerm ? "Aucun plan alimentaire trouvé" : "Aucun plan alimentaire"}
-                description={searchTerm 
-                  ? "Essayez d'ajuster vos termes de recherche." 
-                  : "Créez votre premier plan alimentaire pour commencer."
-                }
-                action={!searchTerm ? (
-                  <Button 
-                    onClick={() => setIsAddDialogOpen(true)}
-                    className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
-                  >
-                    <Plus className="mr-2 h-4 w-4" />
-                    Créer votre premier plan alimentaire
-                  </Button>
-                ) : undefined}
-              />
-            ) : (
-              <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
-                {filteredTemplates.map((template) => (
-                  <TemplateCard 
-                    key={template.id} 
-                    template={template} 
-                    type="meal_plan"
-                    onEdit={(template: RecipeTemplate | MealPlanTemplate) => {
-                      setEditingTemplate(template)
-                      setIsEditDialogOpen(true)
-                    }}
-                    onDelete={(id: string) => handleDeleteTemplate(id, 'meal_plan')}
-                    onShare={(template: RecipeTemplate | MealPlanTemplate) => {
-                      setSharingTemplate(template)
-                      setIsShareDialogOpen(true)
-                    }}
-                    onMealPrep={(template: RecipeTemplate | MealPlanTemplate) => {
-                      setMealPrepTemplate(template)
-                      setIsMealPrepDialogOpen(true)
-                    }}
-                    onGenerate={(template: MealPlanTemplate) => handleGenerateFromTemplate(template)}
-                  />
-                ))}
-              </div>
-            )}
-          </TabsContent>
-        </Tabs>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Add Dialog */}
-      {activeTab === 'recipe' ? (
-        <RecipeTemplateDialog
-          isOpen={isAddDialogOpen}
-          onClose={() => setIsAddDialogOpen(false)}
-          onSave={() => {
-            setIsAddDialogOpen(false)
-            fetchTemplates()
-          }}
-        />
-      ) : (
-        <MealPlanTemplateDialog
-          isOpen={isAddDialogOpen}
-          onClose={() => setIsAddDialogOpen(false)}
-          onSave={() => {
-            setIsAddDialogOpen(false)
-            fetchTemplates()
-          }}
-        />
-      )}
+      <MealPlanTemplateDialog
+        isOpen={isAddDialogOpen}
+        onClose={() => setIsAddDialogOpen(false)}
+        onSave={() => {
+          setIsAddDialogOpen(false)
+          fetchTemplates()
+        }}
+      />
 
       {/* Edit Dialog */}
       {editingTemplate && (
-        activeTab === 'recipe' ? (
-          <RecipeTemplateDialog
-            isOpen={isEditDialogOpen}
-            onClose={() => {
-              setIsEditDialogOpen(false)
-              setEditingTemplate(null)
-            }}
-            template={editingTemplate as RecipeTemplate}
-            onSave={() => {
-              setIsEditDialogOpen(false)
-              setEditingTemplate(null)
-              fetchTemplates()
-            }}
-          />
-        ) : (
-          <MealPlanTemplateDialog
-            isOpen={isEditDialogOpen}
-            onClose={() => {
-              setIsEditDialogOpen(false)
-              setEditingTemplate(null)
-            }}
-            template={editingTemplate as MealPlanTemplate}
-            onSave={() => {
-              setIsEditDialogOpen(false)
-              setEditingTemplate(null)
-              fetchTemplates()
-            }}
-          />
-        )
+        <MealPlanTemplateDialog
+          isOpen={isEditDialogOpen}
+          onClose={() => {
+            setIsEditDialogOpen(false)
+            setEditingTemplate(null)
+          }}
+          template={editingTemplate}
+          onSave={() => {
+            setIsEditDialogOpen(false)
+            setEditingTemplate(null)
+            fetchTemplates()
+          }}
+        />
       )}
 
       {/* Share Dialog */}
@@ -410,7 +301,7 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
             setSharingTemplate(null)
           }}
           template={sharingTemplate}
-          templateType={activeTab}
+          templateType="meal_plan"
           onShared={() => {
             setIsShareDialogOpen(false)
             setSharingTemplate(null)
@@ -427,8 +318,7 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
             setIsMealPrepDialogOpen(false)
             setMealPrepTemplate(null)
           }}
-          recipeId={activeTab === 'recipe' ? mealPrepTemplate.id : undefined}
-          mealPlanId={activeTab === 'meal_plan' ? mealPrepTemplate.id : undefined}
+          mealPlanId={mealPrepTemplate.id}
           onSaved={() => {
             setIsMealPrepDialogOpen(false)
             setMealPrepTemplate(null)
@@ -443,20 +333,18 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
 // Template Card Component
 function TemplateCard({ 
   template, 
-  type, 
   onEdit, 
   onDelete,
   onShare,
   onMealPrep,
   onGenerate 
 }: { 
-  template: RecipeTemplate | MealPlanTemplate
-  type: TemplateType
-  onEdit: (template: RecipeTemplate | MealPlanTemplate) => void
+  template: MealPlanTemplate
+  onEdit: (template: MealPlanTemplate) => void
   onDelete: (id: string) => void
-  onShare: (template: RecipeTemplate | MealPlanTemplate) => void
-  onMealPrep: (template: RecipeTemplate | MealPlanTemplate) => void
-  onGenerate?: (template: MealPlanTemplate) => void
+  onShare: (template: MealPlanTemplate) => void
+  onMealPrep: (template: MealPlanTemplate) => void
+  onGenerate: (template: MealPlanTemplate) => void
 }) {
   const getCategoryColor = (category: string) => {
     const colors = {
@@ -512,12 +400,10 @@ function TemplateCard({
                 <Edit className="mr-2 h-4 w-4" />
                 Modifier
               </DropdownMenuItem>
-              {type === 'meal_plan' && onGenerate && (
-                <DropdownMenuItem onClick={() => onGenerate(template as MealPlanTemplate)}>
-                  <Zap className="mr-2 h-4 w-4 text-emerald-600" />
-                  <span className="text-emerald-600 font-medium">Générer un plan</span>
-                </DropdownMenuItem>
-              )}
+              <DropdownMenuItem onClick={() => onGenerate(template)}>
+                <Zap className="mr-2 h-4 w-4 text-emerald-600" />
+                <span className="text-emerald-600 font-medium">Générer un plan</span>
+              </DropdownMenuItem>
               <DropdownMenuItem>
                 <Copy className="mr-2 h-4 w-4" />
                 Dupliquer
@@ -556,18 +442,16 @@ function TemplateCard({
 
         <div className="grid grid-cols-2 gap-3 text-sm">
           <div className="flex items-center gap-2 text-gray-600">
-            <Users className="h-3 w-3" />
-            <span>{'servings' in template ? `${template.servings} portions` : 'Plan complet'}</span>
+            <Calendar className="h-3 w-3" />
+            <span>{template.duration_days} jours</span>
           </div>
           <div className="flex items-center gap-2 text-gray-600">
             <Clock className="h-3 w-3" />
-            <span>
-              {'prep_time' in template && template.prep_time ? `${template.prep_time}min` : 'Flexible'}
-            </span>
+            <span>{template.difficulty || 'Standard'}</span>
           </div>
         </div>
 
-        {'tags' in template && template.tags && template.tags.length > 0 && (
+        {template.tags && template.tags.length > 0 && (
           <div className="flex flex-wrap gap-1">
             {template.tags.slice(0, 3).map((tag) => (
               <Badge key={tag} variant="outline" className="text-xs px-2 py-0.5">
@@ -582,16 +466,14 @@ function TemplateCard({
           </div>
         )}
 
-        {/* Template Effectiveness Widget for Meal Plan Templates */}
-        {type === 'meal_plan' && (
-          <div className="mt-4">
-            <TemplateEffectivenessWidget 
-              templateId={template.id}
-              templateName={template.name}
-              compact={true}
-            />
-          </div>
-        )}
+        {/* Template Effectiveness Widget */}
+        <div className="mt-4">
+          <TemplateEffectivenessWidget 
+            templateId={template.id}
+            templateName={template.name}
+            compact={true}
+          />
+        </div>
       </CardContent>
     </Card>
   )

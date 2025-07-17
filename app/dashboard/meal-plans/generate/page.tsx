@@ -57,11 +57,10 @@ import { useEffect, useRef, useState } from "react"
 // Now restored and working with proper dynamic imports!
 import { useAuth } from "@/hooks/useAuthNew"
 import { generateMealPlan, type GeneratedMealPlan, type Meal } from "@/lib/gemini"
-import { supabase, type Client, type Recipe } from "@/lib/supabase"
+import { supabase, type Client } from "@/lib/supabase"
 import { generateProfessionalPDF } from "@/lib/pdf-generator"
 import { useToast } from "@/hooks/use-toast"
 import MacronutrientBreakdown from "@/components/nutrition/MacronutrientBreakdown"
-import RecipeSuggestions from "@/components/meal-plans/RecipeSuggestions"
 
 export default function GenerateMealPlanPage() {
   const { user } = useAuth()
@@ -78,8 +77,6 @@ export default function GenerateMealPlanPage() {
   const [planFeedback, setPlanFeedback] = useState<{ planId: string; rating: 'good' | 'bad' | null }>({ planId: '', rating: null })
   const [viewMode, setViewMode] = useState<'cards' | 'timeline' | 'compact' | 'nutrition'>('cards')
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([1]))
-  const [selectedRecipes, setSelectedRecipes] = useState<Recipe[]>([])
-  const [showRecipeSuggestions, setShowRecipeSuggestions] = useState(false)
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
   // Form state
@@ -102,10 +99,6 @@ export default function GenerateMealPlanPage() {
         planName: planName || prev.planName
       }))
       
-      // If this is from a template, auto-show recipe suggestions
-      if (templateId) {
-        setShowRecipeSuggestions(true)
-      }
     }
   }, [searchParams])
 
@@ -179,16 +172,6 @@ export default function GenerateMealPlanPage() {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
 
-  const handleRecipeSelect = (recipe: Recipe) => {
-    setSelectedRecipes(prev => {
-      const isSelected = prev.some(r => r.id === recipe.id)
-      if (isSelected) {
-        return prev.filter(r => r.id !== recipe.id)
-      } else {
-        return [...prev, recipe]
-      }
-    })
-  }
 
 
   const handleGenerate = async () => {
@@ -220,20 +203,9 @@ export default function GenerateMealPlanPage() {
     }, 800)
 
     try {
-      // Enhance prompt with selected recipes if any
-      let enhancedPrompt = formData.prompt
-      
-      if (selectedRecipes.length > 0) {
-        const recipeContext = selectedRecipes.map(recipe => 
-          `- ${recipe.name}: ${recipe.description} (${recipe.calories_per_serving || 'N/A'} kcal, ${recipe.category})`
-        ).join('\n')
-        
-        enhancedPrompt = `${formData.prompt}\n\nVEUILLEZ UTILISER CES RECETTES EXISTANTES QUAND C'EST POSSIBLE:\n${recipeContext}\n\nSi ces recettes ne correspondent pas exactement au plan demandé, adaptez-les ou créez de nouvelles recettes similaires en vous inspirant de celles-ci.`
-      }
-      
       // Real AI generation with Google Gemini!
       const mealPlanRequest = {
-        prompt: enhancedPrompt,
+        prompt: formData.prompt,
         dietitianId: user?.id || '',
         clientId: formData.clientId || undefined,
       }
@@ -383,59 +355,6 @@ export default function GenerateMealPlanPage() {
         .single()
       
       if (saveError) throw saveError
-
-      // Save recipe connections if any recipes were used
-      if (selectedRecipes.length > 0 && savedPlan) {
-        const recipeConnections: Array<{
-          meal_plan_id: string
-          recipe_id: string
-          day_number: number
-          meal_type: string
-          servings_used: number
-        }> = []
-        
-        // Try to match generated meals with selected recipes by name similarity
-        generatedPlan.days.forEach((day, dayIndex) => {
-          day.meals.forEach(meal => {
-            const matchingRecipe = selectedRecipes.find(recipe => 
-              recipe.name.toLowerCase().includes(meal.name.toLowerCase()) ||
-              meal.name.toLowerCase().includes(recipe.name.toLowerCase())
-            )
-            
-            if (matchingRecipe) {
-              recipeConnections.push({
-                meal_plan_id: savedPlan.id,
-                recipe_id: matchingRecipe.id,
-                day_number: dayIndex + 1,
-                meal_type: meal.type,
-                servings_used: 1.0
-              })
-            }
-          })
-        })
-        
-        if (recipeConnections.length > 0) {
-          await supabase.from('meal_plan_recipes').insert(recipeConnections)
-          
-          // Update recipe usage counts
-          const recipeIds = [...new Set(recipeConnections.map(conn => conn.recipe_id))]
-          for (const recipeId of recipeIds) {
-            // Get current usage count and increment it
-            const { data: recipe } = await supabase
-              .from('recipes')
-              .select('usage_count')
-              .eq('id', recipeId)
-              .single()
-            
-            if (recipe) {
-              await supabase
-                .from('recipes')
-                .update({ usage_count: (recipe.usage_count || 0) + 1 })
-                .eq('id', recipeId)
-            }
-          }
-        }
-      }
       
       // Send notification to client
       try {
@@ -669,41 +588,8 @@ export default function GenerateMealPlanPage() {
                   </Select>
                 </div>
 
-                {/* Recipe Integration Toggle */}
-                <div className="pt-4 border-t border-gray-100">
-                  <div className="flex items-center justify-between mb-4">
-                    <div className="flex items-center gap-2">
-                      <ChefHat className="h-4 w-4 text-emerald-600" />
-                      <span className="text-sm font-medium text-gray-700">Utiliser mes recettes existantes</span>
-                    </div>
-                    <Button
-                      variant={showRecipeSuggestions ? "default" : "outline"}
-                      size="sm"
-                      onClick={() => setShowRecipeSuggestions(!showRecipeSuggestions)}
-                      className={showRecipeSuggestions ? "bg-emerald-600 hover:bg-emerald-700" : ""}
-                    >
-                      {showRecipeSuggestions ? "Masquer" : "Afficher"} les recettes
-                    </Button>
-                  </div>
-                  
-                  {selectedRecipes.length > 0 && (
-                    <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                      <div className="text-sm font-medium text-emerald-900 mb-2">
-                        {selectedRecipes.length} recette{selectedRecipes.length > 1 ? 's' : ''} sélectionnée{selectedRecipes.length > 1 ? 's' : ''}
-                      </div>
-                      <div className="flex flex-wrap gap-1">
-                        {selectedRecipes.map(recipe => (
-                          <Badge key={recipe.id} variant="secondary" className="bg-emerald-100 text-emerald-800 text-xs">
-                            {recipe.name}
-                          </Badge>
-                        ))}
-                      </div>
-                    </div>
-                  )}
-                </div>
-
                 {/* Generation Button */}
-                <div>
+                <div className="pt-4 border-t border-gray-100">
                   {isGenerating && (
                     <div className="mb-4 space-y-3 animate-in fade-in-0 slide-in-from-top-2 duration-300">
                       <div className="flex items-center justify-between text-sm">
@@ -753,14 +639,6 @@ export default function GenerateMealPlanPage() {
               </CardContent>
             </Card>
 
-            {/* Recipe Suggestions */}
-            {showRecipeSuggestions && (
-              <RecipeSuggestions
-                onRecipeSelect={handleRecipeSelect}
-                selectedRecipes={selectedRecipes}
-                searchQuery={formData.prompt}
-              />
-            )}
 
             {/* Pro Tips */}
             <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200/50">
@@ -775,7 +653,6 @@ export default function GenerateMealPlanPage() {
                       <li>• Soyez précis sur les préférences et restrictions alimentaires</li>
                       <li>• Mentionnez si vous préférez la préparation de repas ou des recettes rapides</li>
                       <li>• Incluez les conditions de santé ou objectifs de fitness</li>
-                      <li>• <strong>Nouveau:</strong> Utilisez vos recettes existantes pour des plans plus personnalisés</li>
                     </ul>
                   </div>
                 </div>

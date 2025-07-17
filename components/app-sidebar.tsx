@@ -52,11 +52,6 @@ const data = {
       icon: Users,
     },
     {
-      title: "Recettes",
-      url: "/dashboard/recipes",
-      icon: ChefHat,
-    },
-    {
       title: "Plans alimentaires",
       url: "/dashboard/meal-plans",
       icon: FileText,
@@ -143,14 +138,6 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <SidebarGroupLabel>Actions rapides</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              <SidebarMenuItem>
-                <SidebarMenuButton asChild>
-                  <Link href="/dashboard/recipes">
-                    <ChefHat />
-                    <span>Nouvelle recette</span>
-                  </Link>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
                   <Link href="/dashboard/meal-plans/generate">
