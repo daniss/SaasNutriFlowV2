@@ -73,7 +73,7 @@ export function DashboardHeader({
 
   return (
     <header className={`sticky top-0 z-30 w-full border-b border-slate-200/60 bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60 ${className}`}>
-      <div className="flex h-14 md:h-16 items-center gap-2 md:gap-4 px-4 sm:px-6 md:pl-20">
+      <div className="flex h-14 md:h-16 items-center gap-2 md:gap-4 px-4 sm:px-6">
         <SidebarTrigger className="-ml-1 h-8 w-8 md:h-9 md:w-9 rounded-lg hover:bg-emerald-100 text-emerald-700 transition-colors md:hidden">
           <Menu className="h-4 w-4" />
         </SidebarTrigger>

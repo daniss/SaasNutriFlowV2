@@ -262,28 +262,16 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
   // Desktop floating sidebar
   return (
     <TooltipProvider delayDuration={300}>
-      <div className="fixed left-0 top-4 bottom-4 z-40 hidden md:block pointer-events-none">
+      <div 
+        className="fixed left-4 top-4 bottom-4 z-50 hidden md:block"
+        onMouseEnter={handleMouseEnter}
+        onMouseLeave={handleMouseLeave}
+      >
         <motion.div
-          className="relative h-full ml-4 pointer-events-auto"
-          onMouseEnter={handleMouseEnter}
-          onMouseLeave={handleMouseLeave}
+          className="relative h-full bg-gradient-to-br from-emerald-50/90 via-white/95 to-emerald-50/80 backdrop-blur-xl rounded-3xl border border-emerald-200/50 shadow-xl shadow-emerald-500/10 overflow-hidden"
           initial={false}
           animate={{
             width: expanded ? "280px" : "64px",
-          }}
-          transition={{
-            duration: 0.3,
-            ease: [0.4, 0, 0.2, 1],
-          }}
-        >
-          {/* Invisible hover zone to prevent flickering */}
-          <div className="absolute inset-0 w-full h-full z-10" />
-          
-          {/* Sidebar content */}
-        <motion.div
-          className="relative h-full bg-gradient-to-br from-emerald-50/90 via-white/95 to-emerald-50/80 backdrop-blur-xl rounded-3xl border border-emerald-200/50 shadow-xl shadow-emerald-500/10 overflow-hidden z-20"
-          initial={false}
-          animate={{
             borderRadius: expanded ? "24px" : "32px",
           }}
           transition={{
@@ -456,7 +444,6 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
               </DropdownMenu>
             </div>
           </div>
-        </motion.div>
         </motion.div>
       </div>
     </TooltipProvider>
