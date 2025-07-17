@@ -271,22 +271,22 @@ export function DocumentList({ clientId, refreshTrigger }: DocumentListProps) {
 
           return (
             <Card key={document.id}>
-              <CardContent className="p-4">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center space-x-3">
-                    <FileIcon className="h-10 w-10 text-blue-500" />
+              <CardContent className="p-3 md:p-4">
+                <div className="flex flex-col sm:flex-row sm:items-center gap-3 sm:gap-4">
+                  <div className="flex items-center space-x-3 min-w-0 flex-1">
+                    <FileIcon className="h-8 w-8 md:h-10 md:w-10 text-blue-500 flex-shrink-0" />
                     <div className="min-w-0 flex-1">
                       <h4 className="text-sm font-medium text-gray-900 truncate">
                         {document.name}
                       </h4>
-                      <div className="flex items-center space-x-2 mt-1">
+                      <div className="flex flex-wrap items-center gap-1 md:gap-2 mt-1">
                         <Badge
                           variant="secondary"
-                          className={
+                          className={`text-xs ${
                             CATEGORY_COLORS[
                               document.category as keyof typeof CATEGORY_COLORS
                             ]
-                          }
+                          }`}
                         >
                           {
                             CATEGORY_LABELS[
@@ -297,7 +297,7 @@ export function DocumentList({ clientId, refreshTrigger }: DocumentListProps) {
                         <span className="text-xs text-gray-500">
                           {formatFileSize(document.file_size)}
                         </span>
-                        <span className="text-xs text-gray-500">
+                        <span className="text-xs text-gray-500 hidden sm:inline">
                           {formatDate(document.upload_date)}
                         </span>
                       </div>
@@ -309,7 +309,7 @@ export function DocumentList({ clientId, refreshTrigger }: DocumentListProps) {
                     </div>
                   </div>
 
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center justify-between sm:justify-end space-x-2 flex-shrink-0">
                     {document.is_visible_to_client ? (
                       <div title="Visible par le client">
                         <Eye className="h-4 w-4 text-green-500" />

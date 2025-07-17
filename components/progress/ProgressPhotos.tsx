@@ -248,7 +248,7 @@ export function ProgressPhotos({
 
   return (
     <>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+      <div className="grid gap-3 md:gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
         {photos.map((photo, index) => {
           const photoUrl = photoUrls[photo.id];
 
@@ -305,14 +305,15 @@ export function ProgressPhotos({
                 </div>
               </div>
 
-              <CardContent className="p-3">
-                <div className="flex items-center justify-between mb-2">
-                  <Badge variant="secondary" className="text-xs">
+              <CardContent className="p-2 md:p-3">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-2 mb-2">
+                  <Badge variant="secondary" className="text-xs w-fit">
                     <Calendar className="h-3 w-3 mr-1" />
-                    {formatDate(photo.upload_date)}
+                    <span className="hidden sm:inline">{formatDate(photo.upload_date)}</span>
+                    <span className="sm:hidden">{formatDate(photo.upload_date, { month: 'short', day: 'numeric' })}</span>
                   </Badge>
                   {photo.metadata?.uploaded_by === "client" && (
-                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700 w-fit">
                       Client
                     </Badge>
                   )}
