@@ -243,20 +243,20 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, classN
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-              <TabsTrigger value="overview" className="text-xs sm:text-sm">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 gap-1 bg-muted p-1 rounded-lg h-auto">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm data-[state=active]:bg-background">
                 <span className="hidden sm:inline">Moyennes globales</span>
                 <span className="sm:hidden">Moyennes</span>
               </TabsTrigger>
-              <TabsTrigger value="daily" className="text-xs sm:text-sm">
+              <TabsTrigger value="daily" className="text-xs sm:text-sm data-[state=active]:bg-background">
                 <span className="hidden sm:inline">Analyse par jour</span>
                 <span className="sm:hidden">Par jour</span>
               </TabsTrigger>
-              <TabsTrigger value="charts" className="text-xs sm:text-sm">
+              <TabsTrigger value="charts" className="text-xs sm:text-sm data-[state=active]:bg-background">
                 <span className="hidden lg:inline">Graphiques Pro</span>
                 <span className="lg:hidden">Graphiques</span>
               </TabsTrigger>
-              <TabsTrigger value="recommendations" className="text-xs sm:text-sm">
+              <TabsTrigger value="recommendations" className="text-xs sm:text-sm data-[state=active]:bg-background">
                 <span className="hidden lg:inline">Recommandations</span>
                 <span className="lg:hidden">Conseils</span>
               </TabsTrigger>

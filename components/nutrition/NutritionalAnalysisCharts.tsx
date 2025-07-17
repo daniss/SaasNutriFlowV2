@@ -204,20 +204,20 @@ export default function NutritionalAnalysisCharts({ mealPlan, className = "" }: 
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
-              <TabsTrigger value="overview" className="text-xs sm:text-sm">
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4 gap-1 bg-muted p-1 rounded-lg h-auto">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm data-[state=active]:bg-background">
                 <span className="hidden sm:inline">Vue d'ensemble</span>
                 <span className="sm:hidden">Vue</span>
               </TabsTrigger>
-              <TabsTrigger value="trends" className="text-xs sm:text-sm">
+              <TabsTrigger value="trends" className="text-xs sm:text-sm data-[state=active]:bg-background">
                 <span className="hidden sm:inline">Tendances</span>
                 <span className="sm:hidden">Trend</span>
               </TabsTrigger>
-              <TabsTrigger value="balance" className="text-xs sm:text-sm">
+              <TabsTrigger value="balance" className="text-xs sm:text-sm data-[state=active]:bg-background">
                 <span className="hidden lg:inline">Équilibre</span>
                 <span className="lg:hidden">Balance</span>
               </TabsTrigger>
-              <TabsTrigger value="recommendations" className="text-xs sm:text-sm">
+              <TabsTrigger value="recommendations" className="text-xs sm:text-sm data-[state=active]:bg-background">
                 <span className="hidden lg:inline">Conseils</span>
                 <span className="lg:hidden">Tips</span>
               </TabsTrigger>
