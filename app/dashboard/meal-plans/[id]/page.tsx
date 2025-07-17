@@ -533,6 +533,87 @@ export default function MealPlanDetailPage() {
     setIsEditDayOpen(true)
   }
 
+  const handleDeleteDay = async (dayNumber: number) => {
+    if (!mealPlan || !user?.id) return
+    
+    // Don't allow deletion if there's only one day
+    if (dayPlans.length <= 1) {
+      toast({
+        title: "Impossible de supprimer",
+        description: "Vous devez avoir au moins un jour dans votre plan de repas.",
+        variant: "destructive"
+      })
+      return
+    }
+
+    try {
+      // Get current plan_content
+      let planContent = mealPlan.plan_content || { days: [] }
+      
+      if (!planContent.days) {
+        planContent.days = []
+      }
+
+      // Remove the day from the plan
+      planContent.days = planContent.days.filter((d: any) => d.day !== dayNumber)
+
+      // Reorder remaining days (shift all days after the deleted day)
+      planContent.days = planContent.days.map((d: any) => {
+        if (d.day > dayNumber) {
+          return { ...d, day: d.day - 1 }
+        }
+        return d
+      })
+
+      // Update the meal plan in the database
+      const { error } = await supabase
+        .from('meal_plans')
+        .update({
+          plan_content: planContent,
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', mealPlan.id)
+        .eq('dietitian_id', user.id)
+
+      if (error) throw error
+
+      // Update local state
+      setMealPlan(prev => prev ? { ...prev, plan_content: planContent } : null)
+      
+      // Update selected foods state - remove the deleted day and reorder
+      setSelectedFoods(prev => {
+        const newState = { ...prev }
+        delete newState[dayNumber]
+        
+        // Reorder remaining days
+        const reorderedState: { [key: number]: any } = {}
+        Object.keys(newState).forEach(key => {
+          const dayNum = parseInt(key)
+          if (dayNum > dayNumber) {
+            reorderedState[dayNum - 1] = newState[dayNum]
+          } else {
+            reorderedState[dayNum] = newState[dayNum]
+          }
+        })
+        
+        return reorderedState
+      })
+
+      toast({
+        title: "Jour supprimé",
+        description: `Le jour ${dayNumber} a été supprimé avec succès.`,
+      })
+
+    } catch (error) {
+      console.error('Error deleting day:', error)
+      toast({
+        title: "Erreur",
+        description: "Une erreur est survenue lors de la suppression du jour.",
+        variant: "destructive"
+      })
+    }
+  }
+
   const handleSaveDay = async () => {
     if (!mealPlan || !user?.id) return
 
@@ -1067,15 +1148,26 @@ export default function MealPlanDetailPage() {
                     <div key={day.day} className="border border-slate-100 rounded-lg p-6">
                       <div className="flex items-center justify-between mb-4">
                         <h3 className="text-lg font-semibold text-slate-900">Jour {day.day}</h3>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          className="text-emerald-600 hover:text-emerald-700"
-                          onClick={() => handleEditDay(day.day)}
-                        >
-                          <Edit className="h-4 w-4 mr-1" />
-                          Modifier le jour
-                        </Button>
+                        <div className="flex items-center gap-2">
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-emerald-600 hover:text-emerald-700"
+                            onClick={() => handleEditDay(day.day)}
+                          >
+                            <Edit className="h-4 w-4 mr-1" />
+                            Modifier le jour
+                          </Button>
+                          <Button 
+                            variant="ghost" 
+                            size="sm" 
+                            className="text-red-600 hover:text-red-700"
+                            onClick={() => handleDeleteDay(day.day)}
+                          >
+                            <Trash2 className="h-4 w-4 mr-1" />
+                            Supprimer le jour
+                          </Button>
+                        </div>
                       </div>
 
                       <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
