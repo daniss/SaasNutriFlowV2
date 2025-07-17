@@ -23,6 +23,7 @@ import {
 } from "lucide-react"
 import { supabase, type MealPlanTemplate } from "@/lib/supabase"
 import { useAuth } from "@/hooks/useAuthNew"
+import TemplatePreviewModal from "./TemplatePreviewModal"
 
 interface ClientOption {
   id: string
@@ -61,6 +62,8 @@ export default function TemplateSelectionDialog({
   const [searchTerm, setSearchTerm] = useState("")
   const [categoryFilter, setCategoryFilter] = useState<string>("all")
   const [step, setStep] = useState<"select" | "customize">("select")
+  const [previewTemplate, setPreviewTemplate] = useState<MealPlanTemplate | null>(null)
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   
   const [customizations, setCustomizations] = useState<Customizations>({
     name: "",
@@ -137,6 +140,17 @@ export default function TemplateSelectionDialog({
   }
 
   const handleTemplateSelect = (template: MealPlanTemplate) => {
+    setSelectedTemplate(template)
+    setStep("customize")
+  }
+
+  const handleTemplatePreview = (template: MealPlanTemplate) => {
+    setPreviewTemplate(template)
+    setIsPreviewOpen(true)
+  }
+
+  const handleUseTemplateFromPreview = (template: MealPlanTemplate) => {
+    setIsPreviewOpen(false)
     setSelectedTemplate(template)
     setStep("customize")
   }
@@ -249,6 +263,12 @@ export default function TemplateSelectionDialog({
               : "Personnalisez le plan avant de le créer"
             }
           </DialogDescription>
+          {step === "select" && (
+            <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg mt-3">
+              <Clock className="h-4 w-4" />
+              <span className="font-medium">Prêt en 2 minutes vs 30 minutes manuellement</span>
+            </div>
+          )}
         </DialogHeader>
 
         {step === "select" && (
@@ -287,8 +307,7 @@ export default function TemplateSelectionDialog({
               {filteredTemplates.map(template => (
                 <Card 
                   key={template.id} 
-                  className="cursor-pointer hover:shadow-md transition-shadow"
-                  onClick={() => handleTemplateSelect(template)}
+                  className="hover:shadow-md transition-shadow"
                 >
                   <CardHeader className="pb-3">
                     <div className="flex items-start justify-between">
@@ -322,6 +341,25 @@ export default function TemplateSelectionDialog({
                         <span className="text-orange-800">{template.target_calories} kcal</span>
                       </div>
                     )}
+                    
+                    {/* Action Buttons */}
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => handleTemplatePreview(template)}
+                        className="flex-1 text-xs"
+                      >
+                        Aperçu
+                      </Button>
+                      <Button
+                        onClick={() => handleTemplateSelect(template)}
+                        size="sm"
+                        className="flex-1 bg-emerald-600 hover:bg-emerald-700 text-xs"
+                      >
+                        Utiliser
+                      </Button>
+                    </div>
                   </CardContent>
                 </Card>
               ))}
@@ -455,6 +493,14 @@ export default function TemplateSelectionDialog({
           )}
         </DialogFooter>
       </DialogContent>
+
+      {/* Template Preview Modal */}
+      <TemplatePreviewModal
+        template={previewTemplate}
+        isOpen={isPreviewOpen}
+        onClose={() => setIsPreviewOpen(false)}
+        onUseTemplate={handleUseTemplateFromPreview}
+      />
     </Dialog>
   )
 }

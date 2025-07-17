@@ -614,6 +614,30 @@ export default function MealPlansPage() {
               Créez un plan alimentaire personnalisé pour votre client
             </DialogDescription>
           </DialogHeader>
+
+          {/* Template Suggestion Banner */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="flex-shrink-0">
+                <BookOpen className="h-5 w-5 text-blue-600" />
+              </div>
+              <div>
+                <p className="text-sm font-medium text-blue-900">Gagnez du temps avec un modèle</p>
+                <p className="text-xs text-blue-700">Plans structurés prêts en 2 minutes au lieu de 30 minutes</p>
+              </div>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => {
+                setIsAddDialogOpen(false)
+                setIsTemplateDialogOpen(true)
+              }}
+              className="text-blue-600 border-blue-300 hover:bg-blue-100 text-xs"
+            >
+              Parcourir les modèles
+            </Button>
+          </div>
           
           <div className="space-y-4">
             <div className="space-y-2">
