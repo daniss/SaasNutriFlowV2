@@ -1,11 +1,11 @@
 import type React from "react"
 import { SidebarProvider } from "@/components/ui/sidebar"
-import { AppSidebar } from "@/components/app-sidebar"
+import { WellnessSidebarWrapper } from "@/components/wellness-sidebar-wrapper"
 import { ProtectedRoute } from "@/components/auth/ProtectedRoute"
 
 /**
  * Dashboard layout that wraps all dashboard pages
- * Includes authentication protection and sidebar navigation
+ * Includes authentication protection and floating wellness sidebar navigation
  */
 export default function DashboardLayout({
   children,
@@ -15,9 +15,9 @@ export default function DashboardLayout({
   return (
     <ProtectedRoute>
       <SidebarProvider defaultOpen={false}>
-        <div className="flex min-h-screen w-full">
-          <AppSidebar />
-          <main className="flex-1 overflow-hidden bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+        <div className="relative min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
+          <WellnessSidebarWrapper />
+          <main className="min-h-screen w-full">
             {children}
           </main>
         </div>

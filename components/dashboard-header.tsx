@@ -17,6 +17,7 @@ import {
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Menu } from "lucide-react"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -71,9 +72,11 @@ export function DashboardHeader({
   const currentSearchValue = searchValue !== undefined ? searchValue : localSearchValue
 
   return (
-    <header className={`sticky top-0 z-50 w-full border-b border-slate-200/60 bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60 ${className}`}>
-      <div className="flex h-14 md:h-16 items-center gap-2 md:gap-4 px-4 sm:px-6">
-        <SidebarTrigger className="-ml-1 h-8 w-8 md:h-9 md:w-9 rounded-lg hover:bg-slate-100 transition-colors" />
+    <header className={`sticky top-0 z-30 w-full border-b border-slate-200/60 bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60 ${className}`}>
+      <div className="flex h-14 md:h-16 items-center gap-2 md:gap-4 px-4 sm:px-6 md:pl-20">
+        <SidebarTrigger className="-ml-1 h-8 w-8 md:h-9 md:w-9 rounded-lg hover:bg-emerald-100 text-emerald-700 transition-colors md:hidden">
+          <Menu className="h-4 w-4" />
+        </SidebarTrigger>
 
         <div className="flex flex-1 items-center justify-between gap-1 sm:gap-2 md:gap-4">
           <div className="min-w-0 flex-1">
