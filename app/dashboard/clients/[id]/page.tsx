@@ -813,16 +813,16 @@ export default function ClientDetailPage() {
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-4">
-            <div className="h-12 w-12 bg-emerald-100 rounded-xl flex items-center justify-center">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
+          <div className="flex items-center gap-4 min-w-0 flex-1">
+            <div className="h-12 w-12 bg-emerald-100 rounded-xl flex items-center justify-center flex-shrink-0">
               <User className="h-6 w-6 text-emerald-600" />
             </div>
-            <div>
-              <h1 className="text-2xl font-bold text-slate-900">
+            <div className="min-w-0 flex-1">
+              <h1 className="text-xl sm:text-2xl font-bold text-slate-900 truncate">
                 {client.name}
               </h1>
-              <p className="text-slate-600">{client.email}</p>
+              <p className="text-slate-600 text-sm sm:text-base truncate">{client.email}</p>
             </div>
           </div>
           <Button
@@ -830,19 +830,21 @@ export default function ClientDetailPage() {
             disabled={loading}
             className={
               editing
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow-md transition-all duration-200"
-                : "bg-slate-100 hover:bg-slate-200 text-slate-700 shadow-sm hover:shadow-md transition-all duration-200"
+                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow-md transition-all duration-200 flex-shrink-0"
+                : "bg-slate-100 hover:bg-slate-200 text-slate-700 shadow-sm hover:shadow-md transition-all duration-200 flex-shrink-0"
             }
           >
             {editing ? (
               <>
                 <Save className="h-4 w-4 mr-2" />
-                Enregistrer
+                <span className="hidden sm:inline">Enregistrer</span>
+                <span className="sm:hidden">Sauver</span>
               </>
             ) : (
               <>
                 <Edit className="h-4 w-4 mr-2" />
-                Modifier
+                <span className="hidden sm:inline">Modifier</span>
+                <span className="sm:hidden">Éditer</span>
               </>
             )}
           </Button>
