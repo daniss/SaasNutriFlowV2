@@ -37,6 +37,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { toast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/useAuthNew"
 import { downloadMealPlanPDF, type MealPlanPDFData } from "@/lib/pdf-generator"
+import { downloadModernMealPlanPDF } from "@/lib/pdf-generator-modern"
 import { supabase, type MealPlan } from "@/lib/supabase"
 import {
     Activity,
@@ -351,12 +352,12 @@ export default function MealPlanDetailPage() {
         dayPlans: dayPlans
       }
 
-      // Use downloadMealPlanPDF to actually trigger the download
-      downloadMealPlanPDF(pdfData)
+      // Use the modern PDF generator for a beautiful, magazine-style layout
+      downloadModernMealPlanPDF(pdfData)
       
       toast({
         title: "PDF généré",
-        description: "Le plan alimentaire a été exporté en PDF avec succès."
+        description: "Le plan alimentaire a été exporté en PDF avec un design moderne et professionnel."
       })
     } catch (error) {
       console.error('Error exporting PDF:', error)
@@ -394,8 +395,8 @@ export default function MealPlanDetailPage() {
         dayPlans: dayPlans
       }
 
-      // Download the PDF for the dietitian
-      downloadMealPlanPDF(pdfData)
+      // Download the PDF for the dietitian using the modern generator
+      downloadModernMealPlanPDF(pdfData)
 
       // Send notification to client
       const response = await fetch('/api/notifications', {
