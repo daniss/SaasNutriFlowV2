@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     }
 
     // Convert template structure to meal plan content
-    const planContent = {
+    const planContent: any = {
       generated_by: 'template',
       template_id: templateId,
       template_name: template.name,
