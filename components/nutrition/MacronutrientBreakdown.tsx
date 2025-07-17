@@ -217,25 +217,25 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, classN
       {/* Overview Card */}
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between">
-            <div>
-              <CardTitle className="flex items-center gap-2">
-                <BarChart3 className="h-5 w-5" />
-                Analyse Nutritionnelle Détaillée
+          <div className="flex flex-col sm:flex-row sm:items-start gap-4 sm:justify-between">
+            <div className="min-w-0 flex-1">
+              <CardTitle className="flex items-center gap-2 text-lg sm:text-xl">
+                <BarChart3 className="h-5 w-5 flex-shrink-0" />
+                <span className="truncate">Analyse Nutritionnelle</span>
               </CardTitle>
-              <CardDescription>
-                Moyennes nutritionnelles calculées sur {mealPlan.duration} jours
+              <CardDescription className="mt-1">
+                Moyennes sur {mealPlan.duration} jours
                 {selectedFoodsNutrition.calories > 0 && (
-                  <div className="flex items-center gap-2 mt-2">
+                  <div className="flex flex-wrap items-center gap-2 mt-2">
                     <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-700">
-                      <Info className="h-3 w-3 mr-1" />
-                      +{selectedFoodsNutrition.calories} kcal/jour d'aliments ANSES-CIQUAL (total plan)
+                      <Info className="h-3 w-3 mr-1 flex-shrink-0" />
+                      <span className="truncate">+{selectedFoodsNutrition.calories} kcal/jour ANSES-CIQUAL</span>
                     </Badge>
                   </div>
                 )}
               </CardDescription>
             </div>
-            <Badge variant="outline" className="text-sm">
+            <Badge variant="outline" className="text-sm flex-shrink-0 w-fit">
               <Flame className="h-3 w-3 mr-1" />
               {dailyAverages.avgCalories} kcal/jour
             </Badge>
@@ -243,11 +243,23 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, classN
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Moyennes globales</TabsTrigger>
-              <TabsTrigger value="daily">Analyse par jour</TabsTrigger>
-              <TabsTrigger value="charts">Graphiques Pro</TabsTrigger>
-              <TabsTrigger value="recommendations">Recommandations</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Moyennes globales</span>
+                <span className="sm:hidden">Moyennes</span>
+              </TabsTrigger>
+              <TabsTrigger value="daily" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Analyse par jour</span>
+                <span className="sm:hidden">Par jour</span>
+              </TabsTrigger>
+              <TabsTrigger value="charts" className="text-xs sm:text-sm">
+                <span className="hidden lg:inline">Graphiques Pro</span>
+                <span className="lg:hidden">Graphiques</span>
+              </TabsTrigger>
+              <TabsTrigger value="recommendations" className="text-xs sm:text-sm">
+                <span className="hidden lg:inline">Recommandations</span>
+                <span className="lg:hidden">Conseils</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
@@ -338,7 +350,7 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, classN
                   <Activity className="h-4 w-4" />
                   Distribution calorique
                 </h4>
-                <div className="grid grid-cols-3 gap-4 text-center">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4 text-center">
                   <div>
                     <div className="text-2xl font-bold text-blue-600">
                       {Math.round(safeNumber(dailyAverages.avgProtein * 4))}
@@ -381,7 +393,7 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, classN
                         {day.calories} kcal
                       </Badge>
                     </div>
-                    <div className="grid grid-cols-3 gap-3 text-sm">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm">
                       <div className="text-center p-2 bg-blue-50 rounded">
                         <Beef className="h-4 w-4 mx-auto mb-1 text-blue-600" />
                         <div className="font-semibold">{day.protein}g</div>
@@ -441,7 +453,7 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, classN
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <Card className="border-green-200 bg-green-50">
                   <CardHeader className="pb-3">
                     <CardTitle className="text-base text-green-900 flex items-center gap-2">

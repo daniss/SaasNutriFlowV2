@@ -204,15 +204,27 @@ export default function NutritionalAnalysisCharts({ mealPlan, className = "" }: 
         </CardHeader>
         <CardContent>
           <Tabs defaultValue="overview" className="w-full">
-            <TabsList className="grid w-full grid-cols-4">
-              <TabsTrigger value="overview">Vue d'ensemble</TabsTrigger>
-              <TabsTrigger value="trends">Tendances</TabsTrigger>
-              <TabsTrigger value="balance">Équilibre</TabsTrigger>
-              <TabsTrigger value="recommendations">Conseils</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 lg:grid-cols-4">
+              <TabsTrigger value="overview" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Vue d'ensemble</span>
+                <span className="sm:hidden">Vue</span>
+              </TabsTrigger>
+              <TabsTrigger value="trends" className="text-xs sm:text-sm">
+                <span className="hidden sm:inline">Tendances</span>
+                <span className="sm:hidden">Trend</span>
+              </TabsTrigger>
+              <TabsTrigger value="balance" className="text-xs sm:text-sm">
+                <span className="hidden lg:inline">Équilibre</span>
+                <span className="lg:hidden">Balance</span>
+              </TabsTrigger>
+              <TabsTrigger value="recommendations" className="text-xs sm:text-sm">
+                <span className="hidden lg:inline">Conseils</span>
+                <span className="lg:hidden">Tips</span>
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              <div className="grid grid-cols-1 xl:grid-cols-2 gap-4 lg:gap-6">
                 {/* Macro Distribution Pie Chart */}
                 <Card>
                   <CardHeader>
@@ -269,7 +281,7 @@ export default function NutritionalAnalysisCharts({ mealPlan, className = "" }: 
               </div>
 
               {/* Status Summary */}
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {comparisonData.map((item) => (
                   <div key={item.nutrient} className="bg-gray-50 rounded-lg p-4">
                     <div className="flex items-center justify-between mb-2">
@@ -357,7 +369,7 @@ export default function NutritionalAnalysisCharts({ mealPlan, className = "" }: 
               </Card>
 
               {/* Nutritional Quality Indicators */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
                 <Card className="border-blue-200 bg-blue-50">
                   <CardContent className="p-4">
                     <div className="text-center">
@@ -409,7 +421,7 @@ export default function NutritionalAnalysisCharts({ mealPlan, className = "" }: 
                 </div>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
                 <Card className="border-green-200">
                   <CardHeader>
                     <CardTitle className="text-base text-green-900 flex items-center gap-2">
