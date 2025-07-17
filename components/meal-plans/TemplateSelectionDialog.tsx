@@ -93,11 +93,22 @@ export default function TemplateSelectionDialog({
     try {
       setLoading(true)
 
+      // Get dietitian profile
+      const { data: dietitian, error: dietitianError } = await supabase
+        .from('dietitians')
+        .select('id')
+        .eq('auth_user_id', user.id)
+        .single()
+
+      if (dietitianError || !dietitian) {
+        throw new Error('Dietitian profile not found')
+      }
+
       // Fetch templates
       const { data: templatesData, error: templatesError } = await supabase
         .from('meal_plan_templates')
         .select('*')
-        .eq('dietitian_id', user.id)
+        .eq('dietitian_id', dietitian.id)
         .order('usage_count', { ascending: false })
 
       if (templatesError) throw templatesError
@@ -107,7 +118,7 @@ export default function TemplateSelectionDialog({
       const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
         .select('id, name')
-        .eq('dietitian_id', user.id)
+        .eq('dietitian_id', dietitian.id)
         .eq('status', 'active')
         .order('name')
 
@@ -273,9 +284,9 @@ export default function TemplateSelectionDialog({
 
             {/* Client Selection */}
             <div className="space-y-2">
-              <Label>Client</Label>
+              <Label>Client *</Label>
               <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-                <SelectTrigger>
+                <SelectTrigger className={!selectedClientId ? "border-red-300" : ""}>
                   <SelectValue placeholder="Sélectionner un client" />
                 </SelectTrigger>
                 <SelectContent>
@@ -286,6 +297,9 @@ export default function TemplateSelectionDialog({
                   ))}
                 </SelectContent>
               </Select>
+              {!selectedClientId && (
+                <p className="text-xs text-red-600">Veuillez sélectionner un client</p>
+              )}
             </div>
 
             {/* Templates Grid */}
@@ -354,13 +368,17 @@ export default function TemplateSelectionDialog({
             <div className="grid gap-4">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="plan-name">Nom du plan</Label>
+                  <Label htmlFor="plan-name">Nom du plan *</Label>
                   <Input
                     id="plan-name"
                     value={customizations.name}
                     onChange={(e) => setCustomizations(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Nom personnalisé"
+                    className={!customizations.name.trim() ? "border-red-300" : ""}
                   />
+                  {!customizations.name.trim() && (
+                    <p className="text-xs text-red-600">Le nom du plan est requis</p>
+                  )}
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="target-calories">Calories cibles</Label>
@@ -419,13 +437,21 @@ export default function TemplateSelectionDialog({
               Sélectionner un modèle
             </Button>
           ) : (
-            <Button 
-              onClick={handleCreateFromTemplate} 
-              disabled={loading || !selectedClientId}
-              className="bg-emerald-600 hover:bg-emerald-700"
-            >
-              {loading ? "Création..." : "Créer le plan"}
-            </Button>
+            <div className="flex flex-col gap-2">
+              {(!selectedClientId || !customizations.name.trim()) && (
+                <p className="text-xs text-amber-600 text-center">
+                  {!selectedClientId && "Sélectionnez un client. "}
+                  {!customizations.name.trim() && "Saisissez un nom pour le plan."}
+                </p>
+              )}
+              <Button 
+                onClick={handleCreateFromTemplate} 
+                disabled={loading || !selectedClientId || !customizations.name.trim()}
+                className="bg-emerald-600 hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {loading ? "Création..." : "Créer le plan"}
+              </Button>
+            </div>
           )}
         </DialogFooter>
       </DialogContent>
