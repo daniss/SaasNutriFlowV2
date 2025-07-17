@@ -198,7 +198,7 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
         }
       />
 
-      <div className="px-6 space-y-6">
+      <div className="px-4 sm:px-6 space-y-4 sm:space-y-6">
         {filteredTemplates.length === 0 ? (
           <EmptyStateWithSkeleton 
             icon={Calendar}
@@ -218,7 +218,7 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
             ) : undefined}
           />
         ) : (
-          <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
             {filteredTemplates.map((template) => (
               <TemplateCard 
                 key={template.id} 
@@ -358,12 +358,12 @@ function TemplateCard({
   return (
     <Card className="border-0 shadow-soft bg-white/80 backdrop-blur-sm hover:shadow-soft-md transition-all duration-200 group">
       <CardHeader className="pb-3">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <CardTitle className="text-base font-semibold text-gray-900 mb-1 line-clamp-1">
+        <div className="flex items-start justify-between gap-2">
+          <div className="flex-1 min-w-0">
+            <CardTitle className="text-sm sm:text-base font-semibold text-gray-900 mb-1 line-clamp-1">
               {template.name}
             </CardTitle>
-            <CardDescription className="text-sm text-gray-600 line-clamp-2">
+            <CardDescription className="text-xs sm:text-sm text-gray-600 line-clamp-2">
               {template.description}
             </CardDescription>
           </div>
@@ -407,25 +407,25 @@ function TemplateCard({
         </div>
       </CardHeader>
       <CardContent className="space-y-3">
-        <div className="flex flex-wrap gap-2">
-          <Badge className={`${getCategoryColor(template.category)} border-0 font-medium px-3 py-1`}>
+        <div className="flex flex-wrap gap-1 sm:gap-2">
+          <Badge className={`${getCategoryColor(template.category)} border-0 font-medium text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1`}>
             {template.category}
           </Badge>
           {'difficulty' in template && template.difficulty && (
-            <Badge className={`${getDifficultyColor(template.difficulty)} border-0 font-medium px-3 py-1`}>
+            <Badge className={`${getDifficultyColor(template.difficulty)} border-0 font-medium text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1`}>
               {template.difficulty}
             </Badge>
           )}
         </div>
 
-        <div className="grid grid-cols-2 gap-3 text-sm">
-          <div className="flex items-center gap-2 text-gray-600">
-            <Calendar className="h-3 w-3" />
-            <span>{template.duration_days} jours</span>
+        <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
+          <div className="flex items-center gap-1 sm:gap-2 text-gray-600">
+            <Calendar className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{template.duration_days} jours</span>
           </div>
-          <div className="flex items-center gap-2 text-gray-600">
-            <Clock className="h-3 w-3" />
-            <span>{template.difficulty || 'Standard'}</span>
+          <div className="flex items-center gap-1 sm:gap-2 text-gray-600">
+            <Clock className="h-3 w-3 flex-shrink-0" />
+            <span className="truncate">{template.difficulty || 'Standard'}</span>
           </div>
         </div>
 
