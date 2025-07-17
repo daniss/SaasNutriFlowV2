@@ -320,10 +320,10 @@ export default function MealPlansPage() {
             <Button 
               onClick={() => setIsAddDialogOpen(true)}
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm px-2 sm:px-4"
             >
               <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Nouveau </span>plan
+              <span className="hidden md:inline">Nouveau </span><span className="hidden sm:inline md:hidden">+ </span>Plan
             </Button>
           </div>
         }
@@ -454,18 +454,19 @@ export default function MealPlansPage() {
             <p className="text-gray-600 mb-4">
               Commencez par créer votre premier plan alimentaire pour vos clients
             </p>
-            <div className="flex justify-center gap-3">
+            <div className="flex flex-col sm:flex-row justify-center gap-3">
               <Button 
                 onClick={() => setIsAddDialogOpen(true)}
-                className="bg-emerald-600 hover:bg-emerald-700"
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-xs sm:text-sm"
               >
-                <Plus className="mr-2 h-4 w-4" />
-                Créer un plan
+                <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                <span className="hidden sm:inline">Créer un </span>plan
               </Button>
-              <Button asChild variant="outline">
+              <Button asChild variant="outline" size="sm" className="text-xs sm:text-sm">
                 <Link href="/dashboard/meal-plans/generate">
-                  <Sparkles className="mr-2 h-4 w-4" />
-                  Génération IA
+                  <Sparkles className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Génération </span>IA
                 </Link>
               </Button>
             </div>
