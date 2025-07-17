@@ -255,9 +255,9 @@ export default function DashboardPage() {
           </Card>
         </div>
 
-        <div className="grid gap-4 lg:grid-cols-7">
+        <div className="grid gap-4 grid-cols-1 lg:grid-cols-7">
           {/* Recent Clients */}
-          <Card className="lg:col-span-4">
+          <Card className="w-full min-w-0 lg:col-span-4">
             <CardHeader>
               <CardTitle className="text-lg md:text-xl">
                 <span className="hidden sm:inline">Vos personnes accompagnées</span>
@@ -268,7 +268,7 @@ export default function DashboardPage() {
                 <span className="sm:hidden">Récents</span>
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-hidden">
               <div className="space-y-4 md:space-y-8">
                 {stats.recentClients.length === 0 ? (
                   <div className="text-center py-6 md:py-8">
@@ -335,7 +335,7 @@ export default function DashboardPage() {
           </Card>
 
           {/* Recent Meal Plans */}
-          <Card className="lg:col-span-3">
+          <Card className="w-full min-w-0 lg:col-span-3">
             <CardHeader>
               <CardTitle className="text-lg md:text-xl">
                 <span className="hidden sm:inline">Parcours nutritionnels</span>
@@ -346,7 +346,7 @@ export default function DashboardPage() {
                 <span className="sm:hidden">Récents</span>
               </CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="overflow-hidden">
               <div className="space-y-4">
                 {stats.recentMealPlans.length === 0 ? (
                   <div className="text-center py-6 md:py-8">
