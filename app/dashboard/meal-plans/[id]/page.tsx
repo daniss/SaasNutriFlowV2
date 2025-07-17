@@ -1290,7 +1290,7 @@ export default function MealPlanDetailPage() {
 
         {/* Edit Day Dialog */}
         <Dialog open={isEditDayOpen} onOpenChange={setIsEditDayOpen}>
-        <DialogContent className="sm:max-w-[600px] rounded-xl">
+        <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto rounded-xl">
             <DialogHeader>
               <DialogTitle>Modifier le jour {editDayForm.day}</DialogTitle>
               <DialogDescription>
