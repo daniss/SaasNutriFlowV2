@@ -203,12 +203,12 @@ export class ModernPDFGenerator {
 
     // Sections
     const sections = [
-      { title: 'Vue d\'ensemble', page: 3, icon: '📊' },
-      { title: 'Objectifs nutritionnels', page: 4, icon: '🎯' },
-      { title: 'Plans de repas quotidiens', page: 5, icon: '🍽️' },
-      { title: 'Liste de courses', page: 5 + plan.duration_days, icon: '🛒' },
-      { title: 'Conseils de préparation', page: 6 + plan.duration_days, icon: '👨‍🍳' },
-      { title: 'Suivi et notes', page: 7 + plan.duration_days, icon: '📝' },
+      { title: 'Vue d\'ensemble', page: 3, icon: '•' },
+      { title: 'Objectifs nutritionnels', page: 4, icon: '•' },
+      { title: 'Plans de repas quotidiens', page: 5, icon: '•' },
+      { title: 'Liste de courses', page: 5 + plan.duration_days, icon: '•' },
+      { title: 'Conseils de préparation', page: 6 + plan.duration_days, icon: '•' },
+      { title: 'Suivi et notes', page: 7 + plan.duration_days, icon: '•' },
     ]
 
     sections.forEach((section) => {
@@ -287,19 +287,19 @@ export class ModernPDFGenerator {
         label: 'Durée du plan', 
         value: `${plan.duration_days} jours`,
         color: colors.primary,
-        icon: '📅'
+        icon: 'J'
       },
       { 
         label: 'Calories cibles', 
         value: plan.calories_range || '2000-2200 kcal',
         color: colors.secondary,
-        icon: '🔥'
+        icon: 'C'
       },
       { 
         label: 'Repas par jour', 
         value: '4 repas',
         color: colors.accent,
-        icon: '🍽️'
+        icon: 'R'
       },
     ]
 
@@ -343,9 +343,9 @@ export class ModernPDFGenerator {
 
     // Macro bars
     const macros = [
-      { name: 'Protéines', percentage: 25, color: colors.danger, icon: '🥩' },
-      { name: 'Glucides', percentage: 45, color: colors.success, icon: '🌾' },
-      { name: 'Lipides', percentage: 30, color: colors.warning, icon: '🥑' },
+      { name: 'Protéines', percentage: 25, color: colors.danger, icon: 'P' },
+      { name: 'Glucides', percentage: 45, color: colors.success, icon: 'G' },
+      { name: 'Lipides', percentage: 30, color: colors.warning, icon: 'L' },
     ]
 
     macros.forEach((macro) => {
@@ -397,11 +397,11 @@ export class ModernPDFGenerator {
 
     // Goals checklist
     const goals = [
-      '✓ Maintenir une hydratation adéquate (2L d\'eau/jour)',
-      '✓ Consommer 5 portions de fruits et légumes par jour',
-      '✓ Limiter les aliments transformés',
-      '✓ Privilégier les protéines maigres',
-      '✓ Inclure des fibres à chaque repas',
+      '• Maintenir une hydratation adéquate (2L d\'eau/jour)',
+      '• Consommer 5 portions de fruits et légumes par jour',
+      '• Limiter les aliments transformés',
+      '• Privilégier les protéines maigres',
+      '• Inclure des fibres à chaque repas',
     ]
 
     this.pdf.setFillColor(...this.hexToRgb(colors.bgLight))
@@ -521,7 +521,7 @@ export class ModernPDFGenerator {
       { 
         key: 'breakfast', 
         name: 'Petit-déjeuner', 
-        icon: '🌅',
+        icon: 'PD',
         color: colors.breakfast,
         hour: dayPlan.breakfastHour || '08:00',
         enabled: dayPlan.breakfastEnabled !== false
@@ -529,7 +529,7 @@ export class ModernPDFGenerator {
       { 
         key: 'lunch', 
         name: 'Déjeuner', 
-        icon: '☀️',
+        icon: 'DJ',
         color: colors.lunch,
         hour: dayPlan.lunchHour || '12:00',
         enabled: dayPlan.lunchEnabled !== false
@@ -537,7 +537,7 @@ export class ModernPDFGenerator {
       { 
         key: 'dinner', 
         name: 'Dîner', 
-        icon: '🌙',
+        icon: 'DN',
         color: colors.dinner,
         hour: dayPlan.dinnerHour || '19:00',
         enabled: dayPlan.dinnerEnabled !== false
@@ -545,7 +545,7 @@ export class ModernPDFGenerator {
       { 
         key: 'snacks', 
         name: 'Collations', 
-        icon: '🍎',
+        icon: 'CO',
         color: colors.snack,
         hour: dayPlan.snacksHour || '16:00',
         enabled: dayPlan.snacksEnabled !== false
@@ -576,7 +576,7 @@ export class ModernPDFGenerator {
       // Time
       this.pdf.setFontSize(12)
       this.pdf.setFont('helvetica', 'normal')
-      this.pdf.text(`⏰ ${mealType.hour}`, this.margin + 30, this.currentY + 18)
+      this.pdf.text(`${mealType.hour}`, this.margin + 30, this.currentY + 18)
       
       // Nutrition totals for this meal
       const mealNutrition = this.calculateMealNutrition(dayPlan.meals[mealType.key])
@@ -699,25 +699,25 @@ export class ModernPDFGenerator {
 
     // Categorize foods
     const categories: Record<string, Array<{ name: string, info: string }>> = {
-      '🥗 Fruits et légumes': [],
-      '🥩 Protéines': [],
-      '🥛 Produits laitiers': [],
-      '🌾 Céréales et féculents': [],
-      '🧂 Condiments et autres': [],
+      'Fruits et légumes': [],
+      'Protéines': [],
+      'Produits laitiers': [],
+      'Céréales et féculents': [],
+      'Condiments et autres': [],
     }
 
     foodMap.forEach((info, foodName) => {
-      let category = '🧂 Condiments et autres'
+      let category = 'Condiments et autres'
       
       // Simple categorization
       if (foodName.match(/tomate|carotte|pomme|banane|salade|concombre|courgette|brocoli|épinard|avocat|orange|fraise|poivron|oignon|ail/i)) {
-        category = '🥗 Fruits et légumes'
+        category = 'Fruits et légumes'
       } else if (foodName.match(/poulet|bœuf|poisson|saumon|thon|œuf|tofu|porc|dinde|jambon|viande/i)) {
-        category = '🥩 Protéines'
+        category = 'Protéines'
       } else if (foodName.match(/lait|yaourt|fromage|crème|beurre/i)) {
-        category = '🥛 Produits laitiers'
+        category = 'Produits laitiers'
       } else if (foodName.match(/pain|pâte|riz|quinoa|avoine|farine|pomme de terre/i)) {
-        category = '🌾 Céréales et féculents'
+        category = 'Céréales et féculents'
       }
       
       const infoText = info.quantity > 0 
@@ -789,23 +789,23 @@ export class ModernPDFGenerator {
 
     const tips = [
       {
-        title: '🥘 Batch Cooking',
+        title: 'Batch Cooking',
         content: 'Préparez plusieurs portions à l\'avance pour gagner du temps en semaine. Les plats mijotés et les légumes rôtis se conservent 3-4 jours au réfrigérateur.'
       },
       {
-        title: '🧊 Conservation',
+        title: 'Conservation',
         content: 'Congelez les portions supplémentaires dans des contenants individuels. Étiquetez avec la date et le contenu pour une meilleure organisation.'
       },
       {
-        title: '🔪 Préparation des légumes',
+        title: 'Préparation des légumes',
         content: 'Lavez et découpez vos légumes dès votre retour des courses. Conservez-les dans des contenants hermétiques pour des repas plus rapides.'
       },
       {
-        title: '⏱️ Optimisation du temps',
+        title: 'Optimisation du temps',
         content: 'Utilisez les temps de cuisson pour préparer d\'autres éléments. Par exemple, pendant que le riz cuit, préparez votre salade ou vos légumes.'
       },
       {
-        title: '🌿 Herbes et épices',
+        title: 'Herbes et épices',
         content: 'Variez les saveurs avec différentes herbes et épices. Cela permet de transformer un même ingrédient de base en plusieurs plats différents.'
       }
     ]
