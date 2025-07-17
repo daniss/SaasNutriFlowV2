@@ -1,5 +1,6 @@
 "use client"
 
+import { DashboardHeader } from "@/components/dashboard-header"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -188,9 +189,11 @@ export default function RecipesPage() {
   if (loading) {
     return (
       <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-3xl font-bold tracking-tight">Recettes</h1>
-        </div>
+        <DashboardHeader
+          title="Recettes"
+          subtitle="Gérez votre bibliothèque de recettes pour créer des plans alimentaires personnalisés"
+          showSearch={false}
+        />
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {[...Array(6)].map((_, i) => (
             <Card key={i} className="animate-pulse">
@@ -213,19 +216,19 @@ export default function RecipesPage() {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
-        <div className="space-y-1">
-          <h1 className="text-3xl font-bold tracking-tight">Recettes</h1>
-          <p className="text-muted-foreground">
-            Gérez votre bibliothèque de recettes pour créer des plans alimentaires personnalisés
-          </p>
-        </div>
-        <Button onClick={handleCreateRecipe} className="flex items-center gap-2">
-          <Plus className="h-4 w-4" />
-          Nouvelle recette
-        </Button>
-      </div>
+      <DashboardHeader
+        title="Recettes"
+        subtitle="Gérez votre bibliothèque de recettes pour créer des plans alimentaires personnalisés"
+        searchPlaceholder="Rechercher des recettes..."
+        searchValue={searchTerm}
+        onSearchChange={setSearchTerm}
+        action={
+          <Button onClick={handleCreateRecipe} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
+            <Plus className="h-4 w-4 mr-2" />
+            Nouvelle recette
+          </Button>
+        }
+      />
 
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
@@ -291,22 +294,11 @@ export default function RecipesPage() {
         <CardHeader>
           <CardTitle className="text-lg flex items-center gap-2">
             <Filter className="h-5 w-5" />
-            Filtres et recherche
+            Filtres
           </CardTitle>
         </CardHeader>
         <CardContent>
           <div className="flex flex-col sm:flex-row gap-4">
-            <div className="flex-1">
-              <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Rechercher une recette..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                  className="pl-10"
-                />
-              </div>
-            </div>
             <Select value={categoryFilter} onValueChange={setCategoryFilter}>
               <SelectTrigger className="w-full sm:w-[200px]">
                 <SelectValue />
@@ -350,7 +342,7 @@ export default function RecipesPage() {
               }
             </p>
             {recipes.length === 0 && (
-              <Button onClick={handleCreateRecipe}>
+              <Button onClick={handleCreateRecipe} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
                 <Plus className="h-4 w-4 mr-2" />
                 Créer ma première recette
               </Button>
