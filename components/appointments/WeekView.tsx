@@ -113,12 +113,13 @@ export function WeekView({
   return (
     <div className="space-y-4">
       {/* Week Navigation */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 sm:gap-0">
         <div className="flex items-center gap-2">
           <Button
             variant="outline"
             size="sm"
             onClick={() => navigateWeek("prev")}
+            className="px-2 sm:px-3"
           >
             <ChevronLeft className="h-4 w-4" />
           </Button>
@@ -126,14 +127,16 @@ export function WeekView({
             variant="outline"
             size="sm"
             onClick={() => navigateWeek("next")}
+            className="px-2 sm:px-3"
           >
             <ChevronRight className="h-4 w-4" />
           </Button>
-          <Button variant="outline" size="sm" onClick={goToToday}>
-            Aujourd'hui
+          <Button variant="outline" size="sm" onClick={goToToday} className="text-xs sm:text-sm px-2 sm:px-3">
+            <span className="hidden sm:inline">Aujourd'hui</span>
+            <span className="sm:hidden">Auj.</span>
           </Button>
         </div>
-        <div className="text-lg font-semibold">
+        <div className="text-base sm:text-lg font-semibold text-center sm:text-right">
           {startOfWeek.toLocaleDateString("fr-FR", {
             month: "long",
             year: "numeric",
@@ -142,7 +145,7 @@ export function WeekView({
       </div>
 
       {/* Week Grid */}
-      <div className="grid grid-cols-7 gap-2">
+      <div className="grid grid-cols-7 gap-1 sm:gap-2">
         {weekDays.map((day, index) => {
           const dayAppointments = getAppointmentsForDay(day);
           const isSelected = day.toDateString() === selectedDate.toDateString();
@@ -157,13 +160,13 @@ export function WeekView({
               } ${isToday(day) ? "ring-2 ring-blue-500" : ""}`}
               onClick={() => onDateSelect(day)}
             >
-              <CardContent className="p-3">
-                <div className="text-center mb-2">
+              <CardContent className="p-1 sm:p-3">
+                <div className="text-center mb-1 sm:mb-2">
                   <div className="text-xs font-medium text-gray-600 uppercase">
                     {day.toLocaleDateString("fr-FR", { weekday: "short" })}
                   </div>
                   <div
-                    className={`text-lg font-semibold ${
+                    className={`text-sm sm:text-lg font-semibold ${
                       isToday(day) ? "text-blue-600" : ""
                     }`}
                   >
@@ -171,62 +174,86 @@ export function WeekView({
                   </div>
                 </div>
 
-                <div className="space-y-1">
+                <div className="space-y-0.5 sm:space-y-1">
                   {dayAppointments.slice(0, 3).map((appointment) => (
                     <div
                       key={appointment.id}
-                      className="p-1 rounded text-xs cursor-pointer hover:bg-white transition-colors"
+                      className="p-0.5 sm:p-1 rounded text-xs cursor-pointer hover:bg-white transition-colors"
                       onClick={(e) => {
                         e.stopPropagation();
                         onAppointmentClick(appointment);
                       }}
                     >
-                      <div className="flex items-center gap-1 mb-1">
-                        <div
-                          className={`w-2 h-2 rounded-full ${getTypeColor(
-                            appointment.type
-                          )}`}
-                        />
-                        <Clock className="w-3 h-3 text-gray-500" />
-                        <span className="font-medium">
-                          {formatTime(appointment.appointment_time)}
-                        </span>
-                      </div>
-                      <div className="truncate font-medium text-gray-900">
-                        {appointment.title}
-                      </div>
-                      {appointment.clients?.name && (
-                        <div className="flex items-center gap-1 text-gray-600 truncate">
-                          <Users className="w-3 h-3" />
-                          <span>{appointment.clients.name}</span>
+                      {/* Mobile View - Simplified */}
+                      <div className="sm:hidden">
+                        <div className="flex items-center gap-1">
+                          <div
+                            className={`w-1.5 h-1.5 rounded-full ${getTypeColor(
+                              appointment.type
+                            )}`}
+                          />
+                          <span className="font-medium text-xs truncate">
+                            {formatTime(appointment.appointment_time)}
+                          </span>
                         </div>
-                      )}
-                      <div className="flex items-center gap-1 mt-1">
-                        <Badge
-                          variant={getStatusVariant(appointment.status)}
-                          className="text-xs px-1 py-0"
-                        >
-                          {appointment.status}
-                        </Badge>
-                        {appointment.is_virtual && (
-                          <Video className="w-3 h-3 text-blue-500" />
+                        <div className="truncate text-xs font-medium text-gray-900 mt-0.5">
+                          {appointment.title.length > 12 
+                            ? appointment.title.substring(0, 12) + "..." 
+                            : appointment.title}
+                        </div>
+                      </div>
+
+                      {/* Desktop View - Full Details */}
+                      <div className="hidden sm:block">
+                        <div className="flex items-center gap-1 mb-1">
+                          <div
+                            className={`w-2 h-2 rounded-full ${getTypeColor(
+                              appointment.type
+                            )}`}
+                          />
+                          <Clock className="w-3 h-3 text-gray-500" />
+                          <span className="font-medium">
+                            {formatTime(appointment.appointment_time)}
+                          </span>
+                        </div>
+                        <div className="truncate font-medium text-gray-900">
+                          {appointment.title}
+                        </div>
+                        {appointment.clients?.name && (
+                          <div className="flex items-center gap-1 text-gray-600 truncate">
+                            <Users className="w-3 h-3" />
+                            <span>{appointment.clients.name}</span>
+                          </div>
                         )}
-                        {!appointment.is_virtual && appointment.location && (
-                          <MapPin className="w-3 h-3 text-gray-500" />
-                        )}
+                        <div className="flex items-center gap-1 mt-1">
+                          <Badge
+                            variant={getStatusVariant(appointment.status)}
+                            className="text-xs px-1 py-0"
+                          >
+                            {appointment.status}
+                          </Badge>
+                          {appointment.is_virtual && (
+                            <Video className="w-3 h-3 text-blue-500" />
+                          )}
+                          {!appointment.is_virtual && appointment.location && (
+                            <MapPin className="w-3 h-3 text-gray-500" />
+                          )}
+                        </div>
                       </div>
                     </div>
                   ))}
 
                   {dayAppointments.length > 3 && (
-                    <div className="text-xs text-gray-500 text-center py-1">
-                      +{dayAppointments.length - 3} autres
+                    <div className="text-xs text-gray-500 text-center py-0.5 sm:py-1">
+                      <span className="hidden sm:inline">+{dayAppointments.length - 3} autres</span>
+                      <span className="sm:hidden">+{dayAppointments.length - 3}</span>
                     </div>
                   )}
 
                   {dayAppointments.length === 0 && (
-                    <div className="text-xs text-gray-400 text-center py-4">
-                      Aucun RDV
+                    <div className="text-xs text-gray-400 text-center py-2 sm:py-4">
+                      <span className="hidden sm:inline">Aucun RDV</span>
+                      <span className="sm:hidden">-</span>
                     </div>
                   )}
                 </div>
