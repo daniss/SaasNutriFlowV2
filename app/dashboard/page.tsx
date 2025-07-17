@@ -154,7 +154,7 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <DashboardHeader
         title={`Bienvenue, ${profile?.first_name || "Diététicien(ne)"}!`}
         subtitle="Voici vos accompagnements nutritionnels en cours"
@@ -162,53 +162,60 @@ export default function DashboardPage() {
         action={
           <Button
             asChild
+            size="sm"
             className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
           >
             <Link href="/dashboard/clients">
-              <Plus className="mr-2 h-4 w-4" />
-              Nouveau client
+              <Plus className="mr-1 h-3 w-3 md:mr-2 md:h-4 md:w-4" />
+              <span className="hidden sm:inline">Nouveau client</span>
+              <span className="sm:hidden">Nouveau</span>
             </Link>
           </Button>
         }
       />
 
-      <div className="px-6 space-y-6">
+      <div className="px-4 md:px-6 space-y-4 md:space-y-6">
         {/* Stats Cards */}
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-3 grid-cols-2 md:grid-cols-2 lg:grid-cols-4">
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Personnes accompagnées
+              <CardTitle className="text-xs md:text-sm font-medium">
+                <span className="hidden sm:inline">Personnes accompagnées</span>
+                <span className="sm:hidden">Clients</span>
               </CardTitle>
               <Users className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.supportedPeople}</div>
+              <div className="text-xl md:text-2xl font-bold">{stats.supportedPeople}</div>
               <p className="text-xs text-muted-foreground">
-                Parcours de bien-être en cours
+                <span className="hidden sm:inline">Parcours de bien-être en cours</span>
+                <span className="sm:hidden">En parcours</span>
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Parcours nutritionnels
+              <CardTitle className="text-xs md:text-sm font-medium">
+                <span className="hidden sm:inline">Parcours nutritionnels</span>
+                <span className="sm:hidden">Plans</span>
               </CardTitle>
               <FileText className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">{stats.ongoingJourneys}</div>
+              <div className="text-xl md:text-2xl font-bold">{stats.ongoingJourneys}</div>
               <p className="text-xs text-muted-foreground">
-                Transformations en cours
+                <span className="hidden sm:inline">Transformations en cours</span>
+                <span className="sm:hidden">Actifs</span>
               </p>
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Actions bienveillantes
+              <CardTitle className="text-xs md:text-sm font-medium">
+                <span className="hidden sm:inline">Actions bienveillantes</span>
+                <span className="sm:hidden">Actions</span>
               </CardTitle>
               <Clock className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
@@ -217,10 +224,11 @@ export default function DashboardPage() {
                 <Button
                   asChild
                   size="sm"
-                  className="w-full bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
+                  className="w-full text-xs md:text-sm bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
                 >
                   <Link href="/dashboard/meal-plans">
-                    Créer un parcours
+                    <span className="hidden sm:inline">Créer un parcours</span>
+                    <span className="sm:hidden">Créer</span>
                   </Link>
                 </Button>
               </div>
@@ -229,48 +237,59 @@ export default function DashboardPage() {
 
           <Card>
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-              <CardTitle className="text-sm font-medium">
-                Progrès cette semaine
+              <CardTitle className="text-xs md:text-sm font-medium">
+                <span className="hidden sm:inline">Progrès cette semaine</span>
+                <span className="sm:hidden">Nouveaux</span>
               </CardTitle>
               <Bell className="h-4 w-4 text-muted-foreground" />
             </CardHeader>
             <CardContent>
-              <div className="text-2xl font-bold">
+              <div className="text-xl md:text-2xl font-bold">
                 {stats.recentMealPlans.length}
               </div>
               <p className="text-xs text-muted-foreground">
-                Nouveaux parcours créés
+                <span className="hidden sm:inline">Nouveaux parcours créés</span>
+                <span className="sm:hidden">Cette semaine</span>
               </p>
             </CardContent>
           </Card>
         </div>
 
-        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <div className="grid gap-4 lg:grid-cols-7">
           {/* Recent Clients */}
-          <Card className="col-span-4">
+          <Card className="lg:col-span-4">
             <CardHeader>
-              <CardTitle>Vos personnes accompagnées</CardTitle>
-              <CardDescription>Nouveaux parcours de bien-être</CardDescription>
+              <CardTitle className="text-lg md:text-xl">
+                <span className="hidden sm:inline">Vos personnes accompagnées</span>
+                <span className="sm:hidden">Vos clients</span>
+              </CardTitle>
+              <CardDescription className="text-sm">
+                <span className="hidden sm:inline">Nouveaux parcours de bien-être</span>
+                <span className="sm:hidden">Récents</span>
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-8">
                 {stats.recentClients.length === 0 ? (
-                  <div className="text-center py-8">
-                    <Users className="mx-auto h-12 w-12 text-gray-400" />
+                  <div className="text-center py-6 md:py-8">
+                    <Users className="mx-auto h-10 w-10 md:h-12 md:w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">
                       Prêt à commencer ?
                     </h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Accompagnez votre première personne vers le bien-être.
+                    <p className="mt-1 text-sm text-gray-500 px-2">
+                      <span className="hidden sm:inline">Accompagnez votre première personne vers le bien-être.</span>
+                      <span className="sm:hidden">Ajoutez votre premier client.</span>
                     </p>
-                    <div className="mt-6">
+                    <div className="mt-4 md:mt-6">
                       <Button
                         asChild
+                        size="sm"
                         className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
                       >
                         <Link href="/dashboard/clients">
-                          <Plus className="mr-2 h-4 w-4" />
-                          Nouveau client
+                          <Plus className="mr-1 h-3 w-3 md:mr-2 md:h-4 md:w-4" />
+                          <span className="hidden sm:inline">Nouveau client</span>
+                          <span className="sm:hidden">Ajouter</span>
                         </Link>
                       </Button>
                     </div>
@@ -313,31 +332,40 @@ export default function DashboardPage() {
           </Card>
 
           {/* Recent Meal Plans */}
-          <Card className="col-span-3">
+          <Card className="lg:col-span-3">
             <CardHeader>
-              <CardTitle>Parcours nutritionnels</CardTitle>
-              <CardDescription>Vos dernières créations</CardDescription>
+              <CardTitle className="text-lg md:text-xl">
+                <span className="hidden sm:inline">Parcours nutritionnels</span>
+                <span className="sm:hidden">Plans alimentaires</span>
+              </CardTitle>
+              <CardDescription className="text-sm">
+                <span className="hidden sm:inline">Vos dernières créations</span>
+                <span className="sm:hidden">Récents</span>
+              </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
                 {stats.recentMealPlans.length === 0 ? (
-                  <div className="text-center py-8">
-                    <FileText className="mx-auto h-12 w-12 text-gray-400" />
+                  <div className="text-center py-6 md:py-8">
+                    <FileText className="mx-auto h-10 w-10 md:h-12 md:w-12 text-gray-400" />
                     <h3 className="mt-2 text-sm font-medium text-gray-900">
-                      Aucun parcours créé
+                      <span className="hidden sm:inline">Aucun parcours créé</span>
+                      <span className="sm:hidden">Aucun plan</span>
                     </h3>
-                    <p className="mt-1 text-sm text-gray-500">
-                      Créez votre premier parcours nutritionnel !
+                    <p className="mt-1 text-sm text-gray-500 px-2">
+                      <span className="hidden sm:inline">Créez votre premier parcours nutritionnel !</span>
+                      <span className="sm:hidden">Créez votre premier plan !</span>
                     </p>
-                    <div className="mt-6">
+                    <div className="mt-4 md:mt-6">
                       <Button
                         asChild
                         size="sm"
                         className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium"
                       >
                         <Link href="/dashboard/meal-plans">
-                          <Plus className="mr-2 h-4 w-4" />
-                          Créer un parcours
+                          <Plus className="mr-1 h-3 w-3 md:mr-2 md:h-4 md:w-4" />
+                          <span className="hidden sm:inline">Créer un parcours</span>
+                          <span className="sm:hidden">Créer</span>
                         </Link>
                       </Button>
                     </div>

@@ -14,7 +14,7 @@ export default function DashboardLayout({
 }) {
   return (
     <ProtectedRoute>
-      <SidebarProvider defaultOpen={true}>
+      <SidebarProvider defaultOpen={false}>
         <div className="flex min-h-screen w-full">
           <AppSidebar />
           <main className="flex-1 overflow-hidden bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">

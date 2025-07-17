@@ -72,26 +72,26 @@ export function DashboardHeader({
 
   return (
     <header className={`sticky top-0 z-50 w-full border-b border-slate-200/60 bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60 ${className}`}>
-      <div className="flex h-16 items-center gap-4 px-4 sm:px-6">
-        <SidebarTrigger className="-ml-1 h-9 w-9 rounded-lg hover:bg-slate-100 transition-colors" />
+      <div className="flex h-14 md:h-16 items-center gap-2 md:gap-4 px-4 sm:px-6">
+        <SidebarTrigger className="-ml-1 h-8 w-8 md:h-9 md:w-9 rounded-lg hover:bg-slate-100 transition-colors" />
 
-        <div className="flex flex-1 items-center justify-between gap-4">
+        <div className="flex flex-1 items-center justify-between gap-2 md:gap-4">
           <div className="min-w-0 flex-1">
-            <h1 className="text-xl font-bold text-slate-900 truncate">{title}</h1>
+            <h1 className="text-lg md:text-xl font-bold text-slate-900 truncate">{title}</h1>
             {subtitle && (
-              <p className="text-sm text-slate-600 mt-0.5 truncate">{subtitle}</p>
+              <p className="text-xs md:text-sm text-slate-600 mt-0.5 truncate hidden sm:block">{subtitle}</p>
             )}
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-4">
+          <div className="flex items-center gap-1 md:gap-2">
             {showSearch && (
-              <div className="relative hidden md:block">
+              <div className="relative hidden lg:block">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
                 <Input 
                   placeholder={searchPlaceholder}
                   value={currentSearchValue}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-64 pl-10 h-9 border-slate-200 bg-white/80 focus:border-emerald-300 focus:ring-emerald-200 transition-all"
+                  className="w-48 xl:w-64 pl-10 h-8 md:h-9 border-slate-200 bg-white/80 focus:border-emerald-300 focus:ring-emerald-200 transition-all"
                 />
               </div>
             )}
