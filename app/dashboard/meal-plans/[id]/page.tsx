@@ -64,6 +64,7 @@ import { useEffect, useState } from "react"
 import { type GeneratedMealPlan } from "@/lib/gemini"
 import MacronutrientBreakdown from "@/components/nutrition/MacronutrientBreakdown"
 const FoodSearchModal = dynamic(() => import("@/components/dashboard/FoodSearchModal"), { ssr: false })
+const ManualFoodModal = dynamic(() => import("@/components/dashboard/ManualFoodModal"), { ssr: false })
 
 interface MealPlanWithClient extends MealPlan {
   clients: { id: string; name: string; email: string } | null
@@ -116,6 +117,11 @@ export default function MealPlanDetailPage() {
   const [foodSearchOpen, setFoodSearchOpen] = useState(false)
   const [foodSearchSlot, setFoodSearchSlot] = useState<"breakfast"|"lunch"|"dinner"|"snacks">("breakfast")
   const [foodSearchDay, setFoodSearchDay] = useState(1)
+  
+  // Manual food modal state
+  const [manualFoodOpen, setManualFoodOpen] = useState(false)
+  const [manualFoodSlot, setManualFoodSlot] = useState<"breakfast"|"lunch"|"dinner"|"snacks">("breakfast")
+  const [manualFoodDay, setManualFoodDay] = useState(1)
   interface SelectedFood {
     id: string
     name_fr: string
@@ -1382,18 +1388,32 @@ export default function MealPlanDetailPage() {
                           }
                           rows={1}
                         />
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          className="mt-1 text-xs h-7"
-                          onClick={() => {
-                            setFoodSearchSlot(slot)
-                            setFoodSearchDay(editDayForm.day)
-                            setFoodSearchOpen(true)
-                          }}
-                        >
-                          + Ajouter aliment
-                        </Button>
+                        <div className="flex gap-1 mt-1">
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7 flex-1"
+                            onClick={() => {
+                              setFoodSearchSlot(slot)
+                              setFoodSearchDay(editDayForm.day)
+                              setFoodSearchOpen(true)
+                            }}
+                          >
+                            + Ajouter aliment CIQUAL-ANSES
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            className="text-xs h-7 flex-1"
+                            onClick={() => {
+                              setManualFoodSlot(slot)
+                              setManualFoodDay(editDayForm.day)
+                              setManualFoodOpen(true)
+                            }}
+                          >
+                            + Ajouter aliment manuellement
+                          </Button>
+                        </div>
                         <div className="mt-1">
                           {selectedFoods[editDayForm.day]?.[slot]?.length > 0 && (
                             <div className="space-y-0.5">
@@ -1461,6 +1481,25 @@ export default function MealPlanDetailPage() {
                   }
                 }))
                 setFoodSearchOpen(false)
+              }}
+            />
+            <ManualFoodModal
+              open={manualFoodOpen}
+              onClose={() => setManualFoodOpen(false)}
+              mealSlot={manualFoodSlot}
+              day={manualFoodDay}
+              onAddFood={food => {
+                setSelectedFoods(prev => ({
+                  ...prev,
+                  [manualFoodDay]: {
+                    ...prev[manualFoodDay],
+                    [manualFoodSlot]: [
+                      ...(prev[manualFoodDay]?.[manualFoodSlot] || []),
+                      food
+                    ]
+                  }
+                }))
+                setManualFoodOpen(false)
               }}
             />
             <DialogFooter>
