@@ -92,7 +92,7 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <PlusCircle className="h-5 w-5" />
@@ -103,39 +103,43 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
-          <div className="space-y-2">
-            <Label htmlFor="name_fr">Nom de l'aliment *</Label>
-            <Input
-              id="name_fr"
-              placeholder="Ex: Salade de quinoa maison, Smoothie vert..."
-              value={formData.name_fr}
-              onChange={(e) => handleInputChange("name_fr", e.target.value)}
-              required
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="quantity">Quantité (grammes) *</Label>
-            <div className="flex items-center gap-2">
-              <Scale className="h-4 w-4 text-slate-400" />
+        <div className="space-y-3 py-2">
+          <div className="grid grid-cols-2 gap-3">
+            <div className="space-y-1">
+              <Label htmlFor="name_fr" className="text-sm">Nom de l'aliment *</Label>
               <Input
-                id="quantity"
-                type="number"
-                placeholder="100"
-                value={formData.quantity}
-                onChange={(e) => handleInputChange("quantity", e.target.value)}
-                min="1"
-                max="2000"
+                id="name_fr"
+                placeholder="Ex: Salade de quinoa maison..."
+                value={formData.name_fr}
+                onChange={(e) => handleInputChange("name_fr", e.target.value)}
                 required
+                className="h-8"
               />
-              <span className="text-sm text-slate-500">g</span>
+            </div>
+
+            <div className="space-y-1">
+              <Label htmlFor="quantity" className="text-sm">Quantité (grammes) *</Label>
+              <div className="flex items-center gap-2">
+                <Scale className="h-3 w-3 text-slate-400" />
+                <Input
+                  id="quantity"
+                  type="number"
+                  placeholder="100"
+                  value={formData.quantity}
+                  onChange={(e) => handleInputChange("quantity", e.target.value)}
+                  min="1"
+                  max="2000"
+                  required
+                  className="h-8"
+                />
+                <span className="text-xs text-slate-500">g</span>
+              </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="energy_kcal">Calories (kcal/100g)</Label>
+          <div className="grid grid-cols-5 gap-2">
+            <div className="space-y-1">
+              <Label htmlFor="energy_kcal" className="text-xs">Calories (kcal/100g)</Label>
               <Input
                 id="energy_kcal"
                 type="number"
@@ -145,11 +149,12 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                 min="0"
                 max="900"
                 step="0.1"
+                className="h-8"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="protein_g">Protéines (g/100g)</Label>
+            <div className="space-y-1">
+              <Label htmlFor="protein_g" className="text-xs">Protéines (g/100g)</Label>
               <Input
                 id="protein_g"
                 type="number"
@@ -159,11 +164,12 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                 min="0"
                 max="100"
                 step="0.1"
+                className="h-8"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="carbohydrate_g">Glucides (g/100g)</Label>
+            <div className="space-y-1">
+              <Label htmlFor="carbohydrate_g" className="text-xs">Glucides (g/100g)</Label>
               <Input
                 id="carbohydrate_g"
                 type="number"
@@ -173,11 +179,12 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                 min="0"
                 max="100"
                 step="0.1"
+                className="h-8"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="fat_g">Lipides (g/100g)</Label>
+            <div className="space-y-1">
+              <Label htmlFor="fat_g" className="text-xs">Lipides (g/100g)</Label>
               <Input
                 id="fat_g"
                 type="number"
@@ -187,11 +194,12 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                 min="0"
                 max="100"
                 step="0.1"
+                className="h-8"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="fiber_g">Fibres (g/100g)</Label>
+            <div className="space-y-1">
+              <Label htmlFor="fiber_g" className="text-xs">Fibres (g/100g)</Label>
               <Input
                 id="fiber_g"
                 type="number"
@@ -201,26 +209,28 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                 min="0"
                 max="100"
                 step="0.1"
+                className="h-8"
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="notes">Notes (optionnel)</Label>
+          <div className="space-y-1">
+            <Label htmlFor="notes" className="text-sm">Notes (optionnel)</Label>
             <Textarea
               id="notes"
               placeholder="Recette, ingrédients, préparation..."
               value={formData.notes}
               onChange={(e) => handleInputChange("notes", e.target.value)}
-              rows={3}
+              rows={2}
+              className="text-sm"
             />
           </div>
 
           {/* Nutritional preview */}
           {formData.quantity && parseInt(formData.quantity) > 0 && (
-            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-              <h4 className="font-medium text-blue-900 mb-2">Aperçu nutritionnel pour {formData.quantity}g</h4>
-              <div className="grid grid-cols-2 gap-2 text-sm">
+            <div className="bg-blue-50 p-2 rounded border border-blue-200">
+              <h4 className="font-medium text-blue-900 mb-1 text-sm">Aperçu pour {formData.quantity}g</h4>
+              <div className="grid grid-cols-5 gap-1 text-xs">
                 <div>Calories: <span className="font-semibold">
                   {formData.energy_kcal ? Math.round(parseFloat(formData.energy_kcal) * parseInt(formData.quantity) / 100) : 0} kcal
                 </span></div>
@@ -233,7 +243,7 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                 <div>Lipides: <span className="font-semibold">
                   {formData.fat_g ? Math.round(parseFloat(formData.fat_g) * parseInt(formData.quantity) / 100 * 10) / 10 : 0}g
                 </span></div>
-                <div className="col-span-2">Fibres: <span className="font-semibold">
+                <div>Fibres: <span className="font-semibold">
                   {formData.fiber_g ? Math.round(parseFloat(formData.fiber_g) * parseInt(formData.quantity) / 100 * 10) / 10 : 0}g
                 </span></div>
               </div>
@@ -241,13 +251,14 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
           )}
         </div>
 
-        <DialogFooter className="gap-2">
-          <Button variant="outline" onClick={handleClose}>
+        <DialogFooter className="gap-2 pt-2">
+          <Button variant="outline" onClick={handleClose} size="sm">
             Annuler
           </Button>
           <Button 
             onClick={handleSubmit} 
             disabled={!formData.name_fr.trim() || !formData.quantity || parseInt(formData.quantity) <= 0}
+            size="sm"
           >
             Ajouter l'aliment
           </Button>
