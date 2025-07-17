@@ -12,6 +12,8 @@ export async function POST(request: Request) {
 
     const { templateId, clientId, customizations } = await request.json()
 
+    console.log('Request data:', { templateId, clientId, customizations })
+
     // Validate required fields
     if (!templateId || !clientId) {
       return NextResponse.json(
@@ -90,6 +92,8 @@ export async function POST(request: Request) {
       status: 'draft'
     }
 
+    console.log('Creating meal plan with data:', mealPlanData)
+
     const { data: mealPlan, error: mealPlanError } = await supabase
       .from('meal_plans')
       .insert(mealPlanData)
@@ -99,6 +103,8 @@ export async function POST(request: Request) {
         meal_plan_templates (name)
       `)
       .single()
+
+    console.log('Meal plan creation result:', { mealPlan, mealPlanError })
 
     if (mealPlanError) throw mealPlanError
 
@@ -118,8 +124,9 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error("Error creating meal plan from template:", error)
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
     return NextResponse.json(
-      { error: "Failed to create meal plan from template" },
+      { error: `Failed to create meal plan from template: ${errorMessage}` },
       { status: 500 }
     )
   }

@@ -281,25 +281,6 @@ export default function TemplateSelectionDialog({
               </Select>
             </div>
 
-            {/* Client Selection */}
-            <div className="space-y-2">
-              <Label>Client *</Label>
-              <Select value={selectedClientId} onValueChange={setSelectedClientId}>
-                <SelectTrigger className={!selectedClientId ? "border-red-300" : ""}>
-                  <SelectValue placeholder="Sélectionner un client" />
-                </SelectTrigger>
-                <SelectContent>
-                  {clients.map(client => (
-                    <SelectItem key={client.id} value={client.id}>
-                      {client.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              {!selectedClientId && (
-                <p className="text-xs text-red-600">Veuillez sélectionner un client</p>
-              )}
-            </div>
 
             {/* Templates Grid */}
             <div className="grid gap-4 md:grid-cols-2 max-h-96 overflow-y-auto">
@@ -362,6 +343,26 @@ export default function TemplateSelectionDialog({
                 </CardDescription>
               </CardHeader>
             </Card>
+
+            {/* Client Selection */}
+            <div className="space-y-2">
+              <Label>Client *</Label>
+              <Select value={selectedClientId} onValueChange={setSelectedClientId}>
+                <SelectTrigger className={!selectedClientId ? "border-red-300" : ""}>
+                  <SelectValue placeholder="Sélectionner un client" />
+                </SelectTrigger>
+                <SelectContent>
+                  {clients.map(client => (
+                    <SelectItem key={client.id} value={client.id}>
+                      {client.name}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {!selectedClientId && (
+                <p className="text-xs text-red-600">Veuillez sélectionner un client</p>
+              )}
+            </div>
 
             {/* Customization Form */}
             <div className="grid gap-4">
@@ -432,7 +433,7 @@ export default function TemplateSelectionDialog({
             {step === "select" ? "Annuler" : "Retour"}
           </Button>
           {step === "select" ? (
-            <Button disabled={!selectedClientId || filteredTemplates.length === 0}>
+            <Button disabled={filteredTemplates.length === 0}>
               Sélectionner un modèle
             </Button>
           ) : (
