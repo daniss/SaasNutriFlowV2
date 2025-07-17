@@ -30,7 +30,10 @@ export async function POST(request: Request) {
       .eq('dietitian_id', user.id)
       .single()
 
+    console.log('Template fetch result:', { template, templateError })
+
     if (templateError || !template) {
+      console.error('Template not found:', { templateId, userId: user.id, templateError })
       return NextResponse.json(
         { error: "Template not found" },
         { status: 404 }
@@ -45,7 +48,10 @@ export async function POST(request: Request) {
       .eq('dietitian_id', user.id)
       .single()
 
+    console.log('Client fetch result:', { client, clientError })
+
     if (clientError || !client) {
+      console.error('Client not found:', { clientId, userId: user.id, clientError })
       return NextResponse.json(
         { error: "Client not found" },
         { status: 404 }
@@ -87,7 +93,7 @@ export async function POST(request: Request) {
       name: customizations?.name || `${template.name} - ${client.name}`,
       description: customizations?.description || `Plan basé sur le modèle "${template.name}" pour ${client.name}`,
       duration_days: customizations?.duration_days || template.duration_days,
-      target_calories: customizations?.target_calories || template.target_calories,
+      calories_range: customizations?.target_calories || template.target_calories,
       plan_content: planContent,
       status: 'draft'
     }
@@ -124,7 +130,17 @@ export async function POST(request: Request) {
 
   } catch (error) {
     console.error("Error creating meal plan from template:", error)
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+    
+    // More detailed error logging
+    if (error instanceof Error) {
+      console.error("Error details:", {
+        message: error.message,
+        stack: error.stack,
+        name: error.name
+      })
+    }
+    
+    const errorMessage = error instanceof Error ? error.message : JSON.stringify(error)
     return NextResponse.json(
       { error: `Failed to create meal plan from template: ${errorMessage}` },
       { status: 500 }
