@@ -298,34 +298,34 @@ export default function MealPlansPage() {
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
-          <div className="flex items-center gap-1 sm:gap-2 lg:gap-3">
+          <div className="flex flex-wrap items-center gap-1 sm:gap-2">
             <Button 
               onClick={() => setIsTemplateDialogOpen(true)}
               variant="outline"
               size="sm"
-              className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs sm:text-sm"
+              className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs px-2 sm:px-3 flex-shrink-0"
             >
-              <BookOpen className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Utiliser un </span>modèle
+              <BookOpen className="h-3 w-3 flex-shrink-0" />
+              <span className="ml-1 hidden sm:inline">Modèle</span>
             </Button>
             <Button 
               asChild
               variant="outline"
               size="sm"
-              className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 text-xs sm:text-sm"
+              className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 text-xs px-2 sm:px-3 flex-shrink-0"
             >
               <Link href="/dashboard/meal-plans/generate">
-                <Sparkles className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-                <span className="hidden lg:inline">Génération </span>IA
+                <Sparkles className="h-3 w-3 flex-shrink-0" />
+                <span className="ml-1 hidden sm:inline">IA</span>
               </Link>
             </Button>
             <Button 
               onClick={() => setIsAddDialogOpen(true)}
               size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm px-2 sm:px-4"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 sm:px-3 flex-shrink-0"
             >
-              <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="hidden md:inline">Nouveau </span><span className="hidden sm:inline md:hidden">+ </span>Plan
+              <Plus className="h-3 w-3 flex-shrink-0" />
+              <span className="ml-1 hidden sm:inline">Plan</span>
             </Button>
           </div>
         }
