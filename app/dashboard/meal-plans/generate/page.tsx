@@ -425,12 +425,11 @@ export default function GenerateMealPlanPage() {
         subtitle="Créez des plans nutritionnels personnalisés en quelques secondes avec l'IA intelligente"
         showSearch={false}
       />
-      
-      <div className="min-h-screen bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
-        {/* Hero Section */}
-        <div className="relative overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5" />
-          <div className="relative container mx-auto px-6 pt-12 pb-8">
+
+      {/* Hero Section */}
+      <div className="relative overflow-hidden bg-gradient-to-br from-slate-50 via-blue-50/30 to-indigo-50/50">
+        <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5" />
+        <div className="relative container mx-auto px-6 pt-12 pb-8">
             <div className="max-w-3xl">
             
             {/* Key Features */}
@@ -1420,7 +1419,6 @@ export default function GenerateMealPlanPage() {
           </Card>
         </div>
       )}
-      </div>
     </div>
   )
 }

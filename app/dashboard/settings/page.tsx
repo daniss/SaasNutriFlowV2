@@ -134,8 +134,6 @@ export default function SettingsPage() {
         subtitle="Gérez les paramètres de votre compte et vos préférences"
         showSearch={false}
       />
-      
-      <div className="flex-1 space-y-8 p-6 lg:p-8 bg-gradient-to-br from-gray-50/50 via-white to-emerald-50/20 min-h-screen">
 
       {success && (
         <Alert className="border-emerald-200 bg-emerald-50 text-emerald-800 animate-scale-in">
@@ -475,7 +473,6 @@ export default function SettingsPage() {
           <SessionManagement />
         </TabsContent>
       </Tabs>
-      </div>
     </div>
   );
 }
