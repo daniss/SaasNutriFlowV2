@@ -10,17 +10,6 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    // Get dietitian profile
-    const { data: dietitian, error: dietitianError } = await supabase
-      .from('dietitians')
-      .select('id')
-      .eq('auth_user_id', user.id)
-      .single()
-
-    if (dietitianError || !dietitian) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
-    }
-
     const { templateId, clientId, customizations } = await request.json()
 
     // Validate required fields
@@ -36,7 +25,7 @@ export async function POST(request: Request) {
       .from('meal_plan_templates')
       .select('*')
       .eq('id', templateId)
-      .eq('dietitian_id', dietitian.id)
+      .eq('dietitian_id', user.id)
       .single()
 
     if (templateError || !template) {
@@ -51,7 +40,7 @@ export async function POST(request: Request) {
       .from('clients')
       .select('id, name')
       .eq('id', clientId)
-      .eq('dietitian_id', dietitian.id)
+      .eq('dietitian_id', user.id)
       .single()
 
     if (clientError || !client) {
@@ -89,7 +78,7 @@ export async function POST(request: Request) {
 
     // Create the meal plan
     const mealPlanData = {
-      dietitian_id: dietitian.id,
+      dietitian_id: user.id,
       client_id: clientId,
       template_id: templateId,
       generation_method: 'template',
