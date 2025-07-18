@@ -109,7 +109,7 @@ export function MandatoryConsentModal({
   return (
     <Dialog open={isOpen} onOpenChange={() => {}} modal>
       <DialogContent
-        className="max-w-2xl max-h-[90vh] overflow-y-auto"
+        className="w-[95vw] sm:max-w-2xl max-h-[90vh] overflow-y-auto p-4 sm:p-6"
         onPointerDownOutside={(e) => e.preventDefault()}
       >
         <DialogHeader>
@@ -137,8 +137,8 @@ export function MandatoryConsentModal({
 
           <div className="space-y-4">
             {/* Mandatory Consent 1: Data Processing */}
-            <div className="border rounded-lg p-4 bg-red-50 border-red-200">
-              <div className="flex items-start space-x-3">
+            <div className="border rounded-lg p-3 sm:p-4 bg-red-50 border-red-200">
+              <div className="flex items-start space-x-2 sm:space-x-3">
                 <Checkbox
                   id="data_processing"
                   checked={consents.data_processing}
@@ -150,12 +150,12 @@ export function MandatoryConsentModal({
                 <div className="flex-1">
                   <label
                     htmlFor="data_processing"
-                    className="text-sm font-medium cursor-pointer flex items-center gap-1"
+                    className="text-sm font-medium cursor-pointer flex flex-col sm:flex-row sm:items-center gap-1"
                   >
-                    Traitement des données personnelles *
+                    <span>Traitement des données personnelles *</span>
                     <span className="text-red-500 text-xs">(Obligatoire)</span>
                   </label>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
                     J'autorise le traitement de mes données personnelles (nom,
                     prénom, email, téléphone) pour la gestion de mon dossier
                     nutritionnel et la communication avec mon nutritionniste.
@@ -165,8 +165,8 @@ export function MandatoryConsentModal({
             </div>
 
             {/* Mandatory Consent 2: Health Data */}
-            <div className="border rounded-lg p-4 bg-red-50 border-red-200">
-              <div className="flex items-start space-x-3">
+            <div className="border rounded-lg p-3 sm:p-4 bg-red-50 border-red-200">
+              <div className="flex items-start space-x-2 sm:space-x-3">
                 <Checkbox
                   id="health_data"
                   checked={consents.health_data}
@@ -178,12 +178,12 @@ export function MandatoryConsentModal({
                 <div className="flex-1">
                   <label
                     htmlFor="health_data"
-                    className="text-sm font-medium cursor-pointer flex items-center gap-1"
+                    className="text-sm font-medium cursor-pointer flex flex-col sm:flex-row sm:items-center gap-1"
                   >
-                    Traitement des données de santé *
+                    <span>Traitement des données de santé *</span>
                     <span className="text-red-500 text-xs">(Obligatoire)</span>
                   </label>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
                     J'autorise le traitement de mes données de santé sensibles
                     (poids, allergies, pathologies, habitudes alimentaires)
                     nécessaires au suivi nutritionnel.
@@ -193,8 +193,8 @@ export function MandatoryConsentModal({
             </div>
 
             {/* Optional Consent 3: Photos */}
-            <div className="border rounded-lg p-4">
-              <div className="flex items-start space-x-3">
+            <div className="border rounded-lg p-3 sm:p-4">
+              <div className="flex items-start space-x-2 sm:space-x-3">
                 <Checkbox
                   id="photos"
                   checked={consents.photos}
@@ -210,7 +210,7 @@ export function MandatoryConsentModal({
                   >
                     Utilisation de photos (Optionnel)
                   </label>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
                     J'autorise l'utilisation de mes photos corporelles pour le
                     suivi de ma progression et la documentation de mes
                     résultats.
@@ -220,8 +220,8 @@ export function MandatoryConsentModal({
             </div>
 
             {/* Optional Consent 4: Marketing */}
-            <div className="border rounded-lg p-4">
-              <div className="flex items-start space-x-3">
+            <div className="border rounded-lg p-3 sm:p-4">
+              <div className="flex items-start space-x-2 sm:space-x-3">
                 <Checkbox
                   id="marketing"
                   checked={consents.marketing}
@@ -237,7 +237,7 @@ export function MandatoryConsentModal({
                   >
                     Communications marketing (Optionnel)
                   </label>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
                     J'accepte de recevoir des newsletters, conseils
                     nutritionnels et offres promotionnelles par email.
                   </p>
@@ -246,8 +246,8 @@ export function MandatoryConsentModal({
             </div>
 
             {/* Optional Consent 5: Data Sharing */}
-            <div className="border rounded-lg p-4">
-              <div className="flex items-start space-x-3">
+            <div className="border rounded-lg p-3 sm:p-4">
+              <div className="flex items-start space-x-2 sm:space-x-3">
                 <Checkbox
                   id="data_sharing"
                   checked={consents.data_sharing}
@@ -263,7 +263,7 @@ export function MandatoryConsentModal({
                   >
                     Partage avec des tiers (Optionnel)
                   </label>
-                  <p className="text-sm text-gray-600 mt-1">
+                  <p className="text-xs sm:text-sm text-gray-600 mt-1">
                     J'autorise le partage de mes données avec des laboratoires
                     d'analyses, autres professionnels de santé ou partenaires
                     dans le cadre de mon suivi.
@@ -273,7 +273,7 @@ export function MandatoryConsentModal({
             </div>
           </div>
 
-          <div className="text-xs text-gray-500 space-y-2">
+          <div className="text-xs text-gray-500 space-y-2 px-1">
             <p>
               * Les consentements marqués comme obligatoires sont nécessaires
               pour utiliser le portail client.
@@ -302,7 +302,7 @@ export function MandatoryConsentModal({
           </Button>
 
           {!hasRequiredConsents && (
-            <p className="text-sm text-red-600 text-center">
+            <p className="text-xs sm:text-sm text-red-600 text-center px-2">
               Vous devez accepter les consentements obligatoires pour continuer
             </p>
           )}

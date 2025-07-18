@@ -251,29 +251,31 @@ export function ClientGDPRRights() {
             {consents.map((consent) => (
               <div
                 key={consent.type}
-                className="flex items-start justify-between p-4 border rounded-lg"
+                className="flex flex-col sm:flex-row sm:items-start sm:justify-between p-3 sm:p-4 border rounded-lg gap-2 sm:gap-0"
               >
                 <div className="space-y-1 flex-1">
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-2">
                     <p className="font-medium">{consent.title}</p>
                     {consent.required && (
-                      <Badge variant="secondary" className="text-xs">
+                      <Badge variant="secondary" className="text-xs w-fit">
                         Obligatoire
                       </Badge>
                     )}
                   </div>
-                  <p className="text-sm text-gray-600">{consent.description}</p>
+                  <p className="text-xs sm:text-sm text-gray-600">{consent.description}</p>
                 </div>
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-2 sm:ml-4">
                   {consent.granted ? (
-                    <Badge variant="default" className="bg-green-600">
+                    <Badge variant="default" className="bg-green-600 w-fit">
                       <CheckCircle className="h-3 w-3 mr-1" />
-                      Accordé
+                      <span className="hidden sm:inline">Accordé</span>
+                      <span className="sm:hidden">OK</span>
                     </Badge>
                   ) : (
-                    <Badge variant="secondary">
+                    <Badge variant="secondary" className="w-fit">
                       <AlertTriangle className="h-3 w-3 mr-1" />
-                      {consent.required ? "Requis" : "Non accordé"}
+                      <span className="hidden sm:inline">{consent.required ? "Requis" : "Non accordé"}</span>
+                      <span className="sm:hidden">{consent.required ? "Requis" : "Non"}</span>
                     </Badge>
                   )}
                 </div>
@@ -304,14 +306,14 @@ export function ClientGDPRRights() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             {/* Data Export */}
-            <div className="p-4 border rounded-lg">
+            <div className="p-3 sm:p-4 border rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <Download className="h-5 w-5 text-blue-600" />
-                <h3 className="font-medium">Portabilité des données</h3>
+                <Download className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
+                <h3 className="font-medium text-sm sm:text-base">Portabilité des données</h3>
               </div>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                 Recevez une copie complète de toutes vos données personnelles
                 dans un format lisible.
               </p>
@@ -326,12 +328,12 @@ export function ClientGDPRRights() {
             </div>
 
             {/* Data Deletion */}
-            <div className="p-4 border rounded-lg">
+            <div className="p-3 sm:p-4 border rounded-lg">
               <div className="flex items-center gap-2 mb-2">
-                <Trash2 className="h-5 w-5 text-red-600" />
-                <h3 className="font-medium">Droit à l'oubli</h3>
+                <Trash2 className="h-4 w-4 sm:h-5 sm:w-5 text-red-600" />
+                <h3 className="font-medium text-sm sm:text-base">Droit à l'oubli</h3>
               </div>
-              <p className="text-sm text-gray-600 mb-4">
+              <p className="text-xs sm:text-sm text-gray-600 mb-3 sm:mb-4">
                 Demandez la suppression complète de vos données personnelles de
                 nos systèmes.
               </p>
@@ -361,27 +363,27 @@ export function ClientGDPRRights() {
         </CardHeader>
         <CardContent>
           <div className="space-y-3">
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-              <span className="text-sm font-medium">Données de profil</span>
-              <span className="text-sm text-gray-600">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-gray-50 rounded gap-1 sm:gap-0">
+              <span className="text-xs sm:text-sm font-medium">Données de profil</span>
+              <span className="text-xs sm:text-sm text-gray-600">
                 7 ans après la fin du suivi
               </span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-              <span className="text-sm font-medium">Données de santé</span>
-              <span className="text-sm text-gray-600">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-gray-50 rounded gap-1 sm:gap-0">
+              <span className="text-xs sm:text-sm font-medium">Données de santé</span>
+              <span className="text-xs sm:text-sm text-gray-600">
                 10 ans (obligation légale)
               </span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-              <span className="text-sm font-medium">Photos de progression</span>
-              <span className="text-sm text-gray-600">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-gray-50 rounded gap-1 sm:gap-0">
+              <span className="text-xs sm:text-sm font-medium">Photos de progression</span>
+              <span className="text-xs sm:text-sm text-gray-600">
                 Jusqu'à révocation du consentement
               </span>
             </div>
-            <div className="flex justify-between items-center p-3 bg-gray-50 rounded">
-              <span className="text-sm font-medium">Messages</span>
-              <span className="text-sm text-gray-600">
+            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center p-3 bg-gray-50 rounded gap-1 sm:gap-0">
+              <span className="text-xs sm:text-sm font-medium">Messages</span>
+              <span className="text-xs sm:text-sm text-gray-600">
                 3 ans après le dernier message
               </span>
             </div>
@@ -391,7 +393,7 @@ export function ClientGDPRRights() {
 
       {/* Consent Dialog */}
       <Dialog open={consentDialogOpen} onOpenChange={setConsentDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="w-[95vw] sm:max-w-lg p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Modifier mes consentements</DialogTitle>
             <DialogDescription>
@@ -426,14 +428,15 @@ export function ClientGDPRRights() {
               </div>
             ))}
           </div>
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={() => setConsentDialogOpen(false)}
+              className="flex-1"
             >
               Annuler
             </Button>
-            <Button onClick={saveConsents} disabled={loading}>
+            <Button onClick={saveConsents} disabled={loading} className="flex-1">
               Sauvegarder
             </Button>
           </DialogFooter>
@@ -442,7 +445,7 @@ export function ClientGDPRRights() {
 
       {/* Export Dialog */}
       <Dialog open={exportDialogOpen} onOpenChange={setExportDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] sm:max-w-lg p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>Demander mes données</DialogTitle>
             <DialogDescription>
@@ -457,14 +460,15 @@ export function ClientGDPRRights() {
               alimentaires, messages, rendez-vous et photos de progression.
             </AlertDescription>
           </Alert>
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={() => setExportDialogOpen(false)}
+              className="flex-1"
             >
               Annuler
             </Button>
-            <Button onClick={requestDataExport} disabled={loading}>
+            <Button onClick={requestDataExport} disabled={loading} className="flex-1">
               Confirmer la demande
             </Button>
           </DialogFooter>
@@ -473,7 +477,7 @@ export function ClientGDPRRights() {
 
       {/* Delete Dialog */}
       <Dialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <DialogContent>
+        <DialogContent className="w-[95vw] sm:max-w-lg p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle className="text-red-600">
               Demander la suppression de mes données
@@ -491,10 +495,11 @@ export function ClientGDPRRights() {
               votre compte et à toutes vos données.
             </AlertDescription>
           </Alert>
-          <DialogFooter>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
             <Button
               variant="outline"
               onClick={() => setDeleteDialogOpen(false)}
+              className="flex-1"
             >
               Annuler
             </Button>
@@ -502,6 +507,7 @@ export function ClientGDPRRights() {
               variant="destructive"
               onClick={requestDataDeletion}
               disabled={loading}
+              className="flex-1"
             >
               Confirmer la suppression
             </Button>
