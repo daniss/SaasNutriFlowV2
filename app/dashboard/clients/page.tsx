@@ -510,9 +510,9 @@ export default function ClientsPage() {
                 Nouveau client
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[600px] max-h-[80vh] overflow-y-auto shadow-soft-lg border-0">
+            <DialogContent className="w-full max-w-[95vw] sm:max-w-[600px] max-h-[90vh] sm:max-h-[80vh] overflow-y-auto shadow-soft-lg border-0 mx-4 sm:mx-0">
               <DialogHeader className="space-y-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
                   <div className="space-y-1">
                     <DialogTitle className="text-xl font-semibold text-gray-900">
                       {formSteps[currentStep as keyof typeof formSteps].title}
@@ -521,7 +521,7 @@ export default function ClientsPage() {
                       {formSteps[currentStep as keyof typeof formSteps].subtitle}
                     </DialogDescription>
                   </div>
-                  <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium">
+                  <div className="text-sm text-gray-500 bg-gray-100 px-3 py-1 rounded-full font-medium self-start sm:self-auto">
                     {currentStep}/3
                   </div>
                 </div>
@@ -530,7 +530,7 @@ export default function ClientsPage() {
                 <div className="flex items-center space-x-2">
                   {[1, 2, 3].map((step) => (
                     <div key={step} className="flex items-center">
-                      <div className={`h-2 w-8 rounded-full transition-colors duration-200 ${
+                      <div className={`h-3 w-8 sm:h-2 sm:w-8 rounded-full transition-colors duration-200 ${
                         step <= currentStep ? 'bg-emerald-500' : 'bg-gray-200'
                       }`} />
                       {step < 3 && <div className="w-2" />}
@@ -542,7 +542,7 @@ export default function ClientsPage() {
                 {/* Step 1: Personal Information */}
                 {currentStep === 1 && (
                   <div className="space-y-6 animate-slide-in">
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label
                           htmlFor="name"
@@ -697,7 +697,7 @@ export default function ClientsPage() {
                       </p>
                     </div>
                     
-                    <div className="grid grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label
                           htmlFor="current_weight"
@@ -872,34 +872,34 @@ export default function ClientsPage() {
                     <div className="space-y-4 p-4 bg-emerald-50 rounded-lg">
                       <h4 className="text-sm font-semibold text-emerald-800 mb-3">Récapitulatif du profil</h4>
                       <div className="grid gap-3 text-sm">
-                        <div className="flex justify-between">
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
                           <span className="text-gray-600">Nom :</span>
                           <span className="font-medium text-gray-900">{newClient.name}</span>
                         </div>
-                        <div className="flex justify-between">
+                        <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
                           <span className="text-gray-600">Email :</span>
-                          <span className="font-medium text-gray-900">{newClient.email}</span>
+                          <span className="font-medium text-gray-900 break-all">{newClient.email}</span>
                         </div>
                         {newClient.phone && (
-                          <div className="flex justify-between">
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
                             <span className="text-gray-600">Téléphone :</span>
                             <span className="font-medium text-gray-900">{newClient.phone}</span>
                           </div>
                         )}
                         {newClient.current_weight && (
-                          <div className="flex justify-between">
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
                             <span className="text-gray-600">Poids actuel :</span>
                             <span className="font-medium text-gray-900">{newClient.current_weight} kg</span>
                           </div>
                         )}
                         {newClient.goal_weight && (
-                          <div className="flex justify-between">
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
                             <span className="text-gray-600">Poids objectif :</span>
                             <span className="font-medium text-gray-900">{newClient.goal_weight} kg</span>
                           </div>
                         )}
                         {newClient.goal && (
-                          <div className="flex justify-between">
+                          <div className="flex flex-col sm:flex-row sm:justify-between gap-1 sm:gap-0">
                             <span className="text-gray-600">Objectif :</span>
                             <span className="font-medium text-gray-900">
                               {newClient.goal === 'weight_loss' && 'Perte de poids'}

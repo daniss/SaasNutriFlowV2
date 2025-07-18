@@ -864,7 +864,7 @@ export default function ClientDetailPage() {
         )}
 
         {/* Quick Stats Cards */}
-        <div className="grid gap-6 md:grid-cols-4">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
           <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm">
             <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
               <CardTitle className="text-sm font-semibold text-slate-700">
@@ -955,7 +955,7 @@ export default function ClientDetailPage() {
 
         {/* Tabs */}
         <Tabs defaultValue="progress" className="space-y-6">
-          <TabsList className="bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm w-full justify-start overflow-x-auto no-scrollbar">
+          <TabsList className="bg-white/80 backdrop-blur-sm border border-slate-200 shadow-sm w-full justify-start overflow-x-auto no-scrollbar flex-wrap sm:flex-nowrap">
             <TabsTrigger
               value="progress"
               className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600 whitespace-nowrap"
@@ -1008,7 +1008,7 @@ export default function ClientDetailPage() {
 
           {/* Progress Tab */}
           <TabsContent value="progress" className="space-y-6">
-            <div className="grid gap-4 md:gap-6 grid-cols-1 lg:grid-cols-2">
+            <div className="grid gap-4 grid-cols-1 lg:grid-cols-2">
               <Card className="bg-white/90 backdrop-blur-sm border-slate-200 shadow-sm">
                 <CardHeader>
                   <CardTitle className="text-slate-900 flex items-center gap-2">
@@ -1232,7 +1232,7 @@ export default function ClientDetailPage() {
               </CardHeader>
               <CardContent className="space-y-6">
                 {editing ? (
-                  <div className="grid gap-6 md:grid-cols-2">
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                     <div className="space-y-2">
                       <Label
                         htmlFor="name"
@@ -1450,7 +1450,7 @@ export default function ClientDetailPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="grid gap-6 md:grid-cols-2">
+                  <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                     <div className="space-y-4">
                       <div className="flex items-center gap-3 p-3 bg-slate-50/50 rounded-lg">
                         <Mail className="h-5 w-5 text-slate-500" />
