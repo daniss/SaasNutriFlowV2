@@ -59,36 +59,23 @@ export default function TemplatePreviewModal({
       )
     }
 
-    // Try to extract sample meals from the structure
+    // Parse the template structure - should be array format
     const mealStructure = template.meal_structure as any
-    const sampleDays = ['day_1', 'day_2', 'jour_1', 'jour_2', 'lundi', 'mardi']
-    const mealTypes = ['breakfast', 'lunch', 'dinner', 'petit_dejeuner', 'dejeuner', 'diner']
+    let templateDays = []
     
-    let previewContent = []
-    
-    // Try to find sample meals
-    for (const day of sampleDays) {
-      if (mealStructure[day]) {
-        const dayMeals = []
-        for (const meal of mealTypes) {
-          if (mealStructure[day][meal]) {
-            const mealData = mealStructure[day][meal]
-            dayMeals.push({
-              type: meal,
-              name: mealData.name || mealData.recipe || 'Repas personnalisé',
-              calories: mealData.calories || mealData.kcal,
-              time: mealData.prep_time || mealData.preparation_time
-            })
-          }
-        }
-        if (dayMeals.length > 0) {
-          previewContent.push({ day, meals: dayMeals })
-        }
-        if (previewContent.length >= 2) break // Show max 2 days
-      }
+    // Handle both array and object formats for backward compatibility
+    if (Array.isArray(mealStructure)) {
+      templateDays = mealStructure
+    } else if (typeof mealStructure === 'object') {
+      // Try to convert old object format to array format
+      const dayKeys = Object.keys(mealStructure).filter(key => key.startsWith('day_') || key.startsWith('jour_'))
+      templateDays = dayKeys.map(key => ({
+        day: parseInt(key.replace(/\D/g, '')) || 1,
+        meals: mealStructure[key]?.meals || []
+      }))
     }
 
-    if (previewContent.length === 0) {
+    if (templateDays.length === 0) {
       return (
         <div className="text-center py-6">
           <ChefHat className="h-8 w-8 mx-auto mb-2 text-emerald-600" />
@@ -100,46 +87,55 @@ export default function TemplatePreviewModal({
       )
     }
 
+    // Show first 2 days maximum
+    const previewDays = templateDays.slice(0, 2)
+
     return (
       <div className="space-y-4">
-        {previewContent.map((dayData, dayIndex) => (
+        {previewDays.map((dayData, dayIndex) => (
           <Card key={dayIndex} className="border-gray-200">
             <CardHeader className="pb-3">
               <CardTitle className="text-sm font-medium">
-                Jour {dayIndex + 1}
+                Jour {dayData.day}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-2">
-              {dayData.meals.map((meal, mealIndex) => (
-                <div key={mealIndex} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
-                  <div>
-                    <p className="text-sm font-medium text-gray-900 capitalize">
-                      {meal.type.replace('_', ' ')}
-                    </p>
-                    <p className="text-xs text-gray-600 truncate max-w-40">
-                      {meal.name}
-                    </p>
-                  </div>
-                  <div className="text-right">
-                    {meal.calories && (
-                      <p className="text-xs font-medium text-orange-600">
-                        {meal.calories} kcal
+              {dayData.meals && dayData.meals.length > 0 ? (
+                dayData.meals.map((meal: any, mealIndex: number) => (
+                  <div key={mealIndex} className="flex items-center justify-between py-2 border-b border-gray-100 last:border-b-0">
+                    <div>
+                      <p className="text-sm font-medium text-gray-900">
+                        {meal.name || 'Repas'}
                       </p>
-                    )}
-                    {meal.time && (
-                      <p className="text-xs text-gray-500">
-                        {meal.time}
+                      <p className="text-xs text-gray-600 truncate max-w-40">
+                        {meal.description || 'Description non disponible'}
                       </p>
-                    )}
+                    </div>
+                    <div className="text-right">
+                      {meal.calories_target && (
+                        <p className="text-xs font-medium text-orange-600">
+                          {meal.calories_target} kcal
+                        </p>
+                      )}
+                      {meal.time && (
+                        <p className="text-xs text-gray-500">
+                          {meal.time}
+                        </p>
+                      )}
+                    </div>
                   </div>
+                ))
+              ) : (
+                <div className="text-center py-4 text-gray-500">
+                  <p className="text-xs">Aucun repas configuré pour ce jour</p>
                 </div>
-              ))}
+              )}
             </CardContent>
           </Card>
         ))}
         <div className="text-center pt-2">
           <p className="text-xs text-gray-500">
-            ... et {template.duration_days - 2} jours supplémentaires
+            ... et {Math.max(0, template.duration_days - 2)} jours supplémentaires
           </p>
         </div>
       </div>

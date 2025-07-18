@@ -62,22 +62,63 @@ export async function POST(request: Request) {
     async function transformTemplateToPlanContent(templateStructure: any, duration: number): Promise<any> {
       const days = []
       
+      // Ensure templateStructure is array format
+      const templateDays = Array.isArray(templateStructure) ? templateStructure : []
+      
       // Convert template day structure to meal plan day structure
       for (let dayNum = 1; dayNum <= duration; dayNum++) {
-        const templateDay = templateStructure[`day_${dayNum}`] || templateStructure[`jour_${dayNum}`]
+        const templateDay = templateDays.find(d => d.day === dayNum)
         
-        if (templateDay) {
+        if (templateDay && templateDay.meals) {
+          // Create meal categorization mapping
+          const categorizedMeals = {
+            breakfast: [],
+            lunch: [],
+            dinner: [],
+            snacks: []
+          }
+          
+          // Map meal times for the day
+          const mealTimes = {
+            breakfastHour: "08:00",
+            lunchHour: "12:00",
+            dinnerHour: "19:00",
+            snacksHour: "16:00"
+          }
+          
+          // Process each meal slot from template
+          for (const meal of templateDay.meals) {
+            const category = mapMealNameToCategory(meal.name)
+            const mealContent = meal.description || meal.name || 'Repas à définir'
+            
+            // Add meal to appropriate category
+            categorizedMeals[category].push(mealContent)
+            
+            // Set meal time based on meal type
+            if (category === 'breakfast') mealTimes.breakfastHour = meal.time || "08:00"
+            else if (category === 'lunch') mealTimes.lunchHour = meal.time || "12:00"
+            else if (category === 'dinner') mealTimes.dinnerHour = meal.time || "19:00"
+            else if (category === 'snacks') mealTimes.snacksHour = meal.time || "16:00"
+          }
+          
           // Enhanced meal transformation with recipe lookup
           const dayPlan = {
             day: dayNum,
             date: new Date(Date.now() + (dayNum - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
             meals: {
-              breakfast: await transformMealWithRecipes(templateDay.breakfast, 'breakfast'),
-              lunch: await transformMealWithRecipes(templateDay.lunch, 'lunch'),
-              dinner: await transformMealWithRecipes(templateDay.dinner, 'dinner'),
-              snacks: await transformMealWithRecipes(templateDay.snack, 'snack')
+              breakfast: categorizedMeals.breakfast,
+              lunch: categorizedMeals.lunch,
+              dinner: categorizedMeals.dinner,
+              snacks: categorizedMeals.snacks
             },
             notes: templateDay.notes || '',
+            // Add meal timing from template
+            ...mealTimes,
+            // Enable/disable meals based on what's in template
+            breakfastEnabled: categorizedMeals.breakfast.length > 0,
+            lunchEnabled: categorizedMeals.lunch.length > 0,
+            dinnerEnabled: categorizedMeals.dinner.length > 0,
+            snacksEnabled: categorizedMeals.snacks.length > 0,
             // Preserve rich template data for advanced features
             templateData: templateDay
           }
@@ -94,12 +135,38 @@ export async function POST(request: Request) {
               snacks: []
             },
             notes: '',
+            breakfastHour: "08:00",
+            lunchHour: "12:00",
+            dinnerHour: "19:00",
+            snacksHour: "16:00",
+            breakfastEnabled: false,
+            lunchEnabled: false,
+            dinnerEnabled: false,
+            snacksEnabled: false,
             templateData: null
           })
         }
       }
       
       return { days }
+    }
+
+    // Helper function to map meal names to categories
+    function mapMealNameToCategory(mealName: string): 'breakfast' | 'lunch' | 'dinner' | 'snacks' {
+      const name = mealName.toLowerCase()
+      
+      if (name.includes('petit-déjeuner') || name.includes('petit déjeuner') || name.includes('breakfast')) {
+        return 'breakfast'
+      } else if (name.includes('déjeuner') || name.includes('lunch')) {
+        return 'lunch'
+      } else if (name.includes('dîner') || name.includes('diner') || name.includes('dinner')) {
+        return 'dinner'
+      } else if (name.includes('collation') || name.includes('goûter') || name.includes('snack')) {
+        return 'snacks'
+      }
+      
+      // Default mapping based on common meal names
+      return 'snacks'
     }
 
     // Helper function to transform meal with recipe lookup
