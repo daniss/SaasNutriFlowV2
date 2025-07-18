@@ -334,7 +334,7 @@ export function ProgressPhotos({
         open={!!selectedPhoto}
         onOpenChange={() => setSelectedPhoto(null)}
       >
-        <DialogContent className="max-w-4xl">
+        <DialogContent className="w-[95vw] sm:max-w-4xl p-4 sm:p-6">
           <DialogHeader>
             <DialogTitle>{selectedPhoto?.name}</DialogTitle>
             <DialogDescription>
@@ -386,7 +386,7 @@ export function ProgressPhotos({
 
       {/* Delete Confirmation Dialog */}
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
-        <AlertDialogContent>
+        <AlertDialogContent className="w-[95vw] sm:max-w-lg">
           <AlertDialogHeader>
             <AlertDialogTitle>Supprimer la photo</AlertDialogTitle>
             <AlertDialogDescription>

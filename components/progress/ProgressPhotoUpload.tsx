@@ -189,7 +189,7 @@ export function ProgressPhotoUpload({
           </Button>
         )}
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="w-[95vw] sm:max-w-[500px] p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle>Ajouter une photo de progrès</DialogTitle>
           <DialogDescription>
@@ -269,13 +269,14 @@ export function ProgressPhotoUpload({
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={() => setIsOpen(false)}>
+        <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={() => setIsOpen(false)} className="flex-1">
             Annuler
           </Button>
           <Button
             onClick={handleUpload}
             disabled={!selectedFile || isUploading}
+            className="flex-1"
           >
             {isUploading ? "Téléchargement..." : "Ajouter la photo"}
           </Button>
