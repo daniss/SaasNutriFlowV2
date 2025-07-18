@@ -66,8 +66,8 @@ export default function SignupPage() {
   const isEmailAlreadyExistsError = error && error.includes("compte avec cet email existe déjà")
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-      <Card className="w-full max-w-md">
+    <div className="min-h-screen bg-gradient-to-br from-emerald-50 via-white to-teal-50 flex items-center justify-center p-4">
+      <Card className="w-full max-w-md shadow-soft-lg border-0">
         <CardHeader className="space-y-1">
           <CardTitle className="text-2xl font-bold text-center">Créez votre compte NutriFlow</CardTitle>
           <CardDescription className="text-center">
@@ -82,7 +82,7 @@ export default function SignupPage() {
                   {error}
                   {isEmailAlreadyExistsError && (
                     <div className="mt-2">
-                      <Link href="/login" className="text-blue-600 hover:text-blue-800 underline">
+                      <Link href="/login" className="text-emerald-600 hover:text-emerald-700 font-medium transition-colors duration-200">
                         Se connecter avec ce compte
                       </Link>
                     </div>
@@ -95,34 +95,34 @@ export default function SignupPage() {
                 <AlertDescription>{success}</AlertDescription>
               </Alert>
             )}
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="firstName">First Name</Label>
+                <Label htmlFor="firstName" className="text-sm font-medium text-gray-700">Prénom</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     id="firstName"
                     type="text"
-                    placeholder="First name"
+                    placeholder="Votre prénom"
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 text-base border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
                     required
                     disabled={loading}
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="lastName">Last Name</Label>
+                <Label htmlFor="lastName" className="text-sm font-medium text-gray-700">Nom</Label>
                 <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                  <User className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                   <Input
                     id="lastName"
                     type="text"
-                    placeholder="Last name"
+                    placeholder="Votre nom"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 text-base border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
                     required
                     disabled={loading}
                   />
@@ -130,55 +130,55 @@ export default function SignupPage() {
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email" className="text-sm font-medium text-gray-700">Adresse email</Label>
               <div className="relative">
-                <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="email"
                   type="email"
-                  placeholder="Enter your email"
+                  placeholder="votre@email.fr"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 text-base border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
                   required
                   disabled={loading}
                 />
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="password">Password</Label>
+              <Label htmlFor="password" className="text-sm font-medium text-gray-700">Mot de passe</Label>
               <div className="relative">
-                <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <Lock className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
                 <Input
                   id="password"
                   type="password"
-                  placeholder="Create a password"
+                  placeholder="Créer un mot de passe"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="pl-10"
+                  className="pl-10 text-base border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
                   required
                   disabled={loading}
                   minLength={6}
                 />
               </div>
-              <p className="text-xs text-gray-500">Password must be at least 6 characters long</p>
+              <p className="text-xs text-gray-500">Le mot de passe doit contenir au moins 6 caractères</p>
             </div>
           </CardContent>
           <CardFooter className="flex flex-col space-y-4">
-            <Button type="submit" className="w-full" disabled={loading}>
+            <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-medium py-2.5 transition-colors duration-200" disabled={loading}>
               {loading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Creating account...
+                  Création du compte...
                 </>
               ) : (
-                "Create account"
+                "Créer mon compte"
               )}
             </Button>
             <div className="text-center text-sm">
-              Already have an account?{" "}
-              <Link href="/login" className="text-blue-600 hover:underline">
-                Sign in
+              Vous avez déjà un compte ?{" "}
+              <Link href="/login" className="text-emerald-600 hover:text-emerald-700 font-medium transition-colors duration-200">
+                Se connecter
               </Link>
             </div>
           </CardFooter>
