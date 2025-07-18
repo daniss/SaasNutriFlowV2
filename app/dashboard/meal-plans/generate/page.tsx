@@ -451,9 +451,9 @@ export default function GenerateMealPlanPage() {
       </div>
 
       <div className="container mx-auto px-6 pb-12">
-        <div className="grid xl:grid-cols-5 gap-8">
+        <div className="grid grid-cols-1 lg:grid-cols-3 xl:grid-cols-5 gap-6 lg:gap-8">
           {/* Generation Panel */}
-          <div className="xl:col-span-2 space-y-6">
+          <div className="lg:col-span-1 xl:col-span-2 space-y-6">
             {/* Smart Prompt Area */}
             <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
               <CardHeader className="pb-4">
@@ -649,7 +649,7 @@ export default function GenerateMealPlanPage() {
             </Card>
           </div>
           {/* Results Panel */}
-          <div className="xl:col-span-3 space-y-6">
+          <div className="lg:col-span-2 xl:col-span-3 space-y-6">
             {/* Loading State */}
             {isGenerating && (
               <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm animate-in fade-in-0 slide-in-from-bottom-4 duration-300">
@@ -687,7 +687,7 @@ export default function GenerateMealPlanPage() {
                     </div>
                     
                     {/* Enhanced Loading skeleton */}
-                    <div className="grid grid-cols-2 gap-4 mt-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-8">
                       {[
                         { label: "Analyse des préférences alimentaires" },
                         { label: "Calcul de l'équilibre nutritionnel" },
@@ -762,7 +762,7 @@ export default function GenerateMealPlanPage() {
                   
                   <CardContent>
                     {/* Nutrition Overview */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
                       {[
                         { label: "Jours", value: generatedPlan.duration, icon: Calendar, color: "text-blue-600", bg: "bg-blue-50", border: "border-blue-200" },
                         { label: "Calories/Jour", value: generatedPlan.nutritionalGoals?.dailyCalories || 'N/A', icon: Flame, color: "text-red-600", bg: "bg-red-50", border: "border-red-200", suffix: "kcal" },
@@ -1071,7 +1071,7 @@ export default function GenerateMealPlanPage() {
                                 </div>
                               </div>
                               
-                              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-2">
+                              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-2">
                                 {(() => {
                                   const organized = getMealsByType(day.meals)
                                   const allMeals = []
@@ -1127,7 +1127,7 @@ export default function GenerateMealPlanPage() {
                 </Card>
 
                 {/* Shopping List & Notes */}
-                <div className="grid lg:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                   {/* Shopping List */}
                   <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
                     <CardHeader>
@@ -1215,7 +1215,7 @@ export default function GenerateMealPlanPage() {
                       Remplissez vos exigences de plan alimentaire et laissez notre IA créer un plan nutritionnel personnalisé adapté à vos besoins exacts.
                     </p>
                     
-                    <div className="grid grid-cols-3 gap-6 mb-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-8">
                       {[
                         { 
                           icon: Target, 
@@ -1333,7 +1333,7 @@ export default function GenerateMealPlanPage() {
               </div>
 
               {/* Nutrition Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 {[
                   { key: 'calories', label: 'Calories', suffix: '' },
                   { key: 'protein', label: 'Protéines', suffix: 'g' },
@@ -1367,7 +1367,7 @@ export default function GenerateMealPlanPage() {
                 ))}
               </div>
 
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div>
                   <Label className="text-sm font-medium">Temps de préparation (min)</Label>
                   <Input
