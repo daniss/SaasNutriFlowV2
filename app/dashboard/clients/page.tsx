@@ -510,7 +510,7 @@ export default function ClientsPage() {
                 Nouveau client
               </Button>
             </DialogTrigger>
-            <DialogContent className="w-full max-w-[95vw] sm:max-w-[600px] max-h-[90vh] sm:max-h-[80vh] overflow-y-auto shadow-soft-lg border-0 mx-4 sm:mx-0">
+            <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] sm:max-h-[80vh] overflow-y-auto shadow-soft-lg border-0">
               <DialogHeader className="space-y-4">
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 sm:gap-0">
                   <div className="space-y-1">
