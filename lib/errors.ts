@@ -59,23 +59,3 @@ export async function withErrorHandling<T>(
   }
 }
 
-/**
- * React hook for managing error states
- */
-export function useErrorHandler() {
-  const [error, setError] = React.useState<string | null>(null)
-
-  const handleError = React.useCallback((error: unknown, context?: string) => {
-    const errorMessage = handleApiError(error)
-    if (context) {
-      logError(error, context)
-    }
-    setError(errorMessage)
-  }, [])
-
-  const clearError = React.useCallback(() => {
-    setError(null)
-  }, [])
-
-  return { error, handleError, clearError }
-}

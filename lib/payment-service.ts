@@ -456,16 +456,7 @@ export class PaymentService {
 export const paymentService = new PaymentService()
 
 // Utility functions
-export function formatAmount(amount: number, currency: string = 'EUR'): string {
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: currency.toUpperCase()
-  }).format(amount)
-}
 
-export function validateAmount(amount: number): boolean {
-  return amount > 0 && amount <= 999999.99 && Number.isFinite(amount)
-}
 
 export function validateCurrency(currency: string): boolean {
   const supportedCurrencies = ['EUR', 'USD', 'GBP', 'CAD']
