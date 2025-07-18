@@ -124,7 +124,7 @@ export default function ShareTemplateDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[600px] max-h-[90vh] overflow-y-auto mx-4 sm:mx-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Share2 className="h-5 w-5" />
@@ -146,6 +146,7 @@ export default function ShareTemplateDialog({
                 onChange={(e) => setFormData(prev => ({ ...prev, title: e.target.value }))}
                 placeholder="Nom du modèle dans la marketplace"
                 required
+                className="text-base"
               />
             </div>
 
@@ -157,10 +158,11 @@ export default function ShareTemplateDialog({
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Décrivez votre modèle pour aider les autres nutritionnistes"
                 rows={3}
+                className="text-base"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="category">Catégorie</Label>
                 <Select value={formData.category} onValueChange={(value) => setFormData(prev => ({ ...prev, category: value }))}>
@@ -198,7 +200,7 @@ export default function ShareTemplateDialog({
             </div>
 
             {templateType === 'recipe' && (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="prep_time">Temps de préparation (min)</Label>
                   <Input
@@ -207,6 +209,7 @@ export default function ShareTemplateDialog({
                     value={formData.prep_time}
                     onChange={(e) => setFormData(prev => ({ ...prev, prep_time: parseInt(e.target.value) || 0 }))}
                     min="0"
+                    className="text-base"
                   />
                 </div>
 
@@ -218,6 +221,7 @@ export default function ShareTemplateDialog({
                     value={formData.servings}
                     onChange={(e) => setFormData(prev => ({ ...prev, servings: parseInt(e.target.value) || 1 }))}
                     min="1"
+                    className="text-base"
                   />
                 </div>
               </div>
@@ -227,14 +231,15 @@ export default function ShareTemplateDialog({
           {/* Tags */}
           <div className="space-y-2">
             <Label>Tags</Label>
-            <div className="flex gap-2">
+            <div className="flex flex-col sm:flex-row gap-2">
               <Input
                 value={newTag}
                 onChange={(e) => setNewTag(e.target.value)}
                 placeholder="Ajouter un tag"
                 onKeyPress={(e) => e.key === 'Enter' && (e.preventDefault(), addTag())}
+                className="text-base"
               />
-              <Button type="button" variant="outline" onClick={addTag}>
+              <Button type="button" variant="outline" onClick={addTag} className="w-full sm:w-auto">
                 Ajouter
               </Button>
             </div>
@@ -298,6 +303,7 @@ export default function ShareTemplateDialog({
                   onChange={(e) => setFormData(prev => ({ ...prev, price_credits: parseInt(e.target.value) || 0 }))}
                   min="0"
                   placeholder="0 pour gratuit"
+                  className="text-base"
                 />
               </div>
               <p className="text-sm text-gray-600">
@@ -306,11 +312,11 @@ export default function ShareTemplateDialog({
             </div>
           </div>
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>
+          <DialogFooter className="flex flex-col sm:flex-row gap-2">
+            <Button type="button" variant="outline" onClick={onClose} className="flex-1 sm:flex-none">
               Annuler
             </Button>
-            <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700">
+            <Button type="submit" disabled={loading} className="bg-emerald-600 hover:bg-emerald-700 flex-1 sm:flex-none">
               {loading ? "Partage en cours..." : "Partager le modèle"}
             </Button>
           </DialogFooter>

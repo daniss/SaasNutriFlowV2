@@ -152,7 +152,7 @@ export default function FoodSearchModal({ open, onClose, onSelectFood, mealSlot,
 
   return (
     <Dialog open={open} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] max-h-[90vh] rounded-xl">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[900px] max-h-[90vh] overflow-y-auto mx-4 sm:mx-0 rounded-xl">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Utensils className="h-5 w-5" />
@@ -166,7 +166,7 @@ export default function FoodSearchModal({ open, onClose, onSelectFood, mealSlot,
         {!selectedFood ? (
           // Search Phase
           <div className="space-y-4 py-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="search">Nom de l'aliment</Label>
                 <div className="relative">
@@ -176,7 +176,7 @@ export default function FoodSearchModal({ open, onClose, onSelectFood, mealSlot,
                     placeholder="Ex: pomme, saumon, riz..."
                     value={search}
                     onChange={e => setSearch(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 text-base"
                   />
                 </div>
               </div>
@@ -203,6 +203,7 @@ export default function FoodSearchModal({ open, onClose, onSelectFood, mealSlot,
                 placeholder="Scannez ou saisissez le code-barres"
                 value={barcode}
                 onChange={e => setBarcode(e.target.value)}
+                className="text-base"
               />
             </div>
 
@@ -226,7 +227,7 @@ export default function FoodSearchModal({ open, onClose, onSelectFood, mealSlot,
               
               <div className="max-h-64 overflow-y-auto space-y-2">
                 {results.map(food => (
-                  <div key={food.id} className="flex items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors">
+                  <div key={food.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 border rounded-lg hover:bg-slate-50 transition-colors gap-3">
                     <div className="flex-1">
                       <div className="font-semibold text-slate-900">{food.name_fr}</div>
                       <div className="text-sm text-slate-600 space-y-1">
@@ -249,7 +250,7 @@ export default function FoodSearchModal({ open, onClose, onSelectFood, mealSlot,
                         )}
                       </div>
                     </div>
-                    <Button size="sm" onClick={() => handleFoodSelect(food)}>
+                    <Button size="sm" onClick={() => handleFoodSelect(food)} className="w-full sm:w-auto">
                       Sélectionner
                     </Button>
                   </div>
@@ -262,7 +263,7 @@ export default function FoodSearchModal({ open, onClose, onSelectFood, mealSlot,
           <div className="space-y-6 py-4">
             <div className="bg-slate-50 p-4 rounded-lg">
               <h3 className="font-semibold text-slate-900 mb-2">{selectedFood.name_fr}</h3>
-              <div className="text-sm text-slate-600 grid grid-cols-2 gap-2">
+              <div className="text-sm text-slate-600 grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <div>Catégorie: {selectedFood.category || "Non spécifiée"}</div>
                 <div>Énergie: {selectedFood.energy_kcal || 0} kcal/100g</div>
                 <div>Protéines: {selectedFood.protein_g || 0}g/100g</div>
@@ -300,7 +301,7 @@ export default function FoodSearchModal({ open, onClose, onSelectFood, mealSlot,
                     type="number"
                     value={quantity}
                     onChange={e => setQuantity(e.target.value)}
-                    className="flex-1"
+                    className="flex-1 text-base"
                     min="1"
                     max="2000"
                   />
@@ -314,7 +315,7 @@ export default function FoodSearchModal({ open, onClose, onSelectFood, mealSlot,
                     <Activity className="h-4 w-4 text-emerald-600" />
                     <span className="font-medium text-emerald-900">Apport nutritionnel pour {quantity}g</span>
                   </div>
-                  <div className="grid grid-cols-2 gap-2 text-sm">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
                     {(() => {
                       const nutrients = calculateNutrients(selectedFood, parseInt(quantity))
                       return (
@@ -334,18 +335,18 @@ export default function FoodSearchModal({ open, onClose, onSelectFood, mealSlot,
           </div>
         )}
 
-        <DialogFooter className="gap-2">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2">
           {selectedFood ? (
             <>
-              <Button variant="outline" onClick={() => setSelectedFood(null)}>
+              <Button variant="outline" onClick={() => setSelectedFood(null)} className="flex-1 sm:flex-none">
                 Retour
               </Button>
-              <Button onClick={handleAddFood} disabled={!quantity || parseInt(quantity) <= 0}>
+              <Button onClick={handleAddFood} disabled={!quantity || parseInt(quantity) <= 0} className="flex-1 sm:flex-none">
                 Ajouter l'aliment
               </Button>
             </>
           ) : (
-            <Button variant="outline" onClick={onClose}>Fermer</Button>
+            <Button variant="outline" onClick={onClose} className="flex-1 sm:flex-none">Fermer</Button>
           )}
         </DialogFooter>
       </DialogContent>

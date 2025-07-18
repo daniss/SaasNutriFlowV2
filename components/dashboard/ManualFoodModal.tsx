@@ -92,7 +92,7 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
 
   return (
     <Dialog open={open} onOpenChange={handleClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[700px] max-h-[90vh] overflow-y-auto mx-4 sm:mx-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <PlusCircle className="h-5 w-5" />
@@ -104,7 +104,7 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
         </DialogHeader>
 
         <div className="space-y-3 py-2">
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1">
               <Label htmlFor="name_fr" className="text-sm">Nom de l'aliment *</Label>
               <Input
@@ -113,7 +113,7 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                 value={formData.name_fr}
                 onChange={(e) => handleInputChange("name_fr", e.target.value)}
                 required
-                className="h-8"
+                className="h-8 text-base"
               />
             </div>
 
@@ -130,14 +130,14 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                   min="1"
                   max="2000"
                   required
-                  className="h-8"
+                  className="h-8 text-base"
                 />
                 <span className="text-xs text-slate-500">g</span>
               </div>
             </div>
           </div>
 
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-2">
             <div className="space-y-1">
               <Label htmlFor="energy_kcal" className="text-xs">Calories (kcal/100g)</Label>
               <Input
@@ -149,7 +149,7 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                 min="0"
                 max="900"
                 step="0.1"
-                className="h-8"
+                className="h-8 text-base"
               />
             </div>
 
@@ -164,7 +164,7 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                 min="0"
                 max="100"
                 step="0.1"
-                className="h-8"
+                className="h-8 text-base"
               />
             </div>
 
@@ -179,7 +179,7 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                 min="0"
                 max="100"
                 step="0.1"
-                className="h-8"
+                className="h-8 text-base"
               />
             </div>
 
@@ -194,7 +194,7 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                 min="0"
                 max="100"
                 step="0.1"
-                className="h-8"
+                className="h-8 text-base"
               />
             </div>
 
@@ -209,7 +209,7 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
                 min="0"
                 max="100"
                 step="0.1"
-                className="h-8"
+                className="h-8 text-base"
               />
             </div>
           </div>
@@ -222,7 +222,7 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
               value={formData.notes}
               onChange={(e) => handleInputChange("notes", e.target.value)}
               rows={2}
-              className="text-sm"
+              className="text-sm text-base"
             />
           </div>
 
@@ -230,7 +230,7 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
           {formData.quantity && parseInt(formData.quantity) > 0 && (
             <div className="bg-blue-50 p-2 rounded border border-blue-200">
               <h4 className="font-medium text-blue-900 mb-1 text-sm">Aperçu pour {formData.quantity}g</h4>
-              <div className="grid grid-cols-5 gap-1 text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-1 text-xs">
                 <div>Calories: <span className="font-semibold">
                   {formData.energy_kcal ? Math.round(parseFloat(formData.energy_kcal) * parseInt(formData.quantity) / 100) : 0} kcal
                 </span></div>
@@ -251,14 +251,15 @@ export default function ManualFoodModal({ open, onClose, onAddFood, mealSlot, da
           )}
         </div>
 
-        <DialogFooter className="gap-2 pt-2">
-          <Button variant="outline" onClick={handleClose} size="sm">
+        <DialogFooter className="flex flex-col sm:flex-row gap-2 pt-2">
+          <Button variant="outline" onClick={handleClose} size="sm" className="flex-1 sm:flex-none">
             Annuler
           </Button>
           <Button 
             onClick={handleSubmit} 
             disabled={!formData.name_fr.trim() || !formData.quantity || parseInt(formData.quantity) <= 0}
             size="sm"
+            className="flex-1 sm:flex-none"
           >
             Ajouter l'aliment
           </Button>

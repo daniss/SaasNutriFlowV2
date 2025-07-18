@@ -269,26 +269,35 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[900px] max-h-[90vh] overflow-y-auto mx-4 sm:mx-0">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            {template ? "Modifier le modèle de plan" : "Nouveau modèle de plan"}
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <Calendar className="h-5 w-5 flex-shrink-0" />
+            <span className="truncate">{template ? "Modifier le modèle de plan" : "Nouveau modèle de plan"}</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             {template ? "Modifiez les détails de votre modèle de plan alimentaire." : "Créez un nouveau modèle de plan alimentaire."}
           </DialogDescription>
         </DialogHeader>
 
         <Tabs defaultValue="basic" className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="basic">Informations</TabsTrigger>
-            <TabsTrigger value="structure">Structure</TabsTrigger>
-            <TabsTrigger value="nutrition">Nutrition</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-3 gap-1 bg-muted p-1 rounded-lg h-auto">
+            <TabsTrigger value="basic" className="text-xs sm:text-sm data-[state=active]:bg-background">
+              <span className="hidden sm:inline">Informations</span>
+              <span className="sm:hidden">Info</span>
+            </TabsTrigger>
+            <TabsTrigger value="structure" className="text-xs sm:text-sm data-[state=active]:bg-background">
+              <span className="hidden sm:inline">Structure</span>
+              <span className="sm:hidden">Structure</span>
+            </TabsTrigger>
+            <TabsTrigger value="nutrition" className="text-xs sm:text-sm data-[state=active]:bg-background">
+              <span className="hidden sm:inline">Nutrition</span>
+              <span className="sm:hidden">Nutrition</span>
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="basic" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="name">Nom du modèle *</Label>
                 <Input
@@ -296,6 +305,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                   value={formData.name}
                   onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                   placeholder="Ex: Plan perte de poids 7 jours"
+                  className="text-base"
                 />
               </div>
               <div className="space-y-2">
@@ -318,7 +328,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
               </div>
             </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="client_type">Type de client</Label>
                 <Select value={formData.client_type} onValueChange={(value) => setFormData(prev => ({ ...prev, client_type: value }))}>
@@ -366,10 +376,11 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                 onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Décrivez l'objectif et les caractéristiques de ce plan..."
                 rows={3}
+                className="text-base"
               />
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="duration">Durée (jours)</Label>
                 <Input
@@ -379,6 +390,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                   onChange={(e) => setFormData(prev => ({ ...prev, duration_days: parseInt(e.target.value) || 7 }))}
                   min="1"
                   max="30"
+                  className="text-base"
                 />
               </div>
               <div className="space-y-2">
@@ -388,6 +400,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                   value={formData.target_calories}
                   onChange={(e) => setFormData(prev => ({ ...prev, target_calories: e.target.value }))}
                   placeholder="1800-2000"
+                  className="text-base"
                 />
               </div>
               <div className="space-y-2">
@@ -426,6 +439,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                       addTag()
                     }
                   }}
+                  className="text-base"
                 />
                 <Button variant="outline" size="sm" onClick={addTag}>
                   <Plus className="h-4 w-4" />
@@ -435,11 +449,12 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
           </TabsContent>
 
           <TabsContent value="structure" className="space-y-4">
-            <div className="flex items-center justify-between">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h3 className="text-lg font-semibold">Structure du plan ({Array.isArray(formData.meal_structure) ? formData.meal_structure.length : 0} jours)</h3>
-              <Button variant="outline" size="sm" onClick={addDay}>
+              <Button variant="outline" size="sm" onClick={addDay} className="flex-shrink-0">
                 <Plus className="h-4 w-4 mr-2" />
-                Ajouter un jour
+                <span className="hidden sm:inline">Ajouter un jour</span>
+                <span className="sm:hidden">Ajouter</span>
               </Button>
             </div>
 
@@ -447,7 +462,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
               {Array.isArray(formData.meal_structure) && formData.meal_structure.map((day: DayStructure, dayIndex: number) => (
                 <Card key={dayIndex}>
                   <CardHeader>
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
                       <CardTitle className="text-lg">Jour {day.day}</CardTitle>
                       <div className="flex gap-2">
                         <Button
@@ -455,7 +470,8 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                           size="sm"
                           onClick={() => duplicateDay(dayIndex)}
                         >
-                          Dupliquer
+                          <span className="hidden sm:inline">Dupliquer</span>
+                          <span className="sm:hidden">Dup.</span>
                         </Button>
                         <Button
                           variant="outline"
@@ -470,7 +486,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                   </CardHeader>
                   <CardContent className="space-y-4">
                     {day.meals.map((meal: MealSlot, mealIndex: number) => (
-                      <div key={mealIndex} className="grid grid-cols-1 md:grid-cols-5 gap-3 p-3 border rounded-lg">
+                      <div key={mealIndex} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-3 border rounded-lg">
                         <div className="space-y-1">
                           <Label className="text-sm">Repas</Label>
                           <Select 
@@ -493,6 +509,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                             type="time"
                             value={meal.time}
                             onChange={(e) => updateMeal(dayIndex, mealIndex, "time", e.target.value)}
+                            className="text-base"
                           />
                         </div>
                         <div className="space-y-1">
@@ -502,6 +519,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                             value={meal.calories_target || ""}
                             onChange={(e) => updateMeal(dayIndex, mealIndex, "calories_target", e.target.value ? parseInt(e.target.value) : null)}
                             placeholder="500"
+                            className="text-base"
                           />
                         </div>
                         <div className="space-y-1">
@@ -510,14 +528,16 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                             value={meal.description}
                             onChange={(e) => updateMeal(dayIndex, mealIndex, "description", e.target.value)}
                             placeholder="Description du repas"
+                            className="text-base"
                           />
                         </div>
-                        <div className="flex items-end">
+                        <div className="flex items-end lg:items-center lg:justify-center">
                           <Button
                             variant="outline"
                             size="sm"
                             onClick={() => removeMeal(dayIndex, mealIndex)}
                             disabled={day.meals.length === 1}
+                            className="w-full lg:w-auto"
                           >
                             <X className="h-4 w-4" />
                           </Button>
@@ -539,7 +559,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
           </TabsContent>
 
           <TabsContent value="nutrition" className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="protein">Protéines cibles (%)</Label>
                 <Input
@@ -551,6 +571,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                     target_macros: { ...prev.target_macros, protein: e.target.value ? parseInt(e.target.value) : null }
                   }))}
                   placeholder="25"
+                  className="text-base"
                 />
               </div>
               <div className="space-y-2">
@@ -564,6 +585,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                     target_macros: { ...prev.target_macros, carbs: e.target.value ? parseInt(e.target.value) : null }
                   }))}
                   placeholder="45"
+                  className="text-base"
                 />
               </div>
               <div className="space-y-2">
@@ -577,6 +599,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                     target_macros: { ...prev.target_macros, fat: e.target.value ? parseInt(e.target.value) : null }
                   }))}
                   placeholder="30"
+                  className="text-base"
                 />
               </div>
             </div>
@@ -593,11 +616,11 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
           </TabsContent>
         </Tabs>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={loading}>
+        <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1 sm:flex-none">
             Annuler
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <Button onClick={handleSubmit} disabled={loading} className="flex-1 sm:flex-none">
             {loading ? "Enregistrement..." : (template ? "Modifier" : "Créer")}
           </Button>
         </DialogFooter>

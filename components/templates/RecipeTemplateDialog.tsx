@@ -293,7 +293,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-[800px] max-h-[90vh] overflow-y-auto mx-4 sm:mx-0">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ChefHat className="h-5 w-5" />
@@ -306,7 +306,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
 
         <div className="space-y-6">
           {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nom de la recette *</Label>
               <Input
@@ -314,6 +314,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                 value={formData.name}
                 onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
                 placeholder="Ex: Salade quinoa avocat"
+                className="text-base"
               />
             </div>
             <div className="space-y-2">
@@ -341,11 +342,12 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
               onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))}
               placeholder="Décrivez votre recette..."
               rows={3}
+              className="text-base"
             />
           </div>
 
           {/* Time and Servings */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="prep-time">Préparation (min)</Label>
               <Input
@@ -354,6 +356,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                 value={formData.preparation_time || ""}
                 onChange={(e) => setFormData(prev => ({ ...prev, preparation_time: e.target.value ? parseInt(e.target.value) : null }))}
                 placeholder="15"
+                className="text-base"
               />
             </div>
             <div className="space-y-2">
@@ -364,6 +367,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                 value={formData.cooking_time || ""}
                 onChange={(e) => setFormData(prev => ({ ...prev, cooking_time: e.target.value ? parseInt(e.target.value) : null }))}
                 placeholder="30"
+                className="text-base"
               />
             </div>
             <div className="space-y-2">
@@ -374,6 +378,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                 value={formData.servings}
                 onChange={(e) => setFormData(prev => ({ ...prev, servings: parseInt(e.target.value) || 1 }))}
                 placeholder="4"
+                className="text-base"
               />
             </div>
             <div className="space-y-2">
@@ -392,7 +397,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
           </div>
 
           {/* Nutrition */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="space-y-2">
               <Label htmlFor="calories">Calories/portion</Label>
               <Input
@@ -401,6 +406,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                 value={formData.calories_per_serving || ""}
                 onChange={(e) => setFormData(prev => ({ ...prev, calories_per_serving: e.target.value ? parseInt(e.target.value) : null }))}
                 placeholder="250"
+                className="text-base"
               />
             </div>
             <div className="space-y-2">
@@ -414,6 +420,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                   macros: { ...prev.macros, protein: e.target.value ? parseInt(e.target.value) : null }
                 }))}
                 placeholder="15"
+                className="text-base"
               />
             </div>
             <div className="space-y-2">
@@ -427,6 +434,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                   macros: { ...prev.macros, carbs: e.target.value ? parseInt(e.target.value) : null }
                 }))}
                 placeholder="30"
+                className="text-base"
               />
             </div>
             <div className="space-y-2">
@@ -440,6 +448,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                   macros: { ...prev.macros, fat: e.target.value ? parseInt(e.target.value) : null }
                 }))}
                 placeholder="10"
+                className="text-base"
               />
             </div>
             <div className="space-y-2">
@@ -453,6 +462,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                   macros: { ...prev.macros, fiber: e.target.value ? parseInt(e.target.value) : null }
                 }))}
                 placeholder="5"
+                className="text-base"
               />
             </div>
           </div>
@@ -481,21 +491,21 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
             </CardHeader>
             <CardContent className="space-y-3">
               {formData.ingredients.map((ingredient: Ingredient, index: number) => (
-                <div key={index} className="flex gap-2">
+                <div key={index} className="flex flex-col sm:flex-row gap-2">
                   <Input
                     value={ingredient.name}
                     onChange={(e) => updateIngredient(index, "name", e.target.value)}
                     placeholder="Nom de l'ingrédient"
-                    className="flex-1"
+                    className="flex-1 text-base"
                   />
                   <Input
                     value={ingredient.amount}
                     onChange={(e) => updateIngredient(index, "amount", e.target.value)}
                     placeholder="Quantité"
-                    className="w-24"
+                    className="w-full sm:w-24 text-base"
                   />
                   <Select value={ingredient.unit} onValueChange={(value) => updateIngredient(index, "unit", value)}>
-                    <SelectTrigger className="w-32">
+                    <SelectTrigger className="w-full sm:w-32">
                       <SelectValue placeholder="Unité" />
                     </SelectTrigger>
                     <SelectContent>
@@ -509,6 +519,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                     size="sm"
                     onClick={() => removeIngredient(index)}
                     disabled={formData.ingredients.length === 1}
+                    className="w-full sm:w-auto"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -538,7 +549,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
             </CardHeader>
             <CardContent className="space-y-3">
               {formData.instructions.map((instruction: Instruction, index: number) => (
-                <div key={index} className="flex gap-2">
+                <div key={index} className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-medium">
                     {instruction.step}
                   </div>
@@ -546,7 +557,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                     value={instruction.text}
                     onChange={(e) => updateInstruction(index, e.target.value)}
                     placeholder="Décrivez cette étape..."
-                    className="flex-1"
+                    className="flex-1 text-base"
                     rows={2}
                   />
                   <Button
@@ -554,6 +565,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                     size="sm"
                     onClick={() => removeInstruction(index)}
                     disabled={formData.instructions.length === 1}
+                    className="w-full sm:w-auto"
                   >
                     <X className="h-4 w-4" />
                   </Button>
@@ -588,6 +600,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                     addTag()
                   }
                 }}
+                className="text-base"
               />
               <Button variant="outline" size="sm" onClick={addTag}>
                 <Plus className="h-4 w-4" />
@@ -603,15 +616,16 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
               value={formData.source}
               onChange={(e) => setFormData(prev => ({ ...prev, source: e.target.value }))}
               placeholder="Site web, livre, etc."
+              className="text-base"
             />
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={loading}>
+        <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1 sm:flex-none">
             Annuler
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <Button onClick={handleSubmit} disabled={loading} className="flex-1 sm:flex-none">
             {loading ? "Enregistrement..." : (template ? "Modifier" : "Créer")}
           </Button>
         </DialogFooter>
