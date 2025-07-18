@@ -607,7 +607,7 @@ export default function MealPlansPage() {
 
       {/* Create Meal Plan Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[500px]">
+        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Créer un nouveau plan alimentaire</DialogTitle>
             <DialogDescription>
@@ -666,7 +666,7 @@ export default function MealPlansPage() {
               </Select>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="calories">Calories par jour</Label>
                 <Input
@@ -696,7 +696,7 @@ export default function MealPlansPage() {
                 value={newMealPlan.description}
                 onChange={(e) => setNewMealPlan(prev => ({ ...prev, description: e.target.value }))}
                 placeholder="Description du plan alimentaire..."
-                rows={3}
+                rows={2}
               />
             </div>
           </div>
