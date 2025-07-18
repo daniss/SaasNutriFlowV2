@@ -1113,8 +1113,8 @@ export default function ClientsPage() {
                   <CardContent className="p-6">
                     {/* Client Header */}
                     <div className="flex items-start justify-between mb-6">
-                      <div className="flex items-center space-x-3">
-                        <div className="relative">
+                      <div className="flex items-center space-x-3 min-w-0 flex-1">
+                        <div className="relative flex-shrink-0">
                           <Avatar className="h-12 w-12 ring-2 ring-white shadow-soft group-hover:ring-emerald-100 transition-all duration-200">
                             <AvatarImage
                               src={`https://avatar.vercel.sh/${client.email}`}
@@ -1133,8 +1133,8 @@ export default function ClientsPage() {
                             {client.name}
                           </h3>
                           <p className="text-sm text-gray-500 truncate flex items-center">
-                            <Mail className="mr-1 h-3 w-3 opacity-60" />
-                            {client.email}
+                            <Mail className="mr-1 h-3 w-3 opacity-60 flex-shrink-0" />
+                            <span className="truncate">{client.email}</span>
                           </p>
                         </div>
                       </div>
@@ -1146,7 +1146,7 @@ export default function ClientsPage() {
                           client.status === "active"
                             ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
                             : "bg-gray-100 text-gray-600"
-                        } border-0 font-medium px-3 py-1`}
+                        } border-0 font-medium px-3 py-1 flex-shrink-0`}
                       >
                         {client.status === "active" ? "Actif" : "Inactif"}
                       </Badge>
