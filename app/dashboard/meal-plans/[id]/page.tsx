@@ -1419,14 +1419,14 @@ export default function MealPlanDetailPage() {
 
         {/* Edit Day Dialog */}
         <Dialog open={isEditDayOpen} onOpenChange={setIsEditDayOpen}>
-        <DialogContent className="sm:max-w-[800px] rounded-xl">
+        <DialogContent className="sm:max-w-[800px] max-w-[95vw] rounded-xl max-h-[90vh] overflow-y-auto">
             <DialogHeader>
-              <DialogTitle>Modifier le jour {editDayForm.day}</DialogTitle>
-              <DialogDescription>
-                Personnaliser les repas et collations pour ce jour spécifique.
+              <DialogTitle className="text-lg">Modifier le jour {editDayForm.day}</DialogTitle>
+              <DialogDescription className="text-sm">
+                Personnaliser les repas pour ce jour.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-3 py-2">
+            <div className="grid gap-3 py-2 max-h-[60vh] overflow-y-auto">
               {(["breakfast", "lunch", "dinner", "snacks"] as const).map(slot => {
                 const hourField = `${slot}Hour` as keyof EditDayForm
                 const enabledField = `${slot}Enabled` as keyof EditDayForm
@@ -1475,11 +1475,12 @@ export default function MealPlanDetailPage() {
                           value={editDayForm[slot]}
                           onChange={e => setEditDayForm({ ...editDayForm, [slot]: e.target.value })}
                           placeholder={
-                            slot === "breakfast" ? "Ex: Yaourt grec aux baies et granola" :
-                            slot === "lunch" ? "Ex: Salade de poulet grillé au quinoa" :
-                            slot === "dinner" ? "Ex: Saumon grillé aux légumes rôtis" : "Ex: Tranches de pomme au beurre d'amande"
+                            slot === "breakfast" ? "Ex: Yaourt grec..." :
+                            slot === "lunch" ? "Ex: Salade poulet..." :
+                            slot === "dinner" ? "Ex: Saumon grillé..." : "Ex: Pomme..."
                           }
                           rows={1}
+                          className="min-h-[50px] text-sm"
                         />
                         <div className="flex gap-1 mt-1">
                           <Button
@@ -1547,13 +1548,14 @@ export default function MealPlanDetailPage() {
                 )
               })}
               <div className="space-y-1">
-                <Label htmlFor="day-notes">Notes (optionnel)</Label>
+                <Label htmlFor="day-notes" className="text-sm font-medium">Notes (optionnel)</Label>
                 <Textarea
                   id="day-notes"
                   value={editDayForm.notes}
                   onChange={e => setEditDayForm({ ...editDayForm, notes: e.target.value })}
-                  placeholder="Conseils ou instructions spécifiques pour ce jour"
-                  rows={2}
+                  placeholder="Conseils pour ce jour"
+                  rows={1}
+                  className="min-h-[40px] text-sm"
                 />
               </div>
             </div>
@@ -1595,12 +1597,12 @@ export default function MealPlanDetailPage() {
                 setManualFoodOpen(false)
               }}
             />
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditDayOpen(false)}>
+            <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
+              <Button variant="outline" onClick={() => setIsEditDayOpen(false)} className="w-full sm:w-auto">
                 Annuler
               </Button>
-              <Button onClick={handleSaveDay}>
-                Enregistrer les modifications
+              <Button onClick={handleSaveDay} className="w-full sm:w-auto">
+                Enregistrer
               </Button>
             </DialogFooter>
           </DialogContent>
