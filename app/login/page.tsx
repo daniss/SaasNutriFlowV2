@@ -172,7 +172,7 @@ export default function LoginPage() {
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       placeholder="votre@email.fr"
-                      className="pl-10 border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                      className="pl-10 border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 text-base"
                       required
                       disabled={authState.loading}
                     />
@@ -181,7 +181,7 @@ export default function LoginPage() {
 
                 {/* Password Field */}
                 <div className="space-y-2">
-                  <div className="flex items-center justify-between">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-1 sm:gap-0">
                     <Label
                       htmlFor="password"
                       className="text-sm font-medium text-gray-700"
@@ -203,7 +203,7 @@ export default function LoginPage() {
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       placeholder="Votre mot de passe"
-                      className="pl-10 pr-10 border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                      className="pl-10 pr-10 border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 text-base"
                       required
                       disabled={authState.loading}
                     />
@@ -269,7 +269,7 @@ export default function LoginPage() {
                         )
                       }
                       placeholder="123456"
-                      className="pl-10 border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 text-center font-mono text-lg tracking-widest"
+                      className="pl-10 border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 text-center font-mono text-lg tracking-widest text-base"
                       required
                       disabled={authState.loading}
                       maxLength={6}
@@ -328,12 +328,14 @@ export default function LoginPage() {
                     S'inscrire
                   </Link>
                 </p>
-                <Link
-                  href="/"
-                  className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors duration-200"
-                >
-                  ← Retour au site principal
-                </Link>
+                <div className="pt-2 border-t border-gray-100">
+                  <Link
+                    href="/"
+                    className="text-sm text-emerald-600 hover:text-emerald-700 font-medium transition-colors duration-200"
+                  >
+                    ← Retour au site principal
+                  </Link>
+                </div>
               </div>
             )}
           </CardContent>
