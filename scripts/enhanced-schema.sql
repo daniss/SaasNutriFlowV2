@@ -224,22 +224,6 @@ ADD COLUMN IF NOT EXISTS nutritional_analysis JSONB DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS shopping_list JSONB DEFAULT '{}',
 ADD COLUMN IF NOT EXISTS dietary_tags TEXT[] DEFAULT '{}';
 
--- Meal Plan Feedback
-CREATE TABLE IF NOT EXISTS meal_plan_feedback (
-    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    meal_plan_id UUID NOT NULL,
-    client_id UUID NOT NULL,
-    dietitian_id UUID NOT NULL,
-    rating INTEGER CHECK (rating >= 1 AND rating <= 5),
-    feedback_text TEXT,
-    difficulty_rating INTEGER CHECK (difficulty_rating >= 1 AND difficulty_rating <= 5),
-    satisfaction_rating INTEGER CHECK (satisfaction_rating >= 1 AND satisfaction_rating <= 5),
-    would_recommend BOOLEAN,
-    created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    FOREIGN KEY (meal_plan_id) REFERENCES meal_plans(id) ON DELETE CASCADE,
-    FOREIGN KEY (client_id) REFERENCES clients(id) ON DELETE CASCADE,
-    FOREIGN KEY (dietitian_id) REFERENCES profiles(id) ON DELETE CASCADE
-);
 
 -- Enhanced Invoicing
 ALTER TABLE invoices 
@@ -323,7 +307,6 @@ ALTER TABLE custom_foods ENABLE ROW LEVEL SECURITY;
 ALTER TABLE progress_photos ENABLE ROW LEVEL SECURITY;
 ALTER TABLE body_measurements ENABLE ROW LEVEL SECURITY;
 ALTER TABLE user_preferences ENABLE ROW LEVEL SECURITY;
-ALTER TABLE meal_plan_feedback ENABLE ROW LEVEL SECURITY;
 ALTER TABLE subscription_plans ENABLE ROW LEVEL SECURITY;
 ALTER TABLE automation_rules ENABLE ROW LEVEL SECURITY;
 
@@ -366,8 +349,6 @@ CREATE POLICY "Users can manage their clients' measurements" ON body_measurement
 CREATE POLICY "Users can manage their own preferences" ON user_preferences FOR ALL USING (auth.uid() = user_id);
 
 -- Meal Plan Feedback
-CREATE POLICY "Users can view feedback for their meal plans" ON meal_plan_feedback FOR SELECT USING (auth.uid() = dietitian_id);
-CREATE POLICY "Users can insert feedback for their meal plans" ON meal_plan_feedback FOR INSERT WITH CHECK (auth.uid() = dietitian_id);
 
 -- Subscription Plans
 CREATE POLICY "Users can manage their own subscription plans" ON subscription_plans FOR ALL USING (auth.uid() = dietitian_id);

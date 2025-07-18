@@ -59,30 +59,10 @@ export async function GET(request: Request) {
 
     if (mealPlansError) throw mealPlansError
 
-    // Get feedback data for these meal plans
-    const { data: feedback, error: feedbackError } = await supabase
-      .from('meal_plan_feedback')
-      .select(`
-        id,
-        meal_plan_id,
-        rating,
-        satisfaction_rating,
-        difficulty_rating,
-        would_recommend,
-        created_at
-      `)
-      .eq('dietitian_id', user.id)
-      .gte('created_at', startDate.toISOString())
-      .lte('created_at', endDate.toISOString())
-
-    if (feedbackError) throw feedbackError
 
     // Calculate analytics for each template
     const templateAnalytics = templates.map(template => {
       const templateMealPlans = mealPlans.filter(mp => mp.template_id === template.id)
-      const templateFeedback = feedback.filter(f => 
-        templateMealPlans.some(mp => mp.id === f.meal_plan_id)
-      )
 
       // Basic usage metrics
       const usageCount = templateMealPlans.length
@@ -90,26 +70,7 @@ export async function GET(request: Request) {
       const completionRate = templateMealPlans.filter(mp => mp.status === 'completed').length / 
                             Math.max(templateMealPlans.length, 1) * 100
 
-      // Feedback metrics
-      const totalFeedback = templateFeedback.length
-      const averageRating = totalFeedback > 0 ? 
-        templateFeedback.reduce((sum, f) => sum + (f.rating || 0), 0) / totalFeedback : 0
-      const averageSatisfaction = totalFeedback > 0 ? 
-        templateFeedback.reduce((sum, f) => sum + (f.satisfaction_rating || 0), 0) / totalFeedback : 0
-      const averageDifficulty = totalFeedback > 0 ? 
-        templateFeedback.reduce((sum, f) => sum + (f.difficulty_rating || 0), 0) / totalFeedback : 0
-      const recommendationRate = totalFeedback > 0 ? 
-        templateFeedback.filter(f => f.would_recommend).length / totalFeedback * 100 : 0
-
-      // Calculate effectiveness score
-      const effectivenessScore = totalFeedback > 0 ? (
-        (averageRating * 0.3) +
-        (averageSatisfaction * 0.3) +
-        ((6 - averageDifficulty) * 0.2) + // Invert difficulty
-        ((recommendationRate / 100) * 5 * 0.2)
-      ) : 0
-
-      // Performance trends (mock data for now)
+      // Performance trends
       const performanceTrend = usageCount > template.usage_count * 0.7 ? 'improving' : 
                               usageCount < template.usage_count * 0.3 ? 'declining' : 'stable'
 
@@ -121,12 +82,6 @@ export async function GET(request: Request) {
         total_usage: template.usage_count,
         unique_clients: uniqueClients,
         completion_rate: Math.round(completionRate * 10) / 10,
-        total_feedback: totalFeedback,
-        average_rating: Math.round(averageRating * 10) / 10,
-        average_satisfaction: Math.round(averageSatisfaction * 10) / 10,
-        average_difficulty: Math.round(averageDifficulty * 10) / 10,
-        recommendation_rate: Math.round(recommendationRate * 10) / 10,
-        effectiveness_score: Math.round(effectivenessScore * 10) / 10,
         performance_trend: performanceTrend,
         created_at: template.created_at,
         updated_at: template.updated_at
@@ -139,16 +94,15 @@ export async function GET(request: Request) {
       filteredAnalytics = templateAnalytics.filter(t => t.category === category)
     }
 
-    // Sort by effectiveness score
-    filteredAnalytics.sort((a, b) => b.effectiveness_score - a.effectiveness_score)
+    // Sort by usage count
+    filteredAnalytics.sort((a, b) => b.usage_count - a.usage_count)
 
     // Calculate summary statistics
     const totalTemplates = filteredAnalytics.length
     const totalUsage = filteredAnalytics.reduce((sum, t) => sum + t.usage_count, 0)
-    const averageEffectiveness = totalTemplates > 0 ? 
-      filteredAnalytics.reduce((sum, t) => sum + t.effectiveness_score, 0) / totalTemplates : 0
-    const topPerformers = filteredAnalytics.filter(t => t.effectiveness_score >= 4.0)
-    const needsImprovement = filteredAnalytics.filter(t => t.effectiveness_score < 3.0)
+    const averageUsage = totalTemplates > 0 ? totalUsage / totalTemplates : 0
+    const topPerformers = filteredAnalytics.filter(t => t.usage_count >= 5)
+    const needsImprovement = filteredAnalytics.filter(t => t.usage_count < 2)
 
     // Category breakdown
     const categoryBreakdown = templates.reduce((acc, template) => {
@@ -158,22 +112,22 @@ export async function GET(request: Request) {
           category,
           count: 0,
           total_usage: 0,
-          average_effectiveness: 0
+          average_usage: 0
         }
       }
       
       const analytics = filteredAnalytics.find(a => a.template_id === template.id)
       acc[category].count++
       acc[category].total_usage += analytics?.usage_count || 0
-      acc[category].average_effectiveness += analytics?.effectiveness_score || 0
+      acc[category].average_usage += analytics?.usage_count || 0
       
       return acc
     }, {} as Record<string, any>)
 
     // Calculate averages for categories
     Object.values(categoryBreakdown).forEach((cat: any) => {
-      cat.average_effectiveness = cat.count > 0 ? 
-        Math.round((cat.average_effectiveness / cat.count) * 10) / 10 : 0
+      cat.average_usage = cat.count > 0 ? 
+        Math.round((cat.average_usage / cat.count) * 10) / 10 : 0
     })
 
     // Performance over time (mock data - could be enhanced with real time series)
@@ -182,8 +136,7 @@ export async function GET(request: Request) {
       date.setDate(date.getDate() - (6 - i))
       return {
         date: date.toISOString().split('T')[0],
-        usage: Math.floor(Math.random() * 20) + 5,
-        effectiveness: Math.random() * 2 + 3 // 3-5 range
+        usage: Math.floor(Math.random() * 20) + 5
       }
     })
 
@@ -192,7 +145,7 @@ export async function GET(request: Request) {
       summary: {
         total_templates: totalTemplates,
         total_usage: totalUsage,
-        average_effectiveness: Math.round(averageEffectiveness * 10) / 10,
+        average_usage: Math.round(averageUsage * 10) / 10,
         top_performers: topPerformers.length,
         needs_improvement: needsImprovement.length,
         period_days: parseInt(period)

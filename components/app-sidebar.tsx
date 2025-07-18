@@ -67,11 +67,6 @@ const data = {
       icon: ChefHat,
     },
     {
-      title: "Commentaires clients",
-      url: "/dashboard/feedback",
-      icon: MessageSquare,
-    },
-    {
       title: "Rendez-vous",
       url: "/dashboard/appointments",
       icon: Calendar,
