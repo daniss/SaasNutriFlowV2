@@ -251,13 +251,13 @@ export default function TemplateSelectionDialog({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-full max-w-[95vw] sm:max-w-4xl max-h-[90vh] overflow-y-auto mx-4 sm:mx-0">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <BookOpen className="h-5 w-5" />
-            {step === "select" ? "Sélectionner un modèle" : "Personnaliser le plan"}
+          <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
+            <BookOpen className="h-5 w-5 flex-shrink-0" />
+            <span className="truncate">{step === "select" ? "Sélectionner un modèle" : "Personnaliser le plan"}</span>
           </DialogTitle>
-          <DialogDescription>
+          <DialogDescription className="text-sm">
             {step === "select" 
               ? "Choisissez un modèle de plan alimentaire existant"
               : "Personnalisez le plan avant de le créer"
@@ -265,8 +265,8 @@ export default function TemplateSelectionDialog({
           </DialogDescription>
           {step === "select" && (
             <div className="flex items-center gap-2 text-sm text-emerald-600 bg-emerald-50 px-3 py-2 rounded-lg mt-3">
-              <Clock className="h-4 w-4" />
-              <span className="font-medium">Prêt en 2 minutes vs 30 minutes manuellement</span>
+              <Clock className="h-4 w-4 flex-shrink-0" />
+              <span className="font-medium text-xs sm:text-sm">Prêt en 2 minutes vs 30 minutes manuellement</span>
             </div>
           )}
         </DialogHeader>
@@ -274,7 +274,7 @@ export default function TemplateSelectionDialog({
         {step === "select" && (
           <div className="space-y-4">
             {/* Filters */}
-            <div className="flex gap-4">
+            <div className="flex flex-col sm:flex-row gap-4">
               <div className="flex-1">
                 <div className="relative">
                   <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
@@ -282,12 +282,12 @@ export default function TemplateSelectionDialog({
                     placeholder="Rechercher un modèle..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 text-base"
                   />
                 </div>
               </div>
               <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-                <SelectTrigger className="w-48">
+                <SelectTrigger className="w-full sm:w-48">
                   <SelectValue placeholder="Catégorie" />
                 </SelectTrigger>
                 <SelectContent>
@@ -303,36 +303,36 @@ export default function TemplateSelectionDialog({
 
 
             {/* Templates Grid */}
-            <div className="grid gap-4 md:grid-cols-2 max-h-96 overflow-y-auto">
+            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 max-h-96 overflow-y-auto">
               {filteredTemplates.map(template => (
                 <Card 
                   key={template.id} 
                   className="hover:shadow-md transition-shadow"
                 >
                   <CardHeader className="pb-3">
-                    <div className="flex items-start justify-between">
-                      <div className="flex-1">
-                        <CardTitle className="text-base font-semibold mb-1">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-2">
+                      <div className="flex-1 min-w-0">
+                        <CardTitle className="text-base font-semibold mb-1 truncate">
                           {template.name}
                         </CardTitle>
                         <CardDescription className="text-sm line-clamp-2">
                           {template.description}
                         </CardDescription>
                       </div>
-                      <Badge className={getDifficultyColor(template.difficulty)}>
+                      <Badge className={`${getDifficultyColor(template.difficulty)} flex-shrink-0`}>
                         {getDifficultyLabel(template.difficulty)}
                       </Badge>
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <div className="flex items-center gap-4 text-sm text-gray-600">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
                         <span>{template.duration_days} jours</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
-                        <span>{template.usage_count} utilisations</span>
+                        <span>{template.usage_count} util.</span>
                       </div>
                     </div>
                     {template.target_calories && (
@@ -404,7 +404,7 @@ export default function TemplateSelectionDialog({
 
             {/* Customization Form */}
             <div className="grid gap-4">
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="plan-name">Nom du plan *</Label>
                   <Input
@@ -412,7 +412,7 @@ export default function TemplateSelectionDialog({
                     value={customizations.name}
                     onChange={(e) => setCustomizations(prev => ({ ...prev, name: e.target.value }))}
                     placeholder="Nom personnalisé"
-                    className={!customizations.name.trim() ? "border-red-300" : ""}
+                    className={`${!customizations.name.trim() ? "border-red-300" : ""} text-base`}
                   />
                   {!customizations.name.trim() && (
                     <p className="text-xs text-red-600">Le nom du plan est requis</p>
@@ -425,6 +425,7 @@ export default function TemplateSelectionDialog({
                     value={customizations.target_calories}
                     onChange={(e) => setCustomizations(prev => ({ ...prev, target_calories: e.target.value }))}
                     placeholder="1800-2000"
+                    className="text-base"
                   />
                 </div>
               </div>
@@ -438,6 +439,7 @@ export default function TemplateSelectionDialog({
                   onChange={(e) => setCustomizations(prev => ({ ...prev, duration_days: parseInt(e.target.value) || 7 }))}
                   min="1"
                   max="30"
+                  className="text-base"
                 />
               </div>
 
@@ -449,6 +451,7 @@ export default function TemplateSelectionDialog({
                   onChange={(e) => setCustomizations(prev => ({ ...prev, description: e.target.value }))}
                   placeholder="Description personnalisée du plan..."
                   rows={3}
+                  className="text-base"
                 />
               </div>
 
@@ -460,22 +463,23 @@ export default function TemplateSelectionDialog({
                   onChange={(e) => setCustomizations(prev => ({ ...prev, notes: e.target.value }))}
                   placeholder="Notes ou instructions spéciales..."
                   rows={2}
+                  className="text-base"
                 />
               </div>
             </div>
           </div>
         )}
 
-        <DialogFooter>
-          <Button variant="outline" onClick={step === "select" ? onClose : () => setStep("select")}>
+        <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={step === "select" ? onClose : () => setStep("select")} className="flex-1 sm:flex-none">
             {step === "select" ? "Annuler" : "Retour"}
           </Button>
           {step === "select" ? (
-            <Button disabled={filteredTemplates.length === 0}>
+            <Button disabled={filteredTemplates.length === 0} className="flex-1 sm:flex-none">
               Sélectionner un modèle
             </Button>
           ) : (
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2 flex-1 sm:flex-none">
               {(!selectedClientId || !customizations.name.trim()) && (
                 <p className="text-xs text-amber-600 text-center">
                   {!selectedClientId && "Sélectionnez un client. "}

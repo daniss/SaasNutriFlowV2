@@ -953,16 +953,16 @@ export default function GenerateMealPlanPage() {
                       <div className="p-6">
                         <div className="relative">
                           {/* Timeline line */}
-                          <div className="absolute left-8 top-8 bottom-8 w-0.5 bg-gradient-to-b from-blue-500 to-purple-500"></div>
+                          <div className="absolute left-4 sm:left-8 top-8 bottom-8 w-0.5 bg-gradient-to-b from-blue-500 to-purple-500"></div>
                           
                           <div className="space-y-8">
                             {generatedPlan.days.map((day, dayIndex) => (
                               <div key={day.day} className="relative">
                                 {/* Timeline dot */}
-                                <div className="absolute left-6 w-4 h-4 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full border-4 border-white shadow-lg"></div>
+                                <div className="absolute left-2 sm:left-6 w-4 h-4 bg-gradient-to-br from-blue-500 to-purple-500 rounded-full border-4 border-white shadow-lg"></div>
                                 
-                                <div className="ml-16 space-y-4">
-                                  <div className="flex items-center justify-between">
+                                <div className="ml-8 sm:ml-16 space-y-4">
+                                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 sm:gap-0">
                                     <div>
                                       <h3 className="text-lg font-semibold text-gray-900">Jour {day.day}</h3>
                                       <p className="text-sm text-gray-500">{day.date}</p>
