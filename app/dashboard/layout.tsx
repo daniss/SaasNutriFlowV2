@@ -17,7 +17,7 @@ export default function DashboardLayout({
       <SidebarProvider defaultOpen={false}>
         <div className="relative min-h-screen w-full bg-gradient-to-br from-slate-50 via-white to-emerald-50/30">
           <WellnessSidebarWrapper />
-          <main className="min-h-screen w-full">
+          <main className="min-h-screen w-full md:ml-24 transition-all duration-300">
             {children}
           </main>
         </div>
