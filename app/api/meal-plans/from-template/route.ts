@@ -71,7 +71,12 @@ export async function POST(request: Request) {
         
         if (templateDay && templateDay.meals) {
           // Create meal categorization mapping
-          const categorizedMeals = {
+          const categorizedMeals: {
+            breakfast: string[]
+            lunch: string[]
+            dinner: string[]
+            snacks: string[]
+          } = {
             breakfast: [],
             lunch: [],
             dinner: [],
