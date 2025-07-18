@@ -121,7 +121,7 @@ export default function ClientLoginPage() {
                     value={formData.email}
                     onChange={(e) => handleInputChange("email", e.target.value)}
                     placeholder="votre@email.fr"
-                    className="pl-10 border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                    className="pl-10 border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 text-base"
                     required
                   />
                 </div>
@@ -145,7 +145,7 @@ export default function ClientLoginPage() {
                       handleInputChange("password", e.target.value)
                     }
                     placeholder="Votre mot de passe"
-                    className="pl-10 pr-10 border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                    className="pl-10 pr-10 border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 text-base"
                     required
                   />
                   <button
