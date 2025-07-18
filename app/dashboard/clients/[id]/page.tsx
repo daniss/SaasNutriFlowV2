@@ -905,7 +905,7 @@ export default function ClientDetailPage() {
                 {client.goal_weight ? `${client.goal_weight} kg` : "Non défini"}
               </div>
               <p className="text-xs text-slate-600 mt-1">
-                {client.goal || "Objectif non défini"}
+                {client.goal ? getGoalDisplayLabel(client.goal) : "Objectif non défini"}
               </p>
             </CardContent>
           </Card>
