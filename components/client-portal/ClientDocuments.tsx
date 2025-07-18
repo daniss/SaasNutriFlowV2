@@ -252,9 +252,9 @@ export function ClientDocuments() {
             key={document.id}
             className="hover:shadow-md transition-shadow duration-200"
           >
-            <CardContent className="p-6">
-              <div className="flex items-start justify-between">
-                <div className="flex items-start gap-4 flex-1">
+            <CardContent className="p-4 sm:p-6">
+              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4">
+                <div className="flex items-start gap-4 flex-1 min-w-0">
                   <div className="text-2xl flex-shrink-0">
                     {MIME_TYPE_ICONS[
                       document.mime_type as keyof typeof MIME_TYPE_ICONS
@@ -262,7 +262,7 @@ export function ClientDocuments() {
                   </div>
 
                   <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 mb-2">
                       <h3 className="font-semibold text-slate-900 truncate">
                         {document.name}
                       </h3>
@@ -271,7 +271,7 @@ export function ClientDocuments() {
                           CATEGORY_COLORS[
                             document.category as keyof typeof CATEGORY_COLORS
                           ]
-                        } shrink-0`}
+                        } shrink-0 w-fit`}
                       >
                         {
                           CATEGORY_LABELS[
@@ -287,10 +287,10 @@ export function ClientDocuments() {
                       </p>
                     )}
 
-                    <div className="flex items-center gap-4 text-sm text-slate-500">
+                    <div className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-4 text-sm text-slate-500">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
-                        {formatDate(document.upload_date)}
+                        <span className="truncate">{formatDate(document.upload_date)}</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <FileText className="h-4 w-4" />
@@ -299,18 +299,20 @@ export function ClientDocuments() {
                       {document.dietitian && (
                         <div className="flex items-center gap-1">
                           <User className="h-4 w-4" />
-                          {document.dietitian.first_name}{" "}
-                          {document.dietitian.last_name}
+                          <span className="truncate">
+                            {document.dietitian.first_name}{" "}
+                            {document.dietitian.last_name}
+                          </span>
                         </div>
                       )}
                     </div>
                   </div>
                 </div>
 
-                <div className="flex items-center gap-2 ml-4">
+                <div className="flex items-center gap-2 justify-end sm:justify-start flex-shrink-0">
                   <Badge
                     variant="outline"
-                    className="text-emerald-700 border-emerald-200"
+                    className="text-emerald-700 border-emerald-200 hidden sm:flex"
                   >
                     <Eye className="h-3 w-3 mr-1" />
                     Visible
@@ -319,12 +321,19 @@ export function ClientDocuments() {
                     onClick={() => downloadDocument(document)}
                     disabled={downloadingIds.has(document.id)}
                     size="sm"
-                    className="bg-emerald-600 hover:bg-emerald-700"
+                    className="bg-emerald-600 hover:bg-emerald-700 flex-shrink-0"
                   >
                     <Download className="h-4 w-4 mr-2" />
-                    {downloadingIds.has(document.id)
-                      ? "Téléchargement..."
-                      : "Télécharger"}
+                    <span className="hidden sm:inline">
+                      {downloadingIds.has(document.id)
+                        ? "Téléchargement..."
+                        : "Télécharger"}
+                    </span>
+                    <span className="sm:hidden">
+                      {downloadingIds.has(document.id)
+                        ? "..."
+                        : "DL"}
+                    </span>
                   </Button>
                 </div>
               </div>

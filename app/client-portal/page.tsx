@@ -509,10 +509,10 @@ function ClientPortalContent() {
       {consentsChecked && !showConsentModal && (
         <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100">
           {/* Professional Header */}
-          <div className="bg-white shadow-sm border-b border-gray-200 px-6 py-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <Avatar className="h-10 w-10">
+          <div className="bg-white shadow-sm border-b border-gray-200 px-4 sm:px-6 py-4">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+              <div className="flex items-center gap-4 min-w-0">
+                <Avatar className="h-10 w-10 flex-shrink-0">
                   <AvatarImage src="/placeholder-user.jpg" />
                   <AvatarFallback className="bg-emerald-100 text-emerald-700 text-sm">
                     {portalData.profile.name
@@ -521,23 +521,29 @@ function ClientPortalContent() {
                       .join("")}
                   </AvatarFallback>
                 </Avatar>
-                <div>
-                  <h1 className="text-lg font-semibold text-gray-900">
+                <div className="min-w-0 flex-1">
+                  <h1 className="text-lg font-semibold text-gray-900 truncate">
                     Bonjour, {portalData.profile.name}
                   </h1>
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-gray-600 truncate">
                     Votre espace personnel NutriFlow
                   </p>
                 </div>
               </div>
-              <div className="flex items-center gap-3">
-                <Button variant="ghost" size="sm" className="text-gray-600">
+              <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
+                <Button variant="ghost" size="sm" className="text-gray-600 hidden sm:flex">
                   <Bell className="h-4 w-4 mr-2" />
                   Notifications
                 </Button>
-                <Button variant="ghost" size="sm" className="text-gray-600">
+                <Button variant="ghost" size="sm" className="text-gray-600 hidden sm:flex">
                   <Settings className="h-4 w-4 mr-2" />
                   Paramètres
+                </Button>
+                <Button variant="ghost" size="sm" className="text-gray-600 sm:hidden">
+                  <Bell className="h-4 w-4" />
+                </Button>
+                <Button variant="ghost" size="sm" className="text-gray-600 sm:hidden">
+                  <Settings className="h-4 w-4" />
                 </Button>
                 <Button
                   variant="ghost"
@@ -545,66 +551,65 @@ function ClientPortalContent() {
                   onClick={logout}
                   className="text-gray-600"
                 >
-                  Se déconnecter
+                  <span className="hidden sm:inline">Se déconnecter</span>
+                  <span className="sm:hidden">Déconnexion</span>
                 </Button>
               </div>
             </div>
           </div>
 
           {/* Content Container */}
-          <div className="p-6">
+          <div className="p-4 sm:p-6">
             {/* Navigation Tabs */}
             <Tabs defaultValue="overview" className="w-full">
-              <TabsList className="grid w-full grid-cols-7 mb-6 bg-white">
+              <TabsList className="grid w-full grid-cols-3 sm:grid-cols-6 gap-1 mb-6 bg-white p-1 rounded-lg h-auto">
                 <TabsTrigger
                   value="overview"
-                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-4"
                 >
-                  Tableau de bord
+                  <span className="hidden sm:inline">Tableau de bord</span>
+                  <span className="sm:hidden">Dashboard</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="meal-plan"
-                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-4"
                 >
-                  Mon Plan
+                  <span className="hidden sm:inline">Mon Plan</span>
+                  <span className="sm:hidden">Plan</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="progress"
-                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-4"
                 >
-                  Progrès
+                  <span className="hidden sm:inline">Progrès</span>
+                  <span className="sm:hidden">Progrès</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="appointments"
-                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-4"
                 >
-                  Rendez-vous
+                  <span className="hidden sm:inline">Rendez-vous</span>
+                  <span className="sm:hidden">RDV</span>
                 </TabsTrigger>
                 <TabsTrigger
                   value="documents"
-                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-4"
                 >
-                  Documents
+                  <span className="hidden sm:inline">Documents</span>
+                  <span className="sm:hidden">Docs</span>
                 </TabsTrigger>
-                {/* MASKED FOR MVP - Messages functionality will be added in future
-                <TabsTrigger
-                  value="messages"
-                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
-                >
-                  Messages
-                </TabsTrigger>
-                */}
                 <TabsTrigger
                   value="privacy"
-                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white"
+                  className="data-[state=active]:bg-emerald-500 data-[state=active]:text-white text-xs sm:text-sm px-2 sm:px-4"
                 >
-                  Confidentialité
+                  <span className="hidden sm:inline">Confidentialité</span>
+                  <span className="sm:hidden">Privé</span>
                 </TabsTrigger>
               </TabsList>
 
               <TabsContent value="overview" className="space-y-6">
                 {/* Stats Cards */}
-                <div className="grid gap-6 md:grid-cols-3">
+                <div className="grid gap-4 sm:gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                   <Card className="bg-gradient-to-br from-emerald-500 to-emerald-600 text-white shadow-lg">
                     <CardContent className="p-6">
                       <div className="flex items-center justify-between">
@@ -710,9 +715,9 @@ function ClientPortalContent() {
                 </div>
 
                 {/* Main Content Grid */}
-                <div className="grid gap-8 lg:grid-cols-3">
+                <div className="grid gap-6 lg:gap-8 grid-cols-1 lg:grid-cols-3">
                   {/* Current Plan - Takes 2 columns */}
-                  <div className="lg:col-span-2 space-y-8">
+                  <div className="lg:col-span-2 space-y-6 lg:space-y-8">
                     {portalData.currentPlan && (
                       <Card className="shadow-lg">
                         <CardHeader className="bg-gradient-to-r from-emerald-50 to-teal-50 border-b border-emerald-100">
@@ -1175,7 +1180,7 @@ function ClientPortalContent() {
                     </CardHeader>
                     <CardContent className="p-6">
                       <div className="space-y-4">
-                        <div className="grid gap-4 md:grid-cols-2">
+                        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2">
                           <div>
                             <Label
                               htmlFor="weight"
@@ -1190,7 +1195,7 @@ function ClientPortalContent() {
                               value={newWeight}
                               onChange={(e) => setNewWeight(e.target.value)}
                               placeholder="Ex: 70.5"
-                              className="mt-1"
+                              className="mt-1 text-base"
                             />
                           </div>
                           <div>
@@ -1206,7 +1211,7 @@ function ClientPortalContent() {
                               onChange={(e) => setWeightNote(e.target.value)}
                               placeholder="Comment vous sentez-vous ?"
                               rows={2}
-                              className="mt-1"
+                              className="mt-1 text-base"
                             />
                           </div>
                         </div>
@@ -1373,7 +1378,7 @@ function ClientPortalContent() {
                         <p className="text-lg text-gray-600 mb-6">
                           Progression vers votre objectif
                         </p>
-                        <div className="grid gap-4 md:grid-cols-3 text-center">
+                        <div className="grid gap-4 grid-cols-1 sm:grid-cols-3 text-center">
                           <div className="bg-blue-50 rounded-lg p-4">
                             <div className="text-2xl font-bold text-blue-600">
                               {portalData.profile.currentWeight || "N/A"} kg
@@ -1415,7 +1420,7 @@ function ClientPortalContent() {
                       </CardDescription>
                     </CardHeader>
                     <CardContent className="p-6">
-                      <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-4">
+                      <div className="grid gap-4 grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
                         {portalData.progressPhotos && portalData.progressPhotos.length > 0 ? (
                           portalData.progressPhotos.map((photo: any, index: number) => (
                             <div key={photo.id} className="relative group">
@@ -1576,7 +1581,7 @@ function ClientPortalContent() {
             {/* Progress Photo Viewer Modal */}
             {selectedProgressPhoto && (
               <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-50 p-4" onClick={() => setSelectedProgressPhoto(null)}>
-                <div className="relative max-w-4xl max-h-[90vh] bg-white rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
+                <div className="relative max-w-4xl max-h-[90vh] w-full bg-white rounded-lg overflow-hidden" onClick={(e) => e.stopPropagation()}>
                   <div className="absolute top-4 right-4 z-10">
                     <Button
                       variant="secondary"
@@ -1587,7 +1592,7 @@ function ClientPortalContent() {
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div className="p-6">
+                  <div className="p-4 sm:p-6">
                     <div className="mb-4">
                       <h3 className="text-lg font-semibold text-gray-900">
                         Photo de progrès
@@ -1604,7 +1609,7 @@ function ClientPortalContent() {
                           className="max-w-full max-h-[60vh] object-contain rounded-lg"
                         />
                       ) : (
-                        <div className="w-96 h-96 bg-gray-200 flex items-center justify-center rounded-lg">
+                        <div className="w-full max-w-sm h-96 bg-gray-200 flex items-center justify-center rounded-lg">
                           <Camera className="h-16 w-16 text-gray-400" />
                         </div>
                       )}
