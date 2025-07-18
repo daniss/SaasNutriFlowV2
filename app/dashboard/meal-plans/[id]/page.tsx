@@ -1061,7 +1061,7 @@ export default function MealPlanDetailPage() {
                       <Clock className="h-4 w-4 text-slate-500" />
                       <span className="text-sm font-medium text-slate-500">Durée</span>
                     </div>
-                    <span className="text-lg font-semibold text-slate-900">{mealPlan.duration_days} jours</span>
+                    <span className="text-2xl font-bold text-slate-900">{mealPlan.duration_days} jours</span>
                   </div>
 
                   {mealPlan.calories_range && (
@@ -1070,7 +1070,7 @@ export default function MealPlanDetailPage() {
                         <Zap className="h-4 w-4 text-slate-500" />
                         <span className="text-sm font-medium text-slate-500">Calories</span>
                       </div>
-                      <span className="text-lg font-semibold text-slate-900">{mealPlan.calories_range}</span>
+                      <span className="text-2xl font-bold text-slate-900">{mealPlan.calories_range}</span>
                     </div>
                   )}
 
@@ -1079,7 +1079,7 @@ export default function MealPlanDetailPage() {
                       <Calendar className="h-4 w-4 text-slate-500" />
                       <span className="text-sm font-medium text-slate-500">Créé le</span>
                     </div>
-                    <span className="text-lg font-semibold text-slate-900">
+                    <span className="text-2xl font-bold text-slate-900">
                       {new Date(mealPlan.created_at).toLocaleDateString('fr-FR')}
                     </span>
                   </div>
@@ -1089,7 +1089,7 @@ export default function MealPlanDetailPage() {
                       <Users className="h-4 w-4 text-slate-500" />
                       <span className="text-sm font-medium text-slate-500">Statut</span>
                     </div>
-                    <span className="text-lg font-semibold text-slate-900">{getStatusText(mealPlan.status)}</span>
+                    <span className="text-2xl font-bold text-slate-900">{getStatusText(mealPlan.status)}</span>
                   </div>
                 </div>
               </CardContent>
@@ -1132,13 +1132,13 @@ export default function MealPlanDetailPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                    className="bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100 text-xs"
                     onClick={() => {
                       const nextDay = Math.max(...dayPlans.map(d => d.day), 0) + 1
                       handleEditDay(nextDay)
                     }}
                   >
-                    <Target className="h-4 w-4 mr-2" />
+                    <Target className="h-3 w-3 mr-2" />
                     Ajouter un jour
                   </Button>
                 </div>
@@ -1153,19 +1153,19 @@ export default function MealPlanDetailPage() {
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-emerald-600 hover:text-emerald-700"
+                            className="text-emerald-600 hover:text-emerald-700 text-xs"
                             onClick={() => handleEditDay(day.day)}
                           >
-                            <Edit className="h-4 w-4 mr-1" />
+                            <Edit className="h-3 w-3 mr-1" />
                             Modifier le jour
                           </Button>
                           <Button 
                             variant="ghost" 
                             size="sm" 
-                            className="text-red-600 hover:text-red-700"
+                            className="text-red-600 hover:text-red-700 text-xs"
                             onClick={() => handleDeleteDay(day.day)}
                           >
-                            <Trash2 className="h-4 w-4 mr-1" />
+                            <Trash2 className="h-3 w-3 mr-1" />
                             Supprimer le jour
                           </Button>
                         </div>
@@ -1240,7 +1240,7 @@ export default function MealPlanDetailPage() {
                   <Button 
                     variant="outline" 
                     size="sm" 
-                    className="w-full"
+                    className="w-full text-xs"
                     onClick={handleViewClientProfile}
                   >
                     Voir le profil client
@@ -1258,23 +1258,23 @@ export default function MealPlanDetailPage() {
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="w-full justify-start"
+                  className="w-full justify-start text-xs"
                   onClick={handleSharePlan}
                 >
-                  <Share2 className="mr-2 h-4 w-4" />
+                  <Share2 className="mr-2 h-3 w-3" />
                   Partager avec le client
                 </Button>
-                <Button variant="outline" size="sm" className="w-full justify-start" onClick={handleExportPDF}>
-                  <Download className="mr-2 h-4 w-4" />
+                <Button variant="outline" size="sm" className="w-full justify-start text-xs" onClick={handleExportPDF}>
+                  <Download className="mr-2 h-3 w-3" />
                   Exporter en PDF
                 </Button>
                 <Button 
                   variant="outline" 
                   size="sm" 
-                  className="w-full justify-start"
+                  className="w-full justify-start text-xs"
                   onClick={handleCreateTemplate}
                 >
-                  <Copy className="mr-2 h-4 w-4" />
+                  <Copy className="mr-2 h-3 w-3" />
                   Créer un modèle
                 </Button>
               </CardContent>
