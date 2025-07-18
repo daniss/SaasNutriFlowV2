@@ -264,20 +264,22 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
       >
         <motion.div
           className="relative h-full bg-gradient-to-br from-emerald-50/90 via-white/95 to-emerald-50/80 backdrop-blur-xl rounded-3xl border border-emerald-200/50 shadow-xl shadow-emerald-500/10 overflow-hidden"
+          style={{ willChange: 'width' }}
           initial={false}
           animate={{
             width: expanded ? "280px" : "64px",
             borderRadius: expanded ? "24px" : "32px",
           }}
           transition={{
-            duration: 0.25,
+            duration: 0.3,
             ease: [0.4, 0, 0.2, 1],
+            type: "tween"
           }}
         >
-          <div className="flex flex-col h-full p-3">
+          <div className="flex flex-col h-full p-3 min-w-0">
             {/* Header */}
-            <div className="flex items-center gap-3 mb-6">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-bold shadow-lg">
+            <div className="flex items-center mb-6 relative h-10">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-bold shadow-lg flex-shrink-0 relative z-10">
                 N
               </div>
               <AnimatePresence>
@@ -286,11 +288,11 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.15, delay: 0.05 }}
-                    className="flex flex-col"
+                    transition={{ duration: 0.2, delay: 0.1 }}
+                    className="absolute left-12 flex flex-col"
                   >
-                    <span className="font-semibold text-emerald-900">NutriFlow</span>
-                    <span className="text-xs text-emerald-600">
+                    <span className="font-semibold text-emerald-900 whitespace-nowrap">NutriFlow</span>
+                    <span className="text-xs text-emerald-600 whitespace-nowrap">
                       Tableau de bord diététicien
                     </span>
                   </motion.div>
@@ -308,20 +310,21 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
                       <Link
                         href={item.url}
                         className={cn(
-                          "flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium group relative",
+                          "flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium group relative",
                           isActive
                             ? "bg-gradient-to-r from-emerald-500 to-emerald-600 text-white shadow-lg shadow-emerald-500/30"
                             : "text-emerald-700 hover:bg-emerald-100/80 hover:text-emerald-800"
                         )}
                       >
-                        <item.icon className="h-4 w-4 flex-shrink-0" />
+                        <item.icon className="h-4 w-4 flex-shrink-0 relative z-10" />
                         <AnimatePresence>
                           {expanded && (
                             <motion.span
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               exit={{ opacity: 0, x: -10 }}
-                              transition={{ duration: 0.15, delay: 0.05 }}
+                              transition={{ duration: 0.2, delay: 0.1 }}
+                              className="absolute left-10 whitespace-nowrap"
                             >
                               {item.title}
                             </motion.span>
@@ -367,16 +370,17 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
                   <TooltipTrigger asChild>
                     <Link
                       href={action.url}
-                      className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium text-emerald-700 hover:bg-emerald-100/80 hover:text-emerald-800"
+                      className="flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium text-emerald-700 hover:bg-emerald-100/80 hover:text-emerald-800 relative"
                     >
-                      <action.icon className="h-4 w-4 flex-shrink-0" />
+                      <action.icon className="h-4 w-4 flex-shrink-0 relative z-10" />
                       <AnimatePresence>
                         {expanded && (
                           <motion.span
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -10 }}
-                            transition={{ duration: 0.15, delay: 0.05 }}
+                            transition={{ duration: 0.2, delay: 0.1 }}
+                            className="absolute left-10 whitespace-nowrap"
                           >
                             {action.title}
                           </motion.span>
@@ -397,8 +401,8 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
             <div className="pt-4 border-t border-emerald-200/50">
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium text-emerald-700 hover:bg-emerald-100/80 hover:text-emerald-800 w-full">
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-sm font-medium">
+                  <button className="flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium text-emerald-700 hover:bg-emerald-100/80 hover:text-emerald-800 w-full relative min-h-[48px]">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-sm font-medium flex-shrink-0 absolute left-1/2 transform -translate-x-1/2 z-10">
                       {profile?.first_name?.[0] || profile?.email?.[0] || "U"}
                     </div>
                     <AnimatePresence>
@@ -407,15 +411,15 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -10 }}
-                          transition={{ duration: 0.15, delay: 0.05 }}
-                          className="flex flex-col text-left"
+                          transition={{ duration: 0.2, delay: 0.1 }}
+                          className="absolute left-12 flex flex-col text-left"
                         >
-                          <span className="text-sm font-medium">
+                          <span className="text-sm font-medium whitespace-nowrap">
                             {profile?.first_name && profile?.last_name
                               ? `${profile.first_name} ${profile.last_name}`
                               : profile?.email || "Utilisateur"}
                           </span>
-                          <span className="text-xs text-emerald-600">
+                          <span className="text-xs text-emerald-600 whitespace-nowrap">
                             Diététicien(ne)
                           </span>
                         </motion.div>
