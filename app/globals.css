@@ -210,6 +210,35 @@ body {
   }
 }
 
+/* Prevent mobile zoom by ensuring minimum font sizes */
+@media (max-width: 768px) {
+  * {
+    font-size: max(1rem, 16px) !important;
+    -webkit-text-size-adjust: 100% !important;
+  }
+  
+  input, select, textarea, button {
+    font-size: 16px !important;
+    -webkit-text-size-adjust: 100% !important;
+  }
+  
+  /* Override all Tailwind text size classes */
+  .text-xs { font-size: 16px !important; }
+  .text-sm { font-size: 16px !important; }
+  .text-base { font-size: 16px !important; }
+  .text-lg { font-size: 16px !important; }
+  .text-xl { font-size: 16px !important; }
+  .text-2xl { font-size: 16px !important; }
+  .text-3xl { font-size: 16px !important; }
+  
+  /* Ensure all form elements have 16px font size */
+  input[type="text"], input[type="email"], input[type="password"], 
+  input[type="number"], input[type="tel"], input[type="time"], 
+  input[type="date"], input[type="datetime-local"], input[type="search"] {
+    font-size: 16px !important;
+  }
+}
+
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;

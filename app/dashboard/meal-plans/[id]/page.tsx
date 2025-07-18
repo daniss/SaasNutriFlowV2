@@ -114,6 +114,33 @@ interface EditDayForm {
 }
 
 export default function MealPlanDetailPage() {
+  // Add style to prevent zoom on mobile
+  useEffect(() => {
+    const style = document.createElement('style');
+    style.textContent = `
+      @media (max-width: 768px) {
+        * {
+          font-size: 16px !important;
+          -webkit-text-size-adjust: 100% !important;
+        }
+        input, select, textarea, button, span, div, p, h1, h2, h3, h4, h5, h6 {
+          font-size: 16px !important;
+          -webkit-text-size-adjust: 100% !important;
+        }
+        .text-xs, .text-sm, .text-base, .text-lg, .text-xl, .text-2xl {
+          font-size: 16px !important;
+        }
+        input[type="time"] {
+          font-size: 16px !important;
+        }
+      }
+    `;
+    document.head.appendChild(style);
+    
+    return () => {
+      document.head.removeChild(style);
+    };
+  }, []);
   // Food search modal state
   const [foodSearchOpen, setFoodSearchOpen] = useState(false)
   const [foodSearchSlot, setFoodSearchSlot] = useState<"breakfast"|"lunch"|"dinner"|"snacks">("breakfast")
@@ -1461,7 +1488,7 @@ export default function MealPlanDetailPage() {
                           type="time"
                           value={editDayForm[hourField] as string}
                           onChange={(e) => setEditDayForm({ ...editDayForm, [hourField]: e.target.value })}
-                          className="w-16 h-6 text-xs px-1"
+                          className="w-20 h-8 text-sm px-2"
                           disabled={!editDayForm[enabledField]}
                         />
                       </div>
@@ -1474,13 +1501,13 @@ export default function MealPlanDetailPage() {
                           onChange={e => setEditDayForm({ ...editDayForm, [slot]: e.target.value })}
                           placeholder="Repas..."
                           rows={1}
-                          className="min-h-[40px] text-xs resize-none"
+                          className="min-h-[44px] text-sm resize-none"
                         />
                         <div className="flex gap-0.5">
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-xs h-6 flex-1 px-1"
+                            className="text-sm h-8 flex-1 px-2"
                             onClick={() => {
                               setFoodSearchSlot(slot)
                               setFoodSearchDay(editDayForm.day)
@@ -1492,7 +1519,7 @@ export default function MealPlanDetailPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-xs h-6 flex-1 px-1"
+                            className="text-sm h-8 flex-1 px-2"
                             onClick={() => {
                               setManualFoodSlot(slot)
                               setManualFoodDay(editDayForm.day)
