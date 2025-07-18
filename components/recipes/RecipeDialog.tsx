@@ -333,7 +333,7 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <ChefHat className="h-5 w-5" />
@@ -346,7 +346,7 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
 
         <div className="space-y-6">
           {/* Basic Information */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 gap-4">
             <div className="space-y-2">
               <Label htmlFor="name">Nom de la recette *</Label>
               <Input
@@ -385,7 +385,7 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
           </div>
 
           {/* Time and Servings */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
             <div className="space-y-2">
               <Label htmlFor="prep-time">Préparation (min)</Label>
               <Input
@@ -432,7 +432,7 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
           </div>
 
           {/* Nutrition */}
-          <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
             <div className="space-y-2">
               <Label htmlFor="calories">Calories/portion</Label>
               <Input
@@ -492,46 +492,51 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
             </CardHeader>
             <CardContent className="space-y-3">
               {ingredients.map((ingredient, index) => (
-                <div key={index} className="flex gap-2">
-                  <Input
-                    value={ingredient.name}
-                    onChange={(e) => updateIngredient(index, "name", e.target.value)}
-                    placeholder="Nom de l'ingrédient"
-                    className="flex-1"
-                  />
-                  <Input
-                    type="number"
-                    value={ingredient.quantity || ""}
-                    onChange={(e) => updateIngredient(index, "quantity", e.target.value ? parseFloat(e.target.value) : null)}
-                    placeholder="Qté"
-                    className="w-20"
-                  />
-                  <Select value={ingredient.unit || ""} onValueChange={(value) => updateIngredient(index, "unit", value)}>
-                    <SelectTrigger className="w-32">
-                      <SelectValue placeholder="Unité" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {units.map(unit => (
-                        <SelectItem key={unit} value={unit}>{unit}</SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removeIngredient(index)}
-                    disabled={ingredients.length === 1}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
+                <div key={index} className="space-y-2">
+                  <div className="flex gap-2">
+                    <Input
+                      value={ingredient.name}
+                      onChange={(e) => updateIngredient(index, "name", e.target.value)}
+                      placeholder="Nom de l'ingrédient"
+                      className="flex-1 min-w-0"
+                    />
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeIngredient(index)}
+                      disabled={ingredients.length === 1}
+                      className="flex-shrink-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={ingredient.quantity || ""}
+                      onChange={(e) => updateIngredient(index, "quantity", e.target.value ? parseFloat(e.target.value) : null)}
+                      placeholder="Quantité"
+                      className="flex-1"
+                    />
+                    <Select value={ingredient.unit || ""} onValueChange={(value) => updateIngredient(index, "unit", value)}>
+                      <SelectTrigger className="flex-1">
+                        <SelectValue placeholder="Unité" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {units.map(unit => (
+                          <SelectItem key={unit} value={unit}>{unit}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
                 </div>
               ))}
-              <div className="flex gap-2">
-                <Button variant="outline" size="sm" onClick={addIngredient}>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <Button variant="outline" size="sm" onClick={addIngredient} className="flex-1">
                   <Plus className="h-4 w-4 mr-2" />
                   Ajouter manuellement
                 </Button>
-                <Button variant="default" size="sm" onClick={() => setFoodSearchOpen(true)}>
+                <Button variant="default" size="sm" onClick={() => setFoodSearchOpen(true)} className="flex-1">
                   Rechercher dans ANSES-CIQUAL
                 </Button>
               </div>
@@ -545,25 +550,29 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
             </CardHeader>
             <CardContent className="space-y-3">
               {formData.instructions.map((instruction, index) => (
-                <div key={index} className="flex gap-2">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-medium">
-                    {index + 1}
+                <div key={index} className="space-y-2">
+                  <div className="flex items-center gap-2">
+                    <div className="flex-shrink-0 w-8 h-8 rounded-full bg-emerald-100 text-emerald-600 flex items-center justify-center text-sm font-medium">
+                      {index + 1}
+                    </div>
+                    <span className="text-sm font-medium text-gray-700">Étape {index + 1}</span>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => removeInstruction(index)}
+                      disabled={formData.instructions.length === 1}
+                      className="ml-auto flex-shrink-0"
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
                   </div>
                   <Textarea
                     value={instruction}
                     onChange={(e) => updateInstruction(index, e.target.value)}
                     placeholder="Décrivez cette étape..."
-                    className="flex-1"
+                    className="w-full"
                     rows={2}
                   />
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => removeInstruction(index)}
-                    disabled={formData.instructions.length === 1}
-                  >
-                    <X className="h-4 w-4" />
-                  </Button>
                 </div>
               ))}
               <Button variant="outline" size="sm" onClick={addInstruction}>
@@ -589,6 +598,7 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
                 value={currentTag}
                 onChange={(e) => setCurrentTag(e.target.value)}
                 placeholder="Ajouter un tag"
+                className="flex-1 min-w-0"
                 onKeyPress={(e) => {
                   if (e.key === 'Enter') {
                     e.preventDefault()
@@ -596,18 +606,18 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
                   }
                 }}
               />
-              <Button variant="outline" size="sm" onClick={addTag}>
+              <Button variant="outline" size="sm" onClick={addTag} className="flex-shrink-0">
                 <Plus className="h-4 w-4" />
               </Button>
             </div>
           </div>
         </div>
 
-        <DialogFooter>
-          <Button variant="outline" onClick={onClose} disabled={loading}>
+        <DialogFooter className="flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={onClose} disabled={loading} className="flex-1">
             Annuler
           </Button>
-          <Button onClick={handleSubmit} disabled={loading}>
+          <Button onClick={handleSubmit} disabled={loading} className="flex-1">
             {loading ? "Enregistrement..." : (recipe ? "Modifier" : "Créer")}
           </Button>
         </DialogFooter>
