@@ -66,24 +66,6 @@ export const formatWeight = (weight: number, unit = 'kg'): string => {
   return `${weight.toFixed(1)} ${unit}`
 }
 
-export const formatHeight = (height: string): string => {
-  if (!height) return ''
-  
-  // If it's already formatted (contains quotes), return as-is
-  if (height.includes("'") || height.includes('"')) {
-    return height
-  }
-  
-  // If it's just a number, assume it's in cm and convert
-  const num = parseFloat(height)
-  if (!isNaN(num)) {
-    const feet = Math.floor(num / 30.48)
-    const inches = Math.round((num / 2.54) % 12)
-    return `${feet}'${inches}"`
-  }
-  
-  return height
-}
 
 export const formatTime = (time: string): string => {
   const [hours, minutes] = time.split(':')

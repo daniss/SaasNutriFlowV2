@@ -152,15 +152,15 @@ export default function SettingsPage() {
         className="space-y-6 animate-slide-up animate-delay-100"
       >
         <TabsList className="grid grid-cols-3 w-full max-w-md">
-          <TabsTrigger value="profile" className="flex items-center gap-2">
+          <TabsTrigger value="profile" className="flex items-center gap-1 sm:gap-2">
             <User className="h-4 w-4" />
             Profil
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-2">
+          <TabsTrigger value="security" className="flex items-center gap-1 sm:gap-2">
             <Shield className="h-4 w-4" />
             Sécurité
           </TabsTrigger>
-          <TabsTrigger value="sessions" className="flex items-center gap-2">
+          <TabsTrigger value="sessions" className="flex items-center gap-1 sm:gap-2">
             <Activity className="h-4 w-4" />
             Sessions
           </TabsTrigger>
@@ -195,7 +195,7 @@ export default function SettingsPage() {
                       value={firstName}
                       onChange={(e) => setFirstName(e.target.value)}
                       placeholder="Entrez votre prénom"
-                      className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                      className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 text-base"
                     />
                   </div>
                   <div className="space-y-2">
@@ -210,7 +210,7 @@ export default function SettingsPage() {
                       value={lastName}
                       onChange={(e) => setLastName(e.target.value)}
                       placeholder="Entrez votre nom de famille"
-                      className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                      className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 text-base"
                     />
                   </div>
                 </div>
@@ -229,7 +229,7 @@ export default function SettingsPage() {
                         id="email"
                         type="email"
                         value={email}
-                        className="pl-10 border-gray-200 bg-gray-50 text-gray-500"
+                        className="pl-10 border-gray-200 bg-gray-50 text-gray-500 text-base"
                         disabled
                         placeholder="L'email ne peut pas être modifié"
                       />
@@ -249,7 +249,7 @@ export default function SettingsPage() {
                         type="tel"
                         value={phone}
                         onChange={(e) => setPhone(e.target.value)}
-                        className="pl-10 border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                        className="pl-10 border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 text-base"
                         placeholder="Entrez votre numéro de téléphone"
                       />
                     </div>
@@ -268,7 +268,7 @@ export default function SettingsPage() {
                     value={title}
                     onChange={(e) => setTitle(e.target.value)}
                     placeholder="ex. Diététicien(ne) agréé(e), Nutritionniste"
-                    className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20"
+                    className="border-gray-200 focus:border-emerald-300 focus:ring-emerald-500/20 text-base"
                   />
                 </div>
 
@@ -303,6 +303,7 @@ export default function SettingsPage() {
                       value={address}
                       onChange={(e) => setAddress(e.target.value)}
                       placeholder="Entrez votre adresse"
+                      className="text-base"
                     />
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
@@ -313,6 +314,7 @@ export default function SettingsPage() {
                         value={city}
                         onChange={(e) => setCity(e.target.value)}
                         placeholder="Ville"
+                        className="text-base"
                       />
                     </div>
                     <div className="space-y-2">
@@ -322,6 +324,7 @@ export default function SettingsPage() {
                         value={state}
                         onChange={(e) => setState(e.target.value)}
                         placeholder="Région"
+                        className="text-base"
                       />
                     </div>
                     <div className="space-y-2">
@@ -331,6 +334,7 @@ export default function SettingsPage() {
                         value={zipCode}
                         onChange={(e) => setZipCode(e.target.value)}
                         placeholder="Code postal"
+                        className="text-base"
                       />
                     </div>
                   </div>
