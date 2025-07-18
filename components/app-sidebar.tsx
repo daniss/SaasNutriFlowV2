@@ -100,11 +100,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
-        <div className="flex items-center gap-2 px-2 py-1">
-          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold text-sm">
+        <div className="flex items-center px-2 py-1 relative">
+          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-emerald-500 to-teal-600 text-white font-bold text-sm flex-shrink-0">
             N
           </div>
-          <div className="flex flex-col group-data-[collapsible=icon]:hidden">
+          <div className="flex flex-col group-data-[collapsible=icon]:hidden ml-2">
             <span className="font-semibold text-sm">NutriFlow</span>
             <span className="text-xs text-muted-foreground">
               Tableau de bord diététicien
@@ -164,11 +164,11 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <SidebarMenuButton className="w-full">
-                  <div className="flex items-center gap-2 px-2 py-1.5">
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-medium">
+                  <div className="flex items-center px-2 py-1.5 relative">
+                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-purple-500 to-pink-500 flex items-center justify-center text-white text-sm font-medium flex-shrink-0">
                       {profile?.first_name?.[0] || profile?.email?.[0] || "U"}
                     </div>
-                    <div className="flex flex-col group-data-[collapsible=icon]:hidden text-left">
+                    <div className="flex flex-col group-data-[collapsible=icon]:hidden text-left ml-2">
                       <span className="text-sm font-medium">
                         {profile?.first_name && profile?.last_name
                           ? `${profile.first_name} ${profile.last_name}`
