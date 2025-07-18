@@ -124,7 +124,7 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
     }
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-    }, 150); // Small delay to prevent rapid flickering
+    }, 300); // Increased delay to prevent flickering
   }, []);
 
   const expanded = isOpen || isHovered;
@@ -270,7 +270,7 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
             borderRadius: expanded ? "24px" : "32px",
           }}
           transition={{
-            duration: 0.3,
+            duration: 0.25,
             ease: [0.4, 0, 0.2, 1],
           }}
         >
@@ -286,7 +286,7 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
                     initial={{ opacity: 0, x: -10 }}
                     animate={{ opacity: 1, x: 0 }}
                     exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: 0.15, delay: 0.05 }}
                     className="flex flex-col"
                   >
                     <span className="font-semibold text-emerald-900">NutriFlow</span>
@@ -321,7 +321,7 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
                               initial={{ opacity: 0, x: -10 }}
                               animate={{ opacity: 1, x: 0 }}
                               exit={{ opacity: 0, x: -10 }}
-                              transition={{ duration: 0.2 }}
+                              transition={{ duration: 0.15, delay: 0.05 }}
                             >
                               {item.title}
                             </motion.span>
@@ -355,7 +355,7 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
                     initial={{ opacity: 0, y: -10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -10 }}
-                    transition={{ duration: 0.2 }}
+                    transition={{ duration: 0.15, delay: 0.05 }}
                     className="text-xs font-medium text-emerald-600 px-3 mb-2"
                   >
                     Actions rapides
@@ -376,7 +376,7 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
                             initial={{ opacity: 0, x: -10 }}
                             animate={{ opacity: 1, x: 0 }}
                             exit={{ opacity: 0, x: -10 }}
-                            transition={{ duration: 0.2 }}
+                            transition={{ duration: 0.15, delay: 0.05 }}
                           >
                             {action.title}
                           </motion.span>
@@ -407,7 +407,7 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
                           initial={{ opacity: 0, x: -10 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: -10 }}
-                          transition={{ duration: 0.2 }}
+                          transition={{ duration: 0.15, delay: 0.05 }}
                           className="flex flex-col text-left"
                         >
                           <span className="text-sm font-medium">
