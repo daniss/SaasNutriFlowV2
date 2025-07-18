@@ -114,33 +114,6 @@ interface EditDayForm {
 }
 
 export default function MealPlanDetailPage() {
-  // Add style to prevent zoom on mobile
-  useEffect(() => {
-    const style = document.createElement('style');
-    style.textContent = `
-      @media (max-width: 768px) {
-        * {
-          font-size: 16px !important;
-          -webkit-text-size-adjust: 100% !important;
-        }
-        input, select, textarea, button, span, div, p, h1, h2, h3, h4, h5, h6 {
-          font-size: 16px !important;
-          -webkit-text-size-adjust: 100% !important;
-        }
-        .text-xs, .text-sm, .text-base, .text-lg, .text-xl, .text-2xl {
-          font-size: 16px !important;
-        }
-        input[type="time"] {
-          font-size: 16px !important;
-        }
-      }
-    `;
-    document.head.appendChild(style);
-    
-    return () => {
-      document.head.removeChild(style);
-    };
-  }, []);
   // Food search modal state
   const [foodSearchOpen, setFoodSearchOpen] = useState(false)
   const [foodSearchSlot, setFoodSearchSlot] = useState<"breakfast"|"lunch"|"dinner"|"snacks">("breakfast")
@@ -1446,18 +1419,18 @@ export default function MealPlanDetailPage() {
 
         {/* Edit Day Dialog */}
         <Dialog open={isEditDayOpen} onOpenChange={setIsEditDayOpen}>
-        <DialogContent className="sm:max-w-[800px] max-w-[95vw] rounded-xl">
+        <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto rounded-xl">
             <DialogHeader>
-              <DialogTitle className="text-base">Jour {editDayForm.day}</DialogTitle>
+              <DialogTitle>Jour {editDayForm.day}</DialogTitle>
             </DialogHeader>
-            <div className="grid gap-2 py-1">
+            <div className="grid gap-4 py-4">
               {(["breakfast", "lunch", "dinner", "snacks"] as const).map(slot => {
                 const hourField = `${slot}Hour` as keyof EditDayForm
                 const enabledField = `${slot}Enabled` as keyof EditDayForm
                 return (
-                  <div key={slot} className="space-y-0.5">
+                  <div key={slot} className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-1.5">
+                      <div className="flex items-center space-x-3">
                         <Checkbox
                           id={`${slot}-enabled`}
                           checked={editDayForm[enabledField] as boolean}
@@ -1474,40 +1447,39 @@ export default function MealPlanDetailPage() {
                               }))
                             }
                           }}
-                          className="h-3.5 w-3.5"
                         />
-                        <Label htmlFor={`${slot}-enabled`} className="text-sm font-medium">
-                          {slot === "breakfast" ? "Petit-déj" :
+                        <Label htmlFor={`${slot}-enabled`} className="font-medium">
+                          {slot === "breakfast" ? "Petit-déjeuner" :
                            slot === "lunch" ? "Déjeuner" :
                            slot === "dinner" ? "Dîner" : "Collation"}
                         </Label>
                       </div>
-                      <div className="flex items-center space-x-1">
-                        <Clock className="h-3 w-3 text-gray-500" />
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-gray-500" />
                         <Input
                           type="time"
                           value={editDayForm[hourField] as string}
                           onChange={(e) => setEditDayForm({ ...editDayForm, [hourField]: e.target.value })}
-                          className="w-20 h-8 text-sm px-2"
+                          className="w-24 h-10"
                           disabled={!editDayForm[enabledField]}
                         />
                       </div>
                     </div>
                     {editDayForm[enabledField] && (
-                      <div className="space-y-0.5">
+                      <div className="space-y-2">
                         <Textarea
                           id={`day-${slot}`}
                           value={editDayForm[slot]}
                           onChange={e => setEditDayForm({ ...editDayForm, [slot]: e.target.value })}
                           placeholder="Repas..."
-                          rows={1}
-                          className="min-h-[44px] text-sm resize-none"
+                          rows={2}
+                          className="resize-none"
                         />
-                        <div className="flex gap-0.5">
+                        <div className="flex gap-2">
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-sm h-8 flex-1 px-2"
+                            className="flex-1"
                             onClick={() => {
                               setFoodSearchSlot(slot)
                               setFoodSearchDay(editDayForm.day)
@@ -1519,7 +1491,7 @@ export default function MealPlanDetailPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-sm h-8 flex-1 px-2"
+                            className="flex-1"
                             onClick={() => {
                               setManualFoodSlot(slot)
                               setManualFoodDay(editDayForm.day)
@@ -1530,18 +1502,18 @@ export default function MealPlanDetailPage() {
                           </Button>
                         </div>
                         {selectedFoods[editDayForm.day]?.[slot]?.length > 0 && (
-                          <div className="mt-0.5">
-                            <div className="space-y-0.5 max-h-12 overflow-y-auto">
+                          <div className="mt-2">
+                            <div className="space-y-2 max-h-32 overflow-y-auto">
                                 {selectedFoods[editDayForm.day][slot].map((food, foodIndex) => (
-                                  <div key={foodIndex} className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5">
-                                    <div className="text-xs truncate">
+                                  <div key={foodIndex} className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded-md px-3 py-2">
+                                    <div className="truncate">
                                       <span className="text-emerald-800">{food.name_fr}</span>
-                                      <span className="text-emerald-600 ml-0.5">({food.quantity}g)</span>
+                                      <span className="text-emerald-600 ml-2">({food.quantity}g)</span>
                                     </div>
                                     <Button
                                       variant="ghost"
                                       size="sm"
-                                      className="h-4 w-4 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
+                                      className="h-8 w-8 p-0 text-red-500 hover:text-red-700 hover:bg-red-50"
                                       onClick={() => {
                                         setSelectedFoods(prev => ({
                                           ...prev,
@@ -1552,7 +1524,7 @@ export default function MealPlanDetailPage() {
                                         }))
                                       }}
                                     >
-                                      <X className="h-2.5 w-2.5" />
+                                      <X className="h-4 w-4" />
                                     </Button>
                                   </div>
                                 ))}
@@ -1564,15 +1536,15 @@ export default function MealPlanDetailPage() {
                   </div>
                 )
               })}
-              <div className="space-y-0.5">
-                <Label htmlFor="day-notes" className="text-sm font-medium">Notes</Label>
+              <div className="space-y-2">
+                <Label htmlFor="day-notes" className="font-medium">Notes</Label>
                 <Textarea
                   id="day-notes"
                   value={editDayForm.notes}
                   onChange={e => setEditDayForm({ ...editDayForm, notes: e.target.value })}
                   placeholder="Notes..."
-                  rows={1}
-                  className="min-h-[35px] text-sm resize-none"
+                  rows={2}
+                  className="resize-none"
                 />
               </div>
             </div>
@@ -1614,11 +1586,11 @@ export default function MealPlanDetailPage() {
                 setManualFoodOpen(false)
               }}
             />
-            <DialogFooter className="flex-col-reverse sm:flex-row gap-2 sm:gap-0">
-              <Button variant="outline" onClick={() => setIsEditDayOpen(false)} className="w-full sm:w-auto">
+            <DialogFooter>
+              <Button variant="outline" onClick={() => setIsEditDayOpen(false)}>
                 Annuler
               </Button>
-              <Button onClick={handleSaveDay} className="w-full sm:w-auto">
+              <Button onClick={handleSaveDay}>
                 Enregistrer
               </Button>
             </DialogFooter>
