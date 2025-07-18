@@ -1449,7 +1449,7 @@ export default function MealPlanDetailPage() {
                           }}
                           className="h-3.5 w-3.5"
                         />
-                        <Label htmlFor={`${slot}-enabled`} className="text-xs font-medium">
+                        <Label htmlFor={`${slot}-enabled`} className="text-sm font-medium">
                           {slot === "breakfast" ? "Petit-déj" :
                            slot === "lunch" ? "Déjeuner" :
                            slot === "dinner" ? "Dîner" : "Collation"}
@@ -1480,7 +1480,7 @@ export default function MealPlanDetailPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-[10px] h-6 flex-1 px-1"
+                            className="text-xs h-6 flex-1 px-1"
                             onClick={() => {
                               setFoodSearchSlot(slot)
                               setFoodSearchDay(editDayForm.day)
@@ -1492,7 +1492,7 @@ export default function MealPlanDetailPage() {
                           <Button
                             size="sm"
                             variant="outline"
-                            className="text-[10px] h-6 flex-1 px-1"
+                            className="text-xs h-6 flex-1 px-1"
                             onClick={() => {
                               setManualFoodSlot(slot)
                               setManualFoodDay(editDayForm.day)
@@ -1507,7 +1507,7 @@ export default function MealPlanDetailPage() {
                             <div className="space-y-0.5 max-h-12 overflow-y-auto">
                                 {selectedFoods[editDayForm.day][slot].map((food, foodIndex) => (
                                   <div key={foodIndex} className="flex items-center justify-between bg-emerald-50 border border-emerald-200 rounded px-1.5 py-0.5">
-                                    <div className="text-[10px] truncate">
+                                    <div className="text-xs truncate">
                                       <span className="text-emerald-800">{food.name_fr}</span>
                                       <span className="text-emerald-600 ml-0.5">({food.quantity}g)</span>
                                     </div>
@@ -1538,14 +1538,14 @@ export default function MealPlanDetailPage() {
                 )
               })}
               <div className="space-y-0.5">
-                <Label htmlFor="day-notes" className="text-xs font-medium">Notes</Label>
+                <Label htmlFor="day-notes" className="text-sm font-medium">Notes</Label>
                 <Textarea
                   id="day-notes"
                   value={editDayForm.notes}
                   onChange={e => setEditDayForm({ ...editDayForm, notes: e.target.value })}
                   placeholder="Notes..."
                   rows={1}
-                  className="min-h-[30px] text-xs resize-none"
+                  className="min-h-[35px] text-sm resize-none"
                 />
               </div>
             </div>
