@@ -72,32 +72,33 @@ export function DashboardHeader({
   const currentSearchValue = searchValue !== undefined ? searchValue : localSearchValue
 
   return (
-    <header className={`sticky top-0 z-30 w-full border-b border-slate-200/60 bg-white/80 backdrop-blur-md supports-[backdrop-filter]:bg-white/60 ${className}`}>
+    <header className={`sticky top-0 z-30 w-full border-b bg-background/80 backdrop-blur-md supports-[backdrop-filter]:bg-background/60 ${className}`}>
       <div className="flex h-14 md:h-16 items-center gap-2 md:gap-4 px-4 sm:px-6">
-        <SidebarTrigger className="-ml-1 h-8 w-8 md:h-9 md:w-9 rounded-lg hover:bg-emerald-100 text-emerald-700 transition-colors md:hidden">
+        <SidebarTrigger className="-ml-1 h-8 w-8 md:h-9 md:w-9 rounded-lg hover:bg-primary/10 text-primary transition-colors md:hidden">
           <Menu className="h-4 w-4" />
         </SidebarTrigger>
 
         <div className="flex flex-1 items-center justify-between gap-1 sm:gap-2 md:gap-4">
           <div className="min-w-0 flex-1">
-            <h1 className="text-base sm:text-lg md:text-xl font-bold text-slate-900 truncate">{title}</h1>
+            <h1 className="text-base sm:text-lg md:text-xl font-bold text-foreground truncate">{title}</h1>
             {subtitle && (
-              <p className="text-xs md:text-sm text-slate-600 mt-0.5 truncate hidden sm:block">{subtitle}</p>
+              <p className="text-xs md:text-sm text-muted-foreground mt-0.5 truncate hidden sm:block">{subtitle}</p>
             )}
           </div>
 
           <div className="flex items-center gap-1 md:gap-2 flex-shrink-0">
             {showSearch && (
               <div className="relative hidden lg:block">
-                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
                 <Input 
                   placeholder={searchPlaceholder}
                   value={currentSearchValue}
                   onChange={(e) => handleSearchChange(e.target.value)}
-                  className="w-48 xl:w-64 pl-10 h-8 md:h-9 border-slate-200 bg-white/80 focus:border-emerald-300 focus:ring-emerald-200 transition-all"
+                  className="w-48 xl:w-64 pl-10 h-8 md:h-9 bg-background/80 focus:border-primary focus:ring-primary/20 transition-all"
                 />
               </div>
             )}
+
 
             {showNotifications && (
               <DropdownMenu>
