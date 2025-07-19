@@ -37,6 +37,8 @@ interface AuthContextType {
     password: string,
     firstName: string,
     lastName: string,
+    phone?: string,
+    address?: string,
   ) => Promise<{ data: any; error: string | null }>
   signOut: () => Promise<void>
   resetPassword: (email: string) => Promise<{ data: any; error: string | null }>
@@ -156,19 +158,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }
 
-  const signUp = async (email: string, password: string, firstName: string, lastName: string) => {
+  const signUp = async (email: string, password: string, firstName: string, lastName: string, phone?: string, address?: string) => {
     try {
       setLoading(true)
       setError(null)
+
+      const userData: any = {
+        first_name: firstName,
+        last_name: lastName,
+      }
+      
+      // Add optional fields if provided
+      if (phone?.trim()) {
+        userData.phone = phone.trim()
+      }
+      if (address?.trim()) {
+        userData.address = address.trim()
+      }
 
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
-          data: {
-            first_name: firstName,
-            last_name: lastName,
-          },
+          data: userData,
           emailRedirectTo: `${window.location.origin}/auth/confirm`,
         },
       })
