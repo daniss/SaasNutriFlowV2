@@ -1696,8 +1696,12 @@ export default function MealPlanDetailPage() {
           dayData={currentEditDay}
           dayNumber={editDayNumber}
           onOpenFoodSearch={(mealId, day) => {
+            console.log('onOpenFoodSearch called with:', { mealId, day, currentEditDay })
+            
             // Map dynamic meal types to legacy slot names for food modals
             const mealType = currentEditDay?.meals?.find(m => m.id === mealId)?.name
+            console.log('Found meal type:', mealType)
+            
             let slot: "breakfast"|"lunch"|"dinner"|"snacks" = "breakfast"
             
             if (mealType?.includes("déjeuner") || mealType?.includes("Petit-déjeuner")) {
@@ -1709,15 +1713,23 @@ export default function MealPlanDetailPage() {
             } else {
               slot = "snacks"
             }
+            
+            console.log('Mapped to slot:', slot, 'Opening food search modal...')
             
             setFoodSearchSlot(slot)
             setFoodSearchDay(day)
             setFoodSearchMealId(mealId)
             setFoodSearchOpen(true)
+            
+            console.log('Food search state set:', { slot, day, mealId, open: true })
           }}
           onOpenManualFood={(mealId, day) => {
+            console.log('onOpenManualFood called with:', { mealId, day, currentEditDay })
+            
             // Map dynamic meal types to legacy slot names for food modals
             const mealType = currentEditDay?.meals?.find(m => m.id === mealId)?.name
+            console.log('Found meal type:', mealType)
+            
             let slot: "breakfast"|"lunch"|"dinner"|"snacks" = "breakfast"
             
             if (mealType?.includes("déjeuner") || mealType?.includes("Petit-déjeuner")) {
@@ -1730,10 +1742,14 @@ export default function MealPlanDetailPage() {
               slot = "snacks"
             }
             
+            console.log('Mapped to slot:', slot, 'Opening manual food modal...')
+            
             setManualFoodSlot(slot)
             setManualFoodDay(day)
             setManualFoodMealId(mealId)
             setManualFoodOpen(true)
+            
+            console.log('Manual food state set:', { slot, day, mealId, open: true })
           }}
         />
 
