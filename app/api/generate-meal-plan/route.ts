@@ -75,17 +75,104 @@ export async function POST(request: NextRequest) {
     // Generate meal plan using Gemini
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const enhancedPrompt = `Crée un plan alimentaire JSON français.
+    // For longer plans (5+ days), generate in chunks to avoid truncation
+    if (duration >= 5) {
+      const maxDays = 3; // Generate max 3 days per request to avoid truncation
+      
+      console.log(`📦 Splitting ${duration}-day plan into chunks of ${maxDays} days`);
+      
+      let allDays = [];
+      
+      for (let chunk = 0; chunk < Math.ceil(duration / maxDays); chunk++) {
+        const startDay = chunk * maxDays + 1;
+        const endDay = Math.min(startDay + maxDays - 1, duration);
+        const chunkDays = endDay - startDay + 1;
+        
+        console.log(`🔄 Generating days ${startDay}-${endDay} (${chunkDays} days)`);
+        
+        const chunkPrompt = `Génère ${chunkDays} jours de plan alimentaire méditerranéen JSON français.
 
-${prompt} - ${duration} jours, ${targetCalories} cal/jour, ${dietType}
+${prompt} - Jours ${startDay} à ${endDay}, ${targetCalories} cal/jour
 ${restrictions.length > 0 ? `Restrictions: ${restrictions.join(", ")}` : ""}
 
-IMPORTANT:
-- MAX 3 ingrédients par repas
-- Descriptions courtes
+ULTRA-CONCIS:
+- 2 ingrédients max par repas
+- 1 instruction max par repas
 - ingredientsNutrition obligatoire
 
-JSON uniquement:
+JSON direct:
+{"days":[
+${Array.from({length: chunkDays}, (_, i) => `
+{"day":${startDay + i},"meals":{
+"breakfast":{"name":"PDJ ${startDay + i}","description":"Repas","calories":${Math.round(targetCalories * 0.25)},"protein":17,"carbs":62,"fat":15,"fiber":5,"prepTime":5,"cookTime":5,"ingredients":["50g avoine","200ml lait"],"ingredientsNutrition":[{"name":"avoine","unit":"g","caloriesPer100":389,"proteinPer100":16.9,"carbsPer100":66.3,"fatPer100":6.9,"fiberPer100":10.6},{"name":"lait","unit":"ml","caloriesPer100":42,"proteinPer100":3.4,"carbsPer100":4.8,"fatPer100":1.0,"fiberPer100":0}],"instructions":["Mélanger"],"tags":["matin"]},
+"lunch":{"name":"DEJ ${startDay + i}","description":"Repas","calories":${Math.round(targetCalories * 0.35)},"protein":32,"carbs":79,"fat":21,"fiber":8,"prepTime":10,"cookTime":10,"ingredients":["100g quinoa","150g légumes"],"ingredientsNutrition":[{"name":"quinoa","unit":"g","caloriesPer100":368,"proteinPer100":14.1,"carbsPer100":64.2,"fatPer100":6.1,"fiberPer100":7.0},{"name":"légumes","unit":"g","caloriesPer100":25,"proteinPer100":2.0,"carbsPer100":5.0,"fatPer100":0.2,"fiberPer100":3.0}],"instructions":["Cuire"],"tags":["midi"]},
+"dinner":{"name":"DIN ${startDay + i}","description":"Repas","calories":${Math.round(targetCalories * 0.30)},"protein":34,"carbs":61,"fat":18,"fiber":6,"prepTime":10,"cookTime":15,"ingredients":["120g poisson","200g légumes"],"ingredientsNutrition":[{"name":"poisson","unit":"g","caloriesPer100":150,"proteinPer100":25,"carbsPer100":0,"fatPer100":5,"fiberPer100":0},{"name":"légumes","unit":"g","caloriesPer100":25,"proteinPer100":2.0,"carbsPer100":5.0,"fatPer100":0.2,"fiberPer100":3.0}],"instructions":["Griller"],"tags":["soir"]},
+"snacks":[{"name":"Snack","description":"Collation","calories":${Math.round(targetCalories * 0.10)},"protein":9,"carbs":27,"fat":4,"fiber":3,"prepTime":2,"cookTime":0,"ingredients":["150g yaourt"],"ingredientsNutrition":[{"name":"yaourt","unit":"g","caloriesPer100":59,"proteinPer100":10,"carbsPer100":3.6,"fatPer100":0.4,"fiberPer100":0}],"instructions":["Servir"],"tags":["snack"]}]
+},"totalCalories":${targetCalories},"totalProtein":90,"totalCarbs":225,"totalFat":60}`).join(",")}
+]}
+
+Génère EXACTEMENT ce format avec variations d'ingrédients:`;
+        
+        try {
+          const result = await model.generateContent(chunkPrompt);
+          const response = await result.response;
+          const text = response.text().trim();
+          
+          console.log(`📏 Chunk ${chunk + 1} response length: ${text.length} characters`);
+          
+          // Clean and parse chunk
+          let jsonText = text.trim();
+          jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+          
+          const jsonStart = jsonText.indexOf("{");
+          const jsonEnd = jsonText.lastIndexOf("}");
+          
+          if (jsonStart === -1 || jsonEnd === -1) {
+            throw new Error(`No valid JSON in chunk ${chunk + 1}`);
+          }
+          
+          jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
+          jsonText = jsonText
+            .replace(/,\s*}/g, '}')
+            .replace(/,\s*]/g, ']')
+            .replace(/\/\*[^*]*\*\//g, '')
+            .replace(/\/\/.*$/gm, '');
+          
+          const chunkData = JSON.parse(jsonText);
+          
+          if (chunkData.days && Array.isArray(chunkData.days)) {
+            allDays.push(...chunkData.days);
+            console.log(`✅ Chunk ${chunk + 1} successful: ${chunkData.days.length} days`);
+          } else {
+            throw new Error(`Invalid chunk structure ${chunk + 1}`);
+          }
+          
+        } catch (chunkError) {
+          console.error(`❌ Chunk ${chunk + 1} failed:`, chunkError.message);
+          throw new Error(`Failed to generate chunk ${chunk + 1}: ${chunkError.message}`);
+        }
+      }
+      
+      // Assemble final plan
+      generatedPlan = {
+        name: `Plan ${duration} jours`,
+        description: `Plan équilibré ${targetCalories} calories`,
+        totalDays: duration,
+        averageCaloriesPerDay: targetCalories,
+        nutritionSummary: {"protein": "25%", "carbohydrates": "45%", "fat": "30%"},
+        days: allDays
+      };
+      
+      console.log(`✅ Combined plan: ${allDays.length} days total`);
+      
+    } else {
+      // For shorter plans (≤4 days), use single request
+      const enhancedPrompt = `Plan alimentaire JSON français concis.
+
+${prompt} - ${duration} jours, ${targetCalories} cal/jour
+${restrictions.length > 0 ? `Restrictions: ${restrictions.join(", ")}` : ""}
+
+MAX 2 ingrédients/repas. JSON direct:
 {
   "name": "Plan ${duration} jours",
   "description": "Plan ${targetCalories} calories",
@@ -96,184 +183,73 @@ JSON uniquement:
     {
       "day": 1,
       "meals": {
-        "breakfast": {
-          "name": "Petit-déjeuner",
-          "description": "Repas matinal",
-          "calories": ${Math.round(targetCalories * 0.25)},
-          "protein": ${Math.round(targetCalories * 0.25 * 0.15 / 4)},
-          "carbs": ${Math.round(targetCalories * 0.25 * 0.55 / 4)},
-          "fat": ${Math.round(targetCalories * 0.25 * 0.30 / 9)},
-          "fiber": 5,
-          "prepTime": 10,
-          "cookTime": 5,
-          "ingredients": ["50g avoine", "200ml lait", "1 banane"],
-          "ingredientsNutrition": [
-            {"name": "avoine", "unit": "g", "caloriesPer100": 389, "proteinPer100": 16.9, "carbsPer100": 66.3, "fatPer100": 6.9, "fiberPer100": 10.6},
-            {"name": "lait", "unit": "ml", "caloriesPer100": 42, "proteinPer100": 3.4, "carbsPer100": 4.8, "fatPer100": 1.0, "fiberPer100": 0},
-            {"name": "banane", "unit": "piece", "caloriesPer100": 89, "proteinPer100": 1.1, "carbsPer100": 22.8, "fatPer100": 0.3, "fiberPer100": 2.6}
-          ],
-          "instructions": ["Mélanger", "Servir"],
-          "tags": ["petit-déjeuner"]
-        },
-        "lunch": {
-          "name": "Déjeuner",
-          "description": "Repas principal",
-          "calories": ${Math.round(targetCalories * 0.35)},
-          "protein": ${Math.round(targetCalories * 0.35 * 0.20 / 4)},
-          "carbs": ${Math.round(targetCalories * 0.35 * 0.50 / 4)},
-          "fat": ${Math.round(targetCalories * 0.35 * 0.30 / 9)},
-          "fiber": 8,
-          "prepTime": 15,
-          "cookTime": 10,
-          "ingredients": ["100g quinoa", "150g légumes", "15ml huile"],
-          "ingredientsNutrition": [
-            {"name": "quinoa", "unit": "g", "caloriesPer100": 368, "proteinPer100": 14.1, "carbsPer100": 64.2, "fatPer100": 6.1, "fiberPer100": 7.0},
-            {"name": "légumes", "unit": "g", "caloriesPer100": 25, "proteinPer100": 2.0, "carbsPer100": 5.0, "fatPer100": 0.2, "fiberPer100": 3.0},
-            {"name": "huile", "unit": "ml", "caloriesPer100": 884, "proteinPer100": 0, "carbsPer100": 0, "fatPer100": 100, "fiberPer100": 0}
-          ],
-          "instructions": ["Cuire", "Mélanger"],
-          "tags": ["déjeuner"]
-        },
-        "dinner": {
-          "name": "Dîner",
-          "description": "Repas du soir",
-          "calories": ${Math.round(targetCalories * 0.30)},
-          "protein": ${Math.round(targetCalories * 0.30 * 0.25 / 4)},
-          "carbs": ${Math.round(targetCalories * 0.30 * 0.45 / 4)},
-          "fat": ${Math.round(targetCalories * 0.30 * 0.30 / 9)},
-          "fiber": 6,
-          "prepTime": 10,
-          "cookTime": 15,
-          "ingredients": ["120g poisson", "200g légumes", "10ml huile"],
-          "ingredientsNutrition": [
-            {"name": "poisson", "unit": "g", "caloriesPer100": 150, "proteinPer100": 25, "carbsPer100": 0, "fatPer100": 5, "fiberPer100": 0},
-            {"name": "légumes", "unit": "g", "caloriesPer100": 25, "proteinPer100": 2.0, "carbsPer100": 5.0, "fatPer100": 0.2, "fiberPer100": 3.0},
-            {"name": "huile", "unit": "ml", "caloriesPer100": 884, "proteinPer100": 0, "carbsPer100": 0, "fatPer100": 100, "fiberPer100": 0}
-          ],
-          "instructions": ["Griller", "Servir"],
-          "tags": ["dîner"]
-        },
-        "snacks": [{"name": "Yaourt", "description": "Collation", "calories": ${Math.round(targetCalories * 0.10)}, "protein": 9, "carbs": 27, "fat": 4, "fiber": 3, "prepTime": 2, "cookTime": 0, "ingredients": ["150g yaourt", "20g noix"], "ingredientsNutrition": [{"name": "yaourt", "unit": "g", "caloriesPer100": 59, "proteinPer100": 10, "carbsPer100": 3.6, "fatPer100": 0.4, "fiberPer100": 0}, {"name": "noix", "unit": "g", "caloriesPer100": 654, "proteinPer100": 15.2, "carbsPer100": 13.7, "fatPer100": 65.2, "fiberPer100": 6.7}], "instructions": ["Mélanger"], "tags": ["collation"]}]
+        "breakfast": {"name": "PDJ", "description": "Matin", "calories": ${Math.round(targetCalories * 0.25)}, "protein": 17, "carbs": 62, "fat": 15, "fiber": 5, "prepTime": 5, "cookTime": 5, "ingredients": ["50g avoine", "200ml lait"], "ingredientsNutrition": [{"name": "avoine", "unit": "g", "caloriesPer100": 389, "proteinPer100": 16.9, "carbsPer100": 66.3, "fatPer100": 6.9, "fiberPer100": 10.6}, {"name": "lait", "unit": "ml", "caloriesPer100": 42, "proteinPer100": 3.4, "carbsPer100": 4.8, "fatPer100": 1.0, "fiberPer100": 0}], "instructions": ["Mélanger"], "tags": ["matin"]},
+        "lunch": {"name": "DEJ", "description": "Midi", "calories": ${Math.round(targetCalories * 0.35)}, "protein": 32, "carbs": 79, "fat": 21, "fiber": 8, "prepTime": 10, "cookTime": 10, "ingredients": ["100g quinoa", "150g légumes"], "ingredientsNutrition": [{"name": "quinoa", "unit": "g", "caloriesPer100": 368, "proteinPer100": 14.1, "carbsPer100": 64.2, "fatPer100": 6.1, "fiberPer100": 7.0}, {"name": "légumes", "unit": "g", "caloriesPer100": 25, "proteinPer100": 2.0, "carbsPer100": 5.0, "fatPer100": 0.2, "fiberPer100": 3.0}], "instructions": ["Cuire"], "tags": ["midi"]},
+        "dinner": {"name": "DIN", "description": "Soir", "calories": ${Math.round(targetCalories * 0.30)}, "protein": 34, "carbs": 61, "fat": 18, "fiber": 6, "prepTime": 10, "cookTime": 15, "ingredients": ["120g poisson", "200g légumes"], "ingredientsNutrition": [{"name": "poisson", "unit": "g", "caloriesPer100": 150, "proteinPer100": 25, "carbsPer100": 0, "fatPer100": 5, "fiberPer100": 0}, {"name": "légumes", "unit": "g", "caloriesPer100": 25, "proteinPer100": 2.0, "carbsPer100": 5.0, "fatPer100": 0.2, "fiberPer100": 3.0}], "instructions": ["Griller"], "tags": ["soir"]},
+        "snacks": [{"name": "Snack", "description": "Collation", "calories": ${Math.round(targetCalories * 0.10)}, "protein": 9, "carbs": 27, "fat": 4, "fiber": 3, "prepTime": 2, "cookTime": 0, "ingredients": ["150g yaourt"], "ingredientsNutrition": [{"name": "yaourt", "unit": "g", "caloriesPer100": 59, "proteinPer100": 10, "carbsPer100": 3.6, "fatPer100": 0.4, "fiberPer100": 0}], "instructions": ["Servir"], "tags": ["snack"]}]
       },
       "totalCalories": ${targetCalories},
-      "totalProtein": ${Math.round(targetCalories * 0.20 / 4)},
-      "totalCarbs": ${Math.round(targetCalories * 0.50 / 4)},
-      "totalFat": ${Math.round(targetCalories * 0.30 / 9)}
+      "totalProtein": 90,
+      "totalCarbs": 225,
+      "totalFat": 60
     }
   ]
 }
 
-Génère ${duration} jours identiques avec variations de repas:`;
+Répète pour ${duration} jours avec variations:`;
 
-    // Retry logic for incomplete generations
-    let generatedPlan;
-    let attempts = 0;
-    const maxAttempts = 3;
+      // Single request retry logic for short plans
+      let attempts = 0;
+      const maxAttempts = 3;
 
-    while (attempts < maxAttempts) {
-      attempts++;
-      console.log(`🤖 Attempt ${attempts}/${maxAttempts} to generate ${duration}-day meal plan...`);
-
-      try {
-        const result = await model.generateContent(enhancedPrompt);
-        const response = await result.response;
-        const text = response.text().trim();
-        
-        console.log(`📏 AI Response length: ${text.length} characters`);
-
-        // Clean and extract JSON from response
-        let jsonText = text.trim();
-        
-        // Remove markdown code blocks if present
-        jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-        
-        // Find JSON boundaries
-        const jsonStart = jsonText.indexOf("{");
-        const jsonEnd = jsonText.lastIndexOf("}");
-        
-        if (jsonStart === -1 || jsonEnd === -1) {
-          console.error(`Attempt ${attempts}: No valid JSON brackets found in response:`, text.substring(0, 200));
-          if (attempts === maxAttempts) throw new Error("No JSON found in response after all attempts");
-          continue;
-        }
-        
-        // Check if JSON appears to be truncated
-        const lastChars = text.substring(text.length - 10);
-        if (!lastChars.includes('}') && !lastChars.includes(']')) {
-          console.error(`Attempt ${attempts}: Response appears truncated. Last 10 chars: "${lastChars}"`);
-          if (attempts === maxAttempts) throw new Error("AI response truncated - try shorter prompt");
-          continue;
-        }
-        
-        // Extract JSON content
-        jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
-        
-        // Clean up common JSON issues
-        jsonText = jsonText
-          .replace(/,\s*}/g, '}')  // Remove trailing commas before closing braces
-          .replace(/,\s*]/g, ']')  // Remove trailing commas before closing brackets
-          .replace(/\/\*[^*]*\*\//g, '')  // Remove /* comments */
-          .replace(/\/\/.*$/gm, '');  // Remove // comments
+      while (attempts < maxAttempts) {
+        attempts++;
+        console.log(`🤖 Attempt ${attempts}/${maxAttempts} for short plan...`);
 
         try {
-          generatedPlan = JSON.parse(jsonText);
-        } catch (parseError) {
-          console.error(`Attempt ${attempts}: JSON parsing error:`, parseError);
-          console.error("Attempted to parse:", jsonText.substring(0, 500));
-          if (attempts === maxAttempts) throw new Error("Invalid JSON response from AI after all attempts");
-          continue;
-        }
-
-        // Enhanced validation
-        if (
-          !generatedPlan.name ||
-          !generatedPlan.days ||
-          !Array.isArray(generatedPlan.days) ||
-          generatedPlan.days.length !== duration
-        ) {
-          console.error(`Attempt ${attempts}: Invalid structure:`, {
-            hasName: !!generatedPlan.name,
-            hasDays: !!generatedPlan.days,
-            isArray: Array.isArray(generatedPlan.days),
-            daysCount: generatedPlan.days?.length,
-            expectedDays: duration
-          });
+          const result = await model.generateContent(enhancedPrompt);
+          const response = await result.response;
+          const text = response.text().trim();
           
-          if (attempts === maxAttempts) {
-            throw new Error(`Invalid meal plan structure after ${maxAttempts} attempts - AI generated ${generatedPlan.days?.length || 0} days instead of ${duration}`);
+          console.log(`📏 Short plan response length: ${text.length} characters`);
+
+          // Clean and extract JSON
+          let jsonText = text.trim();
+          jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+          
+          const jsonStart = jsonText.indexOf("{");
+          const jsonEnd = jsonText.lastIndexOf("}");
+          
+          if (jsonStart === -1 || jsonEnd === -1) {
+            console.error(`Short plan attempt ${attempts}: No valid JSON found`);
+            if (attempts === maxAttempts) throw new Error("No JSON found after all attempts");
+            continue;
           }
-          continue;
-        }
+          
+          jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
+          jsonText = jsonText
+            .replace(/,\s*}/g, '}')
+            .replace(/,\s*]/g, ']')
+            .replace(/\/\*[^*]*\*\//g, '')
+            .replace(/\/\/.*$/gm, '');
 
-        // Validate each day has the required structure
-        let dayValidationFailed = false;
-        for (let i = 0; i < generatedPlan.days.length; i++) {
-          const day = generatedPlan.days[i];
-          if (!day.meals || !day.meals.breakfast || !day.meals.lunch || !day.meals.dinner) {
-            console.error(`Attempt ${attempts}: Day ${i + 1} is missing required meals`);
-            dayValidationFailed = true;
-            break;
+          generatedPlan = JSON.parse(jsonText);
+          
+          // Validate structure
+          if (!generatedPlan.name || !generatedPlan.days || !Array.isArray(generatedPlan.days) || generatedPlan.days.length !== duration) {
+            console.error(`Short plan attempt ${attempts}: Invalid structure`);
+            if (attempts === maxAttempts) throw new Error("Invalid structure after all attempts");
+            continue;
           }
-        }
 
-        if (dayValidationFailed) {
-          if (attempts === maxAttempts) {
-            throw new Error(`Day structure validation failed after ${maxAttempts} attempts`);
-          }
-          continue;
-        }
+          console.log(`✅ Short plan successful on attempt ${attempts}`);
+          break;
 
-        // If we reach here, generation was successful
-        console.log(`✅ Successfully generated ${duration}-day meal plan on attempt ${attempts}`);
-        break;
-
-      } catch (error) {
-        console.error(`Attempt ${attempts} failed:`, error);
-        if (attempts === maxAttempts) {
-          throw error;
+        } catch (error) {
+          console.error(`Short plan attempt ${attempts} failed:`, error.message);
+          if (attempts === maxAttempts) throw error;
+          await new Promise(resolve => setTimeout(resolve, 1000));
         }
-        // Wait a bit before retry
-        await new Promise(resolve => setTimeout(resolve, 1000));
       }
     }
 
