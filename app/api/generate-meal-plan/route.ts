@@ -75,67 +75,28 @@ export async function POST(request: NextRequest) {
     // Generate meal plan using Gemini
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-    const enhancedPrompt = `
-Tu es un diététicien-nutritionniste professionnel expert. Crée un plan alimentaire détaillé en français.
+    const enhancedPrompt = `Tu es un nutritionniste expert. Crée un plan alimentaire en français.
 
 DEMANDE: ${prompt}
+DURÉE: ${duration} jours
+CALORIES: ${targetCalories} par jour
+TYPE: ${dietType}
+RESTRICTIONS: ${restrictions.length > 0 ? restrictions.join(", ") : "Aucune"}
 
-CONTRAINTES ABSOLUES:
-- Durée: EXACTEMENT ${duration} jours (tous les jours obligatoires)
-- Objectif calorique: ${targetCalories} calories par jour (±100 calories maximum)
-- Type de régime: ${dietType}
-- Objectifs: ${goals || "Équilibre nutritionnel général"}
-- Restrictions: ${restrictions.length > 0 ? restrictions.join(", ") : "Aucune"}
+RÈGLES ABSOLUES:
+1. RÉPONSE UNIQUEMENT EN JSON VALIDE - AUCUN TEXTE
+2. GÉNÈRE EXACTEMENT ${duration} JOURS
+3. CHAQUE REPAS DOIT AVOIR ingredientsNutrition avec les macros
 
-🚨 RÈGLES CRITIQUES - ÉCHEC = REJET COMPLET:
-1. RÉPONSE UNIQUEMENT EN JSON VALIDE - AUCUN TEXTE AVANT OU APRÈS
-2. ⚠️ OBLIGATION ABSOLUE: GÉNÈRE EXACTEMENT ${duration} JOURS COMPLETS - JAMAIS MOINS ⚠️
-3. LE TABLEAU "days" DOIT CONTENIR EXACTEMENT ${duration} ÉLÉMENTS
-4. CHAQUE JOUR DOIT AVOIR day: 1, day: 2, ... jusqu'à day: ${duration}
-5. CALCULS NUTRITIONNELS EXACTS:
-   - Protéines: 4 calories par gramme
-   - Glucides: 4 calories par gramme
-   - Lipides: 9 calories par gramme
-   - Vérifier que protéines(g)×4 + glucides(g)×4 + lipides(g)×9 = calories totales
-6. POURCENTAGES NUTRITIONNELS COHÉRENTS:
-   - Si 100g protéines = 400 calories sur 2000 calories totales = 20%
-   - Vérifier: protéines% + glucides% + lipides% = 100%
-7. TOUS LES CHAMPS OBLIGATOIRES - AUCUN CHAMP VIDE
-8. ⚠️ CHAQUE REPAS DOIT OBLIGATOIREMENT INCLURE:
-   - ingredients: LISTE DÉTAILLÉE avec grammes exacts (ex: "80g flocons d'avoine")
-   - ingredientsNutrition: MACROS POUR CHAQUE INGRÉDIENT (voir format ci-dessous)
-   - calories, protein, carbs, fat: VALEURS NUMÉRIQUES OBLIGATOIRES
-   - instructions: ÉTAPES DE PRÉPARATION CLAIRES
-   - Un repas SANS ingrédients ou SANS macros = REJET
-9. ⚠️ FORMAT OBLIGATOIRE POUR ingredientsNutrition:
-   Chaque ingrédient DOIT avoir ses valeurs nutritionnelles pour 100g/100ml/1 pièce:
-   "ingredientsNutrition": [
-     {
-       "name": "flocons d'avoine",
-       "unit": "g",
-       "caloriesPer100": 389,
-       "proteinPer100": 16.9,
-       "carbsPer100": 66.3,
-       "fatPer100": 6.9,
-       "fiberPer100": 10.6
-     }
-   ]
-
-⚠️ VÉRIFICATION OBLIGATOIRE AVANT ENVOI:
-- Compter les jours dans le tableau: doit être exactement ${duration}
-- Si moins de ${duration} jours: RECOMMENCER ENTIÈREMENT
-- Si plus de ${duration} jours: GARDER SEULEMENT LES ${duration} PREMIERS
-- SNACKS DOIT TOUJOURS ÊTRE UN TABLEAU: "snacks": [...] - JAMAIS UN OBJET SIMPLE
-
-EXEMPLE DE STRUCTURE JSON:
+FORMAT JSON OBLIGATOIRE:
 {
-  "name": "Plan Méditerranéen 7 jours",
-  "description": "Plan équilibré inspiré du régime méditerranéen",
-  "totalDays": 7,
-  "averageCaloriesPerDay": 1800,
+  "name": "Plan X jours",
+  "description": "Description du plan",
+  "totalDays": ${duration},
+  "averageCaloriesPerDay": ${targetCalories},
   "nutritionSummary": {
     "protein": "25%",
-    "carbohydrates": "45%", 
+    "carbohydrates": "45%",
     "fat": "30%"
   },
   "days": [
@@ -144,22 +105,16 @@ EXEMPLE DE STRUCTURE JSON:
       "date": "2024-01-15",
       "meals": {
         "breakfast": {
-          "name": "Porridge aux fruits",
-          "description": "Avoine complète avec fruits frais",
-          "calories": 350,
-          "protein": 12,
-          "carbs": 58,
-          "fat": 8,
-          "fiber": 6,
+          "name": "Nom du repas",
+          "description": "Description",
+          "calories": 400,
+          "protein": 15,
+          "carbs": 50,
+          "fat": 12,
+          "fiber": 8,
           "prepTime": 10,
           "cookTime": 5,
-          "ingredients": [
-            "80g flocons d'avoine",
-            "250ml lait demi-écrémé",
-            "1 banane moyenne",
-            "50g myrtilles",
-            "1 cuillère à soupe miel"
-          ],
+          "ingredients": ["80g flocons d'avoine", "250ml lait"],
           "ingredientsNutrition": [
             {
               "name": "flocons d'avoine",
@@ -169,120 +124,24 @@ EXEMPLE DE STRUCTURE JSON:
               "carbsPer100": 66.3,
               "fatPer100": 6.9,
               "fiberPer100": 10.6
-            },
-            {
-              "name": "lait demi-écrémé",
-              "unit": "ml",
-              "caloriesPer100": 46,
-              "proteinPer100": 3.4,
-              "carbsPer100": 4.8,
-              "fatPer100": 1.5,
-              "fiberPer100": 0
-            },
-            {
-              "name": "banane",
-              "unit": "piece",
-              "caloriesPer100": 89,
-              "proteinPer100": 1.1,
-              "carbsPer100": 22.8,
-              "fatPer100": 0.3,
-              "fiberPer100": 2.6
             }
           ],
-          "instructions": [
-            "Faire chauffer le lait dans une casserole",
-            "Ajouter les flocons d'avoine et cuire 5 minutes",
-            "Couper la banane en rondelles",
-            "Servir avec les fruits et le miel"
-          ],
-          "tags": ["petit-déjeuner", "fibres", "antioxydants"]
+          "instructions": ["Étape 1", "Étape 2"],
+          "tags": ["petit-déjeuner"]
         },
-        "lunch": {
-          "name": "Salade quinoa légumes",
-          "description": "Salade complète au quinoa et légumes frais",
-          "calories": 420,
-          "protein": 18,
-          "carbs": 52,
-          "fat": 14,
-          "fiber": 8,
-          "prepTime": 15,
-          "cookTime": 12,
-          "ingredients": [
-            "100g quinoa cuit",
-            "150g pois chiches",
-            "1 tomate moyenne",
-            "1/2 concombre",
-            "50g feta",
-            "2 cuillères à soupe huile d'olive"
-          ],
-          "instructions": [
-            "Cuire le quinoa selon les instructions",
-            "Couper les légumes en dés",
-            "Mélanger tous les ingrédients",
-            "Assaisonner avec l'huile d'olive"
-          ],
-          "tags": ["déjeuner", "protéines végétales", "méditerranéen"]
-        },
-        "dinner": {
-          "name": "Saumon grillé brocolis",
-          "description": "Filet de saumon avec légumes vapeur",
-          "calories": 380,
-          "protein": 32,
-          "carbs": 12,
-          "fat": 22,
-          "fiber": 4,
-          "prepTime": 10,
-          "cookTime": 15,
-          "ingredients": [
-            "120g filet de saumon",
-            "200g brocolis",
-            "1 cuillère à soupe huile d'olive",
-            "1 citron",
-            "Herbes de Provence"
-          ],
-          "instructions": [
-            "Préchauffer le four à 200°C",
-            "Cuire le saumon 12 minutes",
-            "Cuire les brocolis à la vapeur",
-            "Arroser de citron et huile d'olive"
-          ],
-          "tags": ["dîner", "oméga-3", "protéines"]
-        },
-        "snacks": [
-          {
-            "name": "Yaourt aux noix",
-            "description": "Yaourt grec avec noix et miel",
-            "calories": 180,
-            "protein": 15,
-            "carbs": 12,
-            "fat": 8,
-            "fiber": 1,
-            "prepTime": 2,
-            "cookTime": 0,
-            "ingredients": [
-              "150g yaourt grec nature",
-              "20g noix",
-              "1 cuillère à café miel"
-            ],
-            "instructions": [
-              "Mélanger le yaourt avec le miel",
-              "Ajouter les noix concassées"
-            ],
-            "tags": ["collation", "probiotiques", "protéines"]
-          }
-        ]
+        "lunch": { /* même structure */ },
+        "dinner": { /* même structure */ },
+        "snacks": [{ /* même structure que breakfast */ }]
       },
-      "totalCalories": 1330,
-      "totalProtein": 77,
-      "totalCarbs": 134,
-      "totalFat": 52
+      "totalCalories": ${targetCalories},
+      "totalProtein": 150,
+      "totalCarbs": 200,
+      "totalFat": 80
     }
   ]
 }
 
-Génère maintenant le plan alimentaire complet selon ces spécifications.
-
-COMMENCE TA RÉPONSE DIRECTEMENT PAR { ET TERMINE PAR }`;
+GÉNÈRE LE JSON COMPLET MAINTENANT:`;
 
     // Retry logic for incomplete generations
     let generatedPlan;
@@ -298,32 +157,37 @@ COMMENCE TA RÉPONSE DIRECTEMENT PAR { ET TERMINE PAR }`;
         const response = await result.response;
         const text = response.text().trim();
 
-        // Try to extract and clean JSON from the response
-        let jsonText = text;
+        // Clean and extract JSON from response
+        let jsonText = text.trim();
         
-        // Remove any text before first {
-        let jsonStart = text.indexOf("{");
-        if (jsonStart > 0) {
-          jsonText = text.substring(jsonStart);
-        }
+        // Remove markdown code blocks if present
+        jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
         
-        // Remove any text after last }
-        let jsonEnd = jsonText.lastIndexOf("}");
-        if (jsonEnd !== -1 && jsonEnd < jsonText.length - 1) {
-          jsonText = jsonText.substring(0, jsonEnd + 1);
-        }
-
-        if (jsonStart === -1) {
-          console.error(`Attempt ${attempts}: No JSON found in AI response:`, text);
+        // Find JSON boundaries
+        const jsonStart = jsonText.indexOf("{");
+        const jsonEnd = jsonText.lastIndexOf("}");
+        
+        if (jsonStart === -1 || jsonEnd === -1) {
+          console.error(`Attempt ${attempts}: No valid JSON brackets found in response:`, text.substring(0, 200));
           if (attempts === maxAttempts) throw new Error("No JSON found in response after all attempts");
           continue;
         }
+        
+        // Extract JSON content
+        jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
+        
+        // Clean up common JSON issues
+        jsonText = jsonText
+          .replace(/,\s*}/g, '}')  // Remove trailing commas before closing braces
+          .replace(/,\s*]/g, ']')  // Remove trailing commas before closing brackets
+          .replace(/\/\*[^*]*\*\//g, '')  // Remove /* comments */
+          .replace(/\/\/.*$/gm, '');  // Remove // comments
 
         try {
           generatedPlan = JSON.parse(jsonText);
         } catch (parseError) {
           console.error(`Attempt ${attempts}: JSON parsing error:`, parseError);
-          console.error("Attempted to parse:", jsonText);
+          console.error("Attempted to parse:", jsonText.substring(0, 500));
           if (attempts === maxAttempts) throw new Error("Invalid JSON response from AI after all attempts");
           continue;
         }
