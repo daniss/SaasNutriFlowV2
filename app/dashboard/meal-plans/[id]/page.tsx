@@ -1704,14 +1704,40 @@ export default function MealPlanDetailPage() {
           dayData={currentEditDay}
           dayNumber={editDayNumber}
           onOpenFoodSearch={(mealId, day) => {
-            // For dynamic meals, we'll use the meal ID as the slot identifier
-            setFoodSearchSlot(mealId as any)
+            // Map dynamic meal types to legacy slot names for food modals
+            const mealType = currentEditDay?.meals?.find(m => m.id === mealId)?.name
+            let slot: "breakfast"|"lunch"|"dinner"|"snacks" = "breakfast"
+            
+            if (mealType?.includes("déjeuner") || mealType?.includes("Petit-déjeuner")) {
+              slot = "breakfast"
+            } else if (mealType?.includes("Déjeuner")) {
+              slot = "lunch"  
+            } else if (mealType?.includes("Dîner")) {
+              slot = "dinner"
+            } else {
+              slot = "snacks"
+            }
+            
+            setFoodSearchSlot(slot)
             setFoodSearchDay(day)
             setFoodSearchOpen(true)
           }}
           onOpenManualFood={(mealId, day) => {
-            // For dynamic meals, we'll use the meal ID as the slot identifier  
-            setManualFoodSlot(mealId as any)
+            // Map dynamic meal types to legacy slot names for food modals
+            const mealType = currentEditDay?.meals?.find(m => m.id === mealId)?.name
+            let slot: "breakfast"|"lunch"|"dinner"|"snacks" = "breakfast"
+            
+            if (mealType?.includes("déjeuner") || mealType?.includes("Petit-déjeuner")) {
+              slot = "breakfast"
+            } else if (mealType?.includes("Déjeuner")) {
+              slot = "lunch"  
+            } else if (mealType?.includes("Dîner")) {
+              slot = "dinner"
+            } else {
+              slot = "snacks"
+            }
+            
+            setManualFoodSlot(slot)
             setManualFoodDay(day)
             setManualFoodOpen(true)
           }}
