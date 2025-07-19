@@ -42,8 +42,11 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
-        console.log("🔐 User signed in, checking MFA requirements");
-        await checkAuthenticatorAssuranceLevel();
+        console.log("🔐 User signed in, waiting before checking MFA requirements to avoid race conditions");
+        // Small delay to let Supabase fully process the authentication state
+        setTimeout(async () => {
+          await checkAuthenticatorAssuranceLevel();
+        }, 500); // Give Supabase time to settle
       } else if (event === "SIGNED_OUT") {
         resetState();
       }
@@ -106,30 +109,46 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
       setCurrentLevel(currentAAL);
       setNextLevel(nextAAL);
 
-      // Only require MFA verification if:
-      // 1. NextLevel is aal2 (MFA is expected)
-      // 2. CurrentLevel is not aal2 (not verified in this session)
-      // 3. There are actually verified TOTP factors configured
-      const needsMFAVerification = nextAAL === "aal2" && currentAAL !== nextAAL && hasVerifiedTOTP;
+      // STRICT LOGIC: Only require MFA verification if:
+      // 1. NextLevel is aal2 (Supabase thinks MFA should be required)
+      // 2. CurrentLevel is not aal2 (not verified in this session)  
+      // 3. There are actually verified TOTP factors configured (CRITICAL CHECK)
+      // 4. More than 0 verified factors exist (DOUBLE CHECK)
+      const supabaseExpectsMFA = nextAAL === "aal2";
+      const sessionNotVerified = currentAAL !== nextAAL;
+      const hasActualVerifiedFactors = hasVerifiedTOTP && verifiedFactors.length > 0;
+      const needsMFAVerification = supabaseExpectsMFA && sessionNotVerified && hasActualVerifiedFactors;
 
-      console.log("🔐 Enhanced AAL Check:", {
+      console.log("🔐 DETAILED AAL CHECK:", {
         currentLevel: currentAAL,
         nextLevel: nextAAL,
+        supabaseExpectsMFA,
+        sessionNotVerified,
         hasVerifiedTOTP,
         verifiedFactorsCount: verifiedFactors.length,
+        hasActualVerifiedFactors,
         needsMFAVerification,
+        totalFactors: totpFactors.length,
         userId: user.id,
+        factorDetails: totpFactors.map(f => ({ id: f.id, status: f.status, name: f.friendly_name })),
       });
 
       if (needsMFAVerification) {
+        console.log("🔐 SHOWING TOTP DIALOG - All conditions met for MFA verification");
         setIsRequired(true);
         setIsVerified(false);
         setShowVerification(true);
       } else {
-        // If nextLevel is aal2 but no verified factors, allow access but log warning
-        if (nextAAL === "aal2" && !hasVerifiedTOTP) {
-          console.warn("🔐 Warning: MFA expected but no verified TOTP factors found. Allowing access.");
+        // Handle different scenarios with specific logging
+        if (supabaseExpectsMFA && !hasActualVerifiedFactors) {
+          console.warn("🔐 BYPASSING MFA: Supabase expects MFA but no verified factors exist");
+          console.warn("🔐 This suggests AAL state inconsistency - allowing access");
+        } else if (!supabaseExpectsMFA) {
+          console.log("🔐 NO MFA REQUIRED: Supabase AAL doesn't expect MFA");
+        } else if (!sessionNotVerified) {
+          console.log("🔐 ALREADY VERIFIED: Session already has aal2 level");
         }
+        
         setIsRequired(false);
         setIsVerified(true);
         setShowVerification(false);
@@ -162,8 +181,11 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
       <TOTPVerificationDialog
         onVerificationSuccess={completeTwoFactor}
         onCancel={() => {
-          // Force user to sign out if they cannot complete MFA
-          supabase.auth.signOut();
+          // Allow access if TOTP dialog called onCancel - this means no verified factors exist
+          console.log("🔐 TOTP verification cancelled - allowing access without MFA");
+          setShowVerification(false);
+          setIsRequired(false);
+          setIsVerified(true);
         }}
       />
     );

@@ -45,14 +45,15 @@ export function TOTPVerificationDialog({
     if (verifiedFactors.length > 0) {
       initializeChallenge();
     } else {
-      // This should not happen with the fixed TwoFactorProvider, but defensive programming
-      console.error("🔐 TOTP Dialog shown without verified factors - this should not happen!");
-      setError("Configuration TOTP invalide. Déconnexion pour sécurité...");
+      // Gracefully handle case where dialog shown without verified factors
+      console.warn("🔐 TOTP Dialog shown without verified factors - calling onCancel to exit gracefully");
+      setError("Aucune méthode de vérification disponible");
+      // Don't force logout - let parent handle this gracefully
       setTimeout(() => {
-        supabase.auth.signOut();
-      }, 2000);
+        onCancel(); // Let TwoFactorProvider handle this
+      }, 1000);
     }
-  }, [status.loading, status.factors]);
+  }, [status.loading, status.factors, onCancel]);
 
   const initializeChallenge = async () => {
     setLoading(true);
