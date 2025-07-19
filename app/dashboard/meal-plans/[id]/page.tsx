@@ -120,11 +120,13 @@ export default function MealPlanDetailPage() {
   const [foodSearchOpen, setFoodSearchOpen] = useState(false)
   const [foodSearchSlot, setFoodSearchSlot] = useState<"breakfast"|"lunch"|"dinner"|"snacks">("breakfast")
   const [foodSearchDay, setFoodSearchDay] = useState(1)
+  const [foodSearchMealId, setFoodSearchMealId] = useState<string | null>(null)
   
   // Manual food modal state
   const [manualFoodOpen, setManualFoodOpen] = useState(false)
   const [manualFoodSlot, setManualFoodSlot] = useState<"breakfast"|"lunch"|"dinner"|"snacks">("breakfast")
   const [manualFoodDay, setManualFoodDay] = useState(1)
+  const [manualFoodMealId, setManualFoodMealId] = useState<string | null>(null)
   interface SelectedFood {
     id: string
     name_fr: string
@@ -1650,17 +1652,12 @@ export default function MealPlanDetailPage() {
               mealSlot={foodSearchSlot}
               day={foodSearchDay}
               onSelectFood={food => {
-                setSelectedFoods(prev => ({
-                  ...prev,
-                  [foodSearchDay]: {
-                    ...prev[foodSearchDay],
-                    [foodSearchSlot]: [
-                      ...(prev[foodSearchDay]?.[foodSearchSlot] || []),
-                      food
-                    ]
-                  }
-                }))
+                // For now, just show a toast to confirm the button works
+                console.log('Food selected:', food, 'for meal:', foodSearchMealId)
                 setFoodSearchOpen(false)
+                
+                // TODO: Implement proper food storage for dynamic meals
+                alert(`Food selected: ${food.name_fr} for meal ID: ${foodSearchMealId}`)
               }}
             />
             <ManualFoodModal
@@ -1669,17 +1666,12 @@ export default function MealPlanDetailPage() {
               mealSlot={manualFoodSlot}
               day={manualFoodDay}
               onAddFood={food => {
-                setSelectedFoods(prev => ({
-                  ...prev,
-                  [manualFoodDay]: {
-                    ...prev[manualFoodDay],
-                    [manualFoodSlot]: [
-                      ...(prev[manualFoodDay]?.[manualFoodSlot] || []),
-                      food
-                    ]
-                  }
-                }))
+                // For now, just show a toast to confirm the button works
+                console.log('Manual food added:', food, 'for meal:', manualFoodMealId)
                 setManualFoodOpen(false)
+                
+                // TODO: Implement proper food storage for dynamic meals
+                alert(`Manual food added: ${food.name_fr} for meal ID: ${manualFoodMealId}`)
               }}
             />
             <DialogFooter>
@@ -1720,6 +1712,7 @@ export default function MealPlanDetailPage() {
             
             setFoodSearchSlot(slot)
             setFoodSearchDay(day)
+            setFoodSearchMealId(mealId)
             setFoodSearchOpen(true)
           }}
           onOpenManualFood={(mealId, day) => {
@@ -1739,6 +1732,7 @@ export default function MealPlanDetailPage() {
             
             setManualFoodSlot(slot)
             setManualFoodDay(day)
+            setManualFoodMealId(mealId)
             setManualFoodOpen(true)
           }}
         />
