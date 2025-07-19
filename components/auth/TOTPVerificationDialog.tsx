@@ -12,7 +12,8 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useSupabaseTOTP } from "@/hooks/useSupabaseTOTP";
-import { AlertTriangle, Shield, Smartphone } from "lucide-react";
+import { createClient } from "@/lib/supabase/client";
+import { AlertTriangle, Shield, Smartphone, LogOut } from "lucide-react";
 import { useEffect, useState } from "react";
 
 interface TOTPVerificationDialogProps {
@@ -25,6 +26,7 @@ export function TOTPVerificationDialog({
   onCancel,
 }: TOTPVerificationDialogProps) {
   const { challengeTOTP, verifyTOTPChallenge, status } = useSupabaseTOTP();
+  const supabase = createClient();
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
@@ -92,6 +94,12 @@ export function TOTPVerificationDialog({
   };
 
   const verifiedFactors = status.factors.filter(f => f.status === "verified");
+
+  const handleLogout = async () => {
+    setLoading(true);
+    await supabase.auth.signOut();
+    // The parent component will handle the navigation
+  };
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-cyan-50 p-4">
@@ -171,12 +179,13 @@ export function TOTPVerificationDialog({
             </Button>
 
             <Button
-              variant="ghost"
-              onClick={onCancel}
+              variant="outline"
+              onClick={handleLogout}
               disabled={loading}
-              className="w-full text-gray-600 hover:text-gray-800"
+              className="w-full text-gray-600 hover:text-gray-800 border-gray-300"
             >
-              Continuer sans vérification
+              <LogOut className="h-4 w-4 mr-2" />
+              Se déconnecter
             </Button>
           </div>
 
@@ -184,8 +193,8 @@ export function TOTPVerificationDialog({
           <Alert>
             <AlertTriangle className="h-4 w-4" />
             <AlertDescription className="text-xs">
-              Pour votre sécurité, certaines fonctionnalités peuvent être limitées 
-              sans vérification MFA.
+              La vérification MFA est obligatoire pour accéder à votre compte.
+              Votre sécurité est notre priorité.
             </AlertDescription>
           </Alert>
         </CardContent>

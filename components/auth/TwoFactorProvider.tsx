@@ -139,10 +139,8 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
       <TOTPVerificationDialog
         onVerificationSuccess={completeTwoFactor}
         onCancel={() => {
-          // Allow user to cancel and continue with reduced security
-          setShowVerification(false);
-          setIsRequired(false);
-          setIsVerified(true);
+          // Force user to sign out if they cannot complete MFA
+          supabase.auth.signOut();
         }}
       />
     );
