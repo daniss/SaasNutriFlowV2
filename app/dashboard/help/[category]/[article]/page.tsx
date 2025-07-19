@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Clock, Eye, ThumbsUp, ThumbsDown, Share2, Bookmark, BookmarkCheck } from "lucide-react";
 import Link from "next/link";
@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { getCategoryById, getArticleById, getPopularArticles } from "@/lib/help-content";
+import { getCategoryById, getArticleById, getPopularArticles, voteOnArticle } from "@/lib/help-content-api";
 import ReactMarkdown from "react-markdown";
 
 const difficultyColors = {
@@ -32,10 +32,59 @@ export default function ArticlePage() {
   
   const [isBookmarked, setIsBookmarked] = useState(false);
   const [hasVoted, setHasVoted] = useState<'up' | 'down' | null>(null);
-  
-  const category = getCategoryById(categoryId);
-  const article = getArticleById(articleId);
-  const popularArticles = getPopularArticles(4);
+  const [category, setCategory] = useState<any>(null);
+  const [article, setArticle] = useState<any>(null);
+  const [popularArticles, setPopularArticles] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadData = async () => {
+      try {
+        const [categoryData, articleData, popularData] = await Promise.all([
+          getCategoryById(categoryId),
+          getArticleById(articleId),
+          getPopularArticles(4)
+        ]);
+        
+        setCategory(categoryData);
+        setArticle(articleData);
+        setPopularArticles(popularData);
+      } catch (error) {
+        console.error('Error loading article data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadData();
+  }, [categoryId, articleId]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-6xl">
+        <div className="grid lg:grid-cols-4 gap-8">
+          <div className="lg:col-span-3">
+            <div className="space-y-6">
+              <div className="h-8 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-12 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-6 bg-gray-200 rounded animate-pulse w-3/4"></div>
+              <div className="space-y-4">
+                {[...Array(10)].map((_, i) => (
+                  <div key={i} className="h-4 bg-gray-200 rounded animate-pulse"></div>
+                ))}
+              </div>
+            </div>
+          </div>
+          <div className="lg:col-span-1">
+            <div className="space-y-6">
+              <div className="h-64 bg-gray-200 rounded animate-pulse"></div>
+              <div className="h-48 bg-gray-200 rounded animate-pulse"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!category || !article) {
     return (
@@ -63,7 +112,7 @@ export default function ArticlePage() {
     });
   };
 
-  const handleVote = (type: 'up' | 'down') => {
+  const handleVote = async (type: 'up' | 'down') => {
     if (hasVoted === type) {
       setHasVoted(null);
       toast({
@@ -71,13 +120,30 @@ export default function ArticlePage() {
         description: "Votre évaluation a été retirée"
       });
     } else {
-      setHasVoted(type);
-      toast({
-        title: type === 'up' ? "Merci !" : "Merci pour votre retour",
-        description: type === 'up' 
-          ? "Votre évaluation positive nous aide à améliorer nos contenus"
-          : "Nous allons améliorer cet article grâce à votre retour"
-      });
+      try {
+        const success = await voteOnArticle(articleId, type);
+        if (success) {
+          setHasVoted(type);
+          toast({
+            title: type === 'up' ? "Merci !" : "Merci pour votre retour",
+            description: type === 'up' 
+              ? "Votre évaluation positive nous aide à améliorer nos contenus"
+              : "Nous allons améliorer cet article grâce à votre retour"
+          });
+        } else {
+          toast({
+            title: "Erreur",
+            description: "Impossible d'enregistrer votre vote. Veuillez réessayer.",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        toast({
+          title: "Erreur",
+          description: "Une erreur est survenue. Veuillez réessayer.",
+          variant: "destructive"
+        });
+      }
     }
   };
 
@@ -157,8 +223,8 @@ export default function ArticlePage() {
                 <Eye className="h-4 w-4" />
                 {article.views || 0} vues
               </div>
-              <Badge className={difficultyColors[article.difficulty]} variant="secondary">
-                {difficultyLabels[article.difficulty]}
+              <Badge className={difficultyColors[article.difficulty as keyof typeof difficultyColors]} variant="secondary">
+                {difficultyLabels[article.difficulty as keyof typeof difficultyLabels]}
               </Badge>
               {article.featured && (
                 <Badge className="bg-amber-100 text-amber-800 border-amber-200">
@@ -170,7 +236,7 @@ export default function ArticlePage() {
 
             {/* Tags */}
             <div className="flex flex-wrap gap-2 mb-6">
-              {article.tags.map((tag) => (
+              {article.tags.map((tag: string) => (
                 <Badge key={tag} variant="outline" className="text-xs">
                   {tag}
                 </Badge>
@@ -325,9 +391,9 @@ export default function ArticlePage() {
                     Poser une question
                   </Button>
                 </Link>
-                <a href="mailto:support@nutriflow.fr">
+                <a href="mailto:contact@nutri-flow.me">
                   <Button variant="outline" className="w-full border-emerald-300 text-emerald-700 hover:bg-emerald-50">
-                    Email: support@nutriflow.fr
+                    Email: contact@nutri-flow.me
                   </Button>
                 </a>
               </CardContent>
