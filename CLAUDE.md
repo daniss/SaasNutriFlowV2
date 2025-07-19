@@ -312,3 +312,31 @@ STRIPE_WEBHOOK_SECRET=             # For payment webhooks
 - Environment variables in Vercel dashboard
 - Database migrations via Supabase dashboard
 - Monitor for RLS policy violations
+
+## Workflow Guidelines
+
+### Confirmation Before Commit
+**IMPORTANT**: Always follow this workflow when completing tasks:
+
+1. **Complete the requested work** (implement features, fix bugs, etc.)
+2. **Summarize what was accomplished** with a clear list of:
+   - New functionality added
+   - Changes made to existing features
+   - Files modified or created
+   - Any breaking changes or important notes
+3. **Ask for confirmation** with "Is this OK?" or similar
+4. **Wait for user approval** (user responds with "ok", "yes", "looks good", etc.)
+5. **Only then commit and push** the changes
+
+**Example workflow:**
+```
+✅ Completed: Added user authentication system
+- New login/signup pages with validation
+- JWT token management
+- Protected route middleware
+- Updated 3 components, created 2 new files
+
+Is this OK to commit and push?
+```
+
+This ensures no changes are committed without explicit approval and gives the user a chance to request modifications before finalizing the work.
