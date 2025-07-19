@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
-import { X, Plus, Clock } from "lucide-react"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { X, Plus, Clock, Info } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { MealSlot, DynamicMealPlanDay, generateMealId } from "@/lib/meal-plan-types"
 
@@ -154,6 +155,34 @@ export function DynamicMealEditDialog({
       return
     }
 
+    // Check for duplicate meal types
+    const duplicateMealTypes = enabledMeals
+      .reduce((acc, meal, index) => {
+        const existing = acc.find(item => item.name === meal.name)
+        if (existing) {
+          return acc.map(item => 
+            item.name === meal.name 
+              ? { ...item, indices: [...item.indices, index + 1] }
+              : item
+          )
+        }
+        return [...acc, { name: meal.name, indices: [index + 1] }]
+      }, [] as { name: string; indices: number[] }[])
+      .filter(item => item.indices.length > 1)
+
+    if (duplicateMealTypes.length > 0) {
+      const duplicatesList = duplicateMealTypes
+        .map(item => `"${item.name}" (repas ${item.indices.join(', ')})`)
+        .join(', ')
+      
+      toast({
+        title: "Types de repas en double",
+        description: `Chaque type de repas ne peut être utilisé qu'une fois par jour. Doublons détectés: ${duplicatesList}`,
+        variant: "destructive",
+      })
+      return
+    }
+
     onSave(editData)
     onClose()
   }
@@ -163,14 +192,52 @@ export function DynamicMealEditDialog({
     "Dîner", "Collation soir", "Pré-entraînement", "Post-entraînement"
   ]
 
+  // Helper function to get available meal types (excluding already used ones)
+  const getAvailableMealTypes = (currentMealIndex: number) => {
+    const usedTypes = editData.meals
+      .filter((_, index) => index !== currentMealIndex && _.enabled)
+      .map(meal => meal.name)
+      .filter(name => name.trim())
+    
+    return mealTypes.filter(type => !usedTypes.includes(type))
+  }
+
+  // Helper function to check if a meal type is already used
+  const isMealTypeUsed = (mealType: string, currentMealIndex: number) => {
+    return editData.meals.some((meal, index) => 
+      index !== currentMealIndex && meal.enabled && meal.name === mealType
+    )
+  }
+
+  // Helper function to get duplicate warning class
+  const getDuplicateWarningClass = (mealType: string, currentMealIndex: number) => {
+    if (mealType && isMealTypeUsed(mealType, currentMealIndex)) {
+      return "border-amber-500 bg-amber-50"
+    }
+    return ""
+  }
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[700px] max-h-[90vh] overflow-y-auto rounded-xl">
+      <DialogContent className="w-[95vw] sm:max-w-[900px] max-h-[90vh] overflow-y-auto rounded-xl">
         <DialogHeader>
           <DialogTitle>Modifier le jour {dayNumber}</DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
+          {/* Information Panel */}
+          <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-3">
+            <div className="flex-shrink-0 mt-0.5">
+              <Info className="w-5 h-5 text-blue-500" />
+            </div>
+            <div>
+              <p className="text-sm font-medium text-blue-900">Types de repas uniques</p>
+              <p className="text-xs text-blue-700 mt-1">
+                Chaque type de repas ne peut être utilisé qu'une fois par jour. Maximum {MAX_MEALS_PER_DAY} repas par jour pour maintenir une structure professionnelle claire.
+              </p>
+            </div>
+          </div>
+
           {/* Meals Section */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
@@ -180,7 +247,11 @@ export function DynamicMealEditDialog({
                 size="sm"
                 onClick={addMeal}
                 disabled={editData.meals.length >= MAX_MEALS_PER_DAY}
-                className={editData.meals.length >= MAX_MEALS_PER_DAY ? "opacity-50 cursor-not-allowed" : ""}
+                className={`border-2 border-dashed transition-all duration-200 ${
+                  editData.meals.length >= MAX_MEALS_PER_DAY 
+                    ? "opacity-50 cursor-not-allowed border-gray-300" 
+                    : "border-emerald-300 hover:border-emerald-400 hover:bg-emerald-50 text-emerald-700"
+                }`}
                 title={editData.meals.length >= MAX_MEALS_PER_DAY ? `Maximum ${MAX_MEALS_PER_DAY} repas par jour atteint` : "Ajouter un repas"}
               >
                 <Plus className="h-4 w-4 mr-2" />
@@ -191,8 +262,9 @@ export function DynamicMealEditDialog({
               </Button>
             </div>
 
-            {editData.meals.map((meal, mealIndex) => (
-              <div key={meal.id} className="border border-gray-200 rounded-lg p-4 space-y-4">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              {editData.meals.map((meal, mealIndex) => (
+                <div key={meal.id} className="border border-gray-200 rounded-lg p-4 space-y-4 bg-gray-50/50">
                 <div className="flex items-center justify-between">
                   <h4 className="font-medium text-gray-900">Repas {mealIndex + 1}</h4>
                   <Button
@@ -206,32 +278,59 @@ export function DynamicMealEditDialog({
                   </Button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-3">
                   <div className="space-y-2">
-                    <Label htmlFor={`meal-name-${mealIndex}`}>Nom du repas *</Label>
-                    <select
-                      id={`meal-name-${mealIndex}`}
-                      value={meal.name}
-                      onChange={(e) => updateMeal(mealIndex, 'name', e.target.value)}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                    <Label htmlFor={`meal-name-${mealIndex}`}>
+                      Nom du repas *
+                      {isMealTypeUsed(meal.name, mealIndex) && (
+                        <span className="text-amber-600 text-xs ml-2">(Type déjà utilisé)</span>
+                      )}
+                    </Label>
+                    <Select 
+                      value={meal.name} 
+                      onValueChange={(value) => updateMeal(mealIndex, 'name', value)}
                     >
-                      <option value="">Sélectionner un type de repas</option>
-                      {mealTypes.map(type => (
-                        <option key={type} value={type}>{type}</option>
-                      ))}
-                    </select>
+                      <SelectTrigger className={`w-full ${getDuplicateWarningClass(meal.name, mealIndex)}`}>
+                        <SelectValue placeholder="Sélectionner un type de repas" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {getAvailableMealTypes(mealIndex).map(type => (
+                          <SelectItem key={type} value={type}>{type}</SelectItem>
+                        ))}
+                        {/* Show used types with warning */}
+                        {mealTypes.filter(type => 
+                          editData.meals.some((m, i) => i !== mealIndex && m.name === type && m.enabled)
+                        ).map(type => (
+                          <SelectItem key={`used-${type}`} value={type} disabled className="text-amber-600">
+                            {type} (déjà utilisé)
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
 
-                  <div className="space-y-2">
-                    <Label htmlFor={`meal-time-${mealIndex}`}>Heure</Label>
-                    <div className="flex items-center space-x-2">
-                      <Clock className="h-4 w-4 text-gray-500" />
+                  <div className="grid grid-cols-2 gap-3">
+                    <div className="space-y-2">
+                      <Label htmlFor={`meal-time-${mealIndex}`}>Heure</Label>
+                      <div className="flex items-center space-x-2">
+                        <Clock className="h-4 w-4 text-gray-500 flex-shrink-0" />
+                        <Input
+                          id={`meal-time-${mealIndex}`}
+                          type="time"
+                          value={meal.time}
+                          onChange={(e) => updateMeal(mealIndex, 'time', e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor={`meal-calories-${mealIndex}`}>Calories (opt.)</Label>
                       <Input
-                        id={`meal-time-${mealIndex}`}
-                        type="time"
-                        value={meal.time}
-                        onChange={(e) => updateMeal(mealIndex, 'time', e.target.value)}
-                        className="w-full"
+                        id={`meal-calories-${mealIndex}`}
+                        type="number"
+                        value={meal.calories_target || ''}
+                        onChange={(e) => updateMeal(mealIndex, 'calories_target', e.target.value ? parseInt(e.target.value) : null)}
+                        placeholder="Ex: 500"
                       />
                     </div>
                   </div>
@@ -248,19 +347,9 @@ export function DynamicMealEditDialog({
                     className="resize-none"
                   />
                 </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor={`meal-calories-${mealIndex}`}>Objectif calories (optionnel)</Label>
-                  <Input
-                    id={`meal-calories-${mealIndex}`}
-                    type="number"
-                    value={meal.calories_target || ''}
-                    onChange={(e) => updateMeal(mealIndex, 'calories_target', e.target.value ? parseInt(e.target.value) : null)}
-                    placeholder="Ex: 500"
-                  />
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
 
           {/* Notes Section */}
