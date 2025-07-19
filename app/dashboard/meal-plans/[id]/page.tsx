@@ -1703,6 +1703,18 @@ export default function MealPlanDetailPage() {
           onSave={handleSaveDynamicDay}
           dayData={currentEditDay}
           dayNumber={editDayNumber}
+          onOpenFoodSearch={(mealId, day) => {
+            // For dynamic meals, we'll use the meal ID as the slot identifier
+            setFoodSearchSlot(mealId as any)
+            setFoodSearchDay(day)
+            setFoodSearchOpen(true)
+          }}
+          onOpenManualFood={(mealId, day) => {
+            // For dynamic meals, we'll use the meal ID as the slot identifier  
+            setManualFoodSlot(mealId as any)
+            setManualFoodDay(day)
+            setManualFoodOpen(true)
+          }}
         />
 
         {/* Delete Dialog */}

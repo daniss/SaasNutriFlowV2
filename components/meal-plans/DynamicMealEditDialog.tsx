@@ -20,6 +20,8 @@ interface DynamicMealEditDialogProps {
   onSave: (dayData: DynamicMealPlanDay) => void
   dayData?: DynamicMealPlanDay | null
   dayNumber: number
+  onOpenFoodSearch?: (mealId: string, day: number) => void
+  onOpenManualFood?: (mealId: string, day: number) => void
 }
 
 export function DynamicMealEditDialog({
@@ -27,7 +29,9 @@ export function DynamicMealEditDialog({
   onClose,
   onSave,
   dayData,
-  dayNumber
+  dayNumber,
+  onOpenFoodSearch,
+  onOpenManualFood
 }: DynamicMealEditDialogProps) {
   const [editData, setEditData] = useState<DynamicMealPlanDay>({
     day: dayNumber,
@@ -346,6 +350,28 @@ export function DynamicMealEditDialog({
                     rows={2}
                     className="resize-none"
                   />
+                  
+                  {/* Food Selection Buttons */}
+                  {onOpenFoodSearch && onOpenManualFood && (
+                    <div className="flex gap-2 pt-2">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => onOpenFoodSearch(meal.id, dayNumber)}
+                      >
+                        + CIQUAL
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="flex-1"
+                        onClick={() => onOpenManualFood(meal.id, dayNumber)}
+                      >
+                        + Manuel
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 </div>
               ))}
