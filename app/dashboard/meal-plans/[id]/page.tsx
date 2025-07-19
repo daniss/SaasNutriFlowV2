@@ -1646,34 +1646,6 @@ export default function MealPlanDetailPage() {
                 />
               </div>
             </div>
-            <FoodSearchModal
-              open={foodSearchOpen}
-              onClose={() => setFoodSearchOpen(false)}
-              mealSlot={foodSearchSlot}
-              day={foodSearchDay}
-              onSelectFood={food => {
-                // For now, just show a toast to confirm the button works
-                console.log('Food selected:', food, 'for meal:', foodSearchMealId)
-                setFoodSearchOpen(false)
-                
-                // TODO: Implement proper food storage for dynamic meals
-                alert(`Food selected: ${food.name_fr} for meal ID: ${foodSearchMealId}`)
-              }}
-            />
-            <ManualFoodModal
-              open={manualFoodOpen}
-              onClose={() => setManualFoodOpen(false)}
-              mealSlot={manualFoodSlot}
-              day={manualFoodDay}
-              onAddFood={food => {
-                // For now, just show a toast to confirm the button works
-                console.log('Manual food added:', food, 'for meal:', manualFoodMealId)
-                setManualFoodOpen(false)
-                
-                // TODO: Implement proper food storage for dynamic meals
-                alert(`Manual food added: ${food.name_fr} for meal ID: ${manualFoodMealId}`)
-              }}
-            />
             <DialogFooter>
               <Button variant="outline" onClick={() => setIsEditDayOpen(false)}>
                 Annuler
@@ -1696,11 +1668,8 @@ export default function MealPlanDetailPage() {
           dayData={currentEditDay}
           dayNumber={editDayNumber}
           onOpenFoodSearch={(mealId, day) => {
-            console.log('onOpenFoodSearch called with:', { mealId, day, currentEditDay })
-            
             // Map dynamic meal types to legacy slot names for food modals
             const mealType = currentEditDay?.meals?.find(m => m.id === mealId)?.name
-            console.log('Found meal type:', mealType)
             
             let slot: "breakfast"|"lunch"|"dinner"|"snacks" = "breakfast"
             
@@ -1713,22 +1682,15 @@ export default function MealPlanDetailPage() {
             } else {
               slot = "snacks"
             }
-            
-            console.log('Mapped to slot:', slot, 'Opening food search modal...')
             
             setFoodSearchSlot(slot)
             setFoodSearchDay(day)
             setFoodSearchMealId(mealId)
             setFoodSearchOpen(true)
-            
-            console.log('Food search state set:', { slot, day, mealId, open: true })
           }}
           onOpenManualFood={(mealId, day) => {
-            console.log('onOpenManualFood called with:', { mealId, day, currentEditDay })
-            
             // Map dynamic meal types to legacy slot names for food modals
             const mealType = currentEditDay?.meals?.find(m => m.id === mealId)?.name
-            console.log('Found meal type:', mealType)
             
             let slot: "breakfast"|"lunch"|"dinner"|"snacks" = "breakfast"
             
@@ -1742,14 +1704,40 @@ export default function MealPlanDetailPage() {
               slot = "snacks"
             }
             
-            console.log('Mapped to slot:', slot, 'Opening manual food modal...')
-            
             setManualFoodSlot(slot)
             setManualFoodDay(day)
             setManualFoodMealId(mealId)
             setManualFoodOpen(true)
+          }}
+        />
+
+        {/* Food Modals - Available globally */}
+        <FoodSearchModal
+          open={foodSearchOpen}
+          onClose={() => setFoodSearchOpen(false)}
+          mealSlot={foodSearchSlot}
+          day={foodSearchDay}
+          onSelectFood={food => {
+            // For now, just show a toast to confirm the button works
+            console.log('Food selected:', food, 'for meal:', foodSearchMealId)
+            setFoodSearchOpen(false)
             
-            console.log('Manual food state set:', { slot, day, mealId, open: true })
+            // TODO: Implement proper food storage for dynamic meals
+            alert(`Food selected: ${food.name_fr} for meal ID: ${foodSearchMealId}`)
+          }}
+        />
+        <ManualFoodModal
+          open={manualFoodOpen}
+          onClose={() => setManualFoodOpen(false)}
+          mealSlot={manualFoodSlot}
+          day={manualFoodDay}
+          onAddFood={food => {
+            // For now, just show a toast to confirm the button works
+            console.log('Manual food added:', food, 'for meal:', manualFoodMealId)
+            setManualFoodOpen(false)
+            
+            // TODO: Implement proper food storage for dynamic meals
+            alert(`Manual food added: ${food.name_fr} for meal ID: ${manualFoodMealId}`)
           }}
         />
 

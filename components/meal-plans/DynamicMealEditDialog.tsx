@@ -33,12 +33,6 @@ export function DynamicMealEditDialog({
   onOpenFoodSearch,
   onOpenManualFood
 }: DynamicMealEditDialogProps) {
-  console.log('DynamicMealEditDialog props:', { 
-    onOpenFoodSearch: !!onOpenFoodSearch, 
-    onOpenManualFood: !!onOpenManualFood,
-    dayNumber,
-    dayData 
-  })
   
   const [editData, setEditData] = useState<DynamicMealPlanDay>({
     day: dayNumber,
@@ -365,11 +359,8 @@ export function DynamicMealEditDialog({
                       variant="outline"
                       className="flex-1"
                       onClick={() => {
-                        console.log('CIQUAL button clicked for meal:', meal.id, meal.name)
                         if (onOpenFoodSearch) {
                           onOpenFoodSearch(meal.id, dayNumber)
-                        } else {
-                          alert('CIQUAL function not available')
                         }
                       }}
                     >
@@ -380,11 +371,8 @@ export function DynamicMealEditDialog({
                       variant="outline"
                       className="flex-1"
                       onClick={() => {
-                        console.log('Manual button clicked for meal:', meal.id, meal.name)
                         if (onOpenManualFood) {
                           onOpenManualFood(meal.id, dayNumber)
-                        } else {
-                          alert('Manual function not available')
                         }
                       }}
                     >
