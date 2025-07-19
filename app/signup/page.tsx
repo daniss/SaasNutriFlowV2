@@ -49,10 +49,8 @@ export default function SignupPage() {
       if (error) {
         setError(error || "Échec de la création du compte")
       } else {
-        setSuccess("Compte créé avec succès ! Veuillez vérifier votre email pour confirmer votre compte.")
-        setTimeout(() => {
-          router.push("/login")
-        }, 3000)
+        setSuccess("Compte créé avec succès ! Veuillez vérifier votre email pour confirmer votre compte avant de vous connecter.")
+        // Don't redirect automatically - let user read the message
       }
     } catch (error) {
       console.error("❌ Signup exception:", error)

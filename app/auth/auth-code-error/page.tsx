@@ -11,18 +11,18 @@ export default function AuthCodeErrorPage() {
           <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-red-100">
             <AlertCircle className="h-6 w-6 text-red-600" />
           </div>
-          <CardTitle className="mt-4 text-xl font-semibold text-gray-900">Authentication Error</CardTitle>
+          <CardTitle className="mt-4 text-xl font-semibold text-gray-900">Erreur de vérification</CardTitle>
           <CardDescription className="mt-2">
-            Sorry, we couldn't verify your email. The link may have expired or already been used.
+            Désolé, nous n'avons pas pu vérifier votre email. Le lien a peut-être expiré ou a déjà été utilisé.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="text-sm text-gray-600">
-            <p>This could happen if:</p>
+            <p>Cela peut arriver si :</p>
             <ul className="mt-2 list-disc list-inside space-y-1">
-              <li>The confirmation link has expired</li>
-              <li>The link has already been used</li>
-              <li>There was an error with the verification process</li>
+              <li>Le lien de confirmation a expiré</li>
+              <li>Le lien a déjà été utilisé</li>
+              <li>Il y a eu une erreur lors du processus de vérification</li>
             </ul>
           </div>
 
@@ -30,18 +30,18 @@ export default function AuthCodeErrorPage() {
             <Button asChild>
               <Link href="/login">
                 <Mail className="h-4 w-4 mr-2" />
-                Try Logging In
+                Essayer de se connecter
               </Link>
             </Button>
 
             <Button variant="outline" asChild>
-              <Link href="/signup">Create New Account</Link>
+              <Link href="/signup">Créer un nouveau compte</Link>
             </Button>
 
             <Button variant="ghost" asChild>
               <Link href="/">
                 <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Home
+                Retour à l'accueil
               </Link>
             </Button>
           </div>
