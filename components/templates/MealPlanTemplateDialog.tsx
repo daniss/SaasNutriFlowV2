@@ -43,6 +43,9 @@ interface DayStructure {
   meals: MealSlot[]
 }
 
+// Professional limits for nutritionist workflows
+const MAX_MEALS_PER_DAY = 8
+
 export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, template }: MealPlanTemplateDialogProps) {
   const { user } = useAuth()
   const { toast } = useToast()
@@ -194,11 +197,22 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
     setFormData(prev => ({
       ...prev,
       meal_structure: Array.isArray(prev.meal_structure) 
-        ? prev.meal_structure.map((day: DayStructure, i: number) => 
-            i === dayIndex 
-              ? { ...day, meals: [...(day.meals || []), { name: "", time: "", calories_target: null, description: "" }] }
-              : day
-          )
+        ? prev.meal_structure.map((day: DayStructure, i: number) => {
+            if (i === dayIndex) {
+              const currentMeals = day.meals || []
+              if (currentMeals.length >= MAX_MEALS_PER_DAY) {
+                // Show user-friendly message
+                toast({
+                  title: "Limite atteinte",
+                  description: `Maximum ${MAX_MEALS_PER_DAY} repas par jour pour maintenir une structure claire et professionnelle.`,
+                  variant: "default",
+                })
+                return day // Don't add meal if limit reached
+              }
+              return { ...day, meals: [...currentMeals, { name: "", time: "", calories_target: null, description: "" }] }
+            }
+            return day
+          })
         : []
     }))
   }
@@ -548,9 +562,12 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                       variant="outline"
                       size="sm"
                       onClick={() => addMeal(dayIndex)}
+                      disabled={day.meals.length >= MAX_MEALS_PER_DAY}
+                      className={day.meals.length >= MAX_MEALS_PER_DAY ? "opacity-50 cursor-not-allowed" : ""}
+                      title={day.meals.length >= MAX_MEALS_PER_DAY ? `Maximum ${MAX_MEALS_PER_DAY} repas par jour atteint` : "Ajouter un repas"}
                     >
                       <Plus className="h-4 w-4 mr-2" />
-                      Ajouter un repas
+                      {day.meals.length >= MAX_MEALS_PER_DAY ? `Limite atteinte (${day.meals.length}/${MAX_MEALS_PER_DAY})` : `Ajouter un repas (${day.meals.length}/${MAX_MEALS_PER_DAY})`}
                     </Button>
                   </CardContent>
                 </Card>
