@@ -311,7 +311,7 @@ Transform NutriFlow from a generic CRM into THE reference platform for French di
 ### 🔐 2FA & Advanced Security ✅ COMPLETED
 
 - [x] Implement two-factor authentication for nutritionists
-- [x] Add email-based 2FA (enabled by default)
+- [x] Add TOTP-based 2FA (replaced email-based)
 - [x] Create session-based verification (8-hour duration)
 - [x] Build device management (trusted devices via localStorage)
 - [x] Implement secure 2FA verification flow
@@ -401,7 +401,7 @@ Transform NutriFlow from a generic CRM into THE reference platform for French di
 - [x] End-to-end workflow testing
 - [x] Role-based access control
 - [x] Admin user management
-- [x] Two-factor authentication (email-based)
+- [x] Two-factor authentication (TOTP-based)
 - [x] Advanced session management
 - [x] GDPR compliance tools
 - [x] Client portal with document access

@@ -17,7 +17,7 @@ NutriFlow is a production-ready SaaS platform for French dietitian-nutritionists
 ### Authentication System
 - **Dual authentication**: Nutritionists use `AuthProviderNew`/`useAuth()`, Clients use `ClientAuthProvider`/`useClientAuth()`
 - Never mix authentication contexts
-- Two-factor authentication is implemented for nutritionists (email-based)
+- Two-factor authentication is implemented for nutritionists (TOTP-based)
 - `/dashboard/*` routes are protected by middleware
 
 ## Commands
@@ -261,7 +261,7 @@ npm run type-check && npm run lint && npm test
 - **Password Hashing**: bcryptjs with salt for client accounts
 - **Session Management**: Secure HMAC tokens with expiration
 - **Rate Limiting**: Prevents brute force attacks
-- **Two-Factor Auth**: Email-based 2FA for nutritionists
+- **Two-Factor Auth**: TOTP-based 2FA for nutritionists
 
 ### Database Security
 - **Row Level Security**: All tables have RLS policies
