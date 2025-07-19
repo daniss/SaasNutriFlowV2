@@ -42,6 +42,14 @@ import { DashboardHeader } from "@/components/dashboard-header"
 import { DashboardSkeleton, EmptyStateWithSkeleton } from "@/components/shared/skeletons"
 import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type MealPlanTemplate } from "@/lib/supabase"
+import { 
+  MEAL_PLAN_CATEGORIES, 
+  CLIENT_TYPES, 
+  GOAL_TYPES,
+  getCategoryInfo,
+  getClientTypeInfo,
+  getGoalTypeInfo
+} from "@/lib/template-categories"
 import MealPlanTemplateDialog from "@/components/templates/MealPlanTemplateDialog"
 import ShareTemplateDialog from "@/components/templates/ShareTemplateDialog"
 import MealPrepInstructionsDialog from "@/components/meal-prep/MealPrepInstructionsDialog"
@@ -110,11 +118,11 @@ export default function TemplatesPage() {
 Nom: ${template.name}
 Description: ${template.description || ''}
 Durée: ${Array.isArray(template.meal_structure) ? template.meal_structure.length : 1} jours
-Catégorie: ${template.category}
-Type de client: ${template.client_type}
-Objectif: ${template.goal_type}
+Catégorie: ${getCategoryInfo(template.category as any)?.label || template.category}
+Type de client: ${getClientTypeInfo(template.client_type as any)?.label || template.client_type}
+Objectif: ${getGoalTypeInfo(template.goal_type as any)?.label || template.goal_type}
 Calories cibles: ${template.target_calories || 'Non spécifiées'}
-Difficulté: ${template.difficulty}
+Difficulté: ${template.difficulty === 'easy' ? 'Facile' : template.difficulty === 'medium' ? 'Moyen' : template.difficulty === 'hard' ? 'Difficile' : template.difficulty}
 
 Utilisez cette structure comme guide et adaptez-la avec des recettes appropriées pour créer un plan complet et personnalisé.`
 
@@ -411,11 +419,13 @@ function TemplateCard({
       <CardContent className="space-y-3">
         <div className="flex flex-wrap gap-1 sm:gap-2">
           <Badge className={`${getCategoryColor(template.category)} border-0 font-medium text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1`}>
-            {template.category}
+            {getCategoryInfo(template.category as any)?.label || template.category}
           </Badge>
           {'difficulty' in template && template.difficulty && (
             <Badge className={`${getDifficultyColor(template.difficulty)} border-0 font-medium text-xs sm:text-sm px-2 sm:px-3 py-0.5 sm:py-1`}>
-              {template.difficulty}
+              {template.difficulty === 'easy' ? 'Facile' : 
+               template.difficulty === 'medium' ? 'Moyen' : 
+               template.difficulty === 'hard' ? 'Difficile' : template.difficulty}
             </Badge>
           )}
         </div>
@@ -427,7 +437,11 @@ function TemplateCard({
           </div>
           <div className="flex items-center gap-1 sm:gap-2 text-gray-600">
             <Clock className="h-3 w-3 flex-shrink-0" />
-            <span className="truncate">{template.difficulty || 'Standard'}</span>
+            <span className="truncate">
+              {template.difficulty === 'easy' ? 'Facile' : 
+               template.difficulty === 'medium' ? 'Moyen' : 
+               template.difficulty === 'hard' ? 'Difficile' : 'Standard'}
+            </span>
           </div>
         </div>
 
