@@ -86,18 +86,37 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Check if there are verified TOTP factors
+      const { data: factorsData, error: factorsError } = await supabase.auth.mfa.listFactors();
+      
+      if (factorsError) {
+        console.error("Error listing factors:", factorsError);
+        resetState();
+        setLoading(false);
+        return;
+      }
+
+      const totpFactors = factorsData.totp || [];
+      const verifiedFactors = totpFactors.filter(factor => factor.status === "verified");
+      const hasVerifiedTOTP = verifiedFactors.length > 0;
+
       const currentAAL = aalData.currentLevel as "aal1" | "aal2";
       const nextAAL = aalData.nextLevel as "aal1" | "aal2";
 
       setCurrentLevel(currentAAL);
       setNextLevel(nextAAL);
 
-      // If user has MFA enrolled but hasn't verified it in this session
-      const needsMFAVerification = nextAAL === "aal2" && currentAAL !== nextAAL;
+      // Only require MFA verification if:
+      // 1. NextLevel is aal2 (MFA is expected)
+      // 2. CurrentLevel is not aal2 (not verified in this session)
+      // 3. There are actually verified TOTP factors configured
+      const needsMFAVerification = nextAAL === "aal2" && currentAAL !== nextAAL && hasVerifiedTOTP;
 
-      console.log("🔐 AAL Check:", {
+      console.log("🔐 Enhanced AAL Check:", {
         currentLevel: currentAAL,
         nextLevel: nextAAL,
+        hasVerifiedTOTP,
+        verifiedFactorsCount: verifiedFactors.length,
         needsMFAVerification,
         userId: user.id,
       });
@@ -107,6 +126,10 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
         setIsVerified(false);
         setShowVerification(true);
       } else {
+        // If nextLevel is aal2 but no verified factors, allow access but log warning
+        if (nextAAL === "aal2" && !hasVerifiedTOTP) {
+          console.warn("🔐 Warning: MFA expected but no verified TOTP factors found. Allowing access.");
+        }
         setIsRequired(false);
         setIsVerified(true);
         setShowVerification(false);

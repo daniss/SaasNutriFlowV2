@@ -36,9 +36,23 @@ export function TOTPVerificationDialog({
   } | null>(null);
 
   useEffect(() => {
-    // Create a challenge when the component mounts
-    initializeChallenge();
-  }, []);
+    // Wait for factors to load before making decisions
+    if (status.loading) return;
+    
+    // Check if there are verified factors
+    const verifiedFactors = status.factors.filter(f => f.status === "verified");
+    
+    if (verifiedFactors.length > 0) {
+      initializeChallenge();
+    } else {
+      // This should not happen with the fixed TwoFactorProvider, but defensive programming
+      console.error("🔐 TOTP Dialog shown without verified factors - this should not happen!");
+      setError("Configuration TOTP invalide. Déconnexion pour sécurité...");
+      setTimeout(() => {
+        supabase.auth.signOut();
+      }, 2000);
+    }
+  }, [status.loading, status.factors]);
 
   const initializeChallenge = async () => {
     setLoading(true);
