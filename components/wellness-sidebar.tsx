@@ -4,6 +4,7 @@ import {
   Calendar,
   ChefHat,
   FileText,
+  HelpCircle,
   Home,
   LayoutTemplate,
   LogOut,
@@ -77,6 +78,11 @@ const navItems = [
     title: "Paramètres",
     url: "/dashboard/settings",
     icon: Settings,
+  },
+  {
+    title: "Aide & Support",
+    url: "/dashboard/help",
+    icon: HelpCircle,
   },
 ];
 

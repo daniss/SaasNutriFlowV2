@@ -65,10 +65,8 @@ export default function LoginPage() {
         setError(error || "Échec de la connexion");
       } else {
         // Success - redirect will happen via useEffect when user state updates
-        console.log("Login successful");
       }
     } catch (error) {
-      console.error("❌ Login exception:", error);
       setError("Une erreur inattendue s'est produite");
     } finally {
       setLoading(false);

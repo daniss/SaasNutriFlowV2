@@ -43,7 +43,6 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       if (event === "SIGNED_IN" && session?.user) {
-        console.log("🔐 User signed in, waiting before checking MFA requirements to avoid race conditions");
         // Small delay to let Supabase fully process the authentication state
         setTimeout(async () => {
           await checkAuthenticatorAssuranceLevel();
@@ -123,36 +122,11 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
       const hasActualVerifiedFactors = hasVerifiedTOTP && verifiedFactors.length > 0;
       const needsMFAVerification = supabaseExpectsMFA && sessionNotVerified && hasActualVerifiedFactors;
 
-      console.log("🔐 DETAILED AAL CHECK:", {
-        currentLevel: currentAAL,
-        nextLevel: nextAAL,
-        supabaseExpectsMFA,
-        sessionNotVerified,
-        hasVerifiedTOTP,
-        verifiedFactorsCount: verifiedFactors.length,
-        hasActualVerifiedFactors,
-        needsMFAVerification,
-        totalFactors: totpFactors.length,
-        userId: user.id,
-        factorDetails: totpFactors.map(f => ({ id: f.id, status: f.status, name: f.friendly_name })),
-      });
-
       if (needsMFAVerification) {
-        console.log("🔐 SHOWING TOTP DIALOG - All conditions met for MFA verification");
         setIsRequired(true);
         setIsVerified(false);
         setShowVerification(true);
       } else {
-        // Handle different scenarios with specific logging
-        if (supabaseExpectsMFA && !hasActualVerifiedFactors) {
-          console.warn("🔐 BYPASSING MFA: Supabase expects MFA but no verified factors exist");
-          console.warn("🔐 This suggests AAL state inconsistency - allowing access");
-        } else if (!supabaseExpectsMFA) {
-          console.log("🔐 NO MFA REQUIRED: Supabase AAL doesn't expect MFA");
-        } else if (!sessionNotVerified) {
-          console.log("🔐 ALREADY VERIFIED: Session already has aal2 level");
-        }
-        
         setIsRequired(false);
         setIsVerified(true);
         setShowVerification(false);
@@ -168,7 +142,6 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
   };
 
   const completeTwoFactor = async () => {
-    console.log("🔐 Two-factor authentication completed");
     setIsVerified(true);
     setIsRequired(false);
     setShowVerification(false);
@@ -180,13 +153,11 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
 
   // Show TOTP verification dialog if required
   if (showVerification && !loading) {
-    console.log("🔐 TwoFactorProvider showing TOTP verification dialog");
     return (
       <TOTPVerificationDialog
         onVerificationSuccess={completeTwoFactor}
         onCancel={() => {
           // Allow access if TOTP dialog called onCancel - this means no verified factors exist
-          console.log("🔐 TOTP verification cancelled - allowing access without MFA");
           setShowVerification(false);
           setIsRequired(false);
           setIsVerified(true);

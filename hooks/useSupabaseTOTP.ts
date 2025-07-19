@@ -97,7 +97,6 @@ export function useSupabaseTOTP() {
       });
 
       if (error) {
-        console.error("Error enrolling TOTP:", error);
         return null;
       }
 
@@ -109,7 +108,6 @@ export function useSupabaseTOTP() {
       };
 
     } catch (error) {
-      console.error("Error in TOTP enrollment:", error);
       return null;
     } finally {
       setStatus(prev => ({ ...prev, loading: false }));
@@ -126,7 +124,6 @@ export function useSupabaseTOTP() {
       });
 
       if (challengeError) {
-        console.error("Error creating challenge:", challengeError);
         return false;
       }
 
@@ -138,7 +135,6 @@ export function useSupabaseTOTP() {
       });
 
       if (verifyError) {
-        console.error("Error verifying TOTP:", verifyError);
         return false;
       }
 
@@ -147,7 +143,6 @@ export function useSupabaseTOTP() {
       return true;
 
     } catch (error) {
-      console.error("Error in TOTP verification:", error);
       return false;
     } finally {
       setStatus(prev => ({ ...prev, loading: false }));
@@ -159,7 +154,6 @@ export function useSupabaseTOTP() {
       // Get the first verified TOTP factor
       const verifiedFactor = status.factors.find(f => f.status === "verified");
       if (!verifiedFactor) {
-        console.error("No verified TOTP factor found");
         return null;
       }
 
@@ -168,7 +162,6 @@ export function useSupabaseTOTP() {
       });
 
       if (error) {
-        console.error("Error creating TOTP challenge:", error);
         return null;
       }
 
@@ -178,7 +171,6 @@ export function useSupabaseTOTP() {
       };
 
     } catch (error) {
-      console.error("Error in TOTP challenge:", error);
       return null;
     }
   };
@@ -192,7 +184,6 @@ export function useSupabaseTOTP() {
       });
 
       if (error) {
-        console.error("Error verifying TOTP challenge:", error);
         return false;
       }
 
@@ -201,7 +192,6 @@ export function useSupabaseTOTP() {
       return true;
 
     } catch (error) {
-      console.error("Error in TOTP challenge verification:", error);
       return false;
     }
   };
@@ -215,8 +205,6 @@ export function useSupabaseTOTP() {
       });
 
       if (error) {
-        console.error("Error unenrolling TOTP:", error);
-        
         // Check if this is the AAL2 requirement error
         if (error.message?.includes("AAL2 required") || error.message?.includes("verified factor")) {
           return { 
@@ -234,7 +222,6 @@ export function useSupabaseTOTP() {
       return { success: true };
 
     } catch (error) {
-      console.error("Error in TOTP unenrollment:", error);
       return { 
         success: false, 
         error: error instanceof Error ? error.message : "Erreur inattendue lors de la suppression" 

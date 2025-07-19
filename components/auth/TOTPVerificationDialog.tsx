@@ -42,7 +42,6 @@ export function TOTPVerificationDialog({
   useEffect(() => {
     // If bypassFactorCheck is true, skip the factor verification and directly initialize challenge
     if (bypassFactorCheck) {
-      console.log("🔐 Bypassing factor check - TwoFactorProvider already verified factors exist");
       initializeChallenge();
       return;
     }
@@ -57,7 +56,6 @@ export function TOTPVerificationDialog({
       initializeChallenge();
     } else {
       // Gracefully handle case where dialog shown without verified factors
-      console.warn("🔐 TOTP Dialog shown without verified factors - calling onCancel to exit gracefully");
       setError("Aucune méthode de vérification disponible");
       // Don't force logout - let parent handle this gracefully
       setTimeout(() => {
@@ -71,7 +69,6 @@ export function TOTPVerificationDialog({
     try {
       // Use passed factors if bypassing check, otherwise use hook's challengeTOTP
       if (bypassFactorCheck && verifiedFactors.length > 0) {
-        console.log("🔐 Using passed verified factors for challenge:", verifiedFactors);
         const factorId = verifiedFactors[0].id;
         
         // Create challenge directly using supabase
