@@ -365,7 +365,7 @@ export default function GenerateMealPlanPage() {
       })
       
       // Save ingredients to database first
-      const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days, user!.id)
+      const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
       console.log(`Saved ${savedIngredients.length} ingredients to database`)
       
       // Create recipes for each meal
@@ -436,7 +436,7 @@ export default function GenerateMealPlanPage() {
   }
 
   // Function to save ingredients to database
-  const saveIngredientsToDatabase = async (days: any[], dietitianId: string) => {
+  const saveIngredientsToDatabase = async (days: any[]) => {
     const savedIngredients = []
     
     for (const day of days) {
@@ -445,22 +445,20 @@ export default function GenerateMealPlanPage() {
         
         for (const ingredient of meal.ingredientsNutrition) {
           try {
-            // Check if ingredient already exists
+            // Check if ingredient already exists globally
             const { data: existingIngredient } = await supabase
               .from("ingredients")
               .select("id")
-              .eq("dietitian_id", dietitianId)
               .eq("name", ingredient.name)
               .single()
             
             if (existingIngredient) {
-              console.log(`Ingredient "${ingredient.name}" already exists, skipping`)
+              console.log(`Ingredient "${ingredient.name}" already exists globally, skipping`)
               continue
             }
             
             // Prepare ingredient data based on unit type
             const ingredientData = {
-              dietitian_id: dietitianId,
               name: ingredient.name,
               category: ingredient.unit === 'ml' ? 'liquid' : ingredient.unit === 'piece' ? 'countable' : 'solid',
               unit_type: ingredient.unit,

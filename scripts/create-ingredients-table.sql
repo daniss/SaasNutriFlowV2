@@ -3,7 +3,6 @@
 
 CREATE TABLE IF NOT EXISTS ingredients (
   id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  dietitian_id UUID REFERENCES auth.users(id) ON DELETE CASCADE NOT NULL,
   name TEXT NOT NULL,
   
   -- Nutritional values per 100g (for solid ingredients)
@@ -36,31 +35,30 @@ CREATE TABLE IF NOT EXISTS ingredients (
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   
-  -- Unique constraint to prevent duplicate ingredients per dietitian
-  UNIQUE(dietitian_id, name)
+  -- Unique constraint to prevent duplicate ingredients globally
+  UNIQUE(name)
 );
 
--- Create RLS policies
+-- Create RLS policies for global read access
 ALTER TABLE ingredients ENABLE ROW LEVEL SECURITY;
 
--- Policy: Users can only see their own ingredients
-CREATE POLICY "Users can view own ingredients" ON ingredients
-  FOR SELECT USING (auth.uid() = dietitian_id);
+-- Policy: All authenticated users can view ingredients (global read access)
+CREATE POLICY "Anyone can view ingredients" ON ingredients
+  FOR SELECT USING (auth.role() = 'authenticated');
 
--- Policy: Users can insert their own ingredients
-CREATE POLICY "Users can insert own ingredients" ON ingredients
-  FOR INSERT WITH CHECK (auth.uid() = dietitian_id);
+-- Policy: All authenticated users can insert ingredients (global write access)
+CREATE POLICY "Anyone can insert ingredients" ON ingredients
+  FOR INSERT WITH CHECK (auth.role() = 'authenticated');
 
--- Policy: Users can update their own ingredients
-CREATE POLICY "Users can update own ingredients" ON ingredients
-  FOR UPDATE USING (auth.uid() = dietitian_id);
+-- Policy: All authenticated users can update ingredients (global write access)
+CREATE POLICY "Anyone can update ingredients" ON ingredients
+  FOR UPDATE USING (auth.role() = 'authenticated');
 
--- Policy: Users can delete their own ingredients
-CREATE POLICY "Users can delete own ingredients" ON ingredients
-  FOR DELETE USING (auth.uid() = dietitian_id);
+-- Policy: All authenticated users can delete ingredients (global write access)
+CREATE POLICY "Anyone can delete ingredients" ON ingredients
+  FOR DELETE USING (auth.role() = 'authenticated');
 
 -- Create indexes for better performance
-CREATE INDEX ingredients_dietitian_id_idx ON ingredients(dietitian_id);
 CREATE INDEX ingredients_name_idx ON ingredients(name);
 CREATE INDEX ingredients_category_idx ON ingredients(category);
 
