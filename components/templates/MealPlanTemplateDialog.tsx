@@ -51,6 +51,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
   const { toast } = useToast()
   const [loading, setLoading] = useState(false)
   const [currentTag, setCurrentTag] = useState("")
+  const [activeDay, setActiveDay] = useState(1)
   
   const [formData, setFormData] = useState({
     name: template?.name || "",
@@ -206,9 +207,11 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
         ]
       }]
     }))
+    setActiveDay(newDay) // Switch to the newly created day
   }
 
   const removeDay = (dayIndex: number) => {
+    const dayToRemove = formData.meal_structure[dayIndex]
     setFormData(prev => ({
       ...prev,
       meal_structure: Array.isArray(prev.meal_structure) 
@@ -216,14 +219,25 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
             .map((day: DayStructure, i: number) => ({ ...day, day: i + 1 }))
         : []
     }))
+    
+    // Adjust activeDay if needed
+    if (dayToRemove && activeDay === dayToRemove.day) {
+      const newDayCount = formData.meal_structure.length - 1
+      setActiveDay(Math.min(activeDay, newDayCount))
+    } else if (dayToRemove && activeDay > dayToRemove.day) {
+      setActiveDay(activeDay - 1)
+    }
   }
 
-  const addMeal = (dayIndex: number) => {
+  const addMeal = () => {
+    const activeDayIndex = getActiveDayIndex()
+    if (activeDayIndex === -1) return
+    
     setFormData(prev => ({
       ...prev,
       meal_structure: Array.isArray(prev.meal_structure) 
         ? prev.meal_structure.map((day: DayStructure, i: number) => {
-            if (i === dayIndex) {
+            if (i === activeDayIndex) {
               const currentMeals = day.meals || []
               if (currentMeals.length >= MAX_MEALS_PER_DAY) {
                 // Show user-friendly message
@@ -242,12 +256,15 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
     }))
   }
 
-  const removeMeal = (dayIndex: number, mealIndex: number) => {
+  const removeMeal = (mealIndex: number) => {
+    const activeDayIndex = getActiveDayIndex()
+    if (activeDayIndex === -1) return
+    
     setFormData(prev => ({
       ...prev,
       meal_structure: Array.isArray(prev.meal_structure) 
         ? prev.meal_structure.map((day: DayStructure, i: number) =>
-        i === dayIndex 
+        i === activeDayIndex 
           ? { ...day, meals: (day.meals || []).filter((_: MealSlot, j: number) => j !== mealIndex) }
           : day
       )
@@ -255,12 +272,15 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
     }))
   }
 
-  const updateMeal = (dayIndex: number, mealIndex: number, field: keyof MealSlot, value: string | number | null) => {
+  const updateMeal = (mealIndex: number, field: keyof MealSlot, value: string | number | null) => {
+    const activeDayIndex = getActiveDayIndex()
+    if (activeDayIndex === -1) return
+    
     setFormData(prev => ({
       ...prev,
       meal_structure: Array.isArray(prev.meal_structure) 
         ? prev.meal_structure.map((day: DayStructure, i: number) =>
-            i === dayIndex 
+            i === activeDayIndex 
               ? {
                   ...day,
                   meals: (day.meals || []).map((meal: MealSlot, j: number) =>
@@ -290,20 +310,58 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
     }))
   }
 
-  const duplicateDay = (dayIndex: number) => {
-    if (!Array.isArray(formData.meal_structure) || !formData.meal_structure[dayIndex]) {
-      return
-    }
-    const dayToCopy = formData.meal_structure[dayIndex]
+  const duplicateActiveDay = () => {
+    const activeDayIndex = getActiveDayIndex()
+    if (activeDayIndex === -1 || !Array.isArray(formData.meal_structure)) return
+    
+    const dayToCopy = formData.meal_structure[activeDayIndex]
+    const newDayNumber = formData.meal_structure.length + 1
+    
     setFormData(prev => ({
       ...prev,
       meal_structure: Array.isArray(prev.meal_structure) 
         ? [...prev.meal_structure, {
             ...dayToCopy,
-            day: prev.meal_structure.length + 1
+            day: newDayNumber
           }]
         : []
     }))
+    setActiveDay(newDayNumber) // Switch to the duplicated day
+  }
+
+  // Helper functions for tabbed interface
+  const getActiveDayData = () => {
+    if (!Array.isArray(formData.meal_structure)) return null
+    return formData.meal_structure.find(day => day.day === activeDay) || null
+  }
+
+  const getActiveDayIndex = () => {
+    if (!Array.isArray(formData.meal_structure)) return -1
+    return formData.meal_structure.findIndex(day => day.day === activeDay)
+  }
+
+  const copyDayTo = (sourceDayIndex: number, targetDay: number) => {
+    if (!Array.isArray(formData.meal_structure) || !formData.meal_structure[sourceDayIndex]) return
+    
+    const dayToCopy = formData.meal_structure[sourceDayIndex]
+    const targetDayIndex = formData.meal_structure.findIndex(d => d.day === targetDay)
+    
+    if (targetDayIndex >= 0) {
+      // Replace existing day
+      setFormData(prev => ({
+        ...prev,
+        meal_structure: prev.meal_structure.map((day, i) => 
+          i === targetDayIndex ? { ...dayToCopy, day: targetDay } : day
+        )
+      }))
+    } else {
+      // Add new day
+      setFormData(prev => ({
+        ...prev,
+        meal_structure: [...prev.meal_structure, { ...dayToCopy, day: targetDay }]
+          .sort((a, b) => a.day - b.day)
+      }))
+    }
   }
 
   return (
@@ -476,13 +534,20 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
           </TabsContent>
 
           <TabsContent value="structure" className="space-y-4">
+            {/* Header with day count and controls */}
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
               <h3 className="text-lg font-semibold">Structure du plan ({Array.isArray(formData.meal_structure) ? formData.meal_structure.length : 0} jours)</h3>
-              <Button variant="outline" size="sm" onClick={addDay} className="flex-shrink-0">
-                <Plus className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Ajouter un jour</span>
-                <span className="sm:hidden">Ajouter</span>
-              </Button>
+              <div className="flex gap-2">
+                <Button variant="outline" size="sm" onClick={duplicateActiveDay} disabled={!getActiveDayData()} className="flex-shrink-0">
+                  <span className="hidden sm:inline">Dupliquer jour</span>
+                  <span className="sm:hidden">Dupliquer</span>
+                </Button>
+                <Button variant="outline" size="sm" onClick={addDay} className="flex-shrink-0">
+                  <Plus className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Ajouter un jour</span>
+                  <span className="sm:hidden">Ajouter</span>
+                </Button>
+              </div>
             </div>
 
             {/* Information box about meal type requirement */}
@@ -500,112 +565,204 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
               </div>
             </div>
 
-            <div className="space-y-6">
-              {Array.isArray(formData.meal_structure) && formData.meal_structure.map((day: DayStructure, dayIndex: number) => (
-                <Card key={dayIndex}>
-                  <CardHeader>
-                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                      <CardTitle className="text-lg">Jour {day.day}</CardTitle>
-                      <div className="flex gap-2">
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => duplicateDay(dayIndex)}
-                        >
-                          <span className="hidden sm:inline">Dupliquer</span>
-                          <span className="sm:hidden">Dup.</span>
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => removeDay(dayIndex)}
-                          disabled={!Array.isArray(formData.meal_structure) || formData.meal_structure.length === 1}
-                        >
-                          <X className="h-4 w-4" />
-                        </Button>
-                      </div>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="space-y-4">
-                    {day.meals.map((meal: MealSlot, mealIndex: number) => (
-                      <div key={mealIndex} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-3 border rounded-lg">
-                        <div className="space-y-1">
-                          <Label className="text-sm">
-                            Repas *
-                            {(!meal.name || meal.name.trim() === "") && (
-                              <span className="text-red-500 text-xs ml-1">(requis)</span>
-                            )}
-                          </Label>
-                          <Select 
-                            value={meal.name} 
-                            onValueChange={(value) => updateMeal(dayIndex, mealIndex, "name", value)}
-                          >
-                            <SelectTrigger className={(!meal.name || meal.name.trim() === "") ? "border-red-300 focus:border-red-500" : ""}>
-                              <SelectValue placeholder="Type de repas *" />
-                            </SelectTrigger>
-                            <SelectContent>
-                              {mealTypes.map(type => (
-                                <SelectItem key={type} value={type}>{type}</SelectItem>
-                              ))}
-                            </SelectContent>
-                          </Select>
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-sm">Heure</Label>
-                          <Input
-                            type="time"
-                            value={meal.time}
-                            onChange={(e) => updateMeal(dayIndex, mealIndex, "time", e.target.value)}
-                            className="text-base"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-sm">Calories</Label>
-                          <Input
-                            type="number"
-                            value={meal.calories_target || ""}
-                            onChange={(e) => updateMeal(dayIndex, mealIndex, "calories_target", e.target.value ? parseInt(e.target.value) : null)}
-                            placeholder="500"
-                            className="text-base"
-                          />
-                        </div>
-                        <div className="space-y-1">
-                          <Label className="text-sm">Description</Label>
-                          <Input
-                            value={meal.description}
-                            onChange={(e) => updateMeal(dayIndex, mealIndex, "description", e.target.value)}
-                            placeholder="Description du repas"
-                            className="text-base"
-                          />
-                        </div>
-                        <div className="flex items-end lg:items-center lg:justify-center">
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => removeMeal(dayIndex, mealIndex)}
-                            disabled={day.meals.length === 1}
-                            className="w-full lg:w-auto"
-                          >
-                            <X className="h-4 w-4" />
-                          </Button>
-                        </div>
-                      </div>
-                    ))}
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => addMeal(dayIndex)}
-                      disabled={day.meals.length >= MAX_MEALS_PER_DAY}
-                      className={day.meals.length >= MAX_MEALS_PER_DAY ? "opacity-50 cursor-not-allowed" : ""}
-                      title={day.meals.length >= MAX_MEALS_PER_DAY ? `Maximum ${MAX_MEALS_PER_DAY} repas par jour atteint` : "Ajouter un repas"}
+            {Array.isArray(formData.meal_structure) && formData.meal_structure.length > 0 ? (
+              <div className="space-y-4">
+                {/* Day Navigation Tabs */}
+                <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
+                  {formData.meal_structure.map((day: DayStructure) => (
+                    <button
+                      key={day.day}
+                      onClick={() => setActiveDay(day.day)}
+                      className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2 ${
+                        activeDay === day.day
+                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm'
+                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
+                      }`}
                     >
-                      <Plus className="h-4 w-4 mr-2" />
-                      {day.meals.length >= MAX_MEALS_PER_DAY ? `Limite atteinte (${day.meals.length}/${MAX_MEALS_PER_DAY})` : `Ajouter un repas (${day.meals.length}/${MAX_MEALS_PER_DAY})`}
-                    </Button>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                      <Calendar className="h-4 w-4" />
+                      <span>Jour {day.day}</span>
+                      <Badge variant="outline" className="text-xs h-5 px-1.5">
+                        {day.meals?.length || 0}
+                      </Badge>
+                    </button>
+                  ))}
+                </div>
+
+                {/* Overview Bar showing meal counts per day */}
+                <div className="bg-gray-50 rounded-lg p-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="font-medium text-gray-700">Aperçu des repas par jour :</span>
+                    <div className="flex gap-4">
+                      {formData.meal_structure.map((day: DayStructure) => (
+                        <div key={day.day} className="flex items-center gap-1 text-gray-600">
+                          <span>J{day.day}:</span>
+                          <Badge variant="outline" className="text-xs">
+                            {day.meals?.length || 0}/{MAX_MEALS_PER_DAY}
+                          </Badge>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Active Day Panel */}
+                {getActiveDayData() && (
+                  <Card className="border-emerald-200 bg-emerald-50/50">
+                    <CardHeader className="bg-emerald-100/50 rounded-t-lg">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-5 w-5 text-emerald-600" />
+                            <CardTitle className="text-lg text-emerald-800">Jour {activeDay}</CardTitle>
+                          </div>
+                          <Badge variant="outline" className="bg-white text-emerald-700 border-emerald-300">
+                            {getActiveDayData()?.meals?.length || 0} repas
+                          </Badge>
+                        </div>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => removeDay(getActiveDayIndex())}
+                          disabled={formData.meal_structure.length === 1}
+                          className="bg-white hover:bg-red-50 border-red-300 text-red-600 hover:border-red-400"
+                        >
+                          <X className="h-4 w-4 mr-1" />
+                          <span className="hidden sm:inline">Supprimer jour</span>
+                          <span className="sm:hidden">Supprimer</span>
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="space-y-4 bg-white">
+                      {/* Meals Grid - 3 columns for cleaner layout */}
+                      <div className="space-y-4">
+                        {getActiveDayData()?.meals?.map((meal: MealSlot, mealIndex: number) => (
+                          <div key={mealIndex} className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50/50">
+                            {/* Column 1: Meal Type and Time */}
+                            <div className="space-y-3">
+                              <div className="space-y-1">
+                                <Label className="text-sm font-medium">
+                                  Type de repas *
+                                  {(!meal.name || meal.name.trim() === "") && (
+                                    <span className="text-red-500 text-xs ml-1">(requis)</span>
+                                  )}
+                                </Label>
+                                <Select 
+                                  value={meal.name} 
+                                  onValueChange={(value) => updateMeal(mealIndex, "name", value)}
+                                >
+                                  <SelectTrigger className={(!meal.name || meal.name.trim() === "") ? "border-red-300 focus:border-red-500" : ""}>
+                                    <SelectValue placeholder="Sélectionner..." />
+                                  </SelectTrigger>
+                                  <SelectContent>
+                                    {mealTypes.map(type => (
+                                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-sm font-medium">Heure</Label>
+                                <Input
+                                  type="time"
+                                  value={meal.time}
+                                  onChange={(e) => updateMeal(mealIndex, "time", e.target.value)}
+                                  className="text-base"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Column 2: Calories and Description */}
+                            <div className="space-y-3">
+                              <div className="space-y-1">
+                                <Label className="text-sm font-medium">Calories cibles</Label>
+                                <Input
+                                  type="number"
+                                  value={meal.calories_target || ""}
+                                  onChange={(e) => updateMeal(mealIndex, "calories_target", e.target.value ? parseInt(e.target.value) : null)}
+                                  placeholder="500"
+                                  className="text-base"
+                                />
+                              </div>
+                              <div className="space-y-1">
+                                <Label className="text-sm font-medium">Description</Label>
+                                <Input
+                                  value={meal.description}
+                                  onChange={(e) => updateMeal(mealIndex, "description", e.target.value)}
+                                  placeholder="Description du repas"
+                                  className="text-base"
+                                />
+                              </div>
+                            </div>
+
+                            {/* Column 3: Meal Badge and Actions */}
+                            <div className="flex flex-col justify-between">
+                              <div className="flex flex-wrap gap-2 mb-3">
+                                {meal.name && (
+                                  <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300">
+                                    {meal.name}
+                                  </Badge>
+                                )}
+                                {meal.calories_target && (
+                                  <Badge variant="outline" className="text-orange-600 border-orange-300">
+                                    {meal.calories_target} kcal
+                                  </Badge>
+                                )}
+                                {meal.time && (
+                                  <Badge variant="outline" className="text-blue-600 border-blue-300">
+                                    {meal.time}
+                                  </Badge>
+                                )}
+                              </div>
+                              <Button
+                                variant="outline"
+                                size="sm"
+                                onClick={() => removeMeal(mealIndex)}
+                                disabled={getActiveDayData()?.meals?.length === 1}
+                                className="self-start border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                              >
+                                <X className="h-4 w-4 mr-1" />
+                                Supprimer
+                              </Button>
+                            </div>
+                          </div>
+                        ))}
+                        
+                        {/* Add Meal Button */}
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={addMeal}
+                          disabled={(getActiveDayData()?.meals?.length || 0) >= MAX_MEALS_PER_DAY}
+                          className={`w-full border-2 border-dashed transition-all duration-200 ${
+                            (getActiveDayData()?.meals?.length || 0) >= MAX_MEALS_PER_DAY 
+                              ? "opacity-50 cursor-not-allowed border-gray-300" 
+                              : "border-emerald-300 hover:border-emerald-400 hover:bg-emerald-50 text-emerald-700"
+                          }`}
+                          title={(getActiveDayData()?.meals?.length || 0) >= MAX_MEALS_PER_DAY ? `Maximum ${MAX_MEALS_PER_DAY} repas par jour atteint` : "Ajouter un repas"}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          {(getActiveDayData()?.meals?.length || 0) >= MAX_MEALS_PER_DAY 
+                            ? `Limite atteinte (${getActiveDayData()?.meals?.length}/${MAX_MEALS_PER_DAY})` 
+                            : `Ajouter un repas (${getActiveDayData()?.meals?.length || 0}/${MAX_MEALS_PER_DAY})`
+                          }
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+            ) : (
+              /* Empty State */
+              <div className="text-center py-12">
+                <Calendar className="h-12 w-12 mx-auto text-gray-400 mb-4" />
+                <h3 className="text-lg font-medium text-gray-900 mb-2">Aucun jour configuré</h3>
+                <p className="text-gray-600 mb-4">Commencez par ajouter le premier jour de votre plan alimentaire.</p>
+                <Button onClick={addDay} className="bg-emerald-600 hover:bg-emerald-700">
+                  <Plus className="h-4 w-4 mr-2" />
+                  Ajouter le premier jour
+                </Button>
+              </div>
+            )}
           </TabsContent>
 
           <TabsContent value="nutrition" className="space-y-4">
