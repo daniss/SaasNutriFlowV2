@@ -5,6 +5,7 @@ import {
   ChefHat,
   FileText,
   Home,
+  LayoutTemplate,
   LogOut,
   MessageSquare,
   Plus,
@@ -59,7 +60,7 @@ const data = {
     {
       title: "Modèles",
       url: "/dashboard/templates",
-      icon: FileText,
+      icon: LayoutTemplate,
     },
     {
       title: "Recettes",
