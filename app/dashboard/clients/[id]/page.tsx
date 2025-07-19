@@ -4,7 +4,6 @@ import { DocumentList } from "@/components/documents/DocumentList";
 import { DocumentUpload } from "@/components/documents/DocumentUpload";
 import { ProgressPhotoUpload } from "@/components/progress/ProgressPhotoUpload";
 import { ProgressPhotos } from "@/components/progress/ProgressPhotos";
-import ProgressDashboard from "@/components/progress/ProgressDashboard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -996,14 +995,6 @@ export default function ClientDetailPage() {
               <span className="hidden sm:inline">Photos de progrès</span>
               <span className="sm:hidden text-xs">Photos</span>
             </TabsTrigger>
-            <TabsTrigger
-              value="analytics"
-              className="data-[state=active]:bg-emerald-50 data-[state=active]:text-emerald-700 data-[state=active]:border-emerald-200 text-slate-600 whitespace-nowrap"
-            >
-              <Target className="h-3 w-3 md:h-4 md:w-4 mr-1 md:mr-2" />
-              <span className="hidden sm:inline">Analytics</span>
-              <span className="sm:hidden text-xs">Stats</span>
-            </TabsTrigger>
           </TabsList>
 
           {/* Progress Tab */}
@@ -1742,13 +1733,6 @@ export default function ClientDetailPage() {
             </Card>
           </TabsContent>
 
-          {/* Analytics Tab */}
-          <TabsContent value="analytics" className="space-y-6">
-            <ProgressDashboard 
-              client={client} 
-              onUpdateProgress={fetchClientData}
-            />
-          </TabsContent>
         </Tabs>
       </div>
     </div>
