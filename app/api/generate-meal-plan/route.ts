@@ -92,28 +92,134 @@ export async function POST(request: NextRequest) {
         
         console.log(`🔄 Generating days ${startDay}-${endDay} (${chunkDays} days)`);
         
-        const chunkPrompt = `Génère ${chunkDays} jours de plan alimentaire méditerranéen JSON français.
+        const chunkPrompt = `Crée ${chunkDays} jours de plan alimentaire méditerranéen JSON français.
 
 ${prompt} - Jours ${startDay} à ${endDay}, ${targetCalories} cal/jour
 ${restrictions.length > 0 ? `Restrictions: ${restrictions.join(", ")}` : ""}
 
-ULTRA-CONCIS:
-- 2 ingrédients max par repas
-- 1 instruction max par repas
+IMPORTANT:
+- Noms de repas créatifs et appétissants
+- 3-4 ingrédients par repas maximum
+- Instructions détaillées de préparation
 - ingredientsNutrition obligatoire
 
-JSON direct:
-{"days":[
-${Array.from({length: chunkDays}, (_, i) => `
-{"day":${startDay + i},"meals":{
-"breakfast":{"name":"PDJ ${startDay + i}","description":"Repas","calories":${Math.round(targetCalories * 0.25)},"protein":17,"carbs":62,"fat":15,"fiber":5,"prepTime":5,"cookTime":5,"ingredients":["50g avoine","200ml lait"],"ingredientsNutrition":[{"name":"avoine","unit":"g","caloriesPer100":389,"proteinPer100":16.9,"carbsPer100":66.3,"fatPer100":6.9,"fiberPer100":10.6},{"name":"lait","unit":"ml","caloriesPer100":42,"proteinPer100":3.4,"carbsPer100":4.8,"fatPer100":1.0,"fiberPer100":0}],"instructions":["Mélanger"],"tags":["matin"]},
-"lunch":{"name":"DEJ ${startDay + i}","description":"Repas","calories":${Math.round(targetCalories * 0.35)},"protein":32,"carbs":79,"fat":21,"fiber":8,"prepTime":10,"cookTime":10,"ingredients":["100g quinoa","150g légumes"],"ingredientsNutrition":[{"name":"quinoa","unit":"g","caloriesPer100":368,"proteinPer100":14.1,"carbsPer100":64.2,"fatPer100":6.1,"fiberPer100":7.0},{"name":"légumes","unit":"g","caloriesPer100":25,"proteinPer100":2.0,"carbsPer100":5.0,"fatPer100":0.2,"fiberPer100":3.0}],"instructions":["Cuire"],"tags":["midi"]},
-"dinner":{"name":"DIN ${startDay + i}","description":"Repas","calories":${Math.round(targetCalories * 0.30)},"protein":34,"carbs":61,"fat":18,"fiber":6,"prepTime":10,"cookTime":15,"ingredients":["120g poisson","200g légumes"],"ingredientsNutrition":[{"name":"poisson","unit":"g","caloriesPer100":150,"proteinPer100":25,"carbsPer100":0,"fatPer100":5,"fiberPer100":0},{"name":"légumes","unit":"g","caloriesPer100":25,"proteinPer100":2.0,"carbsPer100":5.0,"fatPer100":0.2,"fiberPer100":3.0}],"instructions":["Griller"],"tags":["soir"]},
-"snacks":[{"name":"Snack","description":"Collation","calories":${Math.round(targetCalories * 0.10)},"protein":9,"carbs":27,"fat":4,"fiber":3,"prepTime":2,"cookTime":0,"ingredients":["150g yaourt"],"ingredientsNutrition":[{"name":"yaourt","unit":"g","caloriesPer100":59,"proteinPer100":10,"carbsPer100":3.6,"fatPer100":0.4,"fiberPer100":0}],"instructions":["Servir"],"tags":["snack"]}]
-},"totalCalories":${targetCalories},"totalProtein":90,"totalCarbs":225,"totalFat":60}`).join(",")}
-]}
+FORMAT JSON:
+{
+  "days": [
+    {
+      "day": ${startDay},
+      "meals": {
+        "breakfast": {
+          "name": "Porridge méditerranéen aux figues",
+          "description": "Petit-déjeuner énergisant aux saveurs méditerranéennes",
+          "calories": ${Math.round(targetCalories * 0.25)},
+          "protein": 17,
+          "carbs": 62,
+          "fat": 15,
+          "fiber": 5,
+          "prepTime": 10,
+          "cookTime": 5,
+          "ingredients": ["60g flocons d'avoine", "250ml lait d'amande", "2 figues fraîches", "15g amandes effilées"],
+          "ingredientsNutrition": [
+            {"name": "flocons d'avoine", "unit": "g", "caloriesPer100": 389, "proteinPer100": 16.9, "carbsPer100": 66.3, "fatPer100": 6.9, "fiberPer100": 10.6},
+            {"name": "lait d'amande", "unit": "ml", "caloriesPer100": 24, "proteinPer100": 1.0, "carbsPer100": 3.0, "fatPer100": 1.1, "fiberPer100": 0.4},
+            {"name": "figues fraîches", "unit": "piece", "caloriesPer100": 74, "proteinPer100": 0.7, "carbsPer100": 19.2, "fatPer100": 0.3, "fiberPer100": 2.9},
+            {"name": "amandes effilées", "unit": "g", "caloriesPer100": 579, "proteinPer100": 21.2, "carbsPer100": 21.6, "fatPer100": 49.9, "fiberPer100": 12.5}
+          ],
+          "instructions": [
+            "Faire chauffer le lait d'amande dans une casserole à feu moyen",
+            "Ajouter les flocons d'avoine et cuire 5 minutes en remuant",
+            "Couper les figues en quartiers et les ajouter",
+            "Servir chaud avec les amandes effilées sur le dessus"
+          ],
+          "tags": ["petit-déjeuner", "méditerranéen", "fibres"]
+        },
+        "lunch": {
+          "name": "Salade de quinoa aux légumes grillés",
+          "description": "Salade complète et colorée aux légumes de saison",
+          "calories": ${Math.round(targetCalories * 0.35)},
+          "protein": 32,
+          "carbs": 79,
+          "fat": 21,
+          "fiber": 8,
+          "prepTime": 15,
+          "cookTime": 20,
+          "ingredients": ["100g quinoa", "150g courgettes", "100g tomates cerises", "30ml huile d'olive"],
+          "ingredientsNutrition": [
+            {"name": "quinoa", "unit": "g", "caloriesPer100": 368, "proteinPer100": 14.1, "carbsPer100": 64.2, "fatPer100": 6.1, "fiberPer100": 7.0},
+            {"name": "courgettes", "unit": "g", "caloriesPer100": 17, "proteinPer100": 1.2, "carbsPer100": 3.1, "fatPer100": 0.3, "fiberPer100": 1.0},
+            {"name": "tomates cerises", "unit": "g", "caloriesPer100": 18, "proteinPer100": 0.9, "carbsPer100": 3.9, "fatPer100": 0.2, "fiberPer100": 1.2},
+            {"name": "huile d'olive", "unit": "ml", "caloriesPer100": 884, "proteinPer100": 0, "carbsPer100": 0, "fatPer100": 100, "fiberPer100": 0}
+          ],
+          "instructions": [
+            "Cuire le quinoa dans l'eau bouillante selon les instructions du paquet",
+            "Couper les courgettes en dés et les faire griller 10 minutes",
+            "Couper les tomates cerises en deux",
+            "Mélanger tous les ingrédients avec l'huile d'olive et assaisonner"
+          ],
+          "tags": ["déjeuner", "végétarien", "protéines"]
+        },
+        "dinner": {
+          "name": "Poisson grillé aux herbes de Provence",
+          "description": "Filet de poisson savoureux aux aromates méditerranéens",
+          "calories": ${Math.round(targetCalories * 0.30)},
+          "protein": 34,
+          "carbs": 15,
+          "fat": 18,
+          "fiber": 6,
+          "prepTime": 10,
+          "cookTime": 15,
+          "ingredients": ["120g filet de dorade", "200g ratatouille", "15ml huile d'olive", "1 citron"],
+          "ingredientsNutrition": [
+            {"name": "filet de dorade", "unit": "g", "caloriesPer100": 80, "proteinPer100": 19.8, "carbsPer100": 0, "fatPer100": 1.2, "fiberPer100": 0},
+            {"name": "ratatouille", "unit": "g", "caloriesPer100": 25, "proteinPer100": 1.0, "carbsPer100": 5.0, "fatPer100": 0.2, "fiberPer100": 2.5},
+            {"name": "huile d'olive", "unit": "ml", "caloriesPer100": 884, "proteinPer100": 0, "carbsPer100": 0, "fatPer100": 100, "fiberPer100": 0},
+            {"name": "citron", "unit": "piece", "caloriesPer100": 29, "proteinPer100": 1.1, "carbsPer100": 9.3, "fatPer100": 0.3, "fiberPer100": 2.8}
+          ],
+          "instructions": [
+            "Préchauffer le grill du four à 200°C",
+            "Badigeonner le poisson d'huile d'olive et d'herbes de Provence",
+            "Griller le poisson 12-15 minutes selon l'épaisseur",
+            "Réchauffer la ratatouille et servir avec le poisson et un quartier de citron"
+          ],
+          "tags": ["dîner", "poisson", "méditerranéen"]
+        },
+        "snacks": [
+          {
+            "name": "Yaourt grec aux noix et miel",
+            "description": "Collation protéinée aux saveurs méditerranéennes",
+            "calories": ${Math.round(targetCalories * 0.10)},
+            "protein": 9,
+            "carbs": 27,
+            "fat": 4,
+            "fiber": 3,
+            "prepTime": 3,
+            "cookTime": 0,
+            "ingredients": ["150g yaourt grec", "20g noix", "15g miel", "1 pincée cannelle"],
+            "ingredientsNutrition": [
+              {"name": "yaourt grec", "unit": "g", "caloriesPer100": 59, "proteinPer100": 10, "carbsPer100": 3.6, "fatPer100": 0.4, "fiberPer100": 0},
+              {"name": "noix", "unit": "g", "caloriesPer100": 654, "proteinPer100": 15.2, "carbsPer100": 13.7, "fatPer100": 65.2, "fiberPer100": 6.7},
+              {"name": "miel", "unit": "g", "caloriesPer100": 304, "proteinPer100": 0.3, "carbsPer100": 82.4, "fatPer100": 0, "fiberPer100": 0.2},
+              {"name": "cannelle", "unit": "g", "caloriesPer100": 247, "proteinPer100": 4.0, "carbsPer100": 80.6, "fatPer100": 1.2, "fiberPer100": 53.1}
+            ],
+            "instructions": [
+              "Concasser grossièrement les noix",
+              "Mélanger le yaourt avec le miel",
+              "Ajouter les noix et saupoudrer de cannelle"
+            ],
+            "tags": ["collation", "protéines", "antioxydants"]
+          }
+        ]
+      },
+      "totalCalories": ${targetCalories},
+      "totalProtein": 90,
+      "totalCarbs": 225,
+      "totalFat": 60
+    }
+  ]
+}
 
-Génère EXACTEMENT ce format avec variations d'ingrédients:`;
+Génère ${chunkDays} jours complets avec des recettes créatives et variées:`;
         
         try {
           const result = await model.generateContent(chunkPrompt);
