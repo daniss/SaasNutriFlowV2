@@ -216,8 +216,6 @@ export default function GenerateMealPlanPage() {
       setGenerationProgress(100)
       setTimeout(() => {
         setGeneratedPlan(plan)
-        // Store raw plan for saving to database
-        ;(plan as any).rawData = rawPlan
         setPlanFeedback({ planId: plan.title + Date.now(), rating: null })
         clearInterval(progressInterval)
       }, 500)
@@ -349,7 +347,7 @@ export default function GenerateMealPlanPage() {
           name: formData.planName || generatedPlan.title,
           description: generatedPlan.description,
           duration_days: generatedPlan.duration,
-          plan_content: (generatedPlan as any).rawData || generatedPlan,
+          plan_content: generatedPlan,
           status: "Active",
         })
         .select()
