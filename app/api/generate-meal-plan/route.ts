@@ -101,6 +101,11 @@ CONTRAINTES ABSOLUES:
    - Si 100g protéines = 400 calories sur 2000 calories totales = 20%
    - Vérifier: protéines% + glucides% + lipides% = 100%
 7. TOUS LES CHAMPS OBLIGATOIRES - AUCUN CHAMP VIDE
+8. ⚠️ CHAQUE REPAS DOIT OBLIGATOIREMENT INCLURE:
+   - ingredients: LISTE DÉTAILLÉE avec grammes exacts (ex: "80g flocons d'avoine")
+   - calories, protein, carbs, fat: VALEURS NUMÉRIQUES OBLIGATOIRES
+   - instructions: ÉTAPES DE PRÉPARATION CLAIRES
+   - Un repas SANS ingrédients ou SANS macros = REJET
 
 ⚠️ VÉRIFICATION OBLIGATOIRE AVANT ENVOI:
 - Compter les jours dans le tableau: doit être exactement ${duration}

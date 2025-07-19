@@ -59,6 +59,7 @@ import { useEffect, useRef, useState } from "react"
 import { useAuth } from "@/hooks/useAuthNew"
 import { generateMealPlan, type GeneratedMealPlan, type Meal } from "@/lib/gemini"
 import { supabase, type Client } from "@/lib/supabase"
+import { convertAIToDynamicMealPlan } from "@/lib/meal-plan-types"
 import { downloadUltraModernAIPDF } from "@/lib/pdf-generator-ai-modern"
 import { useToast } from "@/hooks/use-toast"
 import MacronutrientBreakdown from "@/components/nutrition/MacronutrientBreakdown"
@@ -338,7 +339,19 @@ export default function GenerateMealPlanPage() {
       
       if (clientError) throw clientError
       
-      // Save the meal plan
+      // Convert AI plan to dynamic format
+      const dynamicPlan = convertAIToDynamicMealPlan({
+        ...generatedPlan,
+        totalDays: generatedPlan.duration,
+        averageCaloriesPerDay: generatedPlan.targetCalories || generatedPlan.nutritionalGoals?.dailyCalories,
+        nutritionSummary: generatedPlan.nutritionSummary || {
+          protein: `${generatedPlan.nutritionalGoals?.proteinPercentage || 25}%`,
+          carbohydrates: `${generatedPlan.nutritionalGoals?.carbPercentage || 45}%`,
+          fat: `${generatedPlan.nutritionalGoals?.fatPercentage || 30}%`
+        }
+      })
+      
+      // Save the meal plan in dynamic format
       const { data: savedPlan, error: saveError } = await supabase
         .from("meal_plans")
         .insert({
@@ -347,7 +360,7 @@ export default function GenerateMealPlanPage() {
           name: formData.planName || generatedPlan.title,
           description: generatedPlan.description,
           duration_days: generatedPlan.duration,
-          plan_content: generatedPlan,
+          plan_content: dynamicPlan,
           status: "Active",
         })
         .select()

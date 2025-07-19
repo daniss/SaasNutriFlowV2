@@ -256,3 +256,139 @@ export function generateMealId(dayNumber: number, mealName: string): string {
   
   return `${dayNumber}-${sanitized}`
 }
+
+// Convert AI-generated meal plan to dynamic format
+export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
+  const dynamicDays: DynamicMealPlanDay[] = aiPlan.days.map((day: any) => {
+    const meals: MealSlot[] = []
+    let order = 0
+
+    // Map meal types to French names
+    const mealTypeMap: Record<string, string> = {
+      breakfast: 'Petit-déjeuner',
+      lunch: 'Déjeuner',
+      dinner: 'Dîner',
+      snack: 'Collation',
+      snacks: 'Collation'
+    }
+
+    // Process breakfast
+    if (day.meals?.breakfast) {
+      const meal = day.meals.breakfast
+      meals.push({
+        id: generateMealId(day.day, 'Petit-déjeuner'),
+        name: 'Petit-déjeuner',
+        time: '08:00',
+        description: formatMealDescription(meal),
+        calories_target: meal.calories,
+        enabled: true,
+        order: order++
+      })
+    }
+
+    // Process lunch
+    if (day.meals?.lunch) {
+      const meal = day.meals.lunch
+      meals.push({
+        id: generateMealId(day.day, 'Déjeuner'),
+        name: 'Déjeuner',
+        time: '12:00',
+        description: formatMealDescription(meal),
+        calories_target: meal.calories,
+        enabled: true,
+        order: order++
+      })
+    }
+
+    // Process dinner
+    if (day.meals?.dinner) {
+      const meal = day.meals.dinner
+      meals.push({
+        id: generateMealId(day.day, 'Dîner'),
+        name: 'Dîner',
+        time: '19:00',
+        description: formatMealDescription(meal),
+        calories_target: meal.calories,
+        enabled: true,
+        order: order++
+      })
+    }
+
+    // Process snacks
+    if (day.meals?.snacks) {
+      if (Array.isArray(day.meals.snacks)) {
+        day.meals.snacks.forEach((snack: any, index: number) => {
+          const snackName = index === 0 ? 'Collation après-midi' : `Collation ${index + 1}`
+          meals.push({
+            id: generateMealId(day.day, snackName),
+            name: snackName,
+            time: index === 0 ? '16:00' : '21:00',
+            description: formatMealDescription(snack),
+            calories_target: snack.calories,
+            enabled: true,
+            order: order++
+          })
+        })
+      } else if (typeof day.meals.snacks === 'object') {
+        // Single snack object
+        meals.push({
+          id: generateMealId(day.day, 'Collation après-midi'),
+          name: 'Collation après-midi',
+          time: '16:00',
+          description: formatMealDescription(day.meals.snacks),
+          calories_target: day.meals.snacks.calories,
+          enabled: true,
+          order: order++
+        })
+      }
+    }
+
+    return {
+      day: day.day,
+      date: day.date || new Date(Date.now() + (day.day - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+      meals: meals.sort((a, b) => a.order - b.order),
+      notes: day.notes
+    }
+  })
+
+  return {
+    days: dynamicDays,
+    generated_by: 'ai',
+    target_calories: aiPlan.averageCaloriesPerDay || aiPlan.targetCalories,
+    duration_days: aiPlan.duration || aiPlan.totalDays,
+    difficulty: aiPlan.difficulty,
+    notes: aiPlan.notes || aiPlan.description,
+    target_macros: aiPlan.nutritionSummary
+  }
+}
+
+// Format meal description including ingredients and macros
+function formatMealDescription(meal: any): string {
+  let description = meal.name || meal.description || ''
+  
+  if (meal.description && meal.description !== meal.name) {
+    description += `\n${meal.description}`
+  }
+  
+  // Add ingredients if available
+  if (meal.ingredients && meal.ingredients.length > 0) {
+    description += '\n\n🥗 Ingrédients:\n' + meal.ingredients.map((ing: string) => `• ${ing}`).join('\n')
+  }
+  
+  // Add macros if available
+  if (meal.protein || meal.carbs || meal.fat) {
+    description += '\n\n📊 Valeurs nutritionnelles:'
+    if (meal.calories) description += `\n• Calories: ${meal.calories} kcal`
+    if (meal.protein) description += `\n• Protéines: ${meal.protein}g`
+    if (meal.carbs) description += `\n• Glucides: ${meal.carbs}g`
+    if (meal.fat) description += `\n• Lipides: ${meal.fat}g`
+    if (meal.fiber) description += `\n• Fibres: ${meal.fiber}g`
+  }
+  
+  // Add instructions if available
+  if (meal.instructions && meal.instructions.length > 0) {
+    description += '\n\n👨‍🍳 Instructions:\n' + meal.instructions.map((inst: string, i: number) => `${i + 1}. ${inst}`).join('\n')
+  }
+  
+  return description
+}
