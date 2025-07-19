@@ -20,12 +20,14 @@ interface TOTPVerificationDialogProps {
   onVerificationSuccess: () => void;
   onCancel: () => void;
   bypassFactorCheck?: boolean;
+  verifiedFactors?: any[];
 }
 
 export function TOTPVerificationDialog({
   onVerificationSuccess,
   onCancel,
   bypassFactorCheck = false,
+  verifiedFactors = [],
 }: TOTPVerificationDialogProps) {
   const { challengeTOTP, verifyTOTPChallenge, status } = useSupabaseTOTP();
   const supabase = createClient();
@@ -67,11 +69,34 @@ export function TOTPVerificationDialog({
   const initializeChallenge = async () => {
     setLoading(true);
     try {
-      const challenge = await challengeTOTP();
-      if (challenge) {
-        setChallengeData(challenge);
+      // Use passed factors if bypassing check, otherwise use hook's challengeTOTP
+      if (bypassFactorCheck && verifiedFactors.length > 0) {
+        console.log("🔐 Using passed verified factors for challenge:", verifiedFactors);
+        const factorId = verifiedFactors[0].id;
+        
+        // Create challenge directly using supabase
+        const { data, error } = await supabase.auth.mfa.challenge({
+          factorId,
+        });
+
+        if (error) {
+          console.error("Error creating TOTP challenge:", error);
+          setError("Erreur lors de l'initialisation de la vérification");
+          return;
+        }
+
+        setChallengeData({
+          challengeId: data.id,
+          factorId: factorId,
+        });
       } else {
-        setError("Aucun facteur TOTP configuré trouvé");
+        // Fallback to hook's challengeTOTP
+        const challenge = await challengeTOTP();
+        if (challenge) {
+          setChallengeData(challenge);
+        } else {
+          setError("Aucun facteur TOTP configuré trouvé");
+        }
       }
     } catch (error) {
       console.error("Error initializing TOTP challenge:", error);
@@ -117,7 +142,10 @@ export function TOTPVerificationDialog({
     setError("");
   };
 
-  const verifiedFactors = status.factors.filter(f => f.status === "verified");
+  // Use passed factors if available, otherwise fall back to hook's factors
+  const displayFactors = bypassFactorCheck && verifiedFactors.length > 0 
+    ? verifiedFactors 
+    : status.factors.filter(f => f.status === "verified");
 
   const handleLogout = async () => {
     setLoading(true);
@@ -144,12 +172,12 @@ export function TOTPVerificationDialog({
 
         <CardContent className="space-y-6">
           {/* Factor Info */}
-          {verifiedFactors.length > 0 && (
+          {displayFactors.length > 0 && (
             <div className="flex items-center gap-3 p-3 bg-emerald-50 rounded-lg">
               <Smartphone className="h-5 w-5 text-emerald-600" />
               <div className="text-sm">
                 <p className="font-medium text-emerald-800">
-                  {verifiedFactors[0].friendly_name || "Application TOTP"}
+                  {displayFactors[0].friendly_name || "Application TOTP"}
                 </p>
                 <p className="text-emerald-600">
                   Ouvrez votre application d'authentification

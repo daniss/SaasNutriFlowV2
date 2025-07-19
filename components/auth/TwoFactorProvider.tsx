@@ -32,6 +32,7 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
   const [nextLevel, setNextLevel] = useState<"aal1" | "aal2">("aal1");
   const [loading, setLoading] = useState(true);
   const [showVerification, setShowVerification] = useState(false);
+  const [verifiedFactorsData, setVerifiedFactorsData] = useState<any[]>([]);
 
   const supabase = createClient();
 
@@ -102,6 +103,9 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
       const totpFactors = factorsData.totp || [];
       const verifiedFactors = totpFactors.filter(factor => factor.status === "verified");
       const hasVerifiedTOTP = verifiedFactors.length > 0;
+      
+      // Store verified factors for use in TOTP dialog
+      setVerifiedFactorsData(verifiedFactors);
 
       const currentAAL = aalData.currentLevel as "aal1" | "aal2";
       const nextAAL = aalData.nextLevel as "aal1" | "aal2";
@@ -188,6 +192,7 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
           setIsVerified(true);
         }}
         bypassFactorCheck={true}
+        verifiedFactors={verifiedFactorsData}
       />
     );
   }
@@ -203,7 +208,8 @@ export function TwoFactorProvider({ children }: { children: React.ReactNode }) {
         refresh: checkAuthenticatorAssuranceLevel,
       }}
     >
-      {children}
+      {/* Only render children if MFA is not required OR if it's verified */}
+      {(!isRequired || isVerified) ? children : null}
     </TwoFactorContext.Provider>
   );
 }
