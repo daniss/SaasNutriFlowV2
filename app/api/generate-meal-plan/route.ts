@@ -103,9 +103,23 @@ CONTRAINTES ABSOLUES:
 7. TOUS LES CHAMPS OBLIGATOIRES - AUCUN CHAMP VIDE
 8. ⚠️ CHAQUE REPAS DOIT OBLIGATOIREMENT INCLURE:
    - ingredients: LISTE DÉTAILLÉE avec grammes exacts (ex: "80g flocons d'avoine")
+   - ingredientsNutrition: MACROS POUR CHAQUE INGRÉDIENT (voir format ci-dessous)
    - calories, protein, carbs, fat: VALEURS NUMÉRIQUES OBLIGATOIRES
    - instructions: ÉTAPES DE PRÉPARATION CLAIRES
    - Un repas SANS ingrédients ou SANS macros = REJET
+9. ⚠️ FORMAT OBLIGATOIRE POUR ingredientsNutrition:
+   Chaque ingrédient DOIT avoir ses valeurs nutritionnelles pour 100g/100ml/1 pièce:
+   "ingredientsNutrition": [
+     {
+       "name": "flocons d'avoine",
+       "unit": "g",
+       "caloriesPer100": 389,
+       "proteinPer100": 16.9,
+       "carbsPer100": 66.3,
+       "fatPer100": 6.9,
+       "fiberPer100": 10.6
+     }
+   ]
 
 ⚠️ VÉRIFICATION OBLIGATOIRE AVANT ENVOI:
 - Compter les jours dans le tableau: doit être exactement ${duration}
@@ -145,6 +159,35 @@ EXEMPLE DE STRUCTURE JSON:
             "1 banane moyenne",
             "50g myrtilles",
             "1 cuillère à soupe miel"
+          ],
+          "ingredientsNutrition": [
+            {
+              "name": "flocons d'avoine",
+              "unit": "g",
+              "caloriesPer100": 389,
+              "proteinPer100": 16.9,
+              "carbsPer100": 66.3,
+              "fatPer100": 6.9,
+              "fiberPer100": 10.6
+            },
+            {
+              "name": "lait demi-écrémé",
+              "unit": "ml",
+              "caloriesPer100": 46,
+              "proteinPer100": 3.4,
+              "carbsPer100": 4.8,
+              "fatPer100": 1.5,
+              "fiberPer100": 0
+            },
+            {
+              "name": "banane",
+              "unit": "piece",
+              "caloriesPer100": 89,
+              "proteinPer100": 1.1,
+              "carbsPer100": 22.8,
+              "fatPer100": 0.3,
+              "fiberPer100": 2.6
+            }
           ],
           "instructions": [
             "Faire chauffer le lait dans une casserole",

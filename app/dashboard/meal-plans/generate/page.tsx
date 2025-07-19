@@ -364,14 +364,18 @@ export default function GenerateMealPlanPage() {
         firstDay: dynamicPlan.days[0]
       })
       
+      // Save ingredients to database first
+      const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days, user!.id)
+      console.log(`Saved ${savedIngredients.length} ingredients to database`)
+      
       // Create recipes for each meal
       const createdRecipes = await createRecipesFromMeals(generatedPlan.days, user!.id)
       console.log(`Created ${createdRecipes.length} recipes from AI meal plan`)
       
-      if (createdRecipes.length > 0) {
+      if (savedIngredients.length > 0 || createdRecipes.length > 0) {
         toast({
-          title: "Recettes créées",
-          description: `${createdRecipes.length} recette(s) ont été automatiquement créées et ajoutées à votre collection.`
+          title: "Données créées",
+          description: `${savedIngredients.length} ingrédient(s) et ${createdRecipes.length} recette(s) ont été automatiquement créés.`
         })
       }
       
@@ -416,7 +420,7 @@ export default function GenerateMealPlanPage() {
       
       toast({
         title: "Succès",
-        description: `Plan alimentaire envoyé au client avec succès! ${createdRecipes.length > 0 ? `${createdRecipes.length} recette(s) créée(s).` : ""}`,
+        description: `Plan alimentaire envoyé au client avec succès! ${savedIngredients.length} ingrédient(s) et ${createdRecipes.length} recette(s) créés.`,
       })
       
       // Optionally redirect to meal plans list
@@ -429,6 +433,87 @@ export default function GenerateMealPlanPage() {
         variant: "destructive",
       })
     }
+  }
+
+  // Function to save ingredients to database
+  const saveIngredientsToDatabase = async (days: any[], dietitianId: string) => {
+    const savedIngredients = []
+    
+    for (const day of days) {
+      for (const meal of day.meals) {
+        if (!meal.ingredientsNutrition || meal.ingredientsNutrition.length === 0) continue
+        
+        for (const ingredient of meal.ingredientsNutrition) {
+          try {
+            // Check if ingredient already exists
+            const { data: existingIngredient } = await supabase
+              .from("ingredients")
+              .select("id")
+              .eq("dietitian_id", dietitianId)
+              .eq("name", ingredient.name)
+              .single()
+            
+            if (existingIngredient) {
+              console.log(`Ingredient "${ingredient.name}" already exists, skipping`)
+              continue
+            }
+            
+            // Prepare ingredient data based on unit type
+            const ingredientData = {
+              dietitian_id: dietitianId,
+              name: ingredient.name,
+              category: ingredient.unit === 'ml' ? 'liquid' : ingredient.unit === 'piece' ? 'countable' : 'solid',
+              unit_type: ingredient.unit,
+              
+              // Set nutritional values based on unit
+              ...(ingredient.unit === 'g' && {
+                calories_per_100g: ingredient.caloriesPer100,
+                protein_per_100g: ingredient.proteinPer100,
+                carbs_per_100g: ingredient.carbsPer100,
+                fat_per_100g: ingredient.fatPer100,
+                fiber_per_100g: ingredient.fiberPer100
+              }),
+              
+              ...(ingredient.unit === 'ml' && {
+                calories_per_100ml: ingredient.caloriesPer100,
+                protein_per_100ml: ingredient.proteinPer100,
+                carbs_per_100ml: ingredient.carbsPer100,
+                fat_per_100ml: ingredient.fatPer100,
+                fiber_per_100ml: ingredient.fiberPer100
+              }),
+              
+              ...(ingredient.unit === 'piece' && {
+                calories_per_piece: ingredient.caloriesPer100,
+                protein_per_piece: ingredient.proteinPer100,
+                carbs_per_piece: ingredient.carbsPer100,
+                fat_per_piece: ingredient.fatPer100,
+                fiber_per_piece: ingredient.fiberPer100
+              })
+            }
+            
+            // Save ingredient
+            const { data: savedIngredient, error: ingredientError } = await supabase
+              .from("ingredients")
+              .insert(ingredientData)
+              .select()
+              .single()
+            
+            if (ingredientError) {
+              console.error(`Error saving ingredient "${ingredient.name}":`, ingredientError)
+              continue
+            }
+            
+            savedIngredients.push(savedIngredient)
+            console.log(`Saved ingredient: "${ingredient.name}"`)
+            
+          } catch (error) {
+            console.error(`Error processing ingredient "${ingredient.name}":`, error)
+          }
+        }
+      }
+    }
+    
+    return savedIngredients
   }
 
   // Function to create recipes from AI-generated meals
