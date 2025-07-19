@@ -58,7 +58,6 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
     category: template?.category || "",
     client_type: template?.client_type || "general",
     goal_type: template?.goal_type || "general",
-    duration_days: template?.duration_days || 7,
     target_calories: template?.target_calories || "",
     target_macros: template?.target_macros || { protein: null, carbs: null, fat: null },
     difficulty: template?.difficulty || "medium",
@@ -110,8 +109,34 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
       return
     }
 
+    // Validate that all meals have a selected meal type
+    const invalidMeals: string[] = []
+    if (Array.isArray(formData.meal_structure)) {
+      formData.meal_structure.forEach((day: DayStructure, dayIndex: number) => {
+        if (Array.isArray(day.meals)) {
+          day.meals.forEach((meal: MealSlot, mealIndex: number) => {
+            if (!meal.name || meal.name.trim() === "") {
+              invalidMeals.push(`Jour ${day.day}, Repas ${mealIndex + 1}`)
+            }
+          })
+        }
+      })
+    }
+
+    if (invalidMeals.length > 0) {
+      toast({
+        title: "Validation requise",
+        description: `Veuillez sélectionner un type de repas pour: ${invalidMeals.join(', ')}. Tous les repas doivent avoir un type sélectionné pour pouvoir utiliser ce modèle.`,
+        variant: "destructive",
+      })
+      return
+    }
+
     setLoading(true)
     try {
+      // Calculate duration_days based on the number of days in meal_structure
+      const calculatedDuration = Array.isArray(formData.meal_structure) ? formData.meal_structure.length : 1
+
       const templateData = {
         dietitian_id: user.id,
         name: formData.name,
@@ -120,7 +145,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
         client_type: formData.client_type,
         health_condition: null, // Optional field, can be added to form later
         goal_type: formData.goal_type,
-        duration_days: formData.duration_days,
+        duration_days: calculatedDuration,
         target_calories: formData.target_calories || null,
         target_macros: formData.target_macros,
         meal_structure: formData.meal_structure,
@@ -394,19 +419,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
               />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="duration">Durée (jours)</Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  value={formData.duration_days}
-                  onChange={(e) => setFormData(prev => ({ ...prev, duration_days: parseInt(e.target.value) || 7 }))}
-                  min="1"
-                  max="30"
-                  className="text-base"
-                />
-              </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="calories">Calories cibles</Label>
                 <Input
@@ -472,6 +485,21 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
               </Button>
             </div>
 
+            {/* Information box about meal type requirement */}
+            <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 flex items-start gap-3">
+              <div className="flex-shrink-0 mt-0.5">
+                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center">
+                  <span className="text-white text-xs font-bold">!</span>
+                </div>
+              </div>
+              <div>
+                <p className="text-sm font-medium text-blue-900">Type de repas obligatoire</p>
+                <p className="text-xs text-blue-700 mt-1">
+                  Chaque repas doit avoir un type sélectionné (Petit-déjeuner, Déjeuner, etc.) pour pouvoir utiliser ce modèle dans la création de plans alimentaires.
+                </p>
+              </div>
+            </div>
+
             <div className="space-y-6">
               {Array.isArray(formData.meal_structure) && formData.meal_structure.map((day: DayStructure, dayIndex: number) => (
                 <Card key={dayIndex}>
@@ -502,13 +530,18 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                     {day.meals.map((meal: MealSlot, mealIndex: number) => (
                       <div key={mealIndex} className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 p-3 border rounded-lg">
                         <div className="space-y-1">
-                          <Label className="text-sm">Repas</Label>
+                          <Label className="text-sm">
+                            Repas *
+                            {(!meal.name || meal.name.trim() === "") && (
+                              <span className="text-red-500 text-xs ml-1">(requis)</span>
+                            )}
+                          </Label>
                           <Select 
                             value={meal.name} 
                             onValueChange={(value) => updateMeal(dayIndex, mealIndex, "name", value)}
                           >
-                            <SelectTrigger>
-                              <SelectValue placeholder="Type de repas" />
+                            <SelectTrigger className={(!meal.name || meal.name.trim() === "") ? "border-red-300 focus:border-red-500" : ""}>
+                              <SelectValue placeholder="Type de repas *" />
                             </SelectTrigger>
                             <SelectContent>
                               {mealTypes.map(type => (

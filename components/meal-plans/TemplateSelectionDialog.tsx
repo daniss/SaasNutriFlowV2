@@ -41,7 +41,6 @@ interface Customizations {
   name: string
   description: string
   target_calories: string
-  duration_days: number
   notes: string
 }
 
@@ -69,7 +68,6 @@ export default function TemplateSelectionDialog({
     name: "",
     description: "",
     target_calories: "",
-    duration_days: 7,
     notes: ""
   })
 
@@ -84,8 +82,7 @@ export default function TemplateSelectionDialog({
       setCustomizations(prev => ({
         ...prev,
         name: selectedTemplate.name + " - Personnalisé",
-        target_calories: selectedTemplate.target_calories || "",
-        duration_days: selectedTemplate.duration_days || 7
+        target_calories: selectedTemplate.target_calories || ""
       }))
     }
   }, [selectedTemplate])
@@ -174,10 +171,7 @@ export default function TemplateSelectionDialog({
         body: JSON.stringify({
           templateId: selectedTemplate.id,
           clientId: selectedClientId,
-          customizations: {
-            ...customizations,
-            duration_days: Number(customizations.duration_days)
-          }
+          customizations: customizations
         })
       })
 
@@ -216,7 +210,6 @@ export default function TemplateSelectionDialog({
       name: "",
       description: "",
       target_calories: "",
-      duration_days: 7,
       notes: ""
     })
   }
@@ -328,7 +321,7 @@ export default function TemplateSelectionDialog({
                     <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm text-gray-600">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-3 w-3" />
-                        <span>{template.duration_days} jours</span>
+                        <span>{Array.isArray(template.meal_structure) ? template.meal_structure.length : 1} jours</span>
                       </div>
                       <div className="flex items-center gap-1">
                         <Users className="h-3 w-3" />
@@ -430,18 +423,6 @@ export default function TemplateSelectionDialog({
                 </div>
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="duration">Durée (jours)</Label>
-                <Input
-                  id="duration"
-                  type="number"
-                  value={customizations.duration_days}
-                  onChange={(e) => setCustomizations(prev => ({ ...prev, duration_days: parseInt(e.target.value) || 7 }))}
-                  min="1"
-                  max="30"
-                  className="text-base"
-                />
-              </div>
 
               <div className="space-y-2">
                 <Label htmlFor="description">Description</Label>

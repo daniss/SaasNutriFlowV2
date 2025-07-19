@@ -109,7 +109,7 @@ export default function TemplatesPage() {
       
 Nom: ${template.name}
 Description: ${template.description || ''}
-Durée: ${template.duration_days} jours
+Durée: ${Array.isArray(template.meal_structure) ? template.meal_structure.length : 1} jours
 Catégorie: ${template.category}
 Type de client: ${template.client_type}
 Objectif: ${template.goal_type}
@@ -423,7 +423,7 @@ function TemplateCard({
         <div className="grid grid-cols-2 gap-2 sm:gap-3 text-xs sm:text-sm">
           <div className="flex items-center gap-1 sm:gap-2 text-gray-600">
             <Calendar className="h-3 w-3 flex-shrink-0" />
-            <span className="truncate">{template.duration_days} jours</span>
+            <span className="truncate">{Array.isArray(template.meal_structure) ? template.meal_structure.length : 1} jours</span>
           </div>
           <div className="flex items-center gap-1 sm:gap-2 text-gray-600">
             <Clock className="h-3 w-3 flex-shrink-0" />

@@ -81,7 +81,7 @@ export default function TemplatePreviewModal({
           <ChefHat className="h-8 w-8 mx-auto mb-2 text-emerald-600" />
           <p className="text-sm font-medium text-gray-900">Plan de repas structuré</p>
           <p className="text-xs text-gray-600">
-            {template.duration_days} jours de repas équilibrés inclus
+            {Array.isArray(template.meal_structure) ? template.meal_structure.length : 1} jours de repas équilibrés inclus
           </p>
         </div>
       )
@@ -135,7 +135,7 @@ export default function TemplatePreviewModal({
         ))}
         <div className="text-center pt-2">
           <p className="text-xs text-gray-500">
-            ... et {Math.max(0, template.duration_days - 2)} jours supplémentaires
+            ... et {Math.max(0, (Array.isArray(template.meal_structure) ? template.meal_structure.length : 1) - 2)} jours supplémentaires
           </p>
         </div>
       </div>
@@ -167,7 +167,7 @@ export default function TemplatePreviewModal({
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
             <div className="flex items-center gap-2 text-sm">
               <Calendar className="h-4 w-4 text-gray-500" />
-              <span>{template.duration_days} jours</span>
+              <span>{Array.isArray(template.meal_structure) ? template.meal_structure.length : 1} jours</span>
             </div>
             {template.target_calories && (
               <div className="flex items-center gap-2 text-sm">

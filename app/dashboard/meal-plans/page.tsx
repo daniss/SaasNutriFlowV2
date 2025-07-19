@@ -44,6 +44,7 @@ import {
 } from "lucide-react"
 import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type MealPlan } from "@/lib/supabase"
+import { DynamicMealPlan, DynamicMealPlanDay, MealSlot, generateMealId } from "@/lib/meal-plan-types"
 import { 
   DropdownMenu, 
   DropdownMenuContent, 
@@ -193,6 +194,47 @@ export default function MealPlansPage() {
     }
 
     try {
+      // Create dynamic meal plan structure with default 3 meals
+      const defaultMeals: MealSlot[] = [
+        {
+          id: generateMealId(1, 'Petit-déjeuner'),
+          name: 'Petit-déjeuner',
+          time: '08:00',
+          description: '',
+          enabled: true,
+          order: 0
+        },
+        {
+          id: generateMealId(1, 'Déjeuner'),
+          name: 'Déjeuner',
+          time: '12:00',
+          description: '',
+          enabled: true,
+          order: 1
+        },
+        {
+          id: generateMealId(1, 'Dîner'),
+          name: 'Dîner',
+          time: '19:00',
+          description: '',
+          enabled: true,
+          order: 2
+        }
+      ]
+
+      const defaultDay: DynamicMealPlanDay = {
+        day: 1,
+        date: new Date().toISOString().split('T')[0],
+        meals: defaultMeals,
+        notes: ""
+      }
+
+      const dynamicPlanContent: DynamicMealPlan = {
+        days: [defaultDay],
+        generated_by: 'manual',
+        notes: newMealPlan.description || ""
+      }
+
       const { data, error } = await supabase
         .from("meal_plans")
         .insert({
@@ -200,10 +242,7 @@ export default function MealPlansPage() {
           dietitian_id: user.id,
           duration_days: parseInt(newMealPlan.duration_days) || null,
           status: "draft",
-          plan_content: {
-            meals: [],
-            notes: newMealPlan.description || ""
-          }
+          plan_content: dynamicPlanContent
         })
         .select()
         .single()

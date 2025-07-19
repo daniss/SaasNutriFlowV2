@@ -200,7 +200,9 @@ export async function POST(request: Request) {
     }
 
     // Convert template structure to meal plan content
-    const duration = customizations?.duration_days || template.duration_days || 7
+    // Calculate duration based on the actual number of days in template structure
+    const templateDays = Array.isArray(template.meal_structure) ? template.meal_structure : []
+    const duration = templateDays.length > 0 ? templateDays.length : 1
     const transformedMealData = await transformTemplateToPlanContent(template.meal_structure, duration)
     
     const planContent: DynamicMealPlan = {
@@ -236,7 +238,7 @@ export async function POST(request: Request) {
       generation_method: 'template',
       name: customizations?.name || `${template.name} - ${client.name}`,
       description: customizations?.description || `Plan basé sur le modèle "${template.name}" pour ${client.name}`,
-      duration_days: customizations?.duration_days || template.duration_days,
+      duration_days: duration,
       calories_range: customizations?.target_calories || template.target_calories,
       plan_content: planContent,
       status: 'draft'
