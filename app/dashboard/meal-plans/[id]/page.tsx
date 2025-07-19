@@ -39,6 +39,8 @@ import { useAuth } from "@/hooks/useAuthNew"
 import { downloadMealPlanPDF, type MealPlanPDFData } from "@/lib/pdf-generator"
 import { downloadModernMealPlanPDF } from "@/lib/pdf-generator-modern"
 import { supabase, type MealPlan } from "@/lib/supabase"
+import { DynamicMealPlanDisplay, LegacyMealPlanDisplay } from "@/components/meal-plans/DynamicMealPlanDisplay"
+import { MealPlanContent, isDynamicMealPlan, isLegacyMealPlan } from "@/lib/meal-plan-types"
 import {
     Activity,
     ArrowLeft,
@@ -1171,44 +1173,28 @@ export default function MealPlanDetailPage() {
                         </div>
                       </div>
 
-                      <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
-                        {(() => {
-                          const mealConfig = [
-                            { key: 'breakfast', name: 'Petit-déjeuner', color: 'bg-orange-400', hour: day.breakfastHour || '08:00', enabled: day.breakfastEnabled !== false },
-                            { key: 'lunch', name: 'Déjeuner', color: 'bg-blue-400', hour: day.lunchHour || '12:00', enabled: day.lunchEnabled !== false },
-                            { key: 'dinner', name: 'Dîner', color: 'bg-purple-400', hour: day.dinnerHour || '19:00', enabled: day.dinnerEnabled !== false },
-                            { key: 'snacks', name: 'Collations', color: 'bg-emerald-400', hour: day.snacksHour || '16:00', enabled: day.snacksEnabled === true }
-                          ]
-                          
-                          return mealConfig
-                            .filter(meal => meal.enabled)
-                            .map(meal => (
-                              <div key={meal.key}>
-                                <h4 className="font-medium text-slate-900 mb-2 flex items-center gap-2">
-                                  <div className={`h-2 w-2 ${meal.color} rounded-full`}></div>
-                                  <span>{meal.name}</span>
-                                  <span className="text-xs text-slate-500 ml-auto flex items-center gap-1">
-                                    <Clock className="h-3 w-3" />
-                                    {meal.hour}
-                                  </span>
-                                </h4>
-                                <ul className="space-y-1 text-sm text-slate-600 ml-4">
-                                  {(day.meals?.[meal.key as keyof typeof day.meals] || []).map((mealItem: any, idx: number) => (
-                                    <li key={idx}>• {mealItem}</li>
-                                  ))}
-                                </ul>
-                              </div>
-                            ))
-                        })()}
-                      </div>
-
-                      {day.notes && (
-                        <div className="mt-4 p-3 bg-amber-50 rounded-lg border border-amber-200">
-                          <p className="text-sm text-amber-800">
-                            <strong>Note :</strong> {day.notes}
-                          </p>
-                        </div>
-                      )}
+                      {(() => {
+                        // Check if we have a modern dynamic meal plan structure
+                        const planContent = mealPlan.plan_content as MealPlanContent
+                        
+                        if (isDynamicMealPlan(planContent)) {
+                          return (
+                            <DynamicMealPlanDisplay 
+                              planContent={planContent}
+                              selectedDay={day.day}
+                              onEditDay={handleEditDay}
+                            />
+                          )
+                        } else {
+                          // Fallback to legacy display for existing meal plans
+                          return (
+                            <LegacyMealPlanDisplay 
+                              day={day}
+                              onEditDay={handleEditDay}
+                            />
+                          )
+                        }
+                      })()}
                     </div>
                   ))}
                 </div>

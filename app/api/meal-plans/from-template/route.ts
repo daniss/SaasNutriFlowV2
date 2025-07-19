@@ -1,5 +1,6 @@
 import { createClient } from "@/lib/supabase/server"
 import { NextResponse } from "next/server"
+import { DynamicMealPlan, MealSlot, generateMealId } from "@/lib/meal-plan-types"
 
 export async function POST(request: Request) {
   try {
@@ -58,121 +59,82 @@ export async function POST(request: Request) {
       )
     }
 
-    // Transform template meal_structure to meal plan format with recipe lookup
-    async function transformTemplateToPlanContent(templateStructure: any, duration: number): Promise<any> {
+    // Transform template meal_structure to dynamic meal plan format
+    async function transformTemplateToPlanContent(templateStructure: any, duration: number): Promise<DynamicMealPlan> {
       const days = []
       
       // Ensure templateStructure is array format
       const templateDays = Array.isArray(templateStructure) ? templateStructure : []
       
-      // Convert template day structure to meal plan day structure
+      // Convert template day structure to dynamic meal plan day structure
       for (let dayNum = 1; dayNum <= duration; dayNum++) {
         const templateDay = templateDays.find(d => d.day === dayNum)
         
         if (templateDay && templateDay.meals) {
-          // Create meal categorization mapping
-          const categorizedMeals: {
-            breakfast: string[]
-            lunch: string[]
-            dinner: string[]
-            snacks: string[]
-          } = {
-            breakfast: [],
-            lunch: [],
-            dinner: [],
-            snacks: []
-          }
+          // Transform template meals to dynamic meal slots
+          const meals: MealSlot[] = templateDay.meals.map((meal: any, index: number) => ({
+            id: generateMealId(dayNum, meal.name),
+            name: meal.name,
+            time: meal.time || '12:00',
+            description: meal.description || meal.name || 'Repas à définir',
+            calories_target: meal.calories_target || null,
+            enabled: true,
+            order: index
+          }))
           
-          // Map meal times for the day
-          const mealTimes = {
-            breakfastHour: "08:00",
-            lunchHour: "12:00",
-            dinnerHour: "19:00",
-            snacksHour: "16:00"
-          }
-          
-          // Process each meal slot from template
-          for (const meal of templateDay.meals) {
-            const category = mapMealNameToCategory(meal.name)
-            const mealContent = meal.description || meal.name || 'Repas à définir'
-            
-            // Add meal to appropriate category
-            categorizedMeals[category].push(mealContent)
-            
-            // Set meal time based on meal type
-            if (category === 'breakfast') mealTimes.breakfastHour = meal.time || "08:00"
-            else if (category === 'lunch') mealTimes.lunchHour = meal.time || "12:00"
-            else if (category === 'dinner') mealTimes.dinnerHour = meal.time || "19:00"
-            else if (category === 'snacks') mealTimes.snacksHour = meal.time || "16:00"
-          }
-          
-          // Enhanced meal transformation with recipe lookup
           const dayPlan = {
             day: dayNum,
             date: new Date(Date.now() + (dayNum - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            meals: {
-              breakfast: categorizedMeals.breakfast,
-              lunch: categorizedMeals.lunch,
-              dinner: categorizedMeals.dinner,
-              snacks: categorizedMeals.snacks
-            },
+            meals: meals,
             notes: templateDay.notes || '',
-            // Add meal timing from template
-            ...mealTimes,
-            // Enable/disable meals based on what's in template
-            breakfastEnabled: categorizedMeals.breakfast.length > 0,
-            lunchEnabled: categorizedMeals.lunch.length > 0,
-            dinnerEnabled: categorizedMeals.dinner.length > 0,
-            snacksEnabled: categorizedMeals.snacks.length > 0,
-            // Preserve rich template data for advanced features
             templateData: templateDay
           }
           days.push(dayPlan)
         } else {
-          // Create placeholder for missing days
+          // Create placeholder for missing days with default meal structure
+          const defaultMeals: MealSlot[] = [
+            {
+              id: generateMealId(dayNum, 'Petit-déjeuner'),
+              name: 'Petit-déjeuner',
+              time: '08:00',
+              description: 'Repas à définir',
+              enabled: false,
+              order: 0
+            },
+            {
+              id: generateMealId(dayNum, 'Déjeuner'),
+              name: 'Déjeuner',
+              time: '12:00',
+              description: 'Repas à définir',
+              enabled: false,
+              order: 1
+            },
+            {
+              id: generateMealId(dayNum, 'Dîner'),
+              name: 'Dîner',
+              time: '19:00',
+              description: 'Repas à définir',
+              enabled: false,
+              order: 2
+            }
+          ]
+          
           days.push({
             day: dayNum,
             date: new Date(Date.now() + (dayNum - 1) * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
-            meals: {
-              breakfast: [],
-              lunch: [],
-              dinner: [],
-              snacks: []
-            },
+            meals: defaultMeals,
             notes: '',
-            breakfastHour: "08:00",
-            lunchHour: "12:00",
-            dinnerHour: "19:00",
-            snacksHour: "16:00",
-            breakfastEnabled: false,
-            lunchEnabled: false,
-            dinnerEnabled: false,
-            snacksEnabled: false,
             templateData: null
           })
         }
       }
       
-      return { days }
+      return { 
+        days,
+        generated_by: 'template' as const
+      }
     }
 
-    // Helper function to map meal names to categories
-    function mapMealNameToCategory(mealName: string): 'breakfast' | 'lunch' | 'dinner' | 'snacks' {
-      const name = mealName.toLowerCase()
-      
-      if (name.includes('petit-déjeuner') || name.includes('petit déjeuner') || name.includes('breakfast')) {
-        return 'breakfast'
-      } else if (name.includes('déjeuner') || name.includes('lunch')) {
-        return 'lunch'
-      } else if (name.includes('dîner') || name.includes('diner') || name.includes('dinner')) {
-        return 'dinner'
-      } else if (name.includes('collation') || name.includes('goûter') || name.includes('snack')) {
-        return 'snacks'
-      }
-      
-      // Default mapping based on common meal names
-      return 'snacks'
-    }
 
     // Helper function to transform meal with recipe lookup
     async function transformMealWithRecipes(mealData: any, mealType: string): Promise<string[]> {
@@ -241,11 +203,11 @@ export async function POST(request: Request) {
     const duration = customizations?.duration_days || template.duration_days || 7
     const transformedMealData = await transformTemplateToPlanContent(template.meal_structure, duration)
     
-    const planContent: any = {
+    const planContent: DynamicMealPlan = {
       generated_by: 'template',
       template_id: templateId,
       template_name: template.name,
-      ...transformedMealData, // Include the transformed days
+      days: transformedMealData.days,
       target_macros: template.target_macros,
       difficulty: template.difficulty,
       notes: customizations?.notes || template.description || '',

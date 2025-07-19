@@ -124,7 +124,7 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
     }
     hoverTimeoutRef.current = setTimeout(() => {
       setIsHovered(false);
-    }, 300); // Increased delay to prevent flickering
+    }, 150); // Faster response
   }, []);
 
   const expanded = isOpen || isHovered;
@@ -271,7 +271,7 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
             borderRadius: expanded ? "24px" : "32px",
           }}
           transition={{
-            duration: 0.3,
+            duration: 0.2,
             ease: [0.4, 0, 0.2, 1],
             type: "tween"
           }}
