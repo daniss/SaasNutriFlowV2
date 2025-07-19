@@ -75,6 +75,8 @@ export async function POST(request: NextRequest) {
     // Generate meal plan using Gemini
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
+    let generatedPlan: any;
+
     // For longer plans (5+ days), generate in chunks to avoid truncation
     if (duration >= 5) {
       const maxDays = 3; // Generate max 3 days per request to avoid truncation
@@ -148,8 +150,9 @@ Génère EXACTEMENT ce format avec variations d'ingrédients:`;
           }
           
         } catch (chunkError) {
-          console.error(`❌ Chunk ${chunk + 1} failed:`, chunkError.message);
-          throw new Error(`Failed to generate chunk ${chunk + 1}: ${chunkError.message}`);
+          const errorMessage = chunkError instanceof Error ? chunkError.message : String(chunkError);
+          console.error(`❌ Chunk ${chunk + 1} failed:`, errorMessage);
+          throw new Error(`Failed to generate chunk ${chunk + 1}: ${errorMessage}`);
         }
       }
       
@@ -246,7 +249,8 @@ Répète pour ${duration} jours avec variations:`;
           break;
 
         } catch (error) {
-          console.error(`Short plan attempt ${attempts} failed:`, error.message);
+          const errorMessage = error instanceof Error ? error.message : String(error);
+          console.error(`Short plan attempt ${attempts} failed:`, errorMessage);
           if (attempts === maxAttempts) throw error;
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
