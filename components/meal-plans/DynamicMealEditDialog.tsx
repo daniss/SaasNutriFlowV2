@@ -14,6 +14,18 @@ import { MealSlot, DynamicMealPlanDay, generateMealId } from "@/lib/meal-plan-ty
 // Professional limits consistent with templates
 const MAX_MEALS_PER_DAY = 8
 
+interface SelectedFood {
+  id: string
+  name_fr: string
+  quantity: number
+  portionSize: 'custom' | 'gemrcn' | 'pnns'
+  energy_kcal?: number
+  protein_g?: number
+  carbohydrate_g?: number
+  fat_g?: number
+  fiber_g?: number
+}
+
 interface DynamicMealEditDialogProps {
   isOpen: boolean
   onClose: () => void
@@ -22,6 +34,8 @@ interface DynamicMealEditDialogProps {
   dayNumber: number
   onOpenFoodSearch?: (mealId: string, day: number) => void
   onOpenManualFood?: (mealId: string, day: number) => void
+  dynamicMealFoods?: Record<string, SelectedFood[]>
+  onRemoveFood?: (mealId: string, foodIndex: number) => void
 }
 
 export function DynamicMealEditDialog({
@@ -31,7 +45,9 @@ export function DynamicMealEditDialog({
   dayData,
   dayNumber,
   onOpenFoodSearch,
-  onOpenManualFood
+  onOpenManualFood,
+  dynamicMealFoods = {},
+  onRemoveFood
 }: DynamicMealEditDialogProps) {
   
   const [editData, setEditData] = useState<DynamicMealPlanDay>({
@@ -379,6 +395,35 @@ export function DynamicMealEditDialog({
                       + Manuel
                     </Button>
                   </div>
+
+                  {/* Selected Foods List */}
+                  {dynamicMealFoods[meal.id] && dynamicMealFoods[meal.id].length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <div className="text-sm font-medium text-gray-700">Aliments sélectionnés:</div>
+                      <div className="space-y-1">
+                        {dynamicMealFoods[meal.id].map((food, foodIndex) => (
+                          <div key={foodIndex} className="flex items-center justify-between bg-gray-50 p-2 rounded border">
+                            <div className="flex-1">
+                              <div className="text-sm font-medium">{food.name_fr}</div>
+                              <div className="text-xs text-gray-600">
+                                {food.quantity}g • {Math.round((food.energy_kcal || 0) * food.quantity / 100)} kcal
+                              </div>
+                            </div>
+                            {onRemoveFood && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => onRemoveFood(meal.id, foodIndex)}
+                                className="ml-2 h-6 w-6 p-0 text-red-600 hover:text-red-700"
+                              >
+                                <X className="h-3 w-3" />
+                              </Button>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
                 </div>
                 </div>
               ))}

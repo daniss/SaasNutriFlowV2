@@ -140,6 +140,17 @@ export default function MealPlanDetailPage() {
   }
   
   const [selectedFoods, setSelectedFoods] = useState<Record<number, { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }>>({})
+  
+  // Dynamic meal food storage - organized by meal ID instead of legacy slots
+  const [dynamicMealFoods, setDynamicMealFoods] = useState<Record<string, SelectedFood[]>>({})
+  
+  // Function to remove food from dynamic meal
+  const removeDynamicMealFood = (mealId: string, foodIndex: number) => {
+    setDynamicMealFoods(prev => ({
+      ...prev,
+      [mealId]: (prev[mealId] || []).filter((_, index) => index !== foodIndex)
+    }))
+  }
   const params = useParams()
   const router = useRouter()
   const { user } = useAuth()
@@ -193,15 +204,29 @@ export default function MealPlanDetailPage() {
   useEffect(() => {
     if (mealPlan?.plan_content?.days) {
       const loadedSelectedFoods: Record<number, { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }> = {}
+      const loadedDynamicMealFoods: Record<string, SelectedFood[]> = {}
       
       mealPlan.plan_content.days.forEach((day: any) => {
+        // Load legacy selected foods
         if (day.selectedFoods && Object.keys(day.selectedFoods).length > 0) {
-          loadedSelectedFoods[day.day] = day.selectedFoods
+          // Check if this is dynamic meal foods (organized by meal ID) or legacy foods (organized by slot)
+          const firstKey = Object.keys(day.selectedFoods)[0]
+          if (firstKey && firstKey.includes('-')) {
+            // Dynamic meal foods (meal IDs like "1-petit-dejeuner")
+            Object.assign(loadedDynamicMealFoods, day.selectedFoods)
+          } else {
+            // Legacy selected foods (slots like "breakfast", "lunch", etc.)
+            loadedSelectedFoods[day.day] = day.selectedFoods
+          }
         }
       })
       
       if (Object.keys(loadedSelectedFoods).length > 0) {
         setSelectedFoods(loadedSelectedFoods)
+      }
+      
+      if (Object.keys(loadedDynamicMealFoods).length > 0) {
+        setDynamicMealFoods(loadedDynamicMealFoods)
       }
     }
   }, [mealPlan])
@@ -738,12 +763,22 @@ export default function MealPlanDetailPage() {
         const dynamicContent = planContent as DynamicMealPlan
         let dayIndex = dynamicContent.days.findIndex(d => d.day === dayData.day)
         
+        // Add selected foods to dayData before saving
+        const dayWithFoods = { 
+          ...dayData, 
+          selectedFoods: Object.fromEntries(
+            Object.entries(dynamicMealFoods).filter(([mealId]) => 
+              dayData.meals.some(meal => meal.id === mealId)
+            )
+          )
+        }
+        
         if (dayIndex >= 0) {
           // Update existing day
-          dynamicContent.days[dayIndex] = dayData
+          dynamicContent.days[dayIndex] = dayWithFoods
         } else {
           // Add new day
-          dynamicContent.days.push(dayData)
+          dynamicContent.days.push(dayWithFoods)
         }
         
         // Sort days by day number
@@ -1667,6 +1702,8 @@ export default function MealPlanDetailPage() {
           onSave={handleSaveDynamicDay}
           dayData={currentEditDay}
           dayNumber={editDayNumber}
+          dynamicMealFoods={dynamicMealFoods}
+          onRemoveFood={removeDynamicMealFood}
           onOpenFoodSearch={(mealId, day) => {
             // Map dynamic meal types to legacy slot names for food modals
             const mealType = currentEditDay?.meals?.find(m => m.id === mealId)?.name
@@ -1718,12 +1755,19 @@ export default function MealPlanDetailPage() {
           mealSlot={foodSearchSlot}
           day={foodSearchDay}
           onSelectFood={food => {
-            // For now, just show a toast to confirm the button works
-            console.log('Food selected:', food, 'for meal:', foodSearchMealId)
+            if (foodSearchMealId) {
+              // Add food to dynamic meal foods storage
+              setDynamicMealFoods(prev => ({
+                ...prev,
+                [foodSearchMealId]: [...(prev[foodSearchMealId] || []), food]
+              }))
+              
+              toast({
+                title: "Aliment ajouté",
+                description: `${food.name_fr} (${food.quantity}g) ajouté au repas.`
+              })
+            }
             setFoodSearchOpen(false)
-            
-            // TODO: Implement proper food storage for dynamic meals
-            alert(`Food selected: ${food.name_fr} for meal ID: ${foodSearchMealId}`)
           }}
         />
         <ManualFoodModal
@@ -1732,12 +1776,25 @@ export default function MealPlanDetailPage() {
           mealSlot={manualFoodSlot}
           day={manualFoodDay}
           onAddFood={food => {
-            // For now, just show a toast to confirm the button works
-            console.log('Manual food added:', food, 'for meal:', manualFoodMealId)
+            if (manualFoodMealId) {
+              // Convert ManualFood to SelectedFood format
+              const selectedFood: SelectedFood = {
+                ...food,
+                portionSize: 'custom' as const
+              }
+              
+              // Add food to dynamic meal foods storage
+              setDynamicMealFoods(prev => ({
+                ...prev,
+                [manualFoodMealId]: [...(prev[manualFoodMealId] || []), selectedFood]
+              }))
+              
+              toast({
+                title: "Aliment ajouté",
+                description: `${food.name_fr} (${food.quantity}g) ajouté au repas.`
+              })
+            }
             setManualFoodOpen(false)
-            
-            // TODO: Implement proper food storage for dynamic meals
-            alert(`Manual food added: ${food.name_fr} for meal ID: ${manualFoodMealId}`)
           }}
         />
 
