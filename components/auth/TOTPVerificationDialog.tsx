@@ -19,11 +19,13 @@ import { useEffect, useState } from "react";
 interface TOTPVerificationDialogProps {
   onVerificationSuccess: () => void;
   onCancel: () => void;
+  bypassFactorCheck?: boolean;
 }
 
 export function TOTPVerificationDialog({
   onVerificationSuccess,
   onCancel,
+  bypassFactorCheck = false,
 }: TOTPVerificationDialogProps) {
   const { challengeTOTP, verifyTOTPChallenge, status } = useSupabaseTOTP();
   const supabase = createClient();
@@ -36,6 +38,13 @@ export function TOTPVerificationDialog({
   } | null>(null);
 
   useEffect(() => {
+    // If bypassFactorCheck is true, skip the factor verification and directly initialize challenge
+    if (bypassFactorCheck) {
+      console.log("🔐 Bypassing factor check - TwoFactorProvider already verified factors exist");
+      initializeChallenge();
+      return;
+    }
+    
     // Wait for factors to load before making decisions
     if (status.loading) return;
     
@@ -53,7 +62,7 @@ export function TOTPVerificationDialog({
         onCancel(); // Let TwoFactorProvider handle this
       }, 1000);
     }
-  }, [status.loading, status.factors, onCancel]);
+  }, [bypassFactorCheck, status.loading, status.factors, onCancel]);
 
   const initializeChallenge = async () => {
     setLoading(true);
