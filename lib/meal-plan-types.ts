@@ -257,6 +257,23 @@ export function generateMealId(dayNumber: number, mealName: string): string {
   return `${dayNumber}-${sanitized}`
 }
 
+// Get default time for meal type
+function getMealTime(mealType: string): string {
+  switch(mealType) {
+    case 'breakfast':
+      return '08:00'
+    case 'lunch':
+      return '12:00'
+    case 'dinner':
+      return '19:00'
+    case 'snack':
+    case 'snacks':
+      return '16:00'
+    default:
+      return '12:00'
+  }
+}
+
 // Convert AI-generated meal plan to dynamic format
 export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
   const dynamicDays: DynamicMealPlanDay[] = aiPlan.days.map((day: any) => {
@@ -272,74 +289,94 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
       snacks: 'Collation'
     }
 
-    // Process breakfast
-    if (day.meals?.breakfast) {
-      const meal = day.meals.breakfast
-      meals.push({
-        id: generateMealId(day.day, 'Petit-déjeuner'),
-        name: 'Petit-déjeuner',
-        time: '08:00',
-        description: formatMealDescription(meal),
-        calories_target: meal.calories,
-        enabled: true,
-        order: order++
-      })
-    }
-
-    // Process lunch
-    if (day.meals?.lunch) {
-      const meal = day.meals.lunch
-      meals.push({
-        id: generateMealId(day.day, 'Déjeuner'),
-        name: 'Déjeuner',
-        time: '12:00',
-        description: formatMealDescription(meal),
-        calories_target: meal.calories,
-        enabled: true,
-        order: order++
-      })
-    }
-
-    // Process dinner
-    if (day.meals?.dinner) {
-      const meal = day.meals.dinner
-      meals.push({
-        id: generateMealId(day.day, 'Dîner'),
-        name: 'Dîner',
-        time: '19:00',
-        description: formatMealDescription(meal),
-        calories_target: meal.calories,
-        enabled: true,
-        order: order++
-      })
-    }
-
-    // Process snacks
-    if (day.meals?.snacks) {
-      if (Array.isArray(day.meals.snacks)) {
-        day.meals.snacks.forEach((snack: any, index: number) => {
-          const snackName = index === 0 ? 'Collation après-midi' : `Collation ${index + 1}`
-          meals.push({
-            id: generateMealId(day.day, snackName),
-            name: snackName,
-            time: index === 0 ? '16:00' : '21:00',
-            description: formatMealDescription(snack),
-            calories_target: snack.calories,
-            enabled: true,
-            order: order++
-          })
-        })
-      } else if (typeof day.meals.snacks === 'object') {
-        // Single snack object
+    // Handle both formats: array of meals (transformed) or object with meal properties (raw API)
+    if (Array.isArray(day.meals)) {
+      // Transformed format: meals is an array with type field
+      day.meals.forEach((meal: any) => {
+        const mealName = mealTypeMap[meal.type] || meal.type
+        const time = getMealTime(meal.type)
+        
         meals.push({
-          id: generateMealId(day.day, 'Collation après-midi'),
-          name: 'Collation après-midi',
-          time: '16:00',
-          description: formatMealDescription(day.meals.snacks),
-          calories_target: day.meals.snacks.calories,
+          id: generateMealId(day.day, mealName),
+          name: mealName,
+          time: time,
+          description: formatMealDescription(meal),
+          calories_target: meal.calories,
           enabled: true,
           order: order++
         })
+      })
+    } else if (day.meals && typeof day.meals === 'object') {
+      // Raw API format: meals is an object with breakfast, lunch, dinner properties
+      // Process breakfast
+      if (day.meals.breakfast) {
+        const meal = day.meals.breakfast
+        meals.push({
+          id: generateMealId(day.day, 'Petit-déjeuner'),
+          name: 'Petit-déjeuner',
+          time: '08:00',
+          description: formatMealDescription(meal),
+          calories_target: meal.calories,
+          enabled: true,
+          order: order++
+        })
+      }
+
+      // Process lunch
+      if (day.meals.lunch) {
+        const meal = day.meals.lunch
+        meals.push({
+          id: generateMealId(day.day, 'Déjeuner'),
+          name: 'Déjeuner',
+          time: '12:00',
+          description: formatMealDescription(meal),
+          calories_target: meal.calories,
+          enabled: true,
+          order: order++
+        })
+      }
+
+      // Process dinner
+      if (day.meals.dinner) {
+        const meal = day.meals.dinner
+        meals.push({
+          id: generateMealId(day.day, 'Dîner'),
+          name: 'Dîner',
+          time: '19:00',
+          description: formatMealDescription(meal),
+          calories_target: meal.calories,
+          enabled: true,
+          order: order++
+        })
+      }
+
+      // Process snacks
+      if (day.meals.snacks) {
+        if (Array.isArray(day.meals.snacks)) {
+          day.meals.snacks.forEach((snack: any, index: number) => {
+            const snackName = index === 0 ? 'Collation après-midi' : `Collation ${index + 1}`
+            meals.push({
+              id: generateMealId(day.day, snackName),
+              name: snackName,
+              time: index === 0 ? '16:00' : '21:00',
+              description: formatMealDescription(snack),
+              calories_target: snack.calories,
+              enabled: true,
+              order: order++
+            })
+          })
+        } else if (typeof day.meals.snacks === 'object') {
+          // Single snack object
+          meals.push({
+            id: generateMealId(day.day, 'Collation après-midi'),
+            name: 'Collation après-midi',
+            time: '16:00',
+            description: formatMealDescription(day.meals.snacks),
+            calories_target: day.meals.snacks.calories,
+            enabled: true,
+            order: order++
+          })
+        }
       }
     }
 

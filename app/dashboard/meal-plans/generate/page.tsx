@@ -339,6 +339,14 @@ export default function GenerateMealPlanPage() {
       
       if (clientError) throw clientError
       
+      // Debug: log the structure
+      console.log('Generated plan structure:', {
+        title: generatedPlan.title,
+        duration: generatedPlan.duration,
+        firstDay: generatedPlan.days[0],
+        firstDayMeals: generatedPlan.days[0]?.meals
+      })
+      
       // Convert AI plan to dynamic format
       const dynamicPlan = convertAIToDynamicMealPlan({
         ...generatedPlan,
@@ -349,6 +357,11 @@ export default function GenerateMealPlanPage() {
           carbohydrates: `${generatedPlan.nutritionalGoals?.carbPercentage || 45}%`,
           fat: `${generatedPlan.nutritionalGoals?.fatPercentage || 30}%`
         }
+      })
+      
+      console.log('Converted dynamic plan:', {
+        daysCount: dynamicPlan.days.length,
+        firstDay: dynamicPlan.days[0]
       })
       
       // Save the meal plan in dynamic format
