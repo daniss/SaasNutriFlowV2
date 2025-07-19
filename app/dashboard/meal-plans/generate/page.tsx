@@ -364,6 +364,17 @@ export default function GenerateMealPlanPage() {
         firstDay: dynamicPlan.days[0]
       })
       
+      // Create recipes for each meal
+      const createdRecipes = await createRecipesFromMeals(generatedPlan.days, user!.id)
+      console.log(`Created ${createdRecipes.length} recipes from AI meal plan`)
+      
+      if (createdRecipes.length > 0) {
+        toast({
+          title: "Recettes créées",
+          description: `${createdRecipes.length} recette(s) ont été automatiquement créées et ajoutées à votre collection.`
+        })
+      }
+      
       // Save the meal plan in dynamic format
       const { data: savedPlan, error: saveError } = await supabase
         .from("meal_plans")
@@ -405,7 +416,7 @@ export default function GenerateMealPlanPage() {
       
       toast({
         title: "Succès",
-        description: "Plan alimentaire envoyé au client avec succès!",
+        description: `Plan alimentaire envoyé au client avec succès! ${createdRecipes.length > 0 ? `${createdRecipes.length} recette(s) créée(s).` : ""}`,
       })
       
       // Optionally redirect to meal plans list
@@ -418,6 +429,126 @@ export default function GenerateMealPlanPage() {
         variant: "destructive",
       })
     }
+  }
+
+  // Function to create recipes from AI-generated meals
+  const createRecipesFromMeals = async (days: any[], dietitianId: string) => {
+    const createdRecipes = []
+    
+    for (const day of days) {
+      for (const meal of day.meals) {
+        if (!meal.ingredients || meal.ingredients.length === 0) continue
+        
+        try {
+          // Map meal type to recipe category
+          const categoryMap: Record<string, string> = {
+            breakfast: 'breakfast',
+            lunch: 'lunch', 
+            dinner: 'dinner',
+            snack: 'snack'
+          }
+          
+          // Create unique recipe name
+          const recipeName = `${meal.name} - Jour ${day.day}`
+          
+          // Check if recipe with this name already exists
+          const { data: existingRecipe } = await supabase
+            .from("recipes")
+            .select("id")
+            .eq("dietitian_id", dietitianId)
+            .eq("name", recipeName)
+            .single()
+          
+          if (existingRecipe) {
+            console.log(`Recipe "${recipeName}" already exists, skipping`)
+            continue
+          }
+          
+          // Create recipe data
+          const recipeData = {
+            dietitian_id: dietitianId,
+            name: recipeName,
+            description: meal.description || `Recette générée automatiquement par l'IA`,
+            category: categoryMap[meal.type] || 'lunch',
+            prep_time: meal.prepTime || null,
+            cook_time: meal.cookTime || null,
+            servings: 1,
+            difficulty: 'medium',
+            calories_per_serving: meal.calories || null,
+            protein_per_serving: meal.protein || null,
+            carbs_per_serving: meal.carbs || null,
+            fat_per_serving: meal.fat || null,
+            fiber_per_serving: meal.fiber || null,
+            image_url: null,
+            instructions: meal.instructions || [],
+            tags: meal.tags || ['ia-generee'],
+            is_favorite: false,
+            usage_count: 0
+          }
+          
+          // Create the recipe
+          const { data: savedRecipe, error: recipeError } = await supabase
+            .from("recipes")
+            .insert(recipeData)
+            .select()
+            .single()
+          
+          if (recipeError) {
+            console.error(`Error creating recipe "${recipeName}":`, recipeError)
+            continue
+          }
+          
+          // Create ingredients
+          const ingredientData = meal.ingredients.map((ingredient: string, index: number) => {
+            // Parse ingredient string to extract quantity and unit
+            const parts = ingredient.trim().split(' ')
+            let quantity = null
+            let unit = null
+            let name = ingredient
+            
+            // Try to extract quantity and unit from beginning of ingredient
+            if (parts.length >= 2) {
+              const firstPart = parts[0]
+              const quantityMatch = firstPart.match(/^(\d+(?:\.\d+)?)(.*)$/)
+              
+              if (quantityMatch) {
+                quantity = parseFloat(quantityMatch[1])
+                unit = quantityMatch[2] || (parts[1] && ['g', 'kg', 'ml', 'l'].includes(parts[1]) ? parts[1] : 'g')
+                name = parts.slice(unit && unit === parts[1] ? 2 : 1).join(' ')
+              }
+            }
+            
+            return {
+              recipe_id: savedRecipe.id,
+              name: name,
+              quantity: quantity,
+              unit: unit,
+              notes: null,
+              order_index: index
+            }
+          })
+          
+          // Insert ingredients
+          if (ingredientData.length > 0) {
+            const { error: ingredientsError } = await supabase
+              .from("recipe_ingredients")
+              .insert(ingredientData)
+            
+            if (ingredientsError) {
+              console.error(`Error creating ingredients for "${recipeName}":`, ingredientsError)
+            }
+          }
+          
+          createdRecipes.push(savedRecipe)
+          console.log(`Created recipe: "${recipeName}"`)
+          
+        } catch (error) {
+          console.error(`Error processing meal "${meal.name}":`, error)
+        }
+      }
+    }
+    
+    return createdRecipes
   }
 
   const handleExportPdf = async () => {
