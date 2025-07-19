@@ -4,7 +4,6 @@ import type React from "react";
 
 import { DashboardHeader } from "@/components/dashboard-header";
 import { PasswordSettings } from "@/components/security/PasswordSettings";
-import { SessionManagement } from "@/components/security/SessionManagement";
 import { TwoFactorSettings } from "@/components/security/TwoFactorSettings";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuthNew";
 import {
-  Activity,
   Bell,
   Loader2,
   Mail,
@@ -151,7 +149,7 @@ export default function SettingsPage() {
         defaultValue="profile"
         className="space-y-6 animate-slide-up animate-delay-100"
       >
-        <TabsList className="grid grid-cols-3 w-full max-w-md">
+        <TabsList className="grid grid-cols-2 w-full max-w-md">
           <TabsTrigger value="profile" className="flex items-center gap-1 sm:gap-2">
             <User className="h-4 w-4" />
             Profil
@@ -159,10 +157,6 @@ export default function SettingsPage() {
           <TabsTrigger value="security" className="flex items-center gap-1 sm:gap-2">
             <Shield className="h-4 w-4" />
             Sécurité
-          </TabsTrigger>
-          <TabsTrigger value="sessions" className="flex items-center gap-1 sm:gap-2">
-            <Activity className="h-4 w-4" />
-            Sessions
           </TabsTrigger>
         </TabsList>
 
@@ -473,9 +467,6 @@ export default function SettingsPage() {
           <TwoFactorSettings />
         </TabsContent>
 
-        <TabsContent value="sessions" className="space-y-8">
-          <SessionManagement />
-        </TabsContent>
       </Tabs>
     </div>
   );

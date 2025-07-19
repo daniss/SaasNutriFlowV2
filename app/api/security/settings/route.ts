@@ -16,9 +16,7 @@ export async function GET() {
     // Get user security settings
     const { data: security, error } = await supabase
       .from("user_security")
-      .select(
-        "session_timeout_minutes, max_concurrent_sessions, require_2fa_for_sensitive_actions"
-      )
+      .select("require_2fa_for_sensitive_actions")
       .eq("user_id", user.id)
       .single();
 
@@ -32,8 +30,6 @@ export async function GET() {
     }
 
     const settings = security || {
-      session_timeout_minutes: 60,
-      max_concurrent_sessions: 3,
       require_2fa_for_sensitive_actions: false,
     };
 
@@ -62,11 +58,7 @@ export async function PUT(request: NextRequest) {
     const updates = await request.json();
 
     // Validate settings
-    const allowedFields = [
-      "session_timeout_minutes",
-      "max_concurrent_sessions",
-      "require_2fa_for_sensitive_actions",
-    ];
+    const allowedFields = ["require_2fa_for_sensitive_actions"];
 
     const filteredUpdates = Object.fromEntries(
       Object.entries(updates).filter(([key]) => allowedFields.includes(key))

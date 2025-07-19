@@ -1,6 +1,28 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
 
+export interface MealPlanPDFData {
+  id: string
+  name: string
+  description?: string
+  clientName: string
+  clientEmail: string
+  duration_days: number
+  calories_range?: string
+  status: string
+  created_at: string
+  dayPlans: Array<{
+    day: number
+    meals: {
+      breakfast: string[]
+      lunch: string[]
+      dinner: string[]
+      snacks: string[]
+    }
+    notes?: string
+  }>
+}
+
 // Modern color palette
 const colors = {
   primary: '#10b981', // emerald-500
