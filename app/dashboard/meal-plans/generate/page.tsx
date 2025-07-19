@@ -448,8 +448,8 @@ export default function GenerateMealPlanPage() {
             snack: 'snack'
           }
           
-          // Create unique recipe name
-          const recipeName = `${meal.name} - Jour ${day.day}`
+          // Use just the meal name without day
+          const recipeName = meal.name
           
           // Check if recipe with this name already exists
           const { data: existingRecipe } = await supabase

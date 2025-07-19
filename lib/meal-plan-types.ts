@@ -399,32 +399,15 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
   }
 }
 
-// Format meal description including ingredients and macros
+// Format meal description - simplified since detailed info is now in recipes
 function formatMealDescription(meal: any): string {
-  let description = meal.name || meal.description || ''
+  // For AI-generated meals, just use the basic description
+  // Detailed ingredients, macros, and instructions are now in separate recipes
+  let description = meal.description || meal.name || ''
   
-  if (meal.description && meal.description !== meal.name) {
-    description += `\n${meal.description}`
-  }
-  
-  // Add ingredients if available
-  if (meal.ingredients && meal.ingredients.length > 0) {
-    description += '\n\n🥗 Ingrédients:\n' + meal.ingredients.map((ing: string) => `• ${ing}`).join('\n')
-  }
-  
-  // Add macros if available
-  if (meal.protein || meal.carbs || meal.fat) {
-    description += '\n\n📊 Valeurs nutritionnelles:'
-    if (meal.calories) description += `\n• Calories: ${meal.calories} kcal`
-    if (meal.protein) description += `\n• Protéines: ${meal.protein}g`
-    if (meal.carbs) description += `\n• Glucides: ${meal.carbs}g`
-    if (meal.fat) description += `\n• Lipides: ${meal.fat}g`
-    if (meal.fiber) description += `\n• Fibres: ${meal.fiber}g`
-  }
-  
-  // Add instructions if available
-  if (meal.instructions && meal.instructions.length > 0) {
-    description += '\n\n👨‍🍳 Instructions:\n' + meal.instructions.map((inst: string, i: number) => `${i + 1}. ${inst}`).join('\n')
+  // If the description is just the name, don't duplicate it
+  if (description === meal.name) {
+    description = `Recette disponible dans votre collection de recettes.`
   }
   
   return description
