@@ -951,19 +951,35 @@ export default function MealPlanDetailPage() {
 
   // Helper function to calculate nutrition from selected foods for a specific day
   const calculateDayNutrition = (dayNumber: number) => {
-    const dayFoods = selectedFoods[dayNumber]
-    if (!dayFoods) return { calories: 0, protein: 0, carbs: 0, fat: 0 }
-    
     let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0
     
-    Object.values(dayFoods).forEach(mealFoods => {
-      mealFoods.forEach(food => {
-        const factor = food.quantity / 100
-        totalCalories += (food.energy_kcal || 0) * factor
-        totalProtein += (food.protein_g || 0) * factor
-        totalCarbs += (food.carbohydrate_g || 0) * factor
-        totalFat += (food.fat_g || 0) * factor
+    // Calculate from legacy foods
+    const dayFoods = selectedFoods[dayNumber]
+    if (dayFoods) {
+      Object.values(dayFoods).forEach(mealFoods => {
+        mealFoods.forEach(food => {
+          const factor = food.quantity / 100
+          totalCalories += (food.energy_kcal || 0) * factor
+          totalProtein += (food.protein_g || 0) * factor
+          totalCarbs += (food.carbohydrate_g || 0) * factor
+          totalFat += (food.fat_g || 0) * factor
+        })
       })
+    }
+    
+    // Calculate from dynamic meal foods
+    Object.entries(dynamicMealFoods).forEach(([mealId, foods]) => {
+      // Check if this meal belongs to the current day
+      const dayFromId = parseInt(mealId.split('-')[0])
+      if (dayFromId === dayNumber) {
+        foods.forEach(food => {
+          const factor = food.quantity / 100
+          totalCalories += (food.energy_kcal || 0) * factor
+          totalProtein += (food.protein_g || 0) * factor
+          totalCarbs += (food.carbohydrate_g || 0) * factor
+          totalFat += (food.fat_g || 0) * factor
+        })
+      }
     })
     
     return {
@@ -1260,6 +1276,7 @@ export default function MealPlanDetailPage() {
                   <MacronutrientBreakdown 
                     mealPlan={mealPlan.plan_content as GeneratedMealPlan} 
                     selectedFoods={selectedFoods}
+                    dynamicMealFoods={dynamicMealFoods}
                   />
                 </CardContent>
               </Card>

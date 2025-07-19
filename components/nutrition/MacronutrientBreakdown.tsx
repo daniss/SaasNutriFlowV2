@@ -34,6 +34,7 @@ interface SelectedFood {
 interface MacronutrientBreakdownProps {
   mealPlan: GeneratedMealPlan
   selectedFoods?: Record<number, { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }>
+  dynamicMealFoods?: Record<string, SelectedFood[]>
   className?: string
 }
 
@@ -97,20 +98,35 @@ const safeNumber = (value: any): number => {
   return isNaN(num) || !isFinite(num) ? 0 : num
 }
 
-export default function MacronutrientBreakdown({ mealPlan, selectedFoods, className = "" }: MacronutrientBreakdownProps) {
+export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynamicMealFoods, className = "" }: MacronutrientBreakdownProps) {
   // Function to calculate nutrition from selected foods
   const calculateSelectedFoodsNutrition = () => {
-    if (!selectedFoods) return { calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 }
-    
     let totalCalories = 0
     let totalProtein = 0
     let totalCarbs = 0
     let totalFat = 0
     let totalFiber = 0
     
-    Object.values(selectedFoods).forEach(dayFoods => {
-      Object.values(dayFoods).forEach(mealFoods => {
-        mealFoods.forEach(food => {
+    // Calculate from legacy selected foods
+    if (selectedFoods) {
+      Object.values(selectedFoods).forEach(dayFoods => {
+        Object.values(dayFoods).forEach(mealFoods => {
+          mealFoods.forEach(food => {
+            const factor = safeNumber(food.quantity) / 100
+            totalCalories += safeNumber(food.energy_kcal) * factor
+            totalProtein += safeNumber(food.protein_g) * factor
+            totalCarbs += safeNumber(food.carbohydrate_g) * factor
+            totalFat += safeNumber(food.fat_g) * factor
+            totalFiber += safeNumber(food.fiber_g) * factor
+          })
+        })
+      })
+    }
+    
+    // Calculate from dynamic meal foods
+    if (dynamicMealFoods) {
+      Object.values(dynamicMealFoods).forEach(foods => {
+        foods.forEach(food => {
           const factor = safeNumber(food.quantity) / 100
           totalCalories += safeNumber(food.energy_kcal) * factor
           totalProtein += safeNumber(food.protein_g) * factor
@@ -119,7 +135,7 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, classN
           totalFiber += safeNumber(food.fiber_g) * factor
         })
       })
-    })
+    }
     
     return {
       calories: Math.round(safeNumber(totalCalories)),
