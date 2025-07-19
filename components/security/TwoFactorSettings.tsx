@@ -86,8 +86,8 @@ export function TwoFactorSettings() {
   const handleDeleteFactor = async () => {
     if (!factorToDelete) return;
 
-    const success = await unenrollTOTP(factorToDelete);
-    if (success) {
+    const result = await unenrollTOTP(factorToDelete);
+    if (result.success) {
       setConfirmDeleteOpen(false);
       setFactorToDelete(null);
       toast({
@@ -95,11 +95,22 @@ export function TwoFactorSettings() {
         description: "L'authentification TOTP a été désactivée.",
       });
     } else {
-      toast({
-        title: "Erreur",
-        description: "Impossible de supprimer le facteur d'authentification.",
-        variant: "destructive",
-      });
+      setConfirmDeleteOpen(false);
+      setFactorToDelete(null);
+      
+      if (result.requiresAAL2) {
+        toast({
+          title: "Authentification requise",
+          description: result.error || "Vous devez d'abord vous authentifier avec votre code TOTP pour supprimer ce facteur.",
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Erreur",
+          description: result.error || "Impossible de supprimer le facteur d'authentification.",
+          variant: "destructive",
+        });
+      }
     }
   };
 

@@ -206,7 +206,7 @@ export function useSupabaseTOTP() {
     }
   };
 
-  const unenrollTOTP = async (factorId: string): Promise<boolean> => {
+  const unenrollTOTP = async (factorId: string): Promise<{ success: boolean; error?: string; requiresAAL2?: boolean }> => {
     setStatus(prev => ({ ...prev, loading: true }));
     
     try {
@@ -216,16 +216,29 @@ export function useSupabaseTOTP() {
 
       if (error) {
         console.error("Error unenrolling TOTP:", error);
-        return false;
+        
+        // Check if this is the AAL2 requirement error
+        if (error.message?.includes("AAL2 required") || error.message?.includes("verified factor")) {
+          return { 
+            success: false, 
+            error: "Vous devez d'abord vous authentifier avec votre code TOTP pour supprimer ce facteur.",
+            requiresAAL2: true 
+          };
+        }
+        
+        return { success: false, error: error.message || "Erreur lors de la suppression du facteur TOTP" };
       }
 
       // Refresh status after unenrollment
       await checkTOTPStatus();
-      return true;
+      return { success: true };
 
     } catch (error) {
       console.error("Error in TOTP unenrollment:", error);
-      return false;
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : "Erreur inattendue lors de la suppression" 
+      };
     } finally {
       setStatus(prev => ({ ...prev, loading: false }));
     }
