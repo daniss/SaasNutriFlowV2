@@ -294,7 +294,8 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
     if (Array.isArray(day.meals)) {
       // Transformed format: meals is an array with type field
       day.meals.forEach((meal: any) => {
-        const mealName = mealTypeMap[meal.type] || meal.type
+        // Use the actual meal name instead of generic type name for AI-generated plans
+        const mealName = meal.name || mealTypeMap[meal.type] || meal.type
         const time = getMealTime(meal.type)
         
         meals.push({
@@ -312,9 +313,10 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
       // Process breakfast
       if (day.meals.breakfast) {
         const meal = day.meals.breakfast
+        const mealName = meal.name || 'Petit-déjeuner'
         meals.push({
-          id: generateMealId(day.day, 'Petit-déjeuner'),
-          name: 'Petit-déjeuner',
+          id: generateMealId(day.day, mealName),
+          name: mealName,
           time: '08:00',
           description: formatMealDescription(meal),
           calories_target: meal.calories,
@@ -326,9 +328,10 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
       // Process lunch
       if (day.meals.lunch) {
         const meal = day.meals.lunch
+        const mealName = meal.name || 'Déjeuner'
         meals.push({
-          id: generateMealId(day.day, 'Déjeuner'),
-          name: 'Déjeuner',
+          id: generateMealId(day.day, mealName),
+          name: mealName,
           time: '12:00',
           description: formatMealDescription(meal),
           calories_target: meal.calories,
@@ -340,9 +343,10 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
       // Process dinner
       if (day.meals.dinner) {
         const meal = day.meals.dinner
+        const mealName = meal.name || 'Dîner'
         meals.push({
-          id: generateMealId(day.day, 'Dîner'),
-          name: 'Dîner',
+          id: generateMealId(day.day, mealName),
+          name: mealName,
           time: '19:00',
           description: formatMealDescription(meal),
           calories_target: meal.calories,
@@ -355,7 +359,7 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
       if (day.meals.snacks) {
         if (Array.isArray(day.meals.snacks)) {
           day.meals.snacks.forEach((snack: any, index: number) => {
-            const snackName = index === 0 ? 'Collation après-midi' : `Collation ${index + 1}`
+            const snackName = snack.name || (index === 0 ? 'Collation après-midi' : `Collation ${index + 1}`)
             meals.push({
               id: generateMealId(day.day, snackName),
               name: snackName,
@@ -368,9 +372,10 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
           })
         } else if (typeof day.meals.snacks === 'object') {
           // Single snack object
+          const snackName = day.meals.snacks.name || 'Collation après-midi'
           meals.push({
-            id: generateMealId(day.day, 'Collation après-midi'),
-            name: 'Collation après-midi',
+            id: generateMealId(day.day, snackName),
+            name: snackName,
             time: '16:00',
             description: formatMealDescription(day.meals.snacks),
             calories_target: day.meals.snacks.calories,
