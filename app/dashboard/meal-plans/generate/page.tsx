@@ -76,6 +76,11 @@ export default function GenerateMealPlanPage() {
   const [generationProgress, setGenerationProgress] = useState(0)
   const [lastSubmission, setLastSubmission] = useState<number>(0)
   const [validationError, setValidationError] = useState<string>("")
+  
+  // Send to client loading states
+  const [isSendingToClient, setIsSendingToClient] = useState(false)
+  const [sendingProgress, setSendingProgress] = useState(0)
+  const [sendingStep, setSendingStep] = useState("")
   const [planFeedback, setPlanFeedback] = useState<{ planId: string; rating: 'good' | 'bad' | null }>({ planId: '', rating: null })
   const [viewMode, setViewMode] = useState<'cards' | 'timeline' | 'compact' | 'nutrition'>('cards')
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([1]))
@@ -413,8 +418,15 @@ export default function GenerateMealPlanPage() {
       return
     }
 
+    setIsSendingToClient(true)
+    setSendingProgress(0)
+    setSendingStep("Préparation...")
+
     try {
-      // Get client information for notification
+      // Step 1: Get client information for notification
+      setSendingStep("Récupération des informations client...")
+      setSendingProgress(10)
+      
       const { data: client, error: clientError } = await supabase
         .from("clients")
         .select("name, email")
@@ -434,11 +446,17 @@ export default function GenerateMealPlanPage() {
       // CRITICAL: Save ingredients and create recipes BEFORE converting to dynamic format
       // The conversion strips out ingredients data, so we must do this first!
       
-      // Save ingredients to database first
+      // Step 2: Save ingredients to database first
+      setSendingStep("Création des ingrédients...")
+      setSendingProgress(20)
+      
       const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
       console.log(`Saved ${savedIngredients.length} ingredients to database`)
       
-      // Create recipes for each meal with full ingredient data
+      // Step 3: Create recipes for each meal with full ingredient data
+      setSendingStep("Création des recettes...")
+      setSendingProgress(40)
+      
       console.log('Generated plan structure before recipe creation:', {
         totalDays: generatedPlan.days.length,
         meals: generatedPlan.days.map(d => ({
@@ -455,7 +473,10 @@ export default function GenerateMealPlanPage() {
       console.log(`Created ${createdRecipes.length} recipes from AI meal plan`)
       console.log('Created recipes details:', createdRecipes.map(r => ({ id: r.id, name: r.name })))
       
-      // NOW convert AI plan to dynamic format (this strips ingredients for storage)
+      // Step 4: Convert AI plan to dynamic format
+      setSendingStep("Traitement du plan alimentaire...")
+      setSendingProgress(50)
+      
       const dynamicPlan = convertAIToDynamicMealPlan({
         ...generatedPlan,
         totalDays: generatedPlan.duration,
@@ -467,6 +488,10 @@ export default function GenerateMealPlanPage() {
         }
       })
 
+      // Step 5: Link recipes to meals
+      setSendingStep("Liaison des recettes aux repas...")
+      setSendingProgress(60)
+      
       // IMPORTANT: Add created recipes to the dynamic plan structure
       // Map recipes to their corresponding meals using the ORIGINAL plan structure
       const recipesByMeal = createRecipeToMealMapping(generatedPlan.days, createdRecipes)
@@ -517,11 +542,17 @@ export default function GenerateMealPlanPage() {
                   } else {
                     console.log(`Fetched full recipe data with ${fullRecipe.recipe_ingredients?.length || 0} ingredients`)
                     
+                    // Transform recipe_ingredients to ingredients for RecipeCard component
+                    const transformedRecipe = {
+                      ...fullRecipe,
+                      ingredients: fullRecipe.recipe_ingredients || []
+                    }
+                    
                     // Store the complete recipe with ingredients
                     if (!day.selectedRecipes) {
                       day.selectedRecipes = {}
                     }
-                    day.selectedRecipes[meal.id] = [fullRecipe]
+                    day.selectedRecipes[meal.id] = [transformedRecipe]
                   }
                 } catch (error) {
                   console.error(`Error fetching recipe ${actualRecipe.id}:`, error)
@@ -555,7 +586,10 @@ export default function GenerateMealPlanPage() {
         })
       }
       
-      // Save the meal plan in dynamic format
+      // Step 6: Save the meal plan to database
+      setSendingStep("Sauvegarde du plan alimentaire...")
+      setSendingProgress(75)
+      
       console.log('Saving meal plan with selectedRecipes:', {
         daysWithRecipes: dynamicPlan.days.map(d => ({
           day: d.day,
@@ -579,7 +613,10 @@ export default function GenerateMealPlanPage() {
       
       if (saveError) throw saveError
       
-      // Send notification to client
+      // Step 7: Send notification to client
+      setSendingStep("Envoi de la notification au client...")
+      setSendingProgress(90)
+      
       try {
         const response = await fetch("/api/notifications/meal-plan", {
           method: "POST",
@@ -601,13 +638,19 @@ export default function GenerateMealPlanPage() {
         // Don't fail the whole operation if notification fails
       }
       
+      // Step 8: Complete
+      setSendingStep("Finalisation...")
+      setSendingProgress(100)
+      
       toast({
         title: "Succès",
         description: `Plan alimentaire envoyé au client avec succès! ${savedIngredients.length} ingrédient(s) et ${createdRecipes.length} recette(s) créés.`,
       })
       
-      // Optionally redirect to meal plans list
-      router.push("/dashboard/meal-plans")
+      // Small delay to show completion, then redirect
+      setTimeout(() => {
+        router.push("/dashboard/meal-plans")
+      }, 1000)
     } catch (error) {
       console.error("Error sending to client:", error)
       toast({
@@ -615,6 +658,11 @@ export default function GenerateMealPlanPage() {
         description: "Échec de l'envoi au client. Veuillez réessayer.",
         variant: "destructive",
       })
+    } finally {
+      // Reset loading state
+      setIsSendingToClient(false)
+      setSendingProgress(0)
+      setSendingStep("")
     }
   }
 
@@ -1280,11 +1328,20 @@ export default function GenerateMealPlanPage() {
                         <Button
                           size="sm"
                           onClick={handleSendToClient}
-                          disabled={!formData.clientId}
+                          disabled={!formData.clientId || isSendingToClient}
                           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 transition-all duration-200 disabled:hover:scale-100"
                         >
-                          <Send className="h-4 w-4 mr-2" />
-                          Envoyer au client
+                          {isSendingToClient ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                              En cours...
+                            </>
+                          ) : (
+                            <>
+                              <Send className="h-4 w-4 mr-2" />
+                              Envoyer au client
+                            </>
+                          )}
                         </Button>
                       </div>
                     </div>
@@ -1947,6 +2004,39 @@ export default function GenerateMealPlanPage() {
               </div>
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* Progress Modal */}
+      {isSendingToClient && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
+            <div className="text-center">
+              <div className="w-16 h-16 mx-auto mb-4 bg-gradient-to-r from-blue-600 to-purple-600 rounded-full flex items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white" />
+              </div>
+              
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                Envoi au client en cours...
+              </h3>
+              
+              <p className="text-sm text-gray-600 mb-6">
+                {sendingStep}
+              </p>
+              
+              {/* Progress Bar */}
+              <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+                <div 
+                  className="bg-gradient-to-r from-blue-600 to-purple-600 h-2 rounded-full transition-all duration-300"
+                  style={{ width: `${sendingProgress}%` }}
+                />
+              </div>
+              
+              <div className="text-xs text-gray-500">
+                {sendingProgress}% terminé
+              </div>
+            </div>
+          </div>
         </div>
       )}
     </div>

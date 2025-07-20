@@ -58,7 +58,7 @@ export function RecipeCard({ recipe, onRemove, className = '' }: RecipeCardProps
   }
 
   // Group ingredients by category
-  const groupedIngredients = recipe.ingredients.reduce((acc, ingredient) => {
+  const groupedIngredients = (recipe.ingredients || []).reduce((acc, ingredient) => {
     const category = ingredient.ingredient.category || 'Autres'
     if (!acc[category]) acc[category] = []
     acc[category].push(ingredient)
@@ -119,7 +119,7 @@ export function RecipeCard({ recipe, onRemove, className = '' }: RecipeCardProps
               className="w-full justify-between p-0 h-auto hover:bg-transparent"
             >
               <span className="text-sm font-medium text-gray-700">
-                Ingrédients ({recipe.ingredients.length})
+                Ingrédients ({recipe.ingredients?.length || 0})
               </span>
               {isExpanded ? (
                 <ChevronUp className="h-4 w-4" />
