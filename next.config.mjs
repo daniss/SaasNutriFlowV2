@@ -16,7 +16,7 @@ const nextConfig = {
           },
           {
             key: "Referrer-Policy",
-            value: "strict-origin-when-cross-origin",
+            value: "origin-when-cross-origin",
           },
         ],
       },
@@ -98,6 +98,7 @@ const nextConfig = {
     unoptimized: true,
     domains: [
       "supabase.co",
+      "cpiarnjeankuefaetgpx.supabase.co",
       "xsgames.co",
       "via.placeholder.com",
       "images.unsplash.com",
