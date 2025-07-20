@@ -27,3 +27,13 @@ yarn-error.log*
 next-env.d.ts
 
 .mcp.json
+
+# Test files with potential sensitive data
+test-*.js
+test-*.mjs
+test-*.sh
+verify-*.sh
+*_TEST*.md
+CHUNKING_*.md
+API_TEST*.md
+TEST_RESULTS*.md
