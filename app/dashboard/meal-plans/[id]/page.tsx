@@ -213,12 +213,13 @@ export default function MealPlanDetailPage() {
 
   // Load selected foods and recipes from plan_content when meal plan loads
   useEffect(() => {
-    if (mealPlan?.plan_content?.days) {
-      const loadedSelectedFoods: Record<number, { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }> = {}
-      const loadedDynamicMealFoods: Record<string, SelectedFood[]> = {}
-      const loadedDynamicMealRecipes: Record<string, any[]> = {}
-      
-      mealPlan.plan_content.days.forEach((day: any) => {
+    const loadMealPlanData = async () => {
+      if (mealPlan?.plan_content?.days) {
+        const loadedSelectedFoods: Record<number, { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }> = {}
+        const loadedDynamicMealFoods: Record<string, SelectedFood[]> = {}
+        const loadedDynamicMealRecipes: Record<string, any[]> = {}
+        
+        for (const day of mealPlan.plan_content.days) {
         // Load legacy selected foods
         if (day.selectedFoods && Object.keys(day.selectedFoods).length > 0) {
           // Check if this is dynamic meal foods (organized by meal ID) or legacy foods (organized by slot)
@@ -232,41 +233,75 @@ export default function MealPlanDetailPage() {
           }
         }
 
-        // Load selected recipes
+        // Load selected recipes - now stored as IDs, need to fetch full data
         if (day.selectedRecipes && Object.keys(day.selectedRecipes).length > 0) {
-          console.log(`Loading selected recipes for day ${day.day}:`, day.selectedRecipes)
+          console.log(`Loading selected recipe IDs for day ${day.day}:`, day.selectedRecipes)
           
-          // Debug: Check ingredients in loaded recipes
-          Object.entries(day.selectedRecipes).forEach(([mealId, recipes]) => {
-            (recipes as any[]).forEach((recipe: any, index: number) => {
-              console.log(`Recipe ${recipe.name} (meal ${mealId}) ingredients:`, {
-                ingredientsCount: recipe.ingredients?.length || 0,
-                hasIngredients: !!recipe.ingredients,
-                ingredientsType: typeof recipe.ingredients,
-                firstIngredient: recipe.ingredients?.[0]
-              })
-            })
-          })
-          
-          Object.assign(loadedDynamicMealRecipes, day.selectedRecipes)
+          // Process each meal's recipe IDs
+          for (const [mealId, recipeIds] of Object.entries(day.selectedRecipes)) {
+            const recipeArray = recipeIds as string[]
+            if (recipeArray && recipeArray.length > 0) {
+              // Fetch full recipe data for each ID
+              const fullRecipes = []
+              
+              for (const recipeId of recipeArray) {
+                try {
+                  console.log(`Fetching full recipe data for ID: ${recipeId}`)
+                  
+                  const { data: fullRecipe, error: recipeError } = await supabase
+                    .from('recipes')
+                    .select(`
+                      *,
+                      recipe_ingredients (
+                        *,
+                        ingredient:ingredients (*)
+                      )
+                    `)
+                    .eq('id', recipeId)
+                    .single()
+                  
+                  if (recipeError) {
+                    console.error(`Error fetching recipe ${recipeId}:`, recipeError)
+                  } else {
+                    // Transform recipe_ingredients to ingredients for RecipeCard component
+                    const transformedRecipe = {
+                      ...fullRecipe,
+                      ingredients: fullRecipe.recipe_ingredients || []
+                    }
+                    fullRecipes.push(transformedRecipe)
+                    console.log(`Loaded recipe ${fullRecipe.name} with ${fullRecipe.recipe_ingredients?.length || 0} ingredients`)
+                  }
+                } catch (error) {
+                  console.error(`Error loading recipe ${recipeId}:`, error)
+                }
+              }
+              
+              if (fullRecipes.length > 0) {
+                loadedDynamicMealRecipes[mealId] = fullRecipes
+              }
+            }
+          }
         }
-      })
-      
-      if (Object.keys(loadedSelectedFoods).length > 0) {
-        setSelectedFoods(loadedSelectedFoods)
-      }
-      
-      if (Object.keys(loadedDynamicMealFoods).length > 0) {
-        setDynamicMealFoods(loadedDynamicMealFoods)
-      }
-      
-      if (Object.keys(loadedDynamicMealRecipes).length > 0) {
-        console.log('Setting dynamic meal recipes:', loadedDynamicMealRecipes)
-        setDynamicMealRecipes(loadedDynamicMealRecipes)
-      } else {
-        console.log('No dynamic meal recipes to load')
+        }
+        
+        if (Object.keys(loadedSelectedFoods).length > 0) {
+          setSelectedFoods(loadedSelectedFoods)
+        }
+        
+        if (Object.keys(loadedDynamicMealFoods).length > 0) {
+          setDynamicMealFoods(loadedDynamicMealFoods)
+        }
+        
+        if (Object.keys(loadedDynamicMealRecipes).length > 0) {
+          console.log('Setting dynamic meal recipes:', loadedDynamicMealRecipes)
+          setDynamicMealRecipes(loadedDynamicMealRecipes)
+        } else {
+          console.log('No dynamic meal recipes to load')
+        }
       }
     }
+
+    loadMealPlanData()
   }, [mealPlan])
 
   const fetchMealPlan = async () => {
