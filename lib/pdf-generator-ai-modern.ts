@@ -117,7 +117,8 @@ export class UltraModernPDFGenerator {
     this.contentHeight = this.pageHeight - (this.margin * 2) - modernDesign.layout.headerHeight - modernDesign.layout.footerHeight
     this.currentY = this.margin + modernDesign.layout.headerHeight
     
-    // Set default font
+    // Set default font with UTF-8 support
+    // Use helvetica for better character support, avoiding encoding issues
     this.pdf.setFont('helvetica')
   }
 
@@ -129,10 +130,48 @@ export class UltraModernPDFGenerator {
       : [0, 0, 0]
   }
 
+  // Text sanitization to prevent encoding issues in PDF
+  private sanitizeText(text: string): string {
+    if (!text || typeof text !== 'string') return ''
+    
+    return text
+      // Remove any null bytes or control characters that might cause issues
+      .replace(/[\x00-\x08\x0B\x0C\x0E-\x1F\x7F]/g, '')
+      // Fix common encoding issues that show up as Ø<ß
+      .replace(/Ã¸/g, 'ø')
+      .replace(/Ã</g, 'à')
+      .replace(/Ã\x9F/g, 'ß')
+      .replace(/Ã¢/g, 'â')
+      .replace(/Ã©/g, 'é')
+      .replace(/Ã¨/g, 'è')
+      .replace(/Ã§/g, 'ç')
+      .replace(/Ã´/g, 'ô')
+      .replace(/Ã»/g, 'û')
+      .replace(/Ã®/g, 'î')
+      .replace(/Ã\s/g, 'à ')
+      // Remove any remaining problematic characters
+      .replace(/[^\u0020-\u007E\u00A0-\u00FF\u0100-\u017F\u1E00-\u1EFF]/g, '')
+      // Normalize whitespace
+      .replace(/\s+/g, ' ')
+      .trim()
+  }
+
   private setTypography(style: keyof typeof modernDesign.typography) {
     const typo = modernDesign.typography[style]
     this.pdf.setFontSize(typo.size)
     this.pdf.setFont('helvetica', typo.weight as any)
+  }
+
+  // Safe text rendering method that sanitizes text before rendering
+  private safeText(text: string, x: number, y: number, options?: any) {
+    const cleanText = this.sanitizeText(text)
+    return this.pdf.text(cleanText, x, y, options)
+  }
+
+  // Safe text splitting method
+  private safeSplitTextToSize(text: string, maxWidth: number) {
+    const cleanText = this.sanitizeText(text)
+    return this.pdf.splitTextToSize(cleanText, maxWidth)
   }
 
   private addNewPageIfNeeded(requiredSpace: number = 30): boolean {
@@ -159,7 +198,7 @@ export class UltraModernPDFGenerator {
       // AI generation indicator
       this.pdf.setTextColor(255, 255, 255)
       this.setTypography('caption')
-      this.pdf.text('✨ Généré par IA', this.pageWidth - this.margin, 5, { align: 'right' })
+      this.safeText('✨ Généré par IA', this.pageWidth - this.margin, 5, { align: 'right' })
     }
   }
 
@@ -190,24 +229,24 @@ export class UltraModernPDFGenerator {
     // Logo text
     this.pdf.setTextColor(255, 255, 255)
     this.setTypography('h2')
-    this.pdf.text('NF', centerX, 45, { align: 'center' })
+    this.safeText('NF', centerX, 45, { align: 'center' })
 
     // AI Badge
     this.pdf.setFillColor(...this.hexToRgb(modernDesign.colors.aiPurple))
     this.pdf.roundedRect(centerX - 20, 60, 40, 12, 6, 6, 'F')
     this.pdf.setTextColor(255, 255, 255)
     this.setTypography('caption')
-    this.pdf.text('✨ PROPULSÉ PAR IA', centerX, 68, { align: 'center' })
+    this.safeText('✨ PROPULSÉ PAR IA', centerX, 68, { align: 'center' })
 
     // Main title
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
     this.setTypography('h1')
-    this.pdf.text('Plan de Repas', centerX, 95, { align: 'center' })
+    this.safeText('Plan de Repas', centerX, 95, { align: 'center' })
     
     // Subtitle with AI emphasis
     this.setTypography('h4')
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.aiBlue))
-    this.pdf.text('Personnalisé & Intelligent', centerX, 107, { align: 'center' })
+    this.safeText('Personnalisé & Intelligent', centerX, 107, { align: 'center' })
 
     // Plan title in elegant box
     const titleBoxY = 125
@@ -220,10 +259,10 @@ export class UltraModernPDFGenerator {
     
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
     this.setTypography('h3')
-    const titleLines = this.pdf.splitTextToSize(plan.title, this.contentWidth - 20)
+    const titleLines = this.safeSplitTextToSize(plan.title, this.contentWidth - 20)
     let titleY = titleBoxY + 15
     titleLines.forEach((line: string) => {
-      this.pdf.text(line, centerX, titleY, { align: 'center' })
+      this.safeText(line, centerX, titleY, { align: 'center' })
       titleY += 8
     })
 
@@ -241,7 +280,7 @@ export class UltraModernPDFGenerator {
     // Client info content
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textSecondary))
     this.setTypography('overline')
-    this.pdf.text('PRÉPARÉ POUR', centerX, clientCardY + 15, { align: 'center' })
+    this.safeText('PRÉPARÉ POUR', centerX, clientCardY + 15, { align: 'center' })
     
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
     this.setTypography('h3')
@@ -250,7 +289,7 @@ export class UltraModernPDFGenerator {
     // Plan details
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textMuted))
     this.setTypography('body')
-    this.pdf.text(`Plan de ${plan.duration} jours`, centerX, clientCardY + 45, { align: 'center' })
+    this.safeText(`Plan de ${plan.duration} jours`, centerX, clientCardY + 45, { align: 'center' })
     
     // Generation date
     const generationDate = new Date(metadata.generatedAt).toLocaleDateString('fr-FR', {
@@ -261,7 +300,7 @@ export class UltraModernPDFGenerator {
       minute: '2-digit'
     })
     this.setTypography('caption')
-    this.pdf.text(`Généré le ${generationDate}`, centerX, clientCardY + 58, { align: 'center' })
+    this.safeText(`Généré le ${generationDate}`, centerX, clientCardY + 58, { align: 'center' })
 
     // Dietitian attribution
     if (metadata.dietitianName) {
@@ -293,11 +332,11 @@ export class UltraModernPDFGenerator {
     
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
     this.setTypography('h2')
-    this.pdf.text('Intelligence Artificielle', this.margin + 12, this.currentY)
+    this.safeText('Intelligence Artificielle', this.margin + 12, this.currentY)
     
     this.setTypography('bodyLarge')
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textSecondary))
-    this.pdf.text('Analyse et recommandations', this.margin + 12, this.currentY + 12)
+    this.safeText('Analyse et recommandations', this.margin + 12, this.currentY + 12)
     this.currentY += 35
 
     // AI Generation Stats Cards
@@ -336,17 +375,17 @@ export class UltraModernPDFGenerator {
       
       // Icon
       this.setTypography('h3')
-      this.pdf.text(card.icon, x + cardWidth / 2, this.currentY + 18, { align: 'center' })
+      this.safeText(card.icon, x + cardWidth / 2, this.currentY + 18, { align: 'center' })
       
       // Value
       this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
       this.setTypography('h4')
-      this.pdf.text(card.value, x + cardWidth / 2, this.currentY + 28, { align: 'center' })
+      this.safeText(card.value, x + cardWidth / 2, this.currentY + 28, { align: 'center' })
       
       // Label
       this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textMuted))
       this.setTypography('caption')
-      this.pdf.text(card.label, x + cardWidth / 2, this.currentY + 36, { align: 'center' })
+      this.safeText(card.label, x + cardWidth / 2, this.currentY + 36, { align: 'center' })
     })
 
     this.currentY += 55
@@ -355,7 +394,7 @@ export class UltraModernPDFGenerator {
     if (metadata.prompt) {
       this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
       this.setTypography('h4')
-      this.pdf.text('Votre demande initiale', this.margin, this.currentY)
+      this.safeText('Votre demande initiale', this.margin, this.currentY)
       this.currentY += 15
 
       // Prompt box with modern styling
@@ -365,8 +404,8 @@ export class UltraModernPDFGenerator {
       // Quote marks
       this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.aiBlue))
       this.setTypography('h2')
-      this.pdf.text('"', this.margin + 8, this.currentY + 5)
-      this.pdf.text('"', this.pageWidth - this.margin - 12, this.currentY + 25)
+      this.safeText('"', this.margin + 8, this.currentY + 5)
+      this.safeText('"', this.pageWidth - this.margin - 12, this.currentY + 25)
       
       // Prompt text
       this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textSecondary))
@@ -374,7 +413,7 @@ export class UltraModernPDFGenerator {
       const promptLines = this.pdf.splitTextToSize(metadata.prompt, this.contentWidth - 40)
       let promptY = this.currentY + 8
       promptLines.slice(0, 4).forEach((line: string) => { // Limit to 4 lines
-        this.pdf.text(line, this.margin + 20, promptY)
+        this.safeText(line, this.margin + 20, promptY)
         promptY += 6
       })
       
@@ -385,7 +424,7 @@ export class UltraModernPDFGenerator {
     if (metadata.nutritionAnalysis) {
       this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
       this.setTypography('h4')
-      this.pdf.text('Analyse nutritionnelle intelligente', this.margin, this.currentY)
+      this.safeText('Analyse nutritionnelle intelligente', this.margin, this.currentY)
       this.currentY += 20
 
       const nutrition = metadata.nutritionAnalysis
@@ -425,7 +464,7 @@ export class UltraModernPDFGenerator {
     // AI Recommendations
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
     this.setTypography('h4')
-    this.pdf.text('Recommandations personnalisées', this.margin, this.currentY)
+    this.safeText('Recommandations personnalisées', this.margin, this.currentY)
     this.currentY += 15
 
     const recommendations = [
@@ -602,14 +641,14 @@ export class UltraModernPDFGenerator {
         // Meal name
         this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
         this.setTypography('h4')
-        this.pdf.text(meal.name, this.margin + 20, this.currentY + 12)
+        this.safeText(meal.name, this.margin + 20, this.currentY + 12)
         
         // Description if available
         if (meal.description) {
           this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textMuted))
           this.setTypography('body')
-          const descLines = this.pdf.splitTextToSize(meal.description, this.contentWidth - 60)
-          this.pdf.text(descLines[0], this.margin + 20, this.currentY + 22)
+          const descLines = this.safeSplitTextToSize(meal.description, this.contentWidth - 60)
+          this.safeText(descLines[0], this.margin + 20, this.currentY + 22)
         }
         
         // Nutrition info with modern badges
@@ -660,11 +699,11 @@ export class UltraModernPDFGenerator {
     
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
     this.setTypography('h2')
-    this.pdf.text('Liste de Courses Intelligente', this.margin + 12, this.currentY)
+    this.safeText('Liste de Courses Intelligente', this.margin + 12, this.currentY)
     
     this.setTypography('body')
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textMuted))
-    this.pdf.text('Organisée par sections de magasin', this.margin + 12, this.currentY + 12)
+    this.safeText('Organisée par sections de magasin', this.margin + 12, this.currentY + 12)
     this.currentY += 35
 
     // Collect all ingredients with better parsing
@@ -679,8 +718,9 @@ export class UltraModernPDFGenerator {
       day.meals.forEach(meal => {
         if (meal.ingredients) {
           meal.ingredients.forEach(ingredient => {
-            const cleanIngredient = ingredient.toLowerCase().trim()
-            if (!ingredientMap.has(cleanIngredient)) {
+            // Apply sanitization to ingredient names
+            const cleanIngredient = this.sanitizeText(ingredient).toLowerCase().trim()
+            if (cleanIngredient && !ingredientMap.has(cleanIngredient)) {
               ingredientMap.set(cleanIngredient, {
                 days: new Set(),
                 quantity: '',
@@ -688,9 +728,11 @@ export class UltraModernPDFGenerator {
                 meals: []
               })
             }
-            const item = ingredientMap.get(cleanIngredient)!
-            item.days.add(day.day)
-            item.meals.push(meal.name)
+            if (cleanIngredient) {
+              const item = ingredientMap.get(cleanIngredient)!
+              item.days.add(day.day)
+              item.meals.push(this.sanitizeText(meal.name))
+            }
           })
         }
       })
@@ -756,12 +798,12 @@ export class UltraModernPDFGenerator {
         // Item name
         this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
         this.setTypography('body')
-        this.pdf.text(item.name, this.margin + 25, this.currentY + 1)
+        this.safeText(item.name, this.margin + 25, this.currentY + 1)
         
         // Usage info
         this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textLight))
         this.setTypography('caption')
-        this.pdf.text(
+        this.safeText(
           `Jours ${item.days} • ${item.mealCount} repas`,
           this.pageWidth - this.margin - 10,
           this.currentY + 1,
@@ -809,7 +851,7 @@ export class UltraModernPDFGenerator {
       // Page indicator with modern style
       this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textMuted))
       this.setTypography('caption')
-      this.pdf.text(
+      this.safeText(
         `${i} / ${totalPages}`,
         this.pageWidth / 2,
         this.pageHeight - 10,
@@ -819,11 +861,11 @@ export class UltraModernPDFGenerator {
       // Brand with AI indicator
       this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.primary))
       this.setTypography('caption')
-      this.pdf.text('✨ NutriFlow AI', this.margin, this.pageHeight - 10)
+      this.safeText('✨ NutriFlow AI', this.margin, this.pageHeight - 10)
       
       // Generation timestamp
       this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textLight))
-      this.pdf.text(
+      this.safeText(
         new Date().toLocaleDateString('fr-FR'),
         this.pageWidth - this.margin,
         this.pageHeight - 10,

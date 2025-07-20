@@ -323,18 +323,29 @@ export default function GenerateMealPlanPage() {
   const createRecipeToMealMapping = (days: any[], createdRecipes: any[]) => {
     const mapping: Record<string, any> = {}
     
+    console.log('Creating recipe mapping with:', {
+      daysCount: days.length,
+      recipesCount: createdRecipes.length,
+      recipeNames: createdRecipes.map(r => r.name)
+    })
+    
     // Create a lookup for recipes by name
     const recipesByName = createdRecipes.reduce((acc, recipe) => {
       acc[recipe.name] = recipe
       return acc
     }, {} as Record<string, any>)
     
+    console.log('Recipes by name lookup:', Object.keys(recipesByName))
+    
     days.forEach(day => {
       day.meals.forEach((meal: any) => {
         const recipeName = meal.name
         const recipeKey = `${day.day}-${meal.name}`
         
+        console.log(`Processing meal: ${recipeKey}, looking for recipe: ${recipeName}`)
+        
         if (recipesByName[recipeName]) {
+          console.log(`Found recipe for ${recipeName}`)
           // Map the recipe with its ingredients for the meal plan editor
           const recipe = recipesByName[recipeName]
           
@@ -444,19 +455,38 @@ export default function GenerateMealPlanPage() {
       })
 
       // IMPORTANT: Add created recipes to the dynamic plan structure
-      // Map recipes to their corresponding meals
+      // Map recipes to their corresponding meals using the ORIGINAL plan structure
       const recipesByMeal = createRecipeToMealMapping(generatedPlan.days, createdRecipes)
+      
+      console.log('Recipe mapping created:', Object.keys(recipesByMeal))
+      console.log('Dynamic plan meals:', dynamicPlan.days.map(d => d.meals.map(m => `${d.day}-${m.name}`)))
       
       // Add recipes to each meal in the dynamic plan
       dynamicPlan.days.forEach(day => {
+        const originalDay = generatedPlan.days.find(d => d.day === day.day)
+        if (!originalDay) return
+        
         day.meals.forEach(meal => {
-          const recipeKey = `${day.day}-${meal.name}`
-          if (recipesByMeal[recipeKey]) {
-            // Store the recipe data in selectedRecipes
-            if (!day.selectedRecipes) {
-              day.selectedRecipes = {}
+          // Try to find matching meal in original plan by name
+          const originalMeal = originalDay.meals.find(m => m.name === meal.name || 
+            m.name.toLowerCase().trim() === meal.name.toLowerCase().trim())
+          
+          if (originalMeal) {
+            const recipeKey = `${day.day}-${originalMeal.name}`
+            console.log(`Looking for recipe key: ${recipeKey}`)
+            
+            if (recipesByMeal[recipeKey]) {
+              console.log(`Found recipe for ${recipeKey}`)
+              // Store the recipe data in selectedRecipes
+              if (!day.selectedRecipes) {
+                day.selectedRecipes = {}
+              }
+              day.selectedRecipes[meal.id] = [recipesByMeal[recipeKey]]
+            } else {
+              console.log(`No recipe found for ${recipeKey}`)
             }
-            day.selectedRecipes[meal.id] = [recipesByMeal[recipeKey]]
+          } else {
+            console.log(`No original meal found for ${meal.name} in day ${day.day}`)
           }
         })
       })
