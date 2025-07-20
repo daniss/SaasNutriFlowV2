@@ -26,6 +26,7 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# MCP configuration with secrets
 .mcp.json
 
 # Test files with potential sensitive data

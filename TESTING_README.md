@@ -29,6 +29,17 @@ Test files have been moved to `.gitignore` to prevent accidental commits of sens
 - `GEMINI_API_KEY` - Google Gemini API key for AI meal plan generation
 - `SUPABASE_SERVICE_ROLE_KEY` - Supabase service role key (use with caution)
 - `CLIENT_AUTH_SECRET` - Secret for client JWT tokens
+- `SUPABASE_ACCESS_TOKEN` - Supabase access token for MCP server
+
+### MCP Configuration
+
+The MCP (Model Context Protocol) configuration is managed through environment variables:
+
+1. Copy the template: `cp .mcp.json.template .mcp.json`
+2. Set your environment variable: `export SUPABASE_ACCESS_TOKEN="your_token_here"`
+3. Update the project reference in `.mcp.json` if needed
+
+The `.mcp.json` file is ignored by git to prevent token exposure.
 
 ### Running tests
 
