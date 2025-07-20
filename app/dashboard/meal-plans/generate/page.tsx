@@ -490,11 +490,45 @@ export default function GenerateMealPlanPage() {
             
             if (recipesByMeal[recipeKey]) {
               console.log(`Found recipe for ${recipeKey}`)
-              // Store the recipe data in selectedRecipes
-              if (!day.selectedRecipes) {
-                day.selectedRecipes = {}
+              
+              // Find the actual database recipe from createdRecipes
+              const recipeMapping = recipesByMeal[recipeKey]
+              const actualRecipe = createdRecipes.find(r => r.name === originalMeal.name)
+              
+              if (actualRecipe) {
+                console.log(`Found actual database recipe: ${actualRecipe.name} (ID: ${actualRecipe.id})`)
+                
+                // Fetch the complete recipe data with ingredients
+                try {
+                  const { data: fullRecipe, error: recipeError } = await supabase
+                    .from('recipes')
+                    .select(`
+                      *,
+                      recipe_ingredients (
+                        *,
+                        ingredient:ingredients (*)
+                      )
+                    `)
+                    .eq('id', actualRecipe.id)
+                    .single()
+                  
+                  if (recipeError) {
+                    console.error(`Error fetching full recipe data for ${actualRecipe.name}:`, recipeError)
+                  } else {
+                    console.log(`Fetched full recipe data with ${fullRecipe.recipe_ingredients?.length || 0} ingredients`)
+                    
+                    // Store the complete recipe with ingredients
+                    if (!day.selectedRecipes) {
+                      day.selectedRecipes = {}
+                    }
+                    day.selectedRecipes[meal.id] = [fullRecipe]
+                  }
+                } catch (error) {
+                  console.error(`Error fetching recipe ${actualRecipe.id}:`, error)
+                }
+              } else {
+                console.log(`Database recipe not found for ${originalMeal.name}`)
               }
-              day.selectedRecipes[meal.id] = [recipesByMeal[recipeKey]]
             } else {
               console.log(`No recipe found for ${recipeKey}`)
             }
