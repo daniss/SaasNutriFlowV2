@@ -151,12 +151,23 @@ ${restrictions.length > 0 ? `Restrictions: ${restrictions.join(", ")}` : ""}
 
 ${ingredientsPromptSection}
 
+TYPES DE REPAS DISPONIBLES (choisir le plus approprié pour chaque repas):
+- "Petit-déjeuner" : repas du matin
+- "Collation matin" : en-cas matinal  
+- "Déjeuner" : repas de midi
+- "Collation après-midi" : en-cas d'après-midi
+- "Dîner" : repas du soir
+- "Collation soir" : en-cas du soir
+- "Pré-entraînement" : avant l'exercice
+- "Post-entraînement" : après l'exercice
+
 IMPORTANT:
 - Noms de repas créatifs et appétissants  
 - 3-4 ingrédients par repas maximum
 - Instructions détaillées de préparation
 - ingredientsNutrition obligatoire avec données exactes de la base
 - OBLIGATOIRE: Numérotation correcte des jours ${startDay} à ${endDay}
+- OBLIGATOIRE: Utilisez les types de repas ci-dessus pour le champ "type"
 - PRIORITÉ: Utilisez les ingrédients de la base de données ci-dessus avec leurs valeurs nutritionnelles exactes
 
 FORMAT JSON:
@@ -167,6 +178,7 @@ FORMAT JSON:
       "meals": {
         "breakfast": {
           "name": "Porridge méditerranéen aux figues",
+          "type": "Petit-déjeuner",
           "description": "Petit-déjeuner énergisant aux saveurs méditerranéennes",
           "calories": ${Math.round(targetCalories * 0.25)},
           "protein": 17,
@@ -192,6 +204,7 @@ FORMAT JSON:
         },
         "lunch": {
           "name": "Salade de quinoa aux légumes grillés",
+          "type": "Déjeuner",
           "description": "Salade complète et colorée aux légumes de saison",
           "calories": ${Math.round(targetCalories * 0.35)},
           "protein": 32,
@@ -217,6 +230,7 @@ FORMAT JSON:
         },
         "dinner": {
           "name": "Poisson grillé aux herbes de Provence",
+          "type": "Dîner",
           "description": "Filet de poisson savoureux aux aromates méditerranéens",
           "calories": ${Math.round(targetCalories * 0.30)},
           "protein": 34,
@@ -243,6 +257,7 @@ FORMAT JSON:
         "snacks": [
           {
             "name": "Yaourt grec aux noix et miel",
+            "type": "Collation après-midi",
             "description": "Collation protéinée aux saveurs méditerranéennes",
             "calories": ${Math.round(targetCalories * 0.10)},
             "protein": 9,

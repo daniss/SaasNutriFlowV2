@@ -328,29 +328,18 @@ export default function GenerateMealPlanPage() {
   const createRecipeToMealMapping = (days: any[], createdRecipes: any[]) => {
     const mapping: Record<string, any> = {}
     
-    console.log('Creating recipe mapping with:', {
-      daysCount: days.length,
-      recipesCount: createdRecipes.length,
-      recipeNames: createdRecipes.map(r => r.name)
-    })
-    
     // Create a lookup for recipes by name
     const recipesByName = createdRecipes.reduce((acc, recipe) => {
       acc[recipe.name] = recipe
       return acc
     }, {} as Record<string, any>)
     
-    console.log('Recipes by name lookup:', Object.keys(recipesByName))
-    
     days.forEach(day => {
       day.meals.forEach((meal: any) => {
         const recipeName = meal.name
         const recipeKey = `${day.day}-${meal.name}`
         
-        console.log(`Processing meal: ${recipeKey}, looking for recipe: ${recipeName}`)
-        
         if (recipesByName[recipeName]) {
-          console.log(`Found recipe for ${recipeName}`)
           // Map the recipe with its ingredients for the meal plan editor
           const recipe = recipesByName[recipeName]
           
@@ -435,13 +424,6 @@ export default function GenerateMealPlanPage() {
       
       if (clientError) throw clientError
       
-      // Debug: log the structure
-      console.log('Generated plan structure:', {
-        title: generatedPlan.title,
-        duration: generatedPlan.duration,
-        firstDay: generatedPlan.days[0],
-        firstDayMeals: generatedPlan.days[0]?.meals
-      })
       
       // CRITICAL: Save ingredients and create recipes BEFORE converting to dynamic format
       // The conversion strips out ingredients data, so we must do this first!
@@ -451,27 +433,12 @@ export default function GenerateMealPlanPage() {
       setSendingProgress(20)
       
       const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
-      console.log(`Saved ${savedIngredients.length} ingredients to database`)
       
       // Step 3: Create recipes for each meal with full ingredient data
       setSendingStep("Création des recettes...")
       setSendingProgress(40)
       
-      console.log('Generated plan structure before recipe creation:', {
-        totalDays: generatedPlan.days.length,
-        meals: generatedPlan.days.map(d => ({
-          day: d.day,
-          meals: d.meals.map(m => ({
-            name: m.name,
-            hasIngredients: !!m.ingredients && m.ingredients.length > 0,
-            ingredientsCount: m.ingredients?.length || 0
-          }))
-        }))
-      })
-      
       const createdRecipes = await createRecipesFromMeals(generatedPlan.days, user!.id)
-      console.log(`Created ${createdRecipes.length} recipes from AI meal plan`)
-      console.log('Created recipes details:', createdRecipes.map(r => ({ id: r.id, name: r.name })))
       
       // Step 4: Convert AI plan to dynamic format
       setSendingStep("Traitement du plan alimentaire...")
@@ -496,9 +463,6 @@ export default function GenerateMealPlanPage() {
       // Map recipes to their corresponding meals using the ORIGINAL plan structure
       const recipesByMeal = createRecipeToMealMapping(generatedPlan.days, createdRecipes)
       
-      console.log('Recipe mapping created:', Object.keys(recipesByMeal))
-      console.log('Dynamic plan meals:', dynamicPlan.days.map(d => d.meals.map(m => `${d.day}-${m.name}`)))
-      
       // Link recipes to meals - simple many-to-one relationship
       for (const day of dynamicPlan.days) {
         const originalDay = generatedPlan.days.find(d => d.day === day.day)
@@ -514,18 +478,10 @@ export default function GenerateMealPlanPage() {
           if (matchingRecipe) {
             // Simple: just add the recipe_id to the meal
             meal.recipe_id = matchingRecipe.id
-            console.log(`Linked recipe ${matchingRecipe.name} (${matchingRecipe.id}) to meal ${meal.name}`)
-          } else {
-            console.log(`No recipe found for meal: ${meal.name}`)
           }
         }
       }
       
-      console.log('Converted dynamic plan:', {
-        daysCount: dynamicPlan.days.length,
-        mealsWithRecipes: dynamicPlan.days.reduce((total, d) => total + d.meals.filter(m => m.recipe_id).length, 0),
-        totalMeals: dynamicPlan.days.reduce((total, d) => total + d.meals.length, 0)
-      })
       
       if (savedIngredients.length > 0 || createdRecipes.length > 0) {
         toast({
@@ -538,13 +494,6 @@ export default function GenerateMealPlanPage() {
       setSendingStep("Sauvegarde du plan alimentaire...")
       setSendingProgress(75)
       
-      console.log('Saving meal plan with recipe links:', {
-        daysWithRecipes: dynamicPlan.days.map(d => ({
-          day: d.day,
-          mealsWithRecipes: d.meals.filter(m => m.recipe_id).length,
-          totalMeals: d.meals.length
-        }))
-      })
       
       const { data: savedPlan, error: saveError } = await supabase
         .from("meal_plans")
@@ -633,7 +582,6 @@ export default function GenerateMealPlanPage() {
               .single()
             
             if (existingIngredient) {
-              console.log(`Ingredient "${ingredient.name}" already exists globally, skipping`)
               continue
             }
             
@@ -677,15 +625,13 @@ export default function GenerateMealPlanPage() {
               .single()
             
             if (ingredientError) {
-              console.error(`Error saving ingredient "${ingredient.name}":`, ingredientError)
               continue
             }
             
             savedIngredients.push(savedIngredient)
-            console.log(`Saved ingredient: "${ingredient.name}"`)
             
           } catch (error) {
-            console.error(`Error processing ingredient "${ingredient.name}":`, error)
+            // Silently handle errors
           }
         }
       }
@@ -698,20 +644,9 @@ export default function GenerateMealPlanPage() {
   const createRecipesFromMeals = async (days: any[], dietitianId: string) => {
     const createdRecipes = []
     
-    console.log('Starting recipe creation process...')
-    
     for (const day of days) {
-      console.log(`Processing day ${day.day} with ${day.meals.length} meals`)
-      
       for (const meal of day.meals) {
-        console.log(`Processing meal: ${meal.name}`, {
-          hasIngredients: !!meal.ingredients,
-          ingredientsLength: meal.ingredients?.length,
-          ingredients: meal.ingredients
-        })
-        
         if (!meal.ingredients || meal.ingredients.length === 0) {
-          console.log(`Skipping meal ${meal.name} - no ingredients`)
           continue
         }
         
@@ -736,7 +671,6 @@ export default function GenerateMealPlanPage() {
             .single()
           
           if (existingRecipe) {
-            console.log(`Recipe "${recipeName}" already exists, skipping`)
             continue
           }
           
@@ -774,7 +708,6 @@ export default function GenerateMealPlanPage() {
             continue
           }
           
-          console.log(`✅ Successfully created recipe: ${recipeName} (ID: ${savedRecipe.id})`)
           
           // Create ingredients using ingredientsNutrition data and link to global database
           const ingredientData = []
@@ -811,7 +744,6 @@ export default function GenerateMealPlanPage() {
                   ingredientId = globalIngredient.id
                 }
               } catch (error) {
-                console.log(`Ingredient "${nutritionData.name}" not found in global database`)
               }
               
               ingredientData.push({
@@ -867,7 +799,6 @@ export default function GenerateMealPlanPage() {
           }
           
           createdRecipes.push(savedRecipe)
-          console.log(`Created recipe: "${recipeName}"`)
           
         } catch (error) {
           console.error(`Error processing meal "${meal.name}":`, error)

@@ -237,8 +237,6 @@ export default function MealPlanDetailPage() {
         for (const meal of day.meals) {
           if (meal.recipe_id) {
             try {
-              console.log(`Loading recipe ${meal.recipe_id} for meal ${meal.name}`)
-              
               const { data: fullRecipe, error: recipeError } = await supabase
                 .from('recipes')
                 .select(`
@@ -251,9 +249,7 @@ export default function MealPlanDetailPage() {
                 .eq('id', meal.recipe_id)
                 .single()
               
-              if (recipeError) {
-                console.error(`Error fetching recipe ${meal.recipe_id}:`, recipeError)
-              } else {
+              if (!recipeError && fullRecipe) {
                 // Transform recipe_ingredients to ingredients for RecipeCard component
                 const transformedRecipe = {
                   ...fullRecipe,
@@ -262,10 +258,9 @@ export default function MealPlanDetailPage() {
                 
                 // Store by meal ID for the UI
                 loadedDynamicMealRecipes[meal.id] = [transformedRecipe]
-                console.log(`Loaded recipe ${fullRecipe.name} with ${fullRecipe.recipe_ingredients?.length || 0} ingredients for meal ${meal.name}`)
               }
             } catch (error) {
-              console.error(`Error loading recipe for meal ${meal.name}:`, error)
+              // Silently handle errors
             }
           }
         }
@@ -280,10 +275,7 @@ export default function MealPlanDetailPage() {
         }
         
         if (Object.keys(loadedDynamicMealRecipes).length > 0) {
-          console.log('Setting dynamic meal recipes:', loadedDynamicMealRecipes)
           setDynamicMealRecipes(loadedDynamicMealRecipes)
-        } else {
-          console.log('No dynamic meal recipes to load')
         }
       }
     }

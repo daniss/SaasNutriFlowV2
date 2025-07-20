@@ -95,21 +95,6 @@ export function DynamicMealEditDialog({
   // Sync localMealRecipes with dynamicMealRecipes prop updates
   useEffect(() => {
     if (dynamicMealRecipes) {
-      console.log('Syncing localMealRecipes with prop update:', dynamicMealRecipes)
-      
-      // Debug: Check ingredients in each recipe
-      Object.entries(dynamicMealRecipes).forEach(([mealId, recipes]) => {
-        recipes.forEach((recipe, index) => {
-          console.log(`Dialog Recipe ${recipe.name} (meal ${mealId}) ingredients:`, {
-            ingredientsCount: recipe.ingredients?.length || 0,
-            hasIngredients: !!recipe.ingredients,
-            ingredientsType: typeof recipe.ingredients,
-            ingredientsArray: recipe.ingredients,
-            recipeKeys: Object.keys(recipe)
-          })
-        })
-      })
-      
       setLocalMealRecipes(dynamicMealRecipes)
     }
   }, [dynamicMealRecipes])

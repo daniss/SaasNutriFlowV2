@@ -297,11 +297,13 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
       day.meals.forEach((meal: any) => {
         // Use the actual meal name instead of generic type name for AI-generated plans
         const mealName = meal.name || mealTypeMap[meal.type] || meal.type
+        // Use the AI-provided meal type if available, otherwise infer from the structure
+        const mealType = meal.type || mealTypeMap[meal.type] || 'Petit-déjeuner'
         const time = getMealTime(meal.type)
         
         meals.push({
           id: generateMealId(day.day, mealName),
-          name: mealName,
+          name: mealType, // Use the proper meal type for categorization
           time: time,
           description: formatMealDescription(meal),
           calories_target: meal.calories,
