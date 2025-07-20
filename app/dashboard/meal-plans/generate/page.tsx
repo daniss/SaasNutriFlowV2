@@ -541,12 +541,22 @@ export default function GenerateMealPlanPage() {
                     console.error(`Error fetching full recipe data for ${actualRecipe.name}:`, recipeError)
                   } else {
                     console.log(`Fetched full recipe data with ${fullRecipe.recipe_ingredients?.length || 0} ingredients`)
+                    console.log('Raw recipe_ingredients:', fullRecipe.recipe_ingredients)
                     
                     // Transform recipe_ingredients to ingredients for RecipeCard component
+                    const dbIngredients = fullRecipe.recipe_ingredients || []
+                    const fallbackIngredients = recipesByMeal[recipeKey]?.ingredients || []
+                    
                     const transformedRecipe = {
                       ...fullRecipe,
-                      ingredients: fullRecipe.recipe_ingredients || []
+                      ingredients: dbIngredients.length > 0 ? dbIngredients : fallbackIngredients
                     }
+                    
+                    console.log(`Transformed recipe ingredients count: ${transformedRecipe.ingredients.length}`)
+                    console.log('DB ingredients:', dbIngredients.length)
+                    console.log('Fallback ingredients:', fallbackIngredients.length)
+                    console.log('Using ingredients from:', dbIngredients.length > 0 ? 'database' : 'fallback')
+                    console.log('Transformed ingredients sample:', transformedRecipe.ingredients.slice(0, 2))
                     
                     // Store the complete recipe with ingredients
                     if (!day.selectedRecipes) {
@@ -593,9 +603,20 @@ export default function GenerateMealPlanPage() {
       console.log('Saving meal plan with selectedRecipes:', {
         daysWithRecipes: dynamicPlan.days.map(d => ({
           day: d.day,
-          selectedRecipes: d.selectedRecipes ? Object.keys(d.selectedRecipes) : []
+          selectedRecipes: d.selectedRecipes ? Object.keys(d.selectedRecipes) : [],
+          recipesWithIngredients: d.selectedRecipes ? Object.entries(d.selectedRecipes).map(([mealId, recipes]) => ({
+            mealId,
+            recipes: recipes.map(r => ({
+              name: r.name,
+              ingredientsCount: r.ingredients?.length || 0,
+              hasIngredients: !!r.ingredients
+            }))
+          })) : []
         }))
       })
+      
+      // Debug: Check the full dynamic plan structure being saved
+      console.log('Full dynamic plan structure being saved to database:', JSON.stringify(dynamicPlan, null, 2))
       
       const { data: savedPlan, error: saveError } = await supabase
         .from("meal_plans")

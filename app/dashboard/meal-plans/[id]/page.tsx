@@ -235,6 +235,19 @@ export default function MealPlanDetailPage() {
         // Load selected recipes
         if (day.selectedRecipes && Object.keys(day.selectedRecipes).length > 0) {
           console.log(`Loading selected recipes for day ${day.day}:`, day.selectedRecipes)
+          
+          // Debug: Check ingredients in loaded recipes
+          Object.entries(day.selectedRecipes).forEach(([mealId, recipes]) => {
+            (recipes as any[]).forEach((recipe: any, index: number) => {
+              console.log(`Recipe ${recipe.name} (meal ${mealId}) ingredients:`, {
+                ingredientsCount: recipe.ingredients?.length || 0,
+                hasIngredients: !!recipe.ingredients,
+                ingredientsType: typeof recipe.ingredients,
+                firstIngredient: recipe.ingredients?.[0]
+              })
+            })
+          })
+          
           Object.assign(loadedDynamicMealRecipes, day.selectedRecipes)
         }
       })
