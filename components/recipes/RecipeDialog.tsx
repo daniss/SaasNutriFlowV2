@@ -23,10 +23,27 @@ interface RecipeDialogProps {
 }
 
 interface Ingredient {
+  id?: string // ID from the database
   name: string
   quantity: number | null
   unit: string | null
   notes?: string
+  // Nutritional data from database
+  calories_per_100g?: number
+  calories_per_100ml?: number
+  calories_per_piece?: number
+  protein_per_100g?: number
+  protein_per_100ml?: number
+  protein_per_piece?: number
+  carbs_per_100g?: number
+  carbs_per_100ml?: number
+  carbs_per_piece?: number
+  fat_per_100g?: number
+  fat_per_100ml?: number
+  fat_per_piece?: number
+  fiber_per_100g?: number
+  fiber_per_100ml?: number
+  fiber_per_piece?: number
 }
 
 export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: RecipeDialogProps) {
@@ -35,6 +52,8 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
   const [loading, setLoading] = useState(false)
   const [currentTag, setCurrentTag] = useState("")
   const [foodSearchOpen, setFoodSearchOpen] = useState(false)
+  const [availableIngredients, setAvailableIngredients] = useState<any[]>([])
+  const [ingredientSearchTerm, setIngredientSearchTerm] = useState("")
   
   const [formData, setFormData] = useState({
     name: "",
@@ -59,6 +78,34 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
   const [ingredients, setIngredients] = useState<Ingredient[]>([
     { name: "", quantity: null, unit: null }
   ])
+
+  // Load available ingredients from database
+  const loadAvailableIngredients = async () => {
+    try {
+      const { data, error } = await supabase
+        .from("ingredients")
+        .select("id, name, category, unit_type, calories_per_100g, calories_per_100ml, calories_per_piece, protein_per_100g, protein_per_100ml, protein_per_piece, carbs_per_100g, carbs_per_100ml, carbs_per_piece, fat_per_100g, fat_per_100ml, fat_per_piece, fiber_per_100g, fiber_per_100ml, fiber_per_piece")
+        .order("name")
+
+      if (error) throw error
+
+      setAvailableIngredients(data || [])
+    } catch (error) {
+      console.error("Error loading ingredients:", error)
+    }
+  }
+
+  // Filter ingredients based on search term
+  const filteredIngredients = availableIngredients.filter(ing =>
+    ing.name.toLowerCase().includes(ingredientSearchTerm.toLowerCase())
+  )
+
+  // Load ingredients when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      loadAvailableIngredients()
+    }
+  }, [isOpen])
 
   // Reset form when dialog opens/closes or recipe changes
   useEffect(() => {
@@ -220,6 +267,7 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
       if (validIngredients.length > 0) {
         const ingredientData = validIngredients.map((ing, index) => ({
           recipe_id: recipeId,
+          ingredient_id: ing.id || null, // Reference to global ingredient if from database
           name: ing.name,
           quantity: ing.quantity,
           unit: ing.unit,
@@ -329,6 +377,69 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
         fiber_per_serving: (prev.fiber_per_serving || 0) + Math.round(food.fiber_g || 0)
       }))
     }
+  }
+
+  const addIngredientFromDatabase = (dbIngredient: any) => {
+    const newIngredient: Ingredient = {
+      id: dbIngredient.id,
+      name: dbIngredient.name,
+      quantity: dbIngredient.unit_type === 'piece' ? 1 : 100, // Default 1 piece or 100g/ml
+      unit: dbIngredient.unit_type,
+      // Include nutritional data from database
+      calories_per_100g: dbIngredient.calories_per_100g,
+      calories_per_100ml: dbIngredient.calories_per_100ml,
+      calories_per_piece: dbIngredient.calories_per_piece,
+      protein_per_100g: dbIngredient.protein_per_100g,
+      protein_per_100ml: dbIngredient.protein_per_100ml,
+      protein_per_piece: dbIngredient.protein_per_piece,
+      carbs_per_100g: dbIngredient.carbs_per_100g,
+      carbs_per_100ml: dbIngredient.carbs_per_100ml,
+      carbs_per_piece: dbIngredient.carbs_per_piece,
+      fat_per_100g: dbIngredient.fat_per_100g,
+      fat_per_100ml: dbIngredient.fat_per_100ml,
+      fat_per_piece: dbIngredient.fat_per_piece,
+      fiber_per_100g: dbIngredient.fiber_per_100g,
+      fiber_per_100ml: dbIngredient.fiber_per_100ml,
+      fiber_per_piece: dbIngredient.fiber_per_piece
+    }
+    
+    setIngredients(prev => [...prev, newIngredient])
+    setIngredientSearchTerm("") // Clear search
+    
+    // Calculate and add nutrition to recipe
+    const quantity = newIngredient.quantity || 0
+    let calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0
+    
+    if (dbIngredient.unit_type === 'g') {
+      const factor = quantity / 100
+      calories = (dbIngredient.calories_per_100g || 0) * factor
+      protein = (dbIngredient.protein_per_100g || 0) * factor
+      carbs = (dbIngredient.carbs_per_100g || 0) * factor
+      fat = (dbIngredient.fat_per_100g || 0) * factor
+      fiber = (dbIngredient.fiber_per_100g || 0) * factor
+    } else if (dbIngredient.unit_type === 'ml') {
+      const factor = quantity / 100
+      calories = (dbIngredient.calories_per_100ml || 0) * factor
+      protein = (dbIngredient.protein_per_100ml || 0) * factor
+      carbs = (dbIngredient.carbs_per_100ml || 0) * factor
+      fat = (dbIngredient.fat_per_100ml || 0) * factor
+      fiber = (dbIngredient.fiber_per_100ml || 0) * factor
+    } else if (dbIngredient.unit_type === 'piece') {
+      calories = (dbIngredient.calories_per_piece || 0) * quantity
+      protein = (dbIngredient.protein_per_piece || 0) * quantity
+      carbs = (dbIngredient.carbs_per_piece || 0) * quantity
+      fat = (dbIngredient.fat_per_piece || 0) * quantity
+      fiber = (dbIngredient.fiber_per_piece || 0) * quantity
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      calories_per_serving: (prev.calories_per_serving || 0) + Math.round(calories),
+      protein_per_serving: (prev.protein_per_serving || 0) + Math.round(protein),
+      carbs_per_serving: (prev.carbs_per_serving || 0) + Math.round(carbs),
+      fat_per_serving: (prev.fat_per_serving || 0) + Math.round(fat),
+      fiber_per_serving: (prev.fiber_per_serving || 0) + Math.round(fiber)
+    }))
   }
 
   return (
@@ -531,6 +642,43 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
                   </div>
                 </div>
               ))}
+              
+              {/* Database Ingredient Selector */}
+              <div className="border-t pt-3">
+                <Label className="text-sm font-medium">Ajouter depuis la base d'ingrédients</Label>
+                <div className="mt-2 space-y-2">
+                  <Input
+                    value={ingredientSearchTerm}
+                    onChange={(e) => setIngredientSearchTerm(e.target.value)}
+                    placeholder="Rechercher un ingrédient..."
+                    className="w-full"
+                  />
+                  {ingredientSearchTerm && (
+                    <div className="max-h-40 overflow-y-auto border rounded-md bg-white">
+                      {filteredIngredients.length > 0 ? (
+                        filteredIngredients.slice(0, 10).map((ingredient) => (
+                          <button
+                            key={ingredient.id}
+                            onClick={() => addIngredientFromDatabase(ingredient)}
+                            className="w-full px-3 py-2 text-left hover:bg-gray-50 border-b last:border-b-0 flex justify-between items-center"
+                          >
+                            <div>
+                              <div className="font-medium">{ingredient.name}</div>
+                              <div className="text-xs text-gray-500">{ingredient.category}</div>
+                            </div>
+                            <div className="text-xs text-gray-400">
+                              {ingredient.unit_type}
+                            </div>
+                          </button>
+                        ))
+                      ) : (
+                        <div className="px-3 py-2 text-gray-500 text-sm">Aucun ingrédient trouvé</div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="flex flex-col sm:flex-row gap-2">
                 <Button variant="outline" size="sm" onClick={addIngredient} className="flex-1">
                   <Plus className="h-4 w-4 mr-2" />

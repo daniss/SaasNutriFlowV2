@@ -54,6 +54,58 @@ export async function POST(request: NextRequest) {
       goals = "",
     } = body;
 
+    // Fetch available ingredients from the global database
+    let availableIngredients: any[] = [];
+    try {
+      const { data: ingredients, error: ingredientsError } = await supabase
+        .from("ingredients")
+        .select("name, category, unit_type, calories_per_100g, calories_per_100ml, calories_per_piece, protein_per_100g, protein_per_100ml, protein_per_piece, carbs_per_100g, carbs_per_100ml, carbs_per_piece, fat_per_100g, fat_per_100ml, fat_per_piece, fiber_per_100g, fiber_per_100ml, fiber_per_piece")
+        .order("name");
+
+      if (!ingredientsError && ingredients) {
+        availableIngredients = ingredients;
+        console.log(`Loaded ${availableIngredients.length} ingredients from database`);
+      }
+    } catch (error) {
+      console.error("Error fetching ingredients:", error);
+      // Continue without ingredients database if it fails
+    }
+
+    // Helper function to format ingredient data for AI prompt
+    const formatIngredientsForAI = (ingredients: any[]) => {
+      if (ingredients.length === 0) return "Utilisez des ingrédients courants avec leurs valeurs nutritionnelles estimées.";
+      
+      // Group ingredients by category for better organization
+      const grouped = ingredients.reduce((acc: any, ing: any) => {
+        const category = ing.category || 'other';
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(ing);
+        return acc;
+      }, {});
+
+      let formattedList = "INGRÉDIENTS DISPONIBLES (utilisez prioritairement ces ingrédients avec leurs données nutritionnelles exactes):\n\n";
+      
+      Object.entries(grouped).forEach(([category, items]: [string, any]) => {
+        formattedList += `${category.toUpperCase()}:\n`;
+        (items as any[]).slice(0, 15).forEach(ing => { // Limit to 15 per category to keep prompt manageable
+          let nutritionInfo = "";
+          if (ing.unit_type === 'g' && ing.calories_per_100g) {
+            nutritionInfo = `(${ing.calories_per_100g}kcal, ${ing.protein_per_100g || 0}g prot, ${ing.carbs_per_100g || 0}g gluc, ${ing.fat_per_100g || 0}g lip/100g)`;
+          } else if (ing.unit_type === 'ml' && ing.calories_per_100ml) {
+            nutritionInfo = `(${ing.calories_per_100ml}kcal, ${ing.protein_per_100ml || 0}g prot, ${ing.carbs_per_100ml || 0}g gluc, ${ing.fat_per_100ml || 0}g lip/100ml)`;
+          } else if (ing.unit_type === 'piece' && ing.calories_per_piece) {
+            nutritionInfo = `(${ing.calories_per_piece}kcal, ${ing.protein_per_piece || 0}g prot, ${ing.carbs_per_piece || 0}g gluc, ${ing.fat_per_piece || 0}g lip/pièce)`;
+          }
+          formattedList += `- ${ing.name} ${nutritionInfo}\n`;
+        });
+        formattedList += "\n";
+      });
+
+      return formattedList;
+    };
+
+    const ingredientsPromptSection = formatIngredientsForAI(availableIngredients);
+
     // Validate input
     if (!prompt || typeof prompt !== "string") {
       return NextResponse.json(
@@ -97,11 +149,15 @@ export async function POST(request: NextRequest) {
 ${prompt} - Jours ${startDay} à ${endDay}, ${targetCalories} cal/jour
 ${restrictions.length > 0 ? `Restrictions: ${restrictions.join(", ")}` : ""}
 
+${ingredientsPromptSection}
+
 IMPORTANT:
-- Noms de repas créatifs et appétissants
+- Noms de repas créatifs et appétissants  
 - 3-4 ingrédients par repas maximum
 - Instructions détaillées de préparation
-- ingredientsNutrition obligatoire
+- ingredientsNutrition obligatoire avec données exactes de la base
+- OBLIGATOIRE: Numérotation correcte des jours ${startDay} à ${endDay}
+- PRIORITÉ: Utilisez les ingrédients de la base de données ci-dessus avec leurs valeurs nutritionnelles exactes
 
 FORMAT JSON:
 {
@@ -215,11 +271,21 @@ FORMAT JSON:
       "totalProtein": 90,
       "totalCarbs": 225,
       "totalFat": 60
-    }
+    }${chunkDays > 1 ? `,
+    {
+      "day": ${startDay + 1},
+      "meals": { /* structure identique */ },
+      "totalCalories": ${targetCalories}
+    }` : ''}${chunkDays > 2 ? `,
+    {
+      "day": ${startDay + 2},
+      "meals": { /* structure identique */ },
+      "totalCalories": ${targetCalories}
+    }` : ''}
   ]
 }
 
-Génère ${chunkDays} jours complets avec des recettes créatives et variées:`;
+Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numérotation correcte:`;
         
         try {
           const result = await model.generateContent(chunkPrompt);
@@ -281,6 +347,9 @@ Génère ${chunkDays} jours complets avec des recettes créatives et variées:`;
 ${prompt} - ${duration} jours, ${targetCalories} cal/jour
 ${restrictions.length > 0 ? `Restrictions: ${restrictions.join(", ")}` : ""}
 
+${ingredientsPromptSection}
+
+PRIORITÉ: Utilisez les ingrédients de la base de données avec leurs valeurs nutritionnelles exactes.
 MAX 2 ingrédients/repas. JSON direct:
 {
   "name": "Plan ${duration} jours",
