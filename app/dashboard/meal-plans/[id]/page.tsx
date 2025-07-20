@@ -234,6 +234,7 @@ export default function MealPlanDetailPage() {
 
         // Load selected recipes
         if (day.selectedRecipes && Object.keys(day.selectedRecipes).length > 0) {
+          console.log(`Loading selected recipes for day ${day.day}:`, day.selectedRecipes)
           Object.assign(loadedDynamicMealRecipes, day.selectedRecipes)
         }
       })
@@ -247,7 +248,10 @@ export default function MealPlanDetailPage() {
       }
       
       if (Object.keys(loadedDynamicMealRecipes).length > 0) {
+        console.log('Setting dynamic meal recipes:', loadedDynamicMealRecipes)
         setDynamicMealRecipes(loadedDynamicMealRecipes)
+      } else {
+        console.log('No dynamic meal recipes to load')
       }
     }
   }, [mealPlan])
