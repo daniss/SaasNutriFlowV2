@@ -581,35 +581,84 @@ export default function GenerateMealPlanPage() {
             continue
           }
           
-          // Create ingredients
-          const ingredientData = meal.ingredients.map((ingredient: string, index: number) => {
-            // Parse ingredient string to extract quantity and unit
-            const parts = ingredient.trim().split(' ')
-            let quantity = null
-            let unit = null
-            let name = ingredient
-            
-            // Try to extract quantity and unit from beginning of ingredient
-            if (parts.length >= 2) {
-              const firstPart = parts[0]
-              const quantityMatch = firstPart.match(/^(\d+(?:\.\d+)?)(.*)$/)
+          // Create ingredients using ingredientsNutrition data and link to global database
+          const ingredientData = []
+          
+          if (meal.ingredientsNutrition && meal.ingredientsNutrition.length > 0) {
+            // Use detailed ingredient nutrition data
+            for (let index = 0; index < meal.ingredientsNutrition.length; index++) {
+              const nutritionData = meal.ingredientsNutrition[index]
+              const ingredientString = meal.ingredients[index] || `${nutritionData.name}`
               
+              // Parse quantity and unit from ingredient string
+              let quantity = null
+              let unit = nutritionData.unit || 'g'
+              
+              // Extract quantity from ingredient string (e.g., "100g quinoa" -> 100)
+              const quantityMatch = ingredientString.match(/^(\d+(?:\.\d+)?)\s*(g|ml|kg|l|piece|pièce|cuillère|tasse)?/)
               if (quantityMatch) {
                 quantity = parseFloat(quantityMatch[1])
-                unit = quantityMatch[2] || (parts[1] && ['g', 'kg', 'ml', 'l'].includes(parts[1]) ? parts[1] : 'g')
-                name = parts.slice(unit && unit === parts[1] ? 2 : 1).join(' ')
+                if (quantityMatch[2]) {
+                  unit = quantityMatch[2] === 'piece' || quantityMatch[2] === 'pièce' ? 'piece' : quantityMatch[2]
+                }
               }
+              
+              // Find ingredient ID from global database
+              let ingredientId = null
+              try {
+                const { data: globalIngredient } = await supabase
+                  .from("ingredients")
+                  .select("id")
+                  .eq("name", nutritionData.name)
+                  .single()
+                
+                if (globalIngredient) {
+                  ingredientId = globalIngredient.id
+                }
+              } catch (error) {
+                console.log(`Ingredient "${nutritionData.name}" not found in global database`)
+              }
+              
+              ingredientData.push({
+                recipe_id: savedRecipe.id,
+                ingredient_id: ingredientId, // Link to global ingredient if found
+                name: nutritionData.name,
+                quantity: quantity,
+                unit: unit,
+                notes: null,
+                order_index: index
+              })
             }
-            
-            return {
-              recipe_id: savedRecipe.id,
-              name: name,
-              quantity: quantity,
-              unit: unit,
-              notes: null,
-              order_index: index
-            }
-          })
+          } else {
+            // Fallback: use basic ingredients array if no nutrition data
+            meal.ingredients.forEach((ingredient: string, index: number) => {
+              const parts = ingredient.trim().split(' ')
+              let quantity = null
+              let unit = null
+              let name = ingredient
+              
+              if (parts.length >= 2) {
+                const firstPart = parts[0]
+                const quantityMatch = firstPart.match(/^(\d+(?:\.\d+)?)(.*)$/)
+                
+                if (quantityMatch) {
+                  quantity = parseFloat(quantityMatch[1])
+                  unit = quantityMatch[2] || (parts[1] && ['g', 'kg', 'ml', 'l'].includes(parts[1]) ? parts[1] : 'g')
+                  name = parts.slice(unit && unit === parts[1] ? 2 : 1).join(' ')
+                }
+              }
+              
+              ingredientData.push({
+                recipe_id: savedRecipe.id,
+                ingredient_id: null, // No global reference for fallback ingredients
+                name: name,
+                quantity: quantity,
+                unit: unit,
+                notes: null,
+                order_index: index
+              })
+            })
+          }
           
           // Insert ingredients
           if (ingredientData.length > 0) {
