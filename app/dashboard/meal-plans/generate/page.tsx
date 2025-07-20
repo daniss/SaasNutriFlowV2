@@ -347,7 +347,18 @@ export default function GenerateMealPlanPage() {
         firstDayMeals: generatedPlan.days[0]?.meals
       })
       
-      // Convert AI plan to dynamic format
+      // CRITICAL: Save ingredients and create recipes BEFORE converting to dynamic format
+      // The conversion strips out ingredients data, so we must do this first!
+      
+      // Save ingredients to database first
+      const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
+      console.log(`Saved ${savedIngredients.length} ingredients to database`)
+      
+      // Create recipes for each meal with full ingredient data
+      const createdRecipes = await createRecipesFromMeals(generatedPlan.days, user!.id)
+      console.log(`Created ${createdRecipes.length} recipes from AI meal plan`)
+      
+      // NOW convert AI plan to dynamic format (this strips ingredients for storage)
       const dynamicPlan = convertAIToDynamicMealPlan({
         ...generatedPlan,
         totalDays: generatedPlan.duration,
@@ -363,14 +374,6 @@ export default function GenerateMealPlanPage() {
         daysCount: dynamicPlan.days.length,
         firstDay: dynamicPlan.days[0]
       })
-      
-      // Save ingredients to database first
-      const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
-      console.log(`Saved ${savedIngredients.length} ingredients to database`)
-      
-      // Create recipes for each meal
-      const createdRecipes = await createRecipesFromMeals(generatedPlan.days, user!.id)
-      console.log(`Created ${createdRecipes.length} recipes from AI meal plan`)
       
       if (savedIngredients.length > 0 || createdRecipes.length > 0) {
         toast({
