@@ -64,18 +64,8 @@ export function RecipeSearchModal({
     try {
       const supabase = createClient()
       
-      // Get dietitian_id
-      const { data: dietitian } = await supabase
-        .from('dietitians')
-        .select('id')
-        .eq('auth_user_id', user.id)
-        .single()
-
-      if (!dietitian) {
-        console.error('No dietitian found')
-        return
-      }
-
+      // Use profile_id (the current user's ID) instead of dietitian_id
+      // In this application, profiles table stores the nutritionist data
       let query_builder = supabase
         .from('recipes')
         .select(`
@@ -101,7 +91,7 @@ export function RecipeSearchModal({
             )
           )
         `)
-        .eq('dietitian_id', dietitian.id)
+        .eq('dietitian_id', user.id)
         .order('name')
 
       if (query.trim()) {
