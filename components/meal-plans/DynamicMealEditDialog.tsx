@@ -16,17 +16,6 @@ import { RecipeCard } from "@/components/meal-plans/RecipeCard"
 // Professional limits consistent with templates
 const MAX_MEALS_PER_DAY = 8
 
-interface SelectedFood {
-  id: string
-  name_fr: string
-  quantity: number
-  portionSize: 'custom' | 'gemrcn' | 'pnns'
-  energy_kcal?: number
-  protein_g?: number
-  carbohydrate_g?: number
-  fat_g?: number
-  fiber_g?: number
-}
 
 interface Recipe {
   id: string
@@ -58,10 +47,6 @@ interface DynamicMealEditDialogProps {
   onSave: (dayData: DynamicMealPlanDay) => void
   dayData?: DynamicMealPlanDay | null
   dayNumber: number
-  onOpenFoodSearch?: (mealId: string, day: number) => void
-  onOpenManualFood?: (mealId: string, day: number) => void
-  dynamicMealFoods?: Record<string, SelectedFood[]>
-  onRemoveFood?: (mealId: string, foodIndex: number) => void
   dynamicMealRecipes?: Record<string, Recipe[]>
   onRemoveRecipe?: (mealId: string, recipeIndex: number) => void
 }
@@ -72,10 +57,6 @@ export function DynamicMealEditDialog({
   onSave,
   dayData,
   dayNumber,
-  onOpenFoodSearch,
-  onOpenManualFood,
-  dynamicMealFoods = {},
-  onRemoveFood,
   dynamicMealRecipes = {},
   onRemoveRecipe
 }: DynamicMealEditDialogProps) {
@@ -437,69 +418,19 @@ export function DynamicMealEditDialog({
                     className="resize-none"
                   />
                   
-                  {/* Food Selection Buttons */}
-                  <div className="grid grid-cols-3 gap-2 pt-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        if (onOpenFoodSearch) {
-                          onOpenFoodSearch(meal.id, dayNumber)
-                        }
-                      }}
-                    >
-                      + CIQUAL
-                    </Button>
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => {
-                        if (onOpenManualFood) {
-                          onOpenManualFood(meal.id, dayNumber)
-                        }
-                      }}
-                    >
-                      + Manuel
-                    </Button>
+                  {/* Recipe Selection Button */}
+                  <div className="pt-2">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => openRecipeSearch(meal.id)}
-                      className="bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                      className="w-full bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
                     >
                       <ChefHat className="h-3 w-3 mr-1" />
-                      Recette
+                      Ajouter une recette
                     </Button>
                   </div>
 
-                  {/* Selected Foods List */}
-                  {dynamicMealFoods[meal.id] && dynamicMealFoods[meal.id].length > 0 && (
-                    <div className="mt-3 space-y-2">
-                      <div className="text-sm font-medium text-gray-700">Aliments sélectionnés:</div>
-                      <div className="space-y-1">
-                        {dynamicMealFoods[meal.id].map((food, foodIndex) => (
-                          <div key={foodIndex} className="flex items-center justify-between bg-gray-50 p-2 rounded border">
-                            <div className="flex-1">
-                              <div className="text-sm font-medium">{food.name_fr}</div>
-                              <div className="text-xs text-gray-600">
-                                {food.quantity}g • {Math.round((food.energy_kcal || 0) * food.quantity / 100)} kcal
-                              </div>
-                            </div>
-                            {onRemoveFood && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                onClick={() => onRemoveFood(meal.id, foodIndex)}
-                                className="ml-2 h-6 w-6 p-0 text-red-600 hover:text-red-700"
-                              >
-                                <X className="h-3 w-3" />
-                              </Button>
-                            )}
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  )}
 
                   {/* Selected Recipes List */}
                   {localMealRecipes[meal.id] && localMealRecipes[meal.id].length > 0 && (

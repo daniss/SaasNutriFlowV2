@@ -1900,52 +1900,8 @@ export default function MealPlanDetailPage() {
           onSave={handleSaveDynamicDay}
           dayData={currentEditDay}
           dayNumber={editDayNumber}
-          dynamicMealFoods={dynamicMealFoods}
-          onRemoveFood={removeDynamicMealFood}
           dynamicMealRecipes={dynamicMealRecipes}
           onRemoveRecipe={removeDynamicMealRecipe}
-          onOpenFoodSearch={(mealId, day) => {
-            // Map dynamic meal types to legacy slot names for food modals
-            const mealType = currentEditDay?.meals?.find(m => m.id === mealId)?.name
-            
-            let slot: "breakfast"|"lunch"|"dinner"|"snacks" = "breakfast"
-            
-            if (mealType?.includes("déjeuner") || mealType?.includes("Petit-déjeuner")) {
-              slot = "breakfast"
-            } else if (mealType?.includes("Déjeuner")) {
-              slot = "lunch"  
-            } else if (mealType?.includes("Dîner")) {
-              slot = "dinner"
-            } else {
-              slot = "snacks"
-            }
-            
-            setFoodSearchSlot(slot)
-            setFoodSearchDay(day)
-            setFoodSearchMealId(mealId)
-            setFoodSearchOpen(true)
-          }}
-          onOpenManualFood={(mealId, day) => {
-            // Map dynamic meal types to legacy slot names for food modals
-            const mealType = currentEditDay?.meals?.find(m => m.id === mealId)?.name
-            
-            let slot: "breakfast"|"lunch"|"dinner"|"snacks" = "breakfast"
-            
-            if (mealType?.includes("déjeuner") || mealType?.includes("Petit-déjeuner")) {
-              slot = "breakfast"
-            } else if (mealType?.includes("Déjeuner")) {
-              slot = "lunch"  
-            } else if (mealType?.includes("Dîner")) {
-              slot = "dinner"
-            } else {
-              slot = "snacks"
-            }
-            
-            setManualFoodSlot(slot)
-            setManualFoodDay(day)
-            setManualFoodMealId(mealId)
-            setManualFoodOpen(true)
-          }}
         />
 
         {/* Food Modals - Available globally */}
