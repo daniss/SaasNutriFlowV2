@@ -144,11 +144,22 @@ export default function MealPlanDetailPage() {
   // Dynamic meal food storage - organized by meal ID instead of legacy slots
   const [dynamicMealFoods, setDynamicMealFoods] = useState<Record<string, SelectedFood[]>>({})
   
+  // Dynamic meal recipe storage - organized by meal ID
+  const [dynamicMealRecipes, setDynamicMealRecipes] = useState<Record<string, any[]>>({})
+  
   // Function to remove food from dynamic meal
   const removeDynamicMealFood = (mealId: string, foodIndex: number) => {
     setDynamicMealFoods(prev => ({
       ...prev,
       [mealId]: (prev[mealId] || []).filter((_, index) => index !== foodIndex)
+    }))
+  }
+
+  // Function to remove recipe from dynamic meal
+  const removeDynamicMealRecipe = (mealId: string, recipeIndex: number) => {
+    setDynamicMealRecipes(prev => ({
+      ...prev,
+      [mealId]: (prev[mealId] || []).filter((_, index) => index !== recipeIndex)
     }))
   }
   const params = useParams()
@@ -200,11 +211,12 @@ export default function MealPlanDetailPage() {
     }
   }, [user, params.id])
 
-  // Load selected foods from plan_content when meal plan loads
+  // Load selected foods and recipes from plan_content when meal plan loads
   useEffect(() => {
     if (mealPlan?.plan_content?.days) {
       const loadedSelectedFoods: Record<number, { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }> = {}
       const loadedDynamicMealFoods: Record<string, SelectedFood[]> = {}
+      const loadedDynamicMealRecipes: Record<string, any[]> = {}
       
       mealPlan.plan_content.days.forEach((day: any) => {
         // Load legacy selected foods
@@ -219,6 +231,11 @@ export default function MealPlanDetailPage() {
             loadedSelectedFoods[day.day] = day.selectedFoods
           }
         }
+
+        // Load selected recipes
+        if (day.selectedRecipes && Object.keys(day.selectedRecipes).length > 0) {
+          Object.assign(loadedDynamicMealRecipes, day.selectedRecipes)
+        }
       })
       
       if (Object.keys(loadedSelectedFoods).length > 0) {
@@ -227,6 +244,10 @@ export default function MealPlanDetailPage() {
       
       if (Object.keys(loadedDynamicMealFoods).length > 0) {
         setDynamicMealFoods(loadedDynamicMealFoods)
+      }
+      
+      if (Object.keys(loadedDynamicMealRecipes).length > 0) {
+        setDynamicMealRecipes(loadedDynamicMealRecipes)
       }
     }
   }, [mealPlan])
@@ -401,6 +422,93 @@ export default function MealPlanDetailPage() {
     }
   }
 
+  // Function to create recipes from selected recipes in the meal plan
+  const createRecipesFromSelectedRecipes = async () => {
+    if (!user?.id) return
+
+    const createdRecipes = []
+    
+    for (const [mealId, recipes] of Object.entries(dynamicMealRecipes)) {
+      for (const recipe of recipes) {
+        try {
+          // Check if recipe with this name already exists for this dietitian
+          const { data: existingRecipe } = await supabase
+            .from('recipes')
+            .select('id')
+            .eq('name', recipe.name)
+            .eq('dietitian_id', user.id)
+            .single()
+
+          if (existingRecipe) {
+            console.log(`Recipe "${recipe.name}" already exists, skipping`)
+            continue
+          }
+
+          // Create the recipe
+          const { data: newRecipe, error: recipeError } = await supabase
+            .from('recipes')
+            .insert({
+              name: recipe.name,
+              description: recipe.description || `Recette générée automatiquement`,
+              dietitian_id: user.id,
+              servings: recipe.servings,
+              prep_time: recipe.prep_time,
+              cook_time: recipe.cook_time,
+              calories_per_serving: recipe.calories_per_serving,
+              protein_per_serving: recipe.protein_per_serving,
+              carbs_per_serving: recipe.carbs_per_serving,
+              fat_per_serving: recipe.fat_per_serving,
+              fiber_per_serving: recipe.fiber_per_serving,
+              category: 'generated',
+              instructions: `Recette créée automatiquement à partir du plan alimentaire.`
+            })
+            .select()
+            .single()
+
+          if (recipeError) {
+            console.error(`Error creating recipe "${recipe.name}":`, recipeError)
+            continue
+          }
+
+          console.log(`Created recipe: ${recipe.name}`)
+          createdRecipes.push(newRecipe)
+
+          // Create recipe ingredients
+          if (recipe.ingredients && recipe.ingredients.length > 0) {
+            const recipeIngredients = recipe.ingredients.map((ingredient: any) => ({
+              recipe_id: newRecipe.id,
+              ingredient_id: ingredient.ingredient.id,
+              quantity: ingredient.quantity,
+              unit: ingredient.unit
+            }))
+
+            const { error: ingredientsError } = await supabase
+              .from('recipe_ingredients')
+              .insert(recipeIngredients)
+
+            if (ingredientsError) {
+              console.error(`Error creating recipe ingredients for "${recipe.name}":`, ingredientsError)
+            } else {
+              console.log(`Created ${recipe.ingredients.length} ingredients for recipe: ${recipe.name}`)
+            }
+          }
+
+        } catch (error) {
+          console.error(`Error processing recipe "${recipe.name}":`, error)
+        }
+      }
+    }
+
+    if (createdRecipes.length > 0) {
+      toast({
+        title: "Recettes créées",
+        description: `${createdRecipes.length} recette(s) ajoutée(s) à votre collection.`
+      })
+    }
+
+    return createdRecipes
+  }
+
   const handleSharePlan = async () => {
     if (!mealPlan || !mealPlan.clients?.email) {
       toast({
@@ -412,6 +520,11 @@ export default function MealPlanDetailPage() {
     }
 
     try {
+      // Create recipes from selected recipes before sharing
+      if (Object.keys(dynamicMealRecipes).length > 0) {
+        await createRecipesFromSelectedRecipes()
+      }
+
       // First generate and download the PDF
       const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7)
       const pdfData: MealPlanPDFData = {
@@ -763,11 +876,16 @@ export default function MealPlanDetailPage() {
         const dynamicContent = planContent as DynamicMealPlan
         let dayIndex = dynamicContent.days.findIndex(d => d.day === dayData.day)
         
-        // Add selected foods to dayData before saving
-        const dayWithFoods = { 
+        // Add selected foods and recipes to dayData before saving
+        const dayWithFoodsAndRecipes = { 
           ...dayData, 
           selectedFoods: Object.fromEntries(
             Object.entries(dynamicMealFoods).filter(([mealId]) => 
+              dayData.meals.some(meal => meal.id === mealId)
+            )
+          ),
+          selectedRecipes: Object.fromEntries(
+            Object.entries(dynamicMealRecipes).filter(([mealId]) => 
               dayData.meals.some(meal => meal.id === mealId)
             )
           )
@@ -775,10 +893,10 @@ export default function MealPlanDetailPage() {
         
         if (dayIndex >= 0) {
           // Update existing day
-          dynamicContent.days[dayIndex] = dayWithFoods
+          dynamicContent.days[dayIndex] = dayWithFoodsAndRecipes
         } else {
           // Add new day
-          dynamicContent.days.push(dayWithFoods)
+          dynamicContent.days.push(dayWithFoodsAndRecipes)
         }
         
         // Sort days by day number
@@ -1721,6 +1839,8 @@ export default function MealPlanDetailPage() {
           dayNumber={editDayNumber}
           dynamicMealFoods={dynamicMealFoods}
           onRemoveFood={removeDynamicMealFood}
+          dynamicMealRecipes={dynamicMealRecipes}
+          onRemoveRecipe={removeDynamicMealRecipe}
           onOpenFoodSearch={(mealId, day) => {
             // Map dynamic meal types to legacy slot names for food modals
             const mealType = currentEditDay?.meals?.find(m => m.id === mealId)?.name

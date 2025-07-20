@@ -7,9 +7,11 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Plus, Clock, Info } from "lucide-react"
+import { X, Plus, Clock, Info, ChefHat } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { MealSlot, DynamicMealPlanDay, generateMealId } from "@/lib/meal-plan-types"
+import { RecipeSearchModal } from "@/components/meal-plans/RecipeSearchModal"
+import { RecipeCard } from "@/components/meal-plans/RecipeCard"
 
 // Professional limits consistent with templates
 const MAX_MEALS_PER_DAY = 8
@@ -26,6 +28,30 @@ interface SelectedFood {
   fiber_g?: number
 }
 
+interface Recipe {
+  id: string
+  name: string
+  description?: string
+  servings: number
+  prep_time?: number
+  cook_time?: number
+  calories_per_serving?: number
+  protein_per_serving?: number
+  carbs_per_serving?: number
+  fat_per_serving?: number
+  fiber_per_serving?: number
+  ingredients: Array<{
+    id: string
+    ingredient: {
+      id: string
+      name: string
+      category?: string
+    }
+    quantity: number
+    unit: string
+  }>
+}
+
 interface DynamicMealEditDialogProps {
   isOpen: boolean
   onClose: () => void
@@ -36,6 +62,8 @@ interface DynamicMealEditDialogProps {
   onOpenManualFood?: (mealId: string, day: number) => void
   dynamicMealFoods?: Record<string, SelectedFood[]>
   onRemoveFood?: (mealId: string, foodIndex: number) => void
+  dynamicMealRecipes?: Record<string, Recipe[]>
+  onRemoveRecipe?: (mealId: string, recipeIndex: number) => void
 }
 
 export function DynamicMealEditDialog({
@@ -47,7 +75,9 @@ export function DynamicMealEditDialog({
   onOpenFoodSearch,
   onOpenManualFood,
   dynamicMealFoods = {},
-  onRemoveFood
+  onRemoveFood,
+  dynamicMealRecipes = {},
+  onRemoveRecipe
 }: DynamicMealEditDialogProps) {
   
   const [editData, setEditData] = useState<DynamicMealPlanDay>({
@@ -56,6 +86,11 @@ export function DynamicMealEditDialog({
     meals: [],
     notes: ""
   })
+
+  // Recipe search modal state
+  const [recipeSearchOpen, setRecipeSearchOpen] = useState(false)
+  const [recipeSearchMealId, setRecipeSearchMealId] = useState<string | null>(null)
+  const [localMealRecipes, setLocalMealRecipes] = useState<Record<string, Recipe[]>>(dynamicMealRecipes || {})
 
   // Initialize edit data when dialog opens
   useEffect(() => {
@@ -151,6 +186,33 @@ export function DynamicMealEditDialog({
           : meal
       )
     }))
+  }
+
+  // Recipe handling functions
+  const handleRecipeSelect = (recipe: Recipe) => {
+    if (recipeSearchMealId) {
+      setLocalMealRecipes(prev => ({
+        ...prev,
+        [recipeSearchMealId]: [...(prev[recipeSearchMealId] || []), recipe]
+      }))
+      
+      toast({
+        title: "Recette ajoutée",
+        description: `${recipe.name} ajoutée au repas.`
+      })
+    }
+  }
+
+  const handleRemoveRecipe = (mealId: string, recipeIndex: number) => {
+    setLocalMealRecipes(prev => ({
+      ...prev,
+      [mealId]: (prev[mealId] || []).filter((_, index) => index !== recipeIndex)
+    }))
+  }
+
+  const openRecipeSearch = (mealId: string) => {
+    setRecipeSearchMealId(mealId)
+    setRecipeSearchOpen(true)
   }
 
   const handleSave = () => {
@@ -369,11 +431,10 @@ export function DynamicMealEditDialog({
                   />
                   
                   {/* Food Selection Buttons */}
-                  <div className="flex gap-2 pt-2">
+                  <div className="grid grid-cols-3 gap-2 pt-2">
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1"
                       onClick={() => {
                         if (onOpenFoodSearch) {
                           onOpenFoodSearch(meal.id, dayNumber)
@@ -385,7 +446,6 @@ export function DynamicMealEditDialog({
                     <Button
                       size="sm"
                       variant="outline"
-                      className="flex-1"
                       onClick={() => {
                         if (onOpenManualFood) {
                           onOpenManualFood(meal.id, dayNumber)
@@ -393,6 +453,15 @@ export function DynamicMealEditDialog({
                       }}
                     >
                       + Manuel
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openRecipeSearch(meal.id)}
+                      className="bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                    >
+                      <ChefHat className="h-3 w-3 mr-1" />
+                      Recette
                     </Button>
                   </div>
 
@@ -420,6 +489,23 @@ export function DynamicMealEditDialog({
                               </Button>
                             )}
                           </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Selected Recipes List */}
+                  {localMealRecipes[meal.id] && localMealRecipes[meal.id].length > 0 && (
+                    <div className="mt-3 space-y-2">
+                      <div className="text-sm font-medium text-gray-700">Recettes sélectionnées:</div>
+                      <div className="space-y-2">
+                        {localMealRecipes[meal.id].map((recipe, recipeIndex) => (
+                          <RecipeCard
+                            key={recipeIndex}
+                            recipe={recipe}
+                            onRemove={() => handleRemoveRecipe(meal.id, recipeIndex)}
+                            className="text-xs"
+                          />
                         ))}
                       </div>
                     </div>
@@ -454,6 +540,17 @@ export function DynamicMealEditDialog({
           </div>
         </div>
       </DialogContent>
+
+      {/* Recipe Search Modal */}
+      <RecipeSearchModal
+        isOpen={recipeSearchOpen}
+        onClose={() => {
+          setRecipeSearchOpen(false)
+          setRecipeSearchMealId(null)
+        }}
+        onSelectRecipe={handleRecipeSelect}
+        excludeRecipeIds={localMealRecipes[recipeSearchMealId || '']?.map(r => r.id) || []}
+      />
     </Dialog>
   )
 }
