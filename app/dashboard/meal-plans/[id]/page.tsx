@@ -264,6 +264,11 @@ export default function MealPlanDetailPage() {
             }
           }
         }
+
+        // Load selectedRecipes from day data (used by AI generation)
+        if (day.selectedRecipes && Object.keys(day.selectedRecipes).length > 0) {
+          Object.assign(loadedDynamicMealRecipes, day.selectedRecipes)
+        }
         }
         
         if (Object.keys(loadedSelectedFoods).length > 0) {

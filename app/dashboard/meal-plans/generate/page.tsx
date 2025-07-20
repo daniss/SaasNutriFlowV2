@@ -671,6 +671,16 @@ export default function GenerateMealPlanPage() {
             .single()
           
           if (existingRecipe) {
+            // Get the full existing recipe data to add to createdRecipes array
+            const { data: fullExistingRecipe } = await supabase
+              .from("recipes")
+              .select("*")
+              .eq("id", existingRecipe.id)
+              .single()
+            
+            if (fullExistingRecipe) {
+              createdRecipes.push(fullExistingRecipe)  // Add existing recipe to array for later linking
+            }
             continue
           }
           
