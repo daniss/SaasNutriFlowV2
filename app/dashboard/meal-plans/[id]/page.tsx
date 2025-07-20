@@ -1098,7 +1098,7 @@ export default function MealPlanDetailPage() {
     return []
   }
 
-  // Helper function to calculate nutrition from selected foods for a specific day
+  // Helper function to calculate nutrition from selected foods and recipes for a specific day
   const calculateDayNutrition = (dayNumber: number) => {
     let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0
     
@@ -1130,6 +1130,38 @@ export default function MealPlanDetailPage() {
         })
       }
     })
+    
+    // Calculate from dynamic meal recipes
+    Object.entries(dynamicMealRecipes).forEach(([mealId, recipes]) => {
+      // Check if this meal belongs to the current day
+      const dayFromId = parseInt(mealId.split('-')[0])
+      if (dayFromId === dayNumber) {
+        recipes.forEach(recipe => {
+          // Use recipe nutritional data per serving
+          totalCalories += recipe.calories_per_serving || 0
+          totalProtein += recipe.protein_per_serving || 0
+          totalCarbs += recipe.carbs_per_serving || 0
+          totalFat += recipe.fat_per_serving || 0
+        })
+      }
+    })
+    
+    // Calculate from meals with recipe_id in the meal plan structure
+    if (mealPlan?.plan_content?.days && isDynamicMealPlan(mealPlan.plan_content)) {
+      const targetDay = mealPlan.plan_content.days.find(day => day.day === dayNumber)
+      if (targetDay?.meals) {
+        targetDay.meals.forEach(meal => {
+          // Include nutrition from calories_target if available (AI-generated meals often have this)
+          if (meal.calories_target) {
+            totalCalories += meal.calories_target
+            // Estimate macros using standard ratios for AI-generated meals
+            totalProtein += Math.round(meal.calories_target * 0.20 / 4) // 20% protein
+            totalCarbs += Math.round(meal.calories_target * 0.50 / 4)   // 50% carbs  
+            totalFat += Math.round(meal.calories_target * 0.30 / 9)     // 30% fat
+          }
+        })
+      }
+    }
     
     return {
       calories: Math.round(totalCalories),
