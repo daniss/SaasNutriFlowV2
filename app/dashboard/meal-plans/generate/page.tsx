@@ -319,6 +319,79 @@ export default function GenerateMealPlanPage() {
     }
   }
 
+  // Function to map created recipes to their corresponding meals
+  const createRecipeToMealMapping = (days: any[], createdRecipes: any[]) => {
+    const mapping: Record<string, any> = {}
+    
+    // Create a lookup for recipes by name
+    const recipesByName = createdRecipes.reduce((acc, recipe) => {
+      acc[recipe.name] = recipe
+      return acc
+    }, {} as Record<string, any>)
+    
+    days.forEach(day => {
+      day.meals.forEach((meal: any) => {
+        const recipeName = meal.name
+        const recipeKey = `${day.day}-${meal.name}`
+        
+        if (recipesByName[recipeName]) {
+          // Map the recipe with its ingredients for the meal plan editor
+          const recipe = recipesByName[recipeName]
+          
+          // Fetch the recipe ingredients to include in the mapping
+          const recipeWithIngredients = {
+            id: recipe.id,
+            name: recipe.name,
+            description: recipe.description,
+            servings: recipe.servings,
+            prep_time: recipe.prep_time,
+            cook_time: recipe.cook_time,
+            calories_per_serving: recipe.calories_per_serving,
+            protein_per_serving: recipe.protein_per_serving,
+            carbs_per_serving: recipe.carbs_per_serving,
+            fat_per_serving: recipe.fat_per_serving,
+            fiber_per_serving: recipe.fiber_per_serving,
+            ingredients: [] // Will be populated from the original meal data
+          }
+          
+          // Add ingredient details from the original meal
+          if (meal.ingredientsNutrition && meal.ingredientsNutrition.length > 0) {
+            recipeWithIngredients.ingredients = meal.ingredientsNutrition.map((nutrition: any, index: number) => {
+              const ingredientString = meal.ingredients[index] || `${nutrition.name}`
+              
+              // Parse quantity and unit
+              let quantity = 100 // default
+              let unit = nutrition.unit || 'g'
+              
+              const quantityMatch = ingredientString.match(/^(\d+(?:\.\d+)?)\s*(g|ml|kg|l|piece|pièce|cuillère|tasse)?/)
+              if (quantityMatch) {
+                quantity = parseFloat(quantityMatch[1])
+                if (quantityMatch[2]) {
+                  unit = quantityMatch[2] === 'piece' || quantityMatch[2] === 'pièce' ? 'piece' : quantityMatch[2]
+                }
+              }
+              
+              return {
+                id: `temp-${index}`, // Temporary ID for the mapping
+                ingredient: {
+                  id: `ingredient-${index}`,
+                  name: nutrition.name,
+                  category: nutrition.unit === 'ml' ? 'Liquides' : nutrition.unit === 'piece' ? 'Comptables' : 'Solides'
+                },
+                quantity: quantity,
+                unit: unit
+              }
+            })
+          }
+          
+          mapping[recipeKey] = recipeWithIngredients
+        }
+      })
+    })
+    
+    return mapping
+  }
+
   const handleSendToClient = async () => {
     if (!generatedPlan || !formData.clientId) {
       toast({
@@ -368,6 +441,24 @@ export default function GenerateMealPlanPage() {
           carbohydrates: `${generatedPlan.nutritionalGoals?.carbPercentage || 45}%`,
           fat: `${generatedPlan.nutritionalGoals?.fatPercentage || 30}%`
         }
+      })
+
+      // IMPORTANT: Add created recipes to the dynamic plan structure
+      // Map recipes to their corresponding meals
+      const recipesByMeal = createRecipeToMealMapping(generatedPlan.days, createdRecipes)
+      
+      // Add recipes to each meal in the dynamic plan
+      dynamicPlan.days.forEach(day => {
+        day.meals.forEach(meal => {
+          const recipeKey = `${day.day}-${meal.name}`
+          if (recipesByMeal[recipeKey]) {
+            // Store the recipe data in selectedRecipes
+            if (!day.selectedRecipes) {
+              day.selectedRecipes = {}
+            }
+            day.selectedRecipes[meal.id] = [recipesByMeal[recipeKey]]
+          }
+        })
       })
       
       console.log('Converted dynamic plan:', {

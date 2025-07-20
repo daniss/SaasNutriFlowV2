@@ -18,6 +18,7 @@ export interface DynamicMealPlanDay {
   notes?: string
   templateData?: any // Preserve original template data
   selectedFoods?: Record<string, any[]> // Foods organized by meal ID
+  selectedRecipes?: Record<string, any[]> // Recipes organized by meal ID
 }
 
 export interface DynamicMealPlan {

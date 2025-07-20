@@ -1,0 +1,6 @@
+- Change recette to use the ingredient created by the generation ia an not use manual adding of ingredient so add list of ingredient and auto calcul of macros
+- We shouldn't have to scroll to access all the field in Modifier le rendez-vous in appointements
+- Add our recipes to be accesible in building the meal plan
+- Their is an instruction and ingrédient in recipes so should it be accesible ?
+- Scheduled in appointements is in english
+- remove Ø<ß from the generated pdf in ia
