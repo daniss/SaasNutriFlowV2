@@ -474,12 +474,12 @@ export default function GenerateMealPlanPage() {
       console.log('Recipe mapping created:', Object.keys(recipesByMeal))
       console.log('Dynamic plan meals:', dynamicPlan.days.map(d => d.meals.map(m => `${d.day}-${m.name}`)))
       
-      // Add recipes to each meal in the dynamic plan
-      dynamicPlan.days.forEach(day => {
+      // Add recipes to each meal in the dynamic plan (using async iteration)
+      for (const day of dynamicPlan.days) {
         const originalDay = generatedPlan.days.find(d => d.day === day.day)
-        if (!originalDay) return
+        if (!originalDay) continue
         
-        day.meals.forEach(meal => {
+        for (const meal of day.meals) {
           // Try to find matching meal in original plan by name
           const originalMeal = originalDay.meals.find(m => m.name === meal.name || 
             m.name.toLowerCase().trim() === meal.name.toLowerCase().trim())
@@ -535,8 +535,8 @@ export default function GenerateMealPlanPage() {
           } else {
             console.log(`No original meal found for ${meal.name} in day ${day.day}`)
           }
-        })
-      })
+        }
+      }
       
       console.log('Converted dynamic plan:', {
         daysCount: dynamicPlan.days.length,
