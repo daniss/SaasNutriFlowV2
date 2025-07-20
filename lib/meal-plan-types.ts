@@ -9,6 +9,7 @@ export interface MealSlot {
   calories_target?: number | null
   enabled: boolean
   order: number
+  recipe_id?: string // Many-to-one relationship to recipes table
 }
 
 export interface DynamicMealPlanDay {

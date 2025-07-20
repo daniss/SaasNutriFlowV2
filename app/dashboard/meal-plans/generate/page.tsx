@@ -499,83 +499,32 @@ export default function GenerateMealPlanPage() {
       console.log('Recipe mapping created:', Object.keys(recipesByMeal))
       console.log('Dynamic plan meals:', dynamicPlan.days.map(d => d.meals.map(m => `${d.day}-${m.name}`)))
       
-      // Add recipes to each meal in the dynamic plan (using async iteration)
+      // Link recipes to meals - simple many-to-one relationship
       for (const day of dynamicPlan.days) {
         const originalDay = generatedPlan.days.find(d => d.day === day.day)
         if (!originalDay) continue
         
         for (const meal of day.meals) {
-          // Try to find matching meal in original plan by name
-          const originalMeal = originalDay.meals.find(m => m.name === meal.name || 
-            m.name.toLowerCase().trim() === meal.name.toLowerCase().trim())
+          // Find matching recipe by meal name
+          const matchingRecipe = createdRecipes.find(recipe => 
+            recipe.name === meal.name || 
+            recipe.name.toLowerCase().trim() === meal.name.toLowerCase().trim()
+          )
           
-          if (originalMeal) {
-            const recipeKey = `${day.day}-${originalMeal.name}`
-            console.log(`Looking for recipe key: ${recipeKey}`)
-            
-            if (recipesByMeal[recipeKey]) {
-              console.log(`Found recipe for ${recipeKey}`)
-              
-              // Find the actual database recipe from createdRecipes
-              const recipeMapping = recipesByMeal[recipeKey]
-              const actualRecipe = createdRecipes.find(r => r.name === originalMeal.name)
-              
-              if (actualRecipe) {
-                console.log(`Found actual database recipe: ${actualRecipe.name} (ID: ${actualRecipe.id})`)
-                
-                // Fetch the complete recipe data with ingredients
-                try {
-                  const { data: fullRecipe, error: recipeError } = await supabase
-                    .from('recipes')
-                    .select(`
-                      *,
-                      recipe_ingredients (
-                        *,
-                        ingredient:ingredients (*)
-                      )
-                    `)
-                    .eq('id', actualRecipe.id)
-                    .single()
-                  
-                  if (recipeError) {
-                    console.error(`Error fetching full recipe data for ${actualRecipe.name}:`, recipeError)
-                  } else {
-                    console.log(`Fetched full recipe data with ${fullRecipe.recipe_ingredients?.length || 0} ingredients`)
-                    console.log('Raw recipe_ingredients:', fullRecipe.recipe_ingredients)
-                    
-                    // Store only recipe ID - much simpler and more reliable
-                    if (!day.selectedRecipes) {
-                      day.selectedRecipes = {}
-                    }
-                    
-                    // Store just the recipe ID - the meal plan editor will load full data when needed
-                    day.selectedRecipes[meal.id] = [actualRecipe.id]
-                    
-                    console.log(`Stored recipe ID ${actualRecipe.id} for meal ${meal.id} in day ${day.day}`)
-                  }
-                } catch (error) {
-                  console.error(`Error fetching recipe ${actualRecipe.id}:`, error)
-                }
-              } else {
-                console.log(`Database recipe not found for ${originalMeal.name}`)
-              }
-            } else {
-              console.log(`No recipe found for ${recipeKey}`)
-            }
+          if (matchingRecipe) {
+            // Simple: just add the recipe_id to the meal
+            meal.recipe_id = matchingRecipe.id
+            console.log(`Linked recipe ${matchingRecipe.name} (${matchingRecipe.id}) to meal ${meal.name}`)
           } else {
-            console.log(`No original meal found for ${meal.name} in day ${day.day}`)
+            console.log(`No recipe found for meal: ${meal.name}`)
           }
         }
       }
       
       console.log('Converted dynamic plan:', {
         daysCount: dynamicPlan.days.length,
-        firstDay: dynamicPlan.days[0],
-        allDaysWithRecipes: dynamicPlan.days.map(d => ({
-          day: d.day,
-          meals: d.meals.map(m => m.name),
-          selectedRecipes: d.selectedRecipes ? Object.keys(d.selectedRecipes) : []
-        }))
+        mealsWithRecipes: dynamicPlan.days.reduce((total, d) => total + d.meals.filter(m => m.recipe_id).length, 0),
+        totalMeals: dynamicPlan.days.reduce((total, d) => total + d.meals.length, 0)
       })
       
       if (savedIngredients.length > 0 || createdRecipes.length > 0) {
@@ -589,11 +538,11 @@ export default function GenerateMealPlanPage() {
       setSendingStep("Sauvegarde du plan alimentaire...")
       setSendingProgress(75)
       
-      console.log('Saving meal plan with selectedRecipe IDs:', {
+      console.log('Saving meal plan with recipe links:', {
         daysWithRecipes: dynamicPlan.days.map(d => ({
           day: d.day,
-          selectedRecipes: d.selectedRecipes || {},
-          recipeCount: d.selectedRecipes ? Object.keys(d.selectedRecipes).length : 0
+          mealsWithRecipes: d.meals.filter(m => m.recipe_id).length,
+          totalMeals: d.meals.length
         }))
       })
       

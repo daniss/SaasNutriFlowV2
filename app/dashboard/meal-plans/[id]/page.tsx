@@ -233,52 +233,39 @@ export default function MealPlanDetailPage() {
           }
         }
 
-        // Load selected recipes - now stored as IDs, need to fetch full data
-        if (day.selectedRecipes && Object.keys(day.selectedRecipes).length > 0) {
-          console.log(`Loading selected recipe IDs for day ${day.day}:`, day.selectedRecipes)
-          
-          // Process each meal's recipe IDs
-          for (const [mealId, recipeIds] of Object.entries(day.selectedRecipes)) {
-            const recipeArray = recipeIds as string[]
-            if (recipeArray && recipeArray.length > 0) {
-              // Fetch full recipe data for each ID
-              const fullRecipes = []
+        // Load recipes using recipe_id from meals - simple many-to-one
+        for (const meal of day.meals) {
+          if (meal.recipe_id) {
+            try {
+              console.log(`Loading recipe ${meal.recipe_id} for meal ${meal.name}`)
               
-              for (const recipeId of recipeArray) {
-                try {
-                  console.log(`Fetching full recipe data for ID: ${recipeId}`)
-                  
-                  const { data: fullRecipe, error: recipeError } = await supabase
-                    .from('recipes')
-                    .select(`
-                      *,
-                      recipe_ingredients (
-                        *,
-                        ingredient:ingredients (*)
-                      )
-                    `)
-                    .eq('id', recipeId)
-                    .single()
-                  
-                  if (recipeError) {
-                    console.error(`Error fetching recipe ${recipeId}:`, recipeError)
-                  } else {
-                    // Transform recipe_ingredients to ingredients for RecipeCard component
-                    const transformedRecipe = {
-                      ...fullRecipe,
-                      ingredients: fullRecipe.recipe_ingredients || []
-                    }
-                    fullRecipes.push(transformedRecipe)
-                    console.log(`Loaded recipe ${fullRecipe.name} with ${fullRecipe.recipe_ingredients?.length || 0} ingredients`)
-                  }
-                } catch (error) {
-                  console.error(`Error loading recipe ${recipeId}:`, error)
+              const { data: fullRecipe, error: recipeError } = await supabase
+                .from('recipes')
+                .select(`
+                  *,
+                  recipe_ingredients (
+                    *,
+                    ingredient:ingredients (*)
+                  )
+                `)
+                .eq('id', meal.recipe_id)
+                .single()
+              
+              if (recipeError) {
+                console.error(`Error fetching recipe ${meal.recipe_id}:`, recipeError)
+              } else {
+                // Transform recipe_ingredients to ingredients for RecipeCard component
+                const transformedRecipe = {
+                  ...fullRecipe,
+                  ingredients: fullRecipe.recipe_ingredients || []
                 }
+                
+                // Store by meal ID for the UI
+                loadedDynamicMealRecipes[meal.id] = [transformedRecipe]
+                console.log(`Loaded recipe ${fullRecipe.name} with ${fullRecipe.recipe_ingredients?.length || 0} ingredients for meal ${meal.name}`)
               }
-              
-              if (fullRecipes.length > 0) {
-                loadedDynamicMealRecipes[mealId] = fullRecipes
-              }
+            } catch (error) {
+              console.error(`Error loading recipe for meal ${meal.name}:`, error)
             }
           }
         }
