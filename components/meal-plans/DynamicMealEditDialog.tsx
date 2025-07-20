@@ -92,6 +92,14 @@ export function DynamicMealEditDialog({
   const [recipeSearchMealId, setRecipeSearchMealId] = useState<string | null>(null)
   const [localMealRecipes, setLocalMealRecipes] = useState<Record<string, Recipe[]>>(dynamicMealRecipes || {})
 
+  // Sync localMealRecipes with dynamicMealRecipes prop updates
+  useEffect(() => {
+    if (dynamicMealRecipes) {
+      console.log('Syncing localMealRecipes with prop update:', dynamicMealRecipes)
+      setLocalMealRecipes(dynamicMealRecipes)
+    }
+  }, [dynamicMealRecipes])
+
   // Initialize edit data when dialog opens
   useEffect(() => {
     if (isOpen) {
