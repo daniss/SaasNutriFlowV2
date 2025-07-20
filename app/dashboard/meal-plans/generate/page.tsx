@@ -439,8 +439,21 @@ export default function GenerateMealPlanPage() {
       console.log(`Saved ${savedIngredients.length} ingredients to database`)
       
       // Create recipes for each meal with full ingredient data
+      console.log('Generated plan structure before recipe creation:', {
+        totalDays: generatedPlan.days.length,
+        meals: generatedPlan.days.map(d => ({
+          day: d.day,
+          meals: d.meals.map(m => ({
+            name: m.name,
+            hasIngredients: !!m.ingredients && m.ingredients.length > 0,
+            ingredientsCount: m.ingredients?.length || 0
+          }))
+        }))
+      })
+      
       const createdRecipes = await createRecipesFromMeals(generatedPlan.days, user!.id)
       console.log(`Created ${createdRecipes.length} recipes from AI meal plan`)
+      console.log('Created recipes details:', createdRecipes.map(r => ({ id: r.id, name: r.name })))
       
       // NOW convert AI plan to dynamic format (this strips ingredients for storage)
       const dynamicPlan = convertAIToDynamicMealPlan({
@@ -493,7 +506,12 @@ export default function GenerateMealPlanPage() {
       
       console.log('Converted dynamic plan:', {
         daysCount: dynamicPlan.days.length,
-        firstDay: dynamicPlan.days[0]
+        firstDay: dynamicPlan.days[0],
+        allDaysWithRecipes: dynamicPlan.days.map(d => ({
+          day: d.day,
+          meals: d.meals.map(m => m.name),
+          selectedRecipes: d.selectedRecipes ? Object.keys(d.selectedRecipes) : []
+        }))
       })
       
       if (savedIngredients.length > 0 || createdRecipes.length > 0) {
@@ -642,9 +660,22 @@ export default function GenerateMealPlanPage() {
   const createRecipesFromMeals = async (days: any[], dietitianId: string) => {
     const createdRecipes = []
     
+    console.log('Starting recipe creation process...')
+    
     for (const day of days) {
+      console.log(`Processing day ${day.day} with ${day.meals.length} meals`)
+      
       for (const meal of day.meals) {
-        if (!meal.ingredients || meal.ingredients.length === 0) continue
+        console.log(`Processing meal: ${meal.name}`, {
+          hasIngredients: !!meal.ingredients,
+          ingredientsLength: meal.ingredients?.length,
+          ingredients: meal.ingredients
+        })
+        
+        if (!meal.ingredients || meal.ingredients.length === 0) {
+          console.log(`Skipping meal ${meal.name} - no ingredients`)
+          continue
+        }
         
         try {
           // Map meal type to recipe category
@@ -704,6 +735,8 @@ export default function GenerateMealPlanPage() {
             console.error(`Error creating recipe "${recipeName}":`, recipeError)
             continue
           }
+          
+          console.log(`✅ Successfully created recipe: ${recipeName} (ID: ${savedRecipe.id})`)
           
           // Create ingredients using ingredientsNutrition data and link to global database
           const ingredientData = []
