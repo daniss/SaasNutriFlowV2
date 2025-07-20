@@ -556,6 +556,13 @@ export default function GenerateMealPlanPage() {
       }
       
       // Save the meal plan in dynamic format
+      console.log('Saving meal plan with selectedRecipes:', {
+        daysWithRecipes: dynamicPlan.days.map(d => ({
+          day: d.day,
+          selectedRecipes: d.selectedRecipes ? Object.keys(d.selectedRecipes) : []
+        }))
+      })
+      
       const { data: savedPlan, error: saveError } = await supabase
         .from("meal_plans")
         .insert({
