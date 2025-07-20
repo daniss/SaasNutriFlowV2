@@ -284,7 +284,7 @@ export class UltraModernPDFGenerator {
     
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
     this.setTypography('h3')
-    this.pdf.text(metadata.clientName || 'Client', centerX, clientCardY + 30, { align: 'center' })
+    this.safeText(metadata.clientName || 'Client', centerX, clientCardY + 30, { align: 'center' })
     
     // Plan details
     this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textMuted))
@@ -306,7 +306,7 @@ export class UltraModernPDFGenerator {
     if (metadata.dietitianName) {
       this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.primary))
       this.setTypography('body')
-      this.pdf.text(`Par ${metadata.dietitianName}`, centerX, 260, { align: 'center' })
+      this.safeText(`Par ${metadata.dietitianName}`, centerX, 260, { align: 'center' })
     }
 
     // Modern decorative elements
@@ -525,7 +525,7 @@ export class UltraModernPDFGenerator {
     // Day title and date
     this.pdf.setTextColor(255, 255, 255)
     this.setTypography('h2')
-    this.pdf.text(`Jour ${dayPlan.day}`, this.margin + 55, this.currentY + 5)
+    this.safeText(`Jour ${dayPlan.day}`, this.margin + 55, this.currentY + 5)
     
     // Date with better formatting
     const date = new Date(Date.now() + dayIndex * 86400000).toLocaleDateString('fr-FR', {
@@ -628,31 +628,31 @@ export class UltraModernPDFGenerator {
 
       // Meals in this type
       meals.forEach((meal, mealIndex) => {
-        this.addNewPageIfNeeded(50)
+        this.addNewPageIfNeeded(35) // Reduced space needed
         
-        // Meal card with modern styling
+        // Meal card with modern styling (compact)
         this.pdf.setFillColor(...this.hexToRgb(modernDesign.colors.bgLight))
-        this.pdf.roundedRect(this.margin + 10, this.currentY, this.contentWidth - 20, 45, 6, 6, 'F')
+        this.pdf.roundedRect(this.margin + 10, this.currentY, this.contentWidth - 20, 35, 4, 4, 'F') // Smaller height and radius
         
         // Accent border
         this.pdf.setFillColor(...this.hexToRgb(config.color))
-        this.pdf.roundedRect(this.margin + 10, this.currentY, 4, 45, 2, 2, 'F')
+        this.pdf.roundedRect(this.margin + 10, this.currentY, 3, 35, 2, 2, 'F') // Smaller border
         
-        // Meal name
+        // Meal name (compact)
         this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
-        this.setTypography('h4')
-        this.safeText(meal.name, this.margin + 20, this.currentY + 12)
+        this.setTypography('body') // Smaller font for compactness
+        this.safeText(meal.name, this.margin + 18, this.currentY + 8)
         
-        // Description if available
+        // Description if available (more compact)
         if (meal.description) {
           this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textMuted))
-          this.setTypography('body')
-          const descLines = this.safeSplitTextToSize(meal.description, this.contentWidth - 60)
-          this.safeText(descLines[0], this.margin + 20, this.currentY + 22)
+          this.setTypography('caption') // Smaller font
+          const shortDesc = meal.description.length > 60 ? meal.description.substring(0, 60) + '...' : meal.description
+          this.safeText(shortDesc, this.margin + 18, this.currentY + 18)
         }
         
-        // Nutrition info with modern badges
-        const nutritionY = this.currentY + 32
+        // Nutrition info with modern badges (compact)
+        const nutritionY = this.currentY + 25 // Adjusted for smaller card
         let badgeX = this.margin + 20
         
         if (meal.calories) {
@@ -684,67 +684,71 @@ export class UltraModernPDFGenerator {
         
         let additionalHeight = 45 // Base height for meal card
         
-        // Add ingredients if available
+        // Add ingredients if available (compact format)
         if (meal.ingredients && meal.ingredients.length > 0) {
-          this.currentY += 50 // Move down from nutrition badges
-          this.addNewPageIfNeeded(20 + meal.ingredients.length * 4)
+          this.currentY += 45 // Reduced spacing
+          this.addNewPageIfNeeded(15 + Math.ceil(meal.ingredients.length / 2) * 4)
           
-          // Ingredients section
+          // Ingredients section - compact
           this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
-          this.setTypography('h4')
-          this.safeText('🥘 Ingrédients', this.margin + 20, this.currentY)
-          this.currentY += 10
+          this.setTypography('body') // Smaller font
+          this.safeText('🥘 Ingrédients:', this.margin + 20, this.currentY)
+          this.currentY += 6
           
-          // Ingredients list
+          // Compact ingredients list - multiple per line
           this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textSecondary))
-          this.setTypography('body')
-          meal.ingredients.forEach((ingredient, index) => {
-            this.addNewPageIfNeeded(8)
-            this.safeText(`• ${ingredient}`, this.margin + 25, this.currentY)
-            this.currentY += 6
+          this.setTypography('caption') // Even smaller font
+          const compactIngredients = meal.ingredients.join(' • ')
+          const ingredientLines = this.safeSplitTextToSize(compactIngredients, this.contentWidth - 50)
+          ingredientLines.forEach((line: string) => {
+            this.addNewPageIfNeeded(5)
+            this.safeText(line, this.margin + 25, this.currentY)
+            this.currentY += 4 // Tighter spacing
           })
           
-          additionalHeight += 20 + meal.ingredients.length * 6
+          additionalHeight += 15 + ingredientLines.length * 4
         }
         
-        // Add instructions if available
+        // Add instructions if available (compact format)
         if (meal.instructions && meal.instructions.length > 0) {
-          this.currentY += 10
-          this.addNewPageIfNeeded(20 + meal.instructions.length * 8)
+          this.currentY += 8 // Reduced spacing
           
-          // Instructions section
+          // Instructions section - compact
           this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
-          this.setTypography('h4')
-          this.safeText('👨‍🍳 Préparation', this.margin + 20, this.currentY)
-          this.currentY += 10
+          this.setTypography('body') // Smaller font
+          this.safeText('👨‍🍳 Préparation:', this.margin + 20, this.currentY)
+          this.currentY += 6
           
-          // Instructions list
+          // Compact instructions - limit to first 3 steps to save space
           this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textSecondary))
-          this.setTypography('body')
-          meal.instructions.forEach((instruction, index) => {
-            this.addNewPageIfNeeded(12)
-            const instructionText = `${index + 1}. ${instruction}`
-            const lines = this.safeSplitTextToSize(instructionText, this.contentWidth - 50)
-            lines.forEach((line: string, lineIndex: number) => {
-              this.addNewPageIfNeeded(8)
-              this.safeText(line, this.margin + 25, this.currentY)
-              this.currentY += 6
-            })
-            this.currentY += 2 // Small gap between steps
+          this.setTypography('caption') // Smaller font
+          const limitedInstructions = meal.instructions.slice(0, 3) // Only show first 3 steps
+          limitedInstructions.forEach((instruction, index) => {
+            this.addNewPageIfNeeded(6)
+            const shortInstruction = instruction.length > 80 ? instruction.substring(0, 80) + '...' : instruction
+            const instructionText = `${index + 1}. ${shortInstruction}`
+            this.safeText(instructionText, this.margin + 25, this.currentY)
+            this.currentY += 4 // Tighter spacing
           })
           
-          additionalHeight += 20 + meal.instructions.length * 8
+          // Add "..." if there are more instructions
+          if (meal.instructions.length > 3) {
+            this.safeText('...', this.margin + 25, this.currentY)
+            this.currentY += 4
+          }
+          
+          additionalHeight += 15 + Math.min(meal.instructions.length, 3) * 4
         }
         
-        // Reset currentY to account for the extended meal card
+        // Reset currentY to account for the extended meal card (compact)
         if (meal.ingredients || meal.instructions) {
-          this.currentY += 15 // Add some bottom margin
+          this.currentY += 10 // Reduced bottom margin
         } else {
-          this.currentY += 55 // Original height if no ingredients/instructions
+          this.currentY += 45 // Reduced original height
         }
       })
       
-      this.currentY += 10
+      this.currentY += 5 // Reduced spacing between day sections
     })
   }
 
