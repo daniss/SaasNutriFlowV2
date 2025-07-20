@@ -484,7 +484,7 @@ export class UltraModernPDFGenerator {
       
       this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textSecondary))
       this.setTypography('body')
-      this.pdf.text(rec, this.margin + 8, this.currentY + 4)
+      this.safeText(rec, this.margin + 8, this.currentY + 4)
       
       this.currentY += 15
     })
@@ -682,7 +682,66 @@ export class UltraModernPDFGenerator {
           this.pdf.text(`${totalTime} min`, badgeX + 12.5, nutritionY + 5, { align: 'center' })
         }
         
-        this.currentY += 55
+        let additionalHeight = 45 // Base height for meal card
+        
+        // Add ingredients if available
+        if (meal.ingredients && meal.ingredients.length > 0) {
+          this.currentY += 50 // Move down from nutrition badges
+          this.addNewPageIfNeeded(20 + meal.ingredients.length * 4)
+          
+          // Ingredients section
+          this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
+          this.setTypography('h4')
+          this.safeText('🥘 Ingrédients', this.margin + 20, this.currentY)
+          this.currentY += 10
+          
+          // Ingredients list
+          this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textSecondary))
+          this.setTypography('body')
+          meal.ingredients.forEach((ingredient, index) => {
+            this.addNewPageIfNeeded(8)
+            this.safeText(`• ${ingredient}`, this.margin + 25, this.currentY)
+            this.currentY += 6
+          })
+          
+          additionalHeight += 20 + meal.ingredients.length * 6
+        }
+        
+        // Add instructions if available
+        if (meal.instructions && meal.instructions.length > 0) {
+          this.currentY += 10
+          this.addNewPageIfNeeded(20 + meal.instructions.length * 8)
+          
+          // Instructions section
+          this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.text))
+          this.setTypography('h4')
+          this.safeText('👨‍🍳 Préparation', this.margin + 20, this.currentY)
+          this.currentY += 10
+          
+          // Instructions list
+          this.pdf.setTextColor(...this.hexToRgb(modernDesign.colors.textSecondary))
+          this.setTypography('body')
+          meal.instructions.forEach((instruction, index) => {
+            this.addNewPageIfNeeded(12)
+            const instructionText = `${index + 1}. ${instruction}`
+            const lines = this.safeSplitTextToSize(instructionText, this.contentWidth - 50)
+            lines.forEach((line: string, lineIndex: number) => {
+              this.addNewPageIfNeeded(8)
+              this.safeText(line, this.margin + 25, this.currentY)
+              this.currentY += 6
+            })
+            this.currentY += 2 // Small gap between steps
+          })
+          
+          additionalHeight += 20 + meal.instructions.length * 8
+        }
+        
+        // Reset currentY to account for the extended meal card
+        if (meal.ingredients || meal.instructions) {
+          this.currentY += 15 // Add some bottom margin
+        } else {
+          this.currentY += 55 // Original height if no ingredients/instructions
+        }
       })
       
       this.currentY += 10
