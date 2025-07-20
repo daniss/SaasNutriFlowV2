@@ -100,6 +100,71 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
     ing.name.toLowerCase().includes(ingredientSearchTerm.toLowerCase())
   )
 
+  // Calculate total nutrition from all ingredients
+  const calculateNutrition = (ingredients: Ingredient[], servings: number = 1) => {
+    let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0, totalFiber = 0
+
+    ingredients.forEach(ingredient => {
+      const quantity = ingredient.quantity || 0
+      
+      if (quantity <= 0) return // Skip if no quantity
+
+      let calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0
+
+      // Calculate based on unit type and available nutritional data
+      if (ingredient.unit === 'g' && ingredient.calories_per_100g !== undefined) {
+        const factor = quantity / 100
+        calories = ingredient.calories_per_100g * factor
+        protein = (ingredient.protein_per_100g || 0) * factor
+        carbs = (ingredient.carbs_per_100g || 0) * factor
+        fat = (ingredient.fat_per_100g || 0) * factor
+        fiber = (ingredient.fiber_per_100g || 0) * factor
+      } else if (ingredient.unit === 'ml' && ingredient.calories_per_100ml !== undefined) {
+        const factor = quantity / 100
+        calories = ingredient.calories_per_100ml * factor
+        protein = (ingredient.protein_per_100ml || 0) * factor
+        carbs = (ingredient.carbs_per_100ml || 0) * factor
+        fat = (ingredient.fat_per_100ml || 0) * factor
+        fiber = (ingredient.fiber_per_100ml || 0) * factor
+      } else if (ingredient.unit === 'piece' && ingredient.calories_per_piece !== undefined) {
+        calories = ingredient.calories_per_piece * quantity
+        protein = (ingredient.protein_per_piece || 0) * quantity
+        carbs = (ingredient.carbs_per_piece || 0) * quantity
+        fat = (ingredient.fat_per_piece || 0) * quantity
+        fiber = (ingredient.fiber_per_piece || 0) * quantity
+      }
+
+      totalCalories += calories
+      totalProtein += protein
+      totalCarbs += carbs
+      totalFat += fat
+      totalFiber += fiber
+    })
+
+    // Return per serving values
+    const actualServings = Math.max(servings, 1)
+    return {
+      calories: Math.round(totalCalories / actualServings),
+      protein: Math.round(totalProtein / actualServings),
+      carbs: Math.round(totalCarbs / actualServings),
+      fat: Math.round(totalFat / actualServings),
+      fiber: Math.round(totalFiber / actualServings)
+    }
+  }
+
+  // Auto-update nutrition when ingredients or servings change
+  useEffect(() => {
+    const nutrition = calculateNutrition(ingredients, formData.servings)
+    setFormData(prev => ({
+      ...prev,
+      calories_per_serving: nutrition.calories,
+      protein_per_serving: nutrition.protein,
+      carbs_per_serving: nutrition.carbs,
+      fat_per_serving: nutrition.fat,
+      fiber_per_serving: nutrition.fiber
+    }))
+  }, [ingredients, formData.servings])
+
   // Load ingredients when dialog opens
   useEffect(() => {
     if (isOpen) {
@@ -162,19 +227,55 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
     try {
       const { data, error } = await supabase
         .from("recipe_ingredients")
-        .select("*")
+        .select(`
+          *,
+          ingredients (
+            id, calories_per_100g, calories_per_100ml, calories_per_piece,
+            protein_per_100g, protein_per_100ml, protein_per_piece,
+            carbs_per_100g, carbs_per_100ml, carbs_per_piece,
+            fat_per_100g, fat_per_100ml, fat_per_piece,
+            fiber_per_100g, fiber_per_100ml, fiber_per_piece
+          )
+        `)
         .eq("recipe_id", recipeId)
         .order("order_index")
 
       if (error) throw error
 
       if (data && data.length > 0) {
-        setIngredients(data.map(ing => ({
-          name: ing.name,
-          quantity: ing.quantity,
-          unit: ing.unit,
-          notes: ing.notes || undefined
-        })))
+        const loadedIngredients = data.map(ing => {
+          const ingredient: Ingredient = {
+            id: ing.ingredient_id || undefined,
+            name: ing.name,
+            quantity: ing.quantity,
+            unit: ing.unit,
+            notes: ing.notes || undefined
+          }
+
+          // Add nutritional data if available from global ingredients table
+          if (ing.ingredients) {
+            const nutritionData = ing.ingredients
+            ingredient.calories_per_100g = nutritionData.calories_per_100g
+            ingredient.calories_per_100ml = nutritionData.calories_per_100ml
+            ingredient.calories_per_piece = nutritionData.calories_per_piece
+            ingredient.protein_per_100g = nutritionData.protein_per_100g
+            ingredient.protein_per_100ml = nutritionData.protein_per_100ml
+            ingredient.protein_per_piece = nutritionData.protein_per_piece
+            ingredient.carbs_per_100g = nutritionData.carbs_per_100g
+            ingredient.carbs_per_100ml = nutritionData.carbs_per_100ml
+            ingredient.carbs_per_piece = nutritionData.carbs_per_piece
+            ingredient.fat_per_100g = nutritionData.fat_per_100g
+            ingredient.fat_per_100ml = nutritionData.fat_per_100ml
+            ingredient.fat_per_piece = nutritionData.fat_per_piece
+            ingredient.fiber_per_100g = nutritionData.fiber_per_100g
+            ingredient.fiber_per_100ml = nutritionData.fiber_per_100ml
+            ingredient.fiber_per_piece = nutritionData.fiber_per_piece
+          }
+
+          return ingredient
+        })
+
+        setIngredients(loadedIngredients)
       } else {
         setIngredients([{ name: "", quantity: null, unit: null }])
       }
@@ -361,22 +462,18 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
     const newIngredient: Ingredient = {
       name: food.name_fr,
       quantity: 100, // Default 100g
-      unit: "g"
+      unit: "g",
+      // Add ANSES nutritional data for automatic calculation
+      calories_per_100g: food.energy_kcal || 0,
+      protein_per_100g: food.protein_g || 0,
+      carbs_per_100g: food.carbohydrate_g || 0,
+      fat_per_100g: food.fat_g || 0,
+      fiber_per_100g: food.fiber_g || 0
     }
     
     setIngredients(prev => [...prev, newIngredient])
     
-    // Update nutrition if available
-    if (food.energy_kcal) {
-      setFormData(prev => ({
-        ...prev,
-        calories_per_serving: (prev.calories_per_serving || 0) + Math.round(food.energy_kcal),
-        protein_per_serving: (prev.protein_per_serving || 0) + Math.round(food.protein_g || 0),
-        carbs_per_serving: (prev.carbs_per_serving || 0) + Math.round(food.carbohydrate_g || 0),
-        fat_per_serving: (prev.fat_per_serving || 0) + Math.round(food.fat_g || 0),
-        fiber_per_serving: (prev.fiber_per_serving || 0) + Math.round(food.fiber_g || 0)
-      }))
-    }
+    // Nutrition will be automatically calculated by useEffect
   }
 
   const addIngredientFromDatabase = (dbIngredient: any) => {
@@ -406,40 +503,7 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
     setIngredients(prev => [...prev, newIngredient])
     setIngredientSearchTerm("") // Clear search
     
-    // Calculate and add nutrition to recipe
-    const quantity = newIngredient.quantity || 0
-    let calories = 0, protein = 0, carbs = 0, fat = 0, fiber = 0
-    
-    if (dbIngredient.unit_type === 'g') {
-      const factor = quantity / 100
-      calories = (dbIngredient.calories_per_100g || 0) * factor
-      protein = (dbIngredient.protein_per_100g || 0) * factor
-      carbs = (dbIngredient.carbs_per_100g || 0) * factor
-      fat = (dbIngredient.fat_per_100g || 0) * factor
-      fiber = (dbIngredient.fiber_per_100g || 0) * factor
-    } else if (dbIngredient.unit_type === 'ml') {
-      const factor = quantity / 100
-      calories = (dbIngredient.calories_per_100ml || 0) * factor
-      protein = (dbIngredient.protein_per_100ml || 0) * factor
-      carbs = (dbIngredient.carbs_per_100ml || 0) * factor
-      fat = (dbIngredient.fat_per_100ml || 0) * factor
-      fiber = (dbIngredient.fiber_per_100ml || 0) * factor
-    } else if (dbIngredient.unit_type === 'piece') {
-      calories = (dbIngredient.calories_per_piece || 0) * quantity
-      protein = (dbIngredient.protein_per_piece || 0) * quantity
-      carbs = (dbIngredient.carbs_per_piece || 0) * quantity
-      fat = (dbIngredient.fat_per_piece || 0) * quantity
-      fiber = (dbIngredient.fiber_per_piece || 0) * quantity
-    }
-    
-    setFormData(prev => ({
-      ...prev,
-      calories_per_serving: (prev.calories_per_serving || 0) + Math.round(calories),
-      protein_per_serving: (prev.protein_per_serving || 0) + Math.round(protein),
-      carbs_per_serving: (prev.carbs_per_serving || 0) + Math.round(carbs),
-      fat_per_serving: (prev.fat_per_serving || 0) + Math.round(fat),
-      fiber_per_serving: (prev.fiber_per_serving || 0) + Math.round(fiber)
-    }))
+    // Nutrition will be automatically calculated by useEffect
   }
 
   return (
@@ -542,58 +606,69 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
             </div>
           </div>
 
-          {/* Nutrition */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="calories">Calories/portion</Label>
-              <Input
-                id="calories"
-                type="number"
-                value={formData.calories_per_serving || ""}
-                onChange={(e) => setFormData(prev => ({ ...prev, calories_per_serving: e.target.value ? parseInt(e.target.value) : null }))}
-                placeholder="250"
-              />
+          {/* Nutrition - Auto-calculated */}
+          <div className="space-y-3">
+            <div className="flex items-center justify-between">
+              <Label className="text-lg font-medium">Valeurs nutritionnelles par portion</Label>
+              <Badge variant="secondary" className="text-xs">
+                Calculé automatiquement
+              </Badge>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="protein">Protéines (g)</Label>
-              <Input
-                id="protein"
-                type="number"
-                value={formData.protein_per_serving || ""}
-                onChange={(e) => setFormData(prev => ({ ...prev, protein_per_serving: e.target.value ? parseInt(e.target.value) : null }))}
-                placeholder="15"
-              />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="calories">Calories</Label>
+                <Input
+                  id="calories"
+                  type="number"
+                  value={formData.calories_per_serving || 0}
+                  readOnly
+                  className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="protein">Protéines (g)</Label>
+                <Input
+                  id="protein"
+                  type="number"
+                  value={formData.protein_per_serving || 0}
+                  readOnly
+                  className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="carbs">Glucides (g)</Label>
+                <Input
+                  id="carbs"
+                  type="number"
+                  value={formData.carbs_per_serving || 0}
+                  readOnly
+                  className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fat">Lipides (g)</Label>
+                <Input
+                  id="fat"
+                  type="number"
+                  value={formData.fat_per_serving || 0}
+                  readOnly
+                  className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="fiber">Fibres (g)</Label>
+                <Input
+                  id="fiber"
+                  type="number"
+                  value={formData.fiber_per_serving || 0}
+                  readOnly
+                  className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                />
+              </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="carbs">Glucides (g)</Label>
-              <Input
-                id="carbs"
-                type="number"
-                value={formData.carbs_per_serving || ""}
-                onChange={(e) => setFormData(prev => ({ ...prev, carbs_per_serving: e.target.value ? parseInt(e.target.value) : null }))}
-                placeholder="30"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="fat">Lipides (g)</Label>
-              <Input
-                id="fat"
-                type="number"
-                value={formData.fat_per_serving || ""}
-                onChange={(e) => setFormData(prev => ({ ...prev, fat_per_serving: e.target.value ? parseInt(e.target.value) : null }))}
-                placeholder="10"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="fiber">Fibres (g)</Label>
-              <Input
-                id="fiber"
-                type="number"
-                value={formData.fiber_per_serving || ""}
-                onChange={(e) => setFormData(prev => ({ ...prev, fiber_per_serving: e.target.value ? parseInt(e.target.value) : null }))}
-                placeholder="5"
-              />
-            </div>
+            <p className="text-xs text-gray-500">
+              💡 Les valeurs nutritionnelles sont calculées automatiquement en fonction des ingrédients et de leurs quantités
+            </p>
           </div>
 
           {/* Ingredients */}
