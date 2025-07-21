@@ -684,25 +684,7 @@ export default function MealPlanDetailPage() {
         throw new Error('Impossible de définir ce plan comme actif pour le client')
       }
 
-      // 2. Generate and download the PDF for the dietitian
-      const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7, true) // forPDF = true
-      const pdfData: MealPlanPDFData = {
-        id: mealPlan.id,
-        name: mealPlan.name,
-        description: mealPlan.description || undefined,
-        clientName: mealPlan.clients.name,
-        clientEmail: mealPlan.clients.email,
-        duration_days: mealPlan.duration_days || 7,
-        calories_range: mealPlan.calories_range || undefined,
-        status: 'active', // Now active
-        created_at: mealPlan.created_at,
-        dayPlans: dayPlans
-      }
-
-      // Download the PDF for the dietitian using the modern generator
-      downloadModernMealPlanPDF(pdfData)
-
-      // 3. Send notification to client
+      // 2. Send notification to client
       const response = await fetch('/api/notifications', {
         method: 'POST',
         headers: {
@@ -728,7 +710,7 @@ export default function MealPlanDetailPage() {
         throw new Error('Erreur lors de l\'envoi de la notification')
       }
 
-      // 4. Update the local state to reflect the change
+      // 3. Update the local state to reflect the change
       setMealPlan(prev => prev ? { ...prev, status: 'active' } : null)
 
       toast({
@@ -1558,9 +1540,18 @@ export default function MealPlanDetailPage() {
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
-            <Badge className={`${getStatusColor(mealPlan.status)} border font-medium px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm`}>
-              {getStatusText(mealPlan.status)}
-            </Badge>
+            <div className="flex items-center gap-2">
+              <Badge className={`${getStatusColor(mealPlan.status)} border font-medium px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm`}>
+                {getStatusText(mealPlan.status)}
+              </Badge>
+              {mealPlan.status === 'active' && (
+                <div className="flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-medium border border-emerald-200">
+                  <div className="w-2 h-2 bg-emerald-500 rounded-full animate-pulse"></div>
+                  <span className="hidden sm:inline">Plan actuel du client</span>
+                  <span className="sm:hidden">Actuel</span>
+                </div>
+              )}
+            </div>
             
             {/* Mobile: Show primary actions directly */}
             <div className="flex sm:hidden gap-1">
