@@ -8,6 +8,14 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Card,
   CardContent,
   CardDescription,
@@ -109,6 +117,8 @@ export default function ClientDetailPage() {
   const [editing, setEditing] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
+  const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
+  const [pendingStatus, setPendingStatus] = useState<string | null>(null);
 
   // Form states
   const [editForm, setEditForm] = useState<Partial<Client>>({});
@@ -190,6 +200,53 @@ export default function ClientDetailPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleStatusChange = (value: string) => {
+    if (value === "inactive" && editForm.status === "active") {
+      // Show confirmation dialog when deactivating
+      setPendingStatus(value);
+      setShowDeactivateDialog(true);
+    } else {
+      // Direct status change for activation or other changes
+      setEditForm({ ...editForm, status: value });
+    }
+  };
+
+  const handleConfirmDeactivate = async () => {
+    try {
+      // Update client status to inactive
+      setEditForm({ ...editForm, status: "inactive" });
+      
+      // Deactivate client account in client_accounts table
+      const { error: accountError } = await supabase
+        .from("client_accounts")
+        .update({ is_active: false })
+        .eq("client_id", clientId);
+
+      if (accountError) {
+        console.error("Error deactivating client account:", accountError);
+        // Don't throw error - client status update can proceed even if account update fails
+      }
+
+      setShowDeactivateDialog(false);
+      setPendingStatus(null);
+      
+      // Show success message
+      setSuccess("Client désactivé. Le compte client a été supprimé - vous devrez recréer un compte pour réactiver l'accès.");
+      setTimeout(() => setSuccess(""), 5000);
+      
+    } catch (error) {
+      console.error("Error during deactivation:", error);
+      setError("Erreur lors de la désactivation du client");
+    }
+  };
+
+  const handleCancelDeactivate = () => {
+    setShowDeactivateDialog(false);
+    setPendingStatus(null);
+    // Reset the select back to current status
+    setEditForm({ ...editForm, status: client?.status || "active" });
   };
 
   const handleSaveClient = async () => {
@@ -1426,9 +1483,7 @@ export default function ClientDetailPage() {
                       </Label>
                       <Select
                         value={editForm.status || "active"}
-                        onValueChange={(value: string) =>
-                          setEditForm({ ...editForm, status: value })
-                        }
+                        onValueChange={handleStatusChange}
                       >
                         <SelectTrigger className="border-slate-200 focus:border-emerald-400 focus:ring-emerald-400/20">
                           <SelectValue placeholder="Choisir un statut" />
@@ -1735,6 +1790,46 @@ export default function ClientDetailPage() {
 
         </Tabs>
       </div>
+
+      {/* Deactivation Confirmation Dialog */}
+      <Dialog open={showDeactivateDialog} onOpenChange={setShowDeactivateDialog}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle className="text-xl font-semibold text-red-600">
+              Confirmer la désactivation
+            </DialogTitle>
+            <DialogDescription className="text-sm text-slate-600 mt-2">
+              Attention ! Cette action va désactiver le client et supprimer son compte d'accès au portail client.
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4">
+            <Alert className="border-amber-200 bg-amber-50">
+              <AlertDescription className="text-sm text-amber-800">
+                <strong>Important :</strong> Le compte client sera définitivement supprimé. 
+                Pour réactiver l'accès, vous devrez recréer un nouveau compte avec un nouveau mot de passe.
+              </AlertDescription>
+            </Alert>
+          </div>
+
+          <DialogFooter className="flex gap-2">
+            <Button 
+              variant="outline" 
+              onClick={handleCancelDeactivate}
+              className="flex-1"
+            >
+              Annuler
+            </Button>
+            <Button 
+              variant="destructive" 
+              onClick={handleConfirmDeactivate}
+              className="flex-1 bg-red-600 hover:bg-red-700"
+            >
+              Confirmer la désactivation
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
