@@ -1228,11 +1228,19 @@ export default function MealPlanDetailPage() {
           day: day.day || day.day_number || index + 1,
           date: day.date,
           meals: forPDF ? {
-            // For PDF, preserve original meal structure
-            breakfast: day.meals?.breakfast || [],
-            lunch: day.meals?.lunch || [],
-            dinner: day.meals?.dinner || [],
-            snacks: day.meals?.snacks || []
+            // For PDF, extract meal names from AI-generated structure
+            breakfast: Array.isArray(day.meals) 
+              ? day.meals.filter((m: any) => m.name === 'breakfast').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              : (day.meals?.breakfast || []),
+            lunch: Array.isArray(day.meals)
+              ? day.meals.filter((m: any) => m.name === 'lunch').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              : (day.meals?.lunch || []),
+            dinner: Array.isArray(day.meals)
+              ? day.meals.filter((m: any) => m.name === 'dinner').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              : (day.meals?.dinner || []),
+            snacks: Array.isArray(day.meals)
+              ? day.meals.filter((m: any) => m.name === 'snack').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              : (day.meals?.snacks || [])
           } : {
             // For display, use normalized strings
             breakfast: normalizeMealData(day.meals?.breakfast),

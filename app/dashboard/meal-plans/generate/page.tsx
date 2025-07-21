@@ -60,7 +60,7 @@ import { useAuth } from "@/hooks/useAuthNew"
 import { generateMealPlan, type GeneratedMealPlan, type Meal } from "@/lib/gemini"
 import { supabase, type Client } from "@/lib/supabase"
 import { convertAIToDynamicMealPlan } from "@/lib/meal-plan-types"
-import { downloadUltraModernAIPDF } from "@/lib/pdf-generator-ai-modern"
+import { downloadModernMealPlanPDF, type MealPlanPDFData } from "@/lib/pdf-generator-modern"
 import { useToast } from "@/hooks/use-toast"
 import MacronutrientBreakdown from "@/components/nutrition/MacronutrientBreakdown"
 
@@ -877,8 +877,40 @@ export default function GenerateMealPlanPage() {
         nutritionAnalysis
       }
       
-      // Use the new ultra-modern AI PDF generator
-      downloadUltraModernAIPDF(generatedPlan, metadata)
+      // Convert AI meal plan data to regular PDF format
+      const pdfData: any = {
+        id: 'ai-generated',
+        name: generatedPlan.title || 'Plan Alimentaire IA',
+        description: generatedPlan.description,
+        clientName: selectedClient?.name || 'Client inconnu',
+        clientEmail: selectedClient?.email || '',
+        duration_days: generatedPlan.duration || generatedPlan.days.length,
+        calories_range: '',
+        status: 'generated',
+        created_at: new Date().toISOString(),
+        dietitianName,
+        dayPlans: generatedPlan.days.map((day: any) => ({
+          day: day.day,
+          meals: {
+            breakfast: Array.isArray(day.meals) 
+              ? day.meals.filter((m: any) => m.name === 'breakfast').map((m: any) => m.original_meal_name || m.description)
+              : (day.meals?.breakfast || []),
+            lunch: Array.isArray(day.meals)
+              ? day.meals.filter((m: any) => m.name === 'lunch').map((m: any) => m.original_meal_name || m.description)
+              : (day.meals?.lunch || []),
+            dinner: Array.isArray(day.meals)
+              ? day.meals.filter((m: any) => m.name === 'dinner').map((m: any) => m.original_meal_name || m.description)
+              : (day.meals?.dinner || []),
+            snacks: Array.isArray(day.meals)
+              ? day.meals.filter((m: any) => m.name === 'snack').map((m: any) => m.original_meal_name || m.description)
+              : (day.meals?.snacks || [])
+          },
+          notes: day.notes
+        }))
+      }
+      
+      // Use the better regular PDF generator
+      downloadModernMealPlanPDF(pdfData)
       
       // Show success message
       toast({
