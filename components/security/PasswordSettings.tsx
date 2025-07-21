@@ -208,7 +208,7 @@ export function PasswordSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between p-4 bg-gray-50 rounded-lg">
             <div className="space-y-1">
               <p className="text-sm font-medium text-gray-900">
                 Dernière modification
@@ -221,10 +221,11 @@ export function PasswordSettings() {
               variant="outline"
               size="sm"
               onClick={() => setChangePasswordOpen(true)}
-              className="border-gray-200 hover:bg-gray-50 hover:shadow-soft transition-all duration-200"
+              className="border-gray-200 hover:bg-gray-50 hover:shadow-soft transition-all duration-200 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
             >
-              <Lock className="mr-2 h-4 w-4" />
-              Changer le mot de passe
+              <Lock className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Changer le mot de passe</span>
+              <span className="sm:hidden">Changer</span>
             </Button>
           </div>
 
@@ -452,9 +453,14 @@ export function PasswordSettings() {
                 newPassword !== confirmPassword ||
                 !validatePasswordStrength(newPassword).isValid
               }
-              className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+              className="bg-orange-600 hover:bg-orange-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-xs sm:text-sm"
             >
-              {loading ? "Modification..." : "Modifier le mot de passe"}
+              {loading ? "Modification..." : (
+                <>
+                  <span className="hidden sm:inline">Modifier le mot de passe</span>
+                  <span className="sm:hidden">Modifier</span>
+                </>
+              )}
             </Button>
           </DialogFooter>
         </DialogContent>

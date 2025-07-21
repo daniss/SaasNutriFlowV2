@@ -139,7 +139,7 @@ export function TwoFactorSettings() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
+          <div className="flex flex-col sm:flex-row gap-4 sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
               {status.isEnabled ? (
                 <ShieldCheck className="h-5 w-5 text-green-500" />
@@ -155,7 +155,7 @@ export function TwoFactorSettings() {
                 </p>
               </div>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <Badge variant={status.isEnabled ? "default" : "secondary"}>
                 {status.isEnabled ? "Activé" : "Désactivé"}
               </Badge>
@@ -164,9 +164,11 @@ export function TwoFactorSettings() {
                 onClick={handleEnrollTOTP}
                 disabled={loading}
                 size="sm"
+                className="text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
               >
-                <Plus className="h-4 w-4 mr-2" />
-                Ajouter facteur
+                <Plus className="h-4 w-4 mr-1 sm:mr-2 flex-shrink-0" />
+                <span className="hidden sm:inline">Ajouter facteur</span>
+                <span className="sm:hidden">Ajouter</span>
               </Button>
             </div>
           </div>
@@ -275,9 +277,10 @@ export function TwoFactorSettings() {
             <Button
               onClick={handleVerifySetup}
               disabled={loading || verificationCode.length !== 6}
-              className="bg-emerald-600 hover:bg-emerald-700"
+              className="bg-emerald-600 hover:bg-emerald-700 text-xs sm:text-sm"
             >
-              Vérifier et activer
+              <span className="hidden sm:inline">Vérifier et activer</span>
+              <span className="sm:hidden">Vérifier</span>
             </Button>
           </DialogFooter>
         </DialogContent>
