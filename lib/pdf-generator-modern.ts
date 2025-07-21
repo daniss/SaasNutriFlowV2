@@ -712,6 +712,8 @@ export class ModernPDFGenerator {
           hasInstructions: !!(food.recipe && food.recipe.instructions),
           ingredientsCount: food.recipe?.ingredients?.length || 0,
           instructionsCount: food.recipe?.instructions?.length || 0,
+          ingredientsTypes: food.recipe?.ingredients?.map((ing: any) => typeof ing) || [],
+          instructionsTypes: food.recipe?.instructions?.map((inst: any) => typeof inst) || [],
           recipe: food.recipe 
         })
         
@@ -720,6 +722,7 @@ export class ModernPDFGenerator {
           
           // Add ingredients if available
           if (food.recipe.ingredients && Array.isArray(food.recipe.ingredients) && food.recipe.ingredients.length > 0) {
+            try {
             // Recipe ingredients header
             this.pdf.setFontSize(10)
             this.pdf.setFont('helvetica', 'bold')
@@ -732,11 +735,12 @@ export class ModernPDFGenerator {
             this.pdf.setFontSize(9)
             this.pdf.setTextColor(...this.hexToRgb(colors.textMuted))
             
-            food.recipe.ingredients.forEach((ingredient: string) => {
-              if (ingredient.trim()) {
+            food.recipe.ingredients.forEach((ingredient: any) => {
+              const ingredientText = typeof ingredient === 'string' ? ingredient : String(ingredient || '')
+              if (ingredientText.trim()) {
                 this.addNewPageIfNeeded(8)
                 
-                const ingredientLines = this.pdf.splitTextToSize(`• ${ingredient}`, this.contentWidth - 25)
+                const ingredientLines = this.pdf.splitTextToSize(`• ${ingredientText}`, this.contentWidth - 25)
                 
                 ingredientLines.forEach((line: string) => {
                   this.pdf.text(line, this.margin + 20, this.currentY + 3)
@@ -746,10 +750,14 @@ export class ModernPDFGenerator {
             })
             
             this.currentY += 3
+            } catch (error) {
+              console.error('Error processing recipe ingredients:', error)
+            }
           }
           
           // Add instructions if available
           if (food.recipe.instructions && Array.isArray(food.recipe.instructions) && food.recipe.instructions.length > 0) {
+            try {
             // Recipe instructions header
             this.pdf.setFontSize(10)
             this.pdf.setFont('helvetica', 'bold')
@@ -762,11 +770,12 @@ export class ModernPDFGenerator {
           this.pdf.setFontSize(9)
           this.pdf.setTextColor(...this.hexToRgb(colors.textMuted))
           
-          food.recipe.instructions.forEach((instruction: string, stepIndex: number) => {
-            if (instruction.trim()) {
+          food.recipe.instructions.forEach((instruction: any, stepIndex: number) => {
+            const instructionText = typeof instruction === 'string' ? instruction : String(instruction || '')
+            if (instructionText.trim()) {
               this.addNewPageIfNeeded(12)
               
-              const stepText = `${stepIndex + 1}. ${instruction}`
+              const stepText = `${stepIndex + 1}. ${instructionText}`
               const stepLines = this.pdf.splitTextToSize(stepText, this.contentWidth - 25)
               
               stepLines.forEach((line: string, lineIndex: number) => {
@@ -778,6 +787,9 @@ export class ModernPDFGenerator {
           })
           
             this.currentY += 5
+            } catch (error) {
+              console.error('Error processing recipe instructions:', error)
+            }
           }
         }
         
