@@ -440,8 +440,14 @@ export class ModernPDFGenerator {
   }
 
   private formatFoodItem(food: any): string {
+    // Handle simple strings (most common case for AI-generated meals)
     if (typeof food === 'string') {
       return food
+    }
+    
+    // Handle null/undefined
+    if (!food) {
+      return 'Repas non spécifié'
     }
     
     // Handle AI-generated meals (with name and nutrition)
@@ -468,6 +474,17 @@ export class ModernPDFGenerator {
       return result
     }
     
+    // Handle meal objects with original_meal_name (from AI conversion)
+    if (food.original_meal_name) {
+      return food.original_meal_name
+    }
+    
+    // Handle meal objects with description
+    if (food.description) {
+      return food.description
+    }
+    
+    // Last resort fallback
     return String(food)
   }
 
@@ -484,7 +501,19 @@ export class ModernPDFGenerator {
       fat: 0
     }
 
+    if (!Array.isArray(foods)) {
+      return totals
+    }
+
     foods.forEach(food => {
+      // Skip null/undefined items
+      if (!food) return
+      
+      // For strings (AI meal names), we can't calculate nutrition
+      if (typeof food === 'string') {
+        return // Skip strings - no nutrition data available
+      }
+      
       // Handle AI-generated meals (with direct nutrition values)
       if (food.calories || food.protein || food.carbs || food.fat) {
         totals.calories += food.calories || 0
@@ -499,6 +528,14 @@ export class ModernPDFGenerator {
         totals.protein += Math.round((food.protein_g || 0) * factor * 10) / 10
         totals.carbs += Math.round((food.carbohydrate_g || 0) * factor * 10) / 10
         totals.fat += Math.round((food.fat_g || 0) * factor * 10) / 10
+      }
+      // Handle meal objects with nutrition (from meal plan conversion)
+      else if (food.original_meal_name && (food.calories_target || food.nutrition)) {
+        const nutrition = food.nutrition || {}
+        totals.calories += food.calories_target || nutrition.calories || 0
+        totals.protein += nutrition.protein || 0
+        totals.carbs += nutrition.carbs || 0
+        totals.fat += nutrition.fat || 0
       }
     })
 

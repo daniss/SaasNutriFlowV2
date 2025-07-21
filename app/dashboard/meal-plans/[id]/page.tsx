@@ -428,6 +428,27 @@ export default function MealPlanDetailPage() {
     try {
       const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7, true) // forPDF = true
       
+      // Ensure correct data structure for PDF generator - only include required properties
+      const cleanedDayPlans = dayPlans.map(day => ({
+        day: day.day,
+        meals: {
+          breakfast: Array.isArray(day.meals.breakfast) ? day.meals.breakfast : [],
+          lunch: Array.isArray(day.meals.lunch) ? day.meals.lunch : [],
+          dinner: Array.isArray(day.meals.dinner) ? day.meals.dinner : [],
+          snacks: Array.isArray(day.meals.snacks) ? day.meals.snacks : []
+        },
+        notes: day.notes,
+        // Include timing and enabled properties for the PDF generator
+        breakfastHour: day.breakfastHour,
+        lunchHour: day.lunchHour,
+        dinnerHour: day.dinnerHour,
+        snacksHour: day.snacksHour,
+        breakfastEnabled: day.breakfastEnabled,
+        lunchEnabled: day.lunchEnabled,
+        dinnerEnabled: day.dinnerEnabled,
+        snacksEnabled: day.snacksEnabled
+      }))
+      
       const pdfData: MealPlanPDFData = {
         id: mealPlan.id,
         name: mealPlan.name,
@@ -438,7 +459,7 @@ export default function MealPlanDetailPage() {
         calories_range: mealPlan.calories_range || undefined,
         status: mealPlan.status,
         created_at: mealPlan.created_at,
-        dayPlans: dayPlans
+        dayPlans: cleanedDayPlans
       }
 
       // Use the modern PDF generator for a beautiful, magazine-style layout
@@ -1256,20 +1277,21 @@ export default function MealPlanDetailPage() {
           meals: forPDF ? {
             // For PDF, extract meal names from AI-generated structure based on French meal names
             breakfast: Array.isArray(day.meals) 
-              ? day.meals.filter((m: any) => m.name === 'Petit-déjeuner' || m.name === 'breakfast').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              ? day.meals.filter((m: any) => m.name === 'Petit-déjeuner').map((m: any) => m.original_meal_name || m.description || 'Repas')
               : (day.meals?.breakfast || []),
             lunch: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.name === 'Déjeuner' || m.name === 'lunch').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              ? day.meals.filter((m: any) => m.name === 'Déjeuner').map((m: any) => m.original_meal_name || m.description || 'Repas')
               : (day.meals?.lunch || []),
             dinner: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.name === 'Dîner' || m.name === 'dinner').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              ? day.meals.filter((m: any) => m.name === 'Dîner').map((m: any) => m.original_meal_name || m.description || 'Repas')
               : (day.meals?.dinner || []),
             snacks: Array.isArray(day.meals)
               ? day.meals.filter((m: any) => 
-                  m.name.includes('Collation') || 
-                  m.name === 'snack' || 
-                  m.name === 'Pré-entraînement' || 
-                  m.name === 'Post-entraînement'
+                  m.name && (
+                    m.name.includes('Collation') || 
+                    m.name === 'Pré-entraînement' || 
+                    m.name === 'Post-entraînement'
+                  )
                 ).map((m: any) => m.original_meal_name || m.description || 'Repas')
               : (day.meals?.snacks || [])
           } : {
