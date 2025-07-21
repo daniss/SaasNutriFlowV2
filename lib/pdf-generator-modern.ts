@@ -705,23 +705,57 @@ export class ModernPDFGenerator {
           this.currentY += 6
         })
         
-        // Add recipe instructions if available
+        // Add recipe details if available
         console.log(`🐛 PDF: Checking recipe for food "${foodText}":`, { 
           hasRecipe: !!food.recipe, 
+          hasIngredients: !!(food.recipe && food.recipe.ingredients),
           hasInstructions: !!(food.recipe && food.recipe.instructions),
+          ingredientsCount: food.recipe?.ingredients?.length || 0,
           instructionsCount: food.recipe?.instructions?.length || 0,
           recipe: food.recipe 
         })
         
-        if (food.recipe && food.recipe.instructions && Array.isArray(food.recipe.instructions)) {
+        if (food.recipe) {
           this.currentY += 3
           
-          // Recipe instructions header
-          this.pdf.setFontSize(10)
-          this.pdf.setFont('helvetica', 'bold')
-          this.pdf.setTextColor(...this.hexToRgb(colors.primaryDark))
-          this.pdf.text('Instructions:', this.margin + 15, this.currentY + 3)
-          this.currentY += 8
+          // Add ingredients if available
+          if (food.recipe.ingredients && Array.isArray(food.recipe.ingredients) && food.recipe.ingredients.length > 0) {
+            // Recipe ingredients header
+            this.pdf.setFontSize(10)
+            this.pdf.setFont('helvetica', 'bold')
+            this.pdf.setTextColor(...this.hexToRgb(colors.primaryDark))
+            this.pdf.text('Ingrédients:', this.margin + 15, this.currentY + 3)
+            this.currentY += 8
+            
+            // Ingredients list
+            this.pdf.setFont('helvetica', 'normal')
+            this.pdf.setFontSize(9)
+            this.pdf.setTextColor(...this.hexToRgb(colors.textMuted))
+            
+            food.recipe.ingredients.forEach((ingredient: string) => {
+              if (ingredient.trim()) {
+                this.addNewPageIfNeeded(8)
+                
+                const ingredientLines = this.pdf.splitTextToSize(`• ${ingredient}`, this.contentWidth - 25)
+                
+                ingredientLines.forEach((line: string) => {
+                  this.pdf.text(line, this.margin + 20, this.currentY + 3)
+                  this.currentY += 5
+                })
+              }
+            })
+            
+            this.currentY += 3
+          }
+          
+          // Add instructions if available
+          if (food.recipe.instructions && Array.isArray(food.recipe.instructions) && food.recipe.instructions.length > 0) {
+            // Recipe instructions header
+            this.pdf.setFontSize(10)
+            this.pdf.setFont('helvetica', 'bold')
+            this.pdf.setTextColor(...this.hexToRgb(colors.primaryDark))
+            this.pdf.text('Instructions:', this.margin + 15, this.currentY + 3)
+            this.currentY += 8
           
           // Instructions steps
           this.pdf.setFont('helvetica', 'normal')
@@ -743,7 +777,8 @@ export class ModernPDFGenerator {
             }
           })
           
-          this.currentY += 5
+            this.currentY += 5
+          }
         }
         
         this.currentY += 4
