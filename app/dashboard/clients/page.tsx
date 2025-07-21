@@ -1176,13 +1176,6 @@ export default function ClientsPage() {
                                 Voir le profil
                               </Link>
                             </DropdownMenuItem>
-                            <DropdownMenuItem asChild className="rounded-md">
-                              <Link href={`/dashboard/clients/${client.id}?edit=true`}>
-                                <Edit className="mr-2 h-4 w-4" />
-                                Modifier
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuSeparator />
                             <DropdownMenuItem 
                               className="text-red-600 hover:bg-red-50 rounded-md"
                               onClick={() => {
