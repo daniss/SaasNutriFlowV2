@@ -1254,18 +1254,23 @@ export default function MealPlanDetailPage() {
           day: day.day || day.day_number || index + 1,
           date: day.date,
           meals: forPDF ? {
-            // For PDF, extract meal names from AI-generated structure
+            // For PDF, extract meal names from AI-generated structure based on French meal names
             breakfast: Array.isArray(day.meals) 
-              ? day.meals.filter((m: any) => m.name === 'breakfast').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              ? day.meals.filter((m: any) => m.name === 'Petit-déjeuner' || m.name === 'breakfast').map((m: any) => m.original_meal_name || m.description || 'Repas')
               : (day.meals?.breakfast || []),
             lunch: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.name === 'lunch').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              ? day.meals.filter((m: any) => m.name === 'Déjeuner' || m.name === 'lunch').map((m: any) => m.original_meal_name || m.description || 'Repas')
               : (day.meals?.lunch || []),
             dinner: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.name === 'dinner').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              ? day.meals.filter((m: any) => m.name === 'Dîner' || m.name === 'dinner').map((m: any) => m.original_meal_name || m.description || 'Repas')
               : (day.meals?.dinner || []),
             snacks: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.name === 'snack').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              ? day.meals.filter((m: any) => 
+                  m.name.includes('Collation') || 
+                  m.name === 'snack' || 
+                  m.name === 'Pré-entraînement' || 
+                  m.name === 'Post-entraînement'
+                ).map((m: any) => m.original_meal_name || m.description || 'Repas')
               : (day.meals?.snacks || [])
           } : {
             // For display, use normalized strings
@@ -1275,6 +1280,15 @@ export default function MealPlanDetailPage() {
             snacks: normalizeMealData(day.meals?.snacks)
           },
           notes: day.notes,
+          // Add timing and enabled properties for PDF generator
+          breakfastHour: Array.isArray(day.meals) ? day.meals.find((m: any) => m.name === 'Petit-déjeuner')?.time || '08:00' : '08:00',
+          lunchHour: Array.isArray(day.meals) ? day.meals.find((m: any) => m.name === 'Déjeuner')?.time || '12:00' : '12:00',
+          dinnerHour: Array.isArray(day.meals) ? day.meals.find((m: any) => m.name === 'Dîner')?.time || '19:00' : '19:00',
+          snacksHour: Array.isArray(day.meals) ? day.meals.find((m: any) => m.name.includes('Collation'))?.time || '16:00' : '16:00',
+          breakfastEnabled: Array.isArray(day.meals) ? day.meals.some((m: any) => m.name === 'Petit-déjeuner') : true,
+          lunchEnabled: Array.isArray(day.meals) ? day.meals.some((m: any) => m.name === 'Déjeuner') : true,
+          dinnerEnabled: Array.isArray(day.meals) ? day.meals.some((m: any) => m.name === 'Dîner') : true,
+          snacksEnabled: Array.isArray(day.meals) ? day.meals.some((m: any) => m.name.includes('Collation') || m.name === 'Pré-entraînement' || m.name === 'Post-entraînement') : false,
           // Combine original nutrition with selected foods nutrition
           totalCalories: (day.totalCalories || 0) + selectedFoodsNutrition.calories,
           totalProtein: (day.totalProtein || 0) + selectedFoodsNutrition.protein,
