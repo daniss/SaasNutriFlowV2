@@ -166,7 +166,11 @@ export default function GenerateMealPlanPage() {
     if (!user) return
 
     try {
-      const { data, error } = await supabase.from("clients").select("*").eq("dietitian_id", user.id).order("name")
+      // RLS policies will automatically filter clients for the authenticated user
+      const { data, error } = await supabase
+        .from("clients")
+        .select("*")
+        .order("name")
 
       if (error) throw error
       setClients(data || [])
