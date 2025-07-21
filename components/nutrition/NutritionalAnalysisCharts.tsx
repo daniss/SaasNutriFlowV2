@@ -221,10 +221,6 @@ export default function NutritionalAnalysisCharts({ mealPlan, className = "" }: 
                 <span className="hidden lg:inline">Équilibre</span>
                 <span className="lg:hidden">Balance</span>
               </TabsTrigger>
-              <TabsTrigger value="recommendations" className="text-xs sm:text-sm data-[state=active]:bg-background">
-                <span className="hidden lg:inline">Conseils</span>
-                <span className="lg:hidden">Tips</span>
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
@@ -412,85 +408,6 @@ export default function NutritionalAnalysisCharts({ mealPlan, className = "" }: 
               </div>
             </TabsContent>
 
-            <TabsContent value="recommendations" className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex gap-3">
-                  <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-blue-900">Analyse Professionnelle</h4>
-                    <div className="text-sm text-blue-800 space-y-1">
-                      <p><strong>Équilibre général:</strong> Le plan présente une répartition {Math.abs(averages.calories - targetMacros.dailyCalories) <= targetMacros.dailyCalories * 0.1 ? 'équilibrée' : 'à ajuster'} des macronutriments.</p>
-                      <p><strong>Apport protéique:</strong> {averages.protein >= Math.round((targetMacros.dailyCalories * targetMacros.proteinPercentage / 100) / 4) ? 'Satisfaisant' : 'Insuffisant'} pour les objectifs fixés.</p>
-                      <p><strong>Fibres alimentaires:</strong> {averages.fiber >= 25 ? 'Apport optimal' : 'Augmentation recommandée'} pour une meilleure santé digestive.</p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card className="border-green-200">
-                  <CardHeader>
-                    <CardTitle className="text-base text-green-900 flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4" />
-                      Recommandations Prioritaires
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="text-sm space-y-2">
-                      {averages.fiber < 25 && (
-                        <li className="flex items-start gap-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
-                          <span>Augmenter l'apport en fibres avec plus de légumes et céréales complètes</span>
-                        </li>
-                      )}
-                      {averages.protein < Math.round((targetMacros.dailyCalories * targetMacros.proteinPercentage / 100) / 4) && (
-                        <li className="flex items-start gap-2">
-                          <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
-                          <span>Optimiser l'apport protéique avec des sources variées</span>
-                        </li>
-                      )}
-                      <li className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
-                        <span>Maintenir la variété alimentaire pour couvrir tous les micronutriments</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-green-500 rounded-full mt-2 flex-shrink-0" />
-                        <span>Surveiller l'hydratation (2-2.5L d'eau par jour)</span>
-                      </li>
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-amber-200">
-                  <CardHeader>
-                    <CardTitle className="text-base text-amber-900 flex items-center gap-2">
-                      <AlertTriangle className="h-4 w-4" />
-                      Points de Vigilance
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="text-sm space-y-2">
-                      <li className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0" />
-                        <span>Surveiller les variations caloriques entre les jours</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0" />
-                        <span>Évaluer la tolérance et les préférences du client</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0" />
-                        <span>Ajuster selon l'activité physique et le métabolisme</span>
-                      </li>
-                      <li className="flex items-start gap-2">
-                        <div className="w-2 h-2 bg-amber-500 rounded-full mt-2 flex-shrink-0" />
-                        <span>Prévoir un suivi régulier pour les ajustements</span>
-                      </li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>

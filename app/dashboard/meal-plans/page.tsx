@@ -141,7 +141,7 @@ export default function MealPlansPage() {
         
         // Calculate stats
         const totalPlans = mealPlanData?.length || 0
-        const activePlans = mealPlanData?.filter(plan => plan.status === 'active').length || 0
+        const activePlans = mealPlanData?.filter(plan => plan.status.toLowerCase() === 'active').length || 0
         const uniqueClients = new Set(mealPlanData?.map(plan => plan.client_id)).size
         const thisMonth = new Date()
         thisMonth.setDate(1)
@@ -319,7 +319,7 @@ export default function MealPlansPage() {
                          plan.clients?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          plan.description?.toLowerCase().includes(searchTerm.toLowerCase())
     
-    const matchesStatus = filterStatus === "all" || plan.status === filterStatus
+    const matchesStatus = filterStatus === "all" || plan.status.toLowerCase() === filterStatus.toLowerCase()
 
     return matchesSearch && matchesStatus
   })

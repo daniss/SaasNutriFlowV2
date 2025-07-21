@@ -229,8 +229,7 @@ export class ModernPDFGenerator {
       { title: 'Objectifs nutritionnels', page: 4, icon: '•' },
       { title: 'Plans de repas quotidiens', page: 5, icon: '•' },
       { title: 'Liste de courses', page: 5 + plan.duration_days, icon: '•' },
-      { title: 'Conseils de préparation', page: 6 + plan.duration_days, icon: '•' },
-      { title: 'Suivi et notes', page: 7 + plan.duration_days, icon: '•' },
+      { title: 'Suivi et notes', page: 6 + plan.duration_days, icon: '•' },
     ]
 
     sections.forEach((section) => {
@@ -898,70 +897,6 @@ export class ModernPDFGenerator {
     })
   }
 
-  private drawPreparationTips() {
-    this.pdf.addPage()
-    this.currentY = 30
-
-    // Title
-    this.pdf.setFillColor(...this.hexToRgb(colors.secondary))
-    this.pdf.rect(this.margin, this.currentY - 10, 5, 25, 'F')
-    
-    this.pdf.setTextColor(...this.hexToRgb(colors.text))
-    this.pdf.setFontSize(24)
-    this.pdf.setFont('helvetica', 'bold')
-    this.pdf.text('Conseils de préparation', this.margin + 10, this.currentY)
-    this.currentY += 35
-
-    const tips = [
-      {
-        title: 'Batch Cooking',
-        content: 'Préparez plusieurs portions à l\'avance pour gagner du temps en semaine. Les plats mijotés et les légumes rôtis se conservent 3-4 jours au réfrigérateur.'
-      },
-      {
-        title: 'Conservation',
-        content: 'Congelez les portions supplémentaires dans des contenants individuels. Étiquetez avec la date et le contenu pour une meilleure organisation.'
-      },
-      {
-        title: 'Préparation des légumes',
-        content: 'Lavez et découpez vos légumes dès votre retour des courses. Conservez-les dans des contenants hermétiques pour des repas plus rapides.'
-      },
-      {
-        title: 'Optimisation du temps',
-        content: 'Utilisez les temps de cuisson pour préparer d\'autres éléments. Par exemple, pendant que le riz cuit, préparez votre salade ou vos légumes.'
-      },
-      {
-        title: 'Herbes et épices',
-        content: 'Variez les saveurs avec différentes herbes et épices. Cela permet de transformer un même ingrédient de base en plusieurs plats différents.'
-      }
-    ]
-
-    tips.forEach((tip) => {
-      this.addNewPageIfNeeded(40)
-      
-      // Tip box
-      this.pdf.setFillColor(...this.hexToRgb(colors.bgLight))
-      this.pdf.roundedRect(this.margin, this.currentY - 5, this.contentWidth, 35, 5, 5, 'F')
-      
-      // Title
-      this.pdf.setTextColor(...this.hexToRgb(colors.text))
-      this.pdf.setFontSize(13)
-      this.pdf.setFont('helvetica', 'bold')
-      this.pdf.text(tip.title, this.margin + 10, this.currentY + 5)
-      
-      // Content
-      this.pdf.setFontSize(11)
-      this.pdf.setFont('helvetica', 'normal')
-      this.pdf.setTextColor(...this.hexToRgb(colors.textMuted))
-      const contentLines = this.pdf.splitTextToSize(tip.content, this.contentWidth - 20)
-      let lineY = this.currentY + 13
-      contentLines.forEach((line: string) => {
-        this.pdf.text(line, this.margin + 10, lineY)
-        lineY += 5
-      })
-      
-      this.currentY += 40
-    })
-  }
 
   private drawNotesSection() {
     this.pdf.addPage()
@@ -1053,8 +988,6 @@ export class ModernPDFGenerator {
     // 5. Shopping list
     this.drawShoppingList(plan)
     
-    // 6. Preparation tips
-    this.drawPreparationTips()
     
     // 7. Notes section
     this.drawNotesSection()

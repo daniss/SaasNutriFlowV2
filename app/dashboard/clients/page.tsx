@@ -40,6 +40,7 @@ import {
   Activity,
   Calendar,
   ChevronRight,
+  Filter,
   Mail,
   Phone,
   Plus,
@@ -61,6 +62,7 @@ export default function ClientsPage() {
   const [loading, setLoading] = useState(true);
   const [emailValidationLoading, setEmailValidationLoading] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
+  const [filterStatus, setFilterStatus] = useState<string>("all");
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
   const [createClientAccount, setCreateClientAccount] = useState(false);
   const [currentStep, setCurrentStep] = useState(1);
@@ -470,9 +472,14 @@ export default function ClientsPage() {
   };
 
   const filteredClients = clients.filter(
-    (client) =>
-      client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      client.email.toLowerCase().includes(searchTerm.toLowerCase())
+    (client) => {
+      const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                           client.email.toLowerCase().includes(searchTerm.toLowerCase())
+      
+      const matchesStatus = filterStatus === "all" || client.status.toLowerCase() === filterStatus.toLowerCase()
+
+      return matchesSearch && matchesStatus
+    }
   );
 
   // Validation functions for new client
@@ -1066,6 +1073,25 @@ export default function ClientsPage() {
         }
       />
 
+      {/* Filters */}
+      <div className="px-6">
+        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-gray-500" />
+            <Select value={filterStatus} onValueChange={setFilterStatus}>
+              <SelectTrigger className="w-48">
+                <SelectValue placeholder="Filtrer par statut" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Tous les statuts</SelectItem>
+                <SelectItem value="active">Actif</SelectItem>
+                <SelectItem value="inactive">Inactif</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
+
       <div className="px-6 space-y-6">
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6 animate-slide-up animate-delay-100">
           <Card className="border-0 shadow-soft hover:shadow-soft-lg bg-gradient-to-br from-emerald-50/90 to-emerald-100/60 hover:from-emerald-50 hover:to-emerald-100/80 transition-all duration-300 group">
@@ -1097,7 +1123,7 @@ export default function ClientsPage() {
                     Objectifs actifs
                   </p>
                   <p className="text-2xl font-bold text-blue-900 tabular-nums">
-                    {clients.filter((c) => c.status === "active").length}
+                    {clients.filter((c) => c.status.toLowerCase() === "active").length}
                   </p>
                   <p className="text-blue-600 text-xs font-medium">En cours</p>
                 </div>

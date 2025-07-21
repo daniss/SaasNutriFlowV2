@@ -203,6 +203,7 @@ export default function MealPlanDetailPage() {
     name: "",
     client_id: ""
   })
+  const [clientHasAccount, setClientHasAccount] = useState<boolean>(false)
 
   useEffect(() => {
     if (user && params.id) {
@@ -315,6 +316,11 @@ export default function MealPlanDetailPage() {
         duration_days: data.duration_days?.toString() || "",
         status: data.status
       })
+
+      // Check if client has an active account
+      if (data.client_id) {
+        await checkClientAccount(data.client_id)
+      }
     } catch (error) {
       console.error("Unexpected error:", error)
       router.push("/dashboard/meal-plans")
@@ -337,6 +343,28 @@ export default function MealPlanDetailPage() {
       }
     } catch (error) {
       console.error("Error fetching clients:", error)
+    }
+  }
+
+  const checkClientAccount = async (clientId: string) => {
+    try {
+      const { data: clientAccount, error } = await supabase
+        .from("client_accounts")
+        .select("id, is_active")
+        .eq("client_id", clientId)
+        .eq("is_active", true)
+        .single()
+
+      if (error) {
+        // Client account doesn't exist or is not active
+        setClientHasAccount(false)
+        return
+      }
+
+      setClientHasAccount(!!clientAccount)
+    } catch (error) {
+      console.error("Error checking client account:", error)
+      setClientHasAccount(false)
     }
   }
 
@@ -1475,14 +1503,16 @@ export default function MealPlanDetailPage() {
               >
                 <Copy className="h-3 w-3" />
               </Button>
-              <Button 
-                variant="outline" 
-                size="sm" 
-                className="h-9 px-2"
-                onClick={handleSharePlan}
-              >
-                <Share2 className="h-3 w-3" />
-              </Button>
+              {clientHasAccount && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="h-9 px-2"
+                  onClick={handleSharePlan}
+                >
+                  <Share2 className="h-3 w-3" />
+                </Button>
+              )}
               <Button 
                 variant="outline" 
                 size="sm" 
@@ -1523,10 +1553,12 @@ export default function MealPlanDetailPage() {
                   <Copy className="mr-2 h-4 w-4" />
                   Dupliquer
                 </DropdownMenuItem>
-                <DropdownMenuItem onClick={handleSharePlan} className="rounded-md">
-                  <Share2 className="mr-2 h-4 w-4" />
-                  Partager le plan
-                </DropdownMenuItem>
+                {clientHasAccount && (
+                  <DropdownMenuItem onClick={handleSharePlan} className="rounded-md">
+                    <Share2 className="mr-2 h-4 w-4" />
+                    Partager le plan
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleExportPDF} className="rounded-md">
                   <Download className="mr-2 h-4 w-4" />
                   Exporter en PDF
@@ -1748,15 +1780,17 @@ export default function MealPlanDetailPage() {
                 <CardTitle>Actions rapides</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
-                <Button 
-                  variant="outline" 
-                  size="sm" 
-                  className="w-full justify-start text-xs"
-                  onClick={handleSharePlan}
-                >
-                  <Share2 className="mr-2 h-3 w-3" />
-                  Partager avec le client
-                </Button>
+                {clientHasAccount && (
+                  <Button 
+                    variant="outline" 
+                    size="sm" 
+                    className="w-full justify-start text-xs"
+                    onClick={handleSharePlan}
+                  >
+                    <Share2 className="mr-2 h-3 w-3" />
+                    Partager avec le client
+                  </Button>
+                )}
                 <Button variant="outline" size="sm" className="w-full justify-start text-xs" onClick={handleExportPDF}>
                   <Download className="mr-2 h-3 w-3" />
                   Exporter en PDF

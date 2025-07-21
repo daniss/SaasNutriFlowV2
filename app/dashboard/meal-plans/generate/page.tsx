@@ -18,9 +18,7 @@ import { Textarea } from "@/components/ui/textarea"
 import {
     Activity,
     AlertTriangle,
-    Award,
     BarChart3,
-    BookOpen,
     Calendar,
     Check,
     ChefHat,
@@ -1162,24 +1160,6 @@ export default function GenerateMealPlanPage() {
             </Card>
 
 
-            {/* Pro Tips */}
-            <Card className="border-0 shadow-lg bg-gradient-to-br from-amber-50 to-orange-50 border-amber-200/50">
-              <CardContent className="p-4">
-                <div className="flex items-start gap-3">
-                  <div className="w-8 h-8 bg-gradient-to-br from-amber-500 to-orange-500 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <Award className="h-4 w-4 text-white" />
-                  </div>
-                  <div className="space-y-2">
-                    <h3 className="font-semibold text-amber-900">Conseils pro</h3>
-                    <ul className="text-sm text-amber-800 space-y-1">
-                      <li>• Soyez précis sur les préférences et restrictions alimentaires</li>
-                      <li>• Mentionnez si vous préférez la préparation de repas ou des recettes rapides</li>
-                      <li>• Incluez les conditions de santé ou objectifs de fitness</li>
-                    </ul>
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
           </div>
           {/* Results Panel */}
           <div className="lg:col-span-2 xl:col-span-3 space-y-6">
@@ -1669,9 +1649,7 @@ export default function GenerateMealPlanPage() {
                   </CardContent>
                 </Card>
 
-                {/* Shopping List & Notes */}
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                  {/* Shopping List */}
+                {/* Shopping List */}
                   <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
                     <CardHeader>
                       <CardTitle className="flex items-center gap-2">
@@ -1710,32 +1688,6 @@ export default function GenerateMealPlanPage() {
                     </CardContent>
                   </Card>
 
-                  {/* Notes & Tips */}
-                  <Card className="border-0 shadow-lg bg-white/80 backdrop-blur-sm">
-                    <CardHeader>
-                      <CardTitle className="flex items-center gap-2">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-500 to-purple-600 rounded-lg flex items-center justify-center">
-                          <BookOpen className="h-4 w-4 text-white" />
-                        </div>
-                        Conseils et notes
-                      </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                      <ScrollArea className="h-64">
-                        <div className="space-y-3">
-                          {(generatedPlan.notes || []).map((note, index) => (
-                            <div key={index} className="flex items-start gap-3 p-3 bg-blue-50/50 rounded-lg">
-                              <div className="w-6 h-6 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0">
-                                <span className="text-xs font-medium text-blue-600">{index + 1}</span>
-                              </div>
-                              <p className="text-sm text-gray-700 leading-relaxed">{note}</p>
-                            </div>
-                          ))}
-                        </div>
-                      </ScrollArea>
-                    </CardContent>
-                  </Card>
-                </div>
               </div>
             )}
 

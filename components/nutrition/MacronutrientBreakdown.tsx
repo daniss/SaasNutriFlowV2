@@ -399,10 +399,6 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
                 <span className="hidden sm:inline">Analyse par jour</span>
                 <span className="sm:hidden">Par jour</span>
               </TabsTrigger>
-              <TabsTrigger value="recommendations" className="text-xs sm:text-sm data-[state=active]:bg-background">
-                <span className="hidden lg:inline">Recommandations</span>
-                <span className="lg:hidden">Conseils</span>
-              </TabsTrigger>
             </TabsList>
 
             <TabsContent value="overview" className="space-y-6">
@@ -558,64 +554,6 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
               </div>
             </TabsContent>
 
-
-            <TabsContent value="recommendations" className="space-y-4">
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                <div className="flex gap-3">
-                  <Info className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
-                  <div className="space-y-2">
-                    <h4 className="font-semibold text-blue-900">Recommandations nutritionnelles</h4>
-                    <ul className="text-sm text-blue-800 space-y-1">
-                      {actualPercentages.protein < targetMacros.proteinPercentage - 5 && (
-                        <li>• Augmentez l'apport en protéines pour atteindre l'objectif de {targetMacros.proteinPercentage}%</li>
-                      )}
-                      {actualPercentages.carbs > targetMacros.carbPercentage + 5 && (
-                        <li>• Réduisez légèrement les glucides pour respecter la cible de {targetMacros.carbPercentage}%</li>
-                      )}
-                      {actualPercentages.fat < targetMacros.fatPercentage - 5 && (
-                        <li>• Incluez plus de sources de lipides sains (avocat, noix, huile d'olive)</li>
-                      )}
-                      <li>• Maintenez une hydratation adéquate (2-2.5L d'eau par jour)</li>
-                      <li>• Privilégiez les aliments riches en fibres pour une meilleure satiété</li>
-                    </ul>
-                  </div>
-                </div>
-              </div>
-
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                <Card className="border-green-200 bg-green-50">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base text-green-900 flex items-center gap-2">
-                      <TrendingUp className="h-4 w-4" />
-                      Points forts
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="text-sm text-green-800 space-y-1">
-                      <li>• Apport calorique stable</li>
-                      <li>• Bonne répartition des repas</li>
-                      <li>• Variété alimentaire respectée</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-
-                <Card className="border-amber-200 bg-amber-50">
-                  <CardHeader className="pb-3">
-                    <CardTitle className="text-base text-amber-900 flex items-center gap-2">
-                      <AlertCircle className="h-4 w-4" />
-                      À améliorer
-                    </CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <ul className="text-sm text-amber-800 space-y-1">
-                      <li>• Équilibrer les macros quotidiens</li>
-                      <li>• Augmenter les fibres alimentaires</li>
-                      <li>• Réduire les variations caloriques</li>
-                    </ul>
-                  </CardContent>
-                </Card>
-              </div>
-            </TabsContent>
           </Tabs>
         </CardContent>
       </Card>
