@@ -22,13 +22,6 @@ import {
     DialogHeader,
     DialogTitle,
 } from "@/components/ui/dialog"
-import {
-    DropdownMenu,
-    DropdownMenuContent,
-    DropdownMenuItem,
-    DropdownMenuSeparator,
-    DropdownMenuTrigger
-} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -52,7 +45,6 @@ import {
     Edit,
     FileText,
     Heart,
-    MoreHorizontal,
     Share2,
     Target,
     Trash2,
@@ -1622,48 +1614,62 @@ export default function MealPlanDetailPage() {
               </Button>
             </div>
 
-            {/* Desktop: Keep dropdown menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-10 hidden sm:flex">
-                  <MoreHorizontal className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 rounded-lg">
-                <DropdownMenuItem onClick={() => setIsEditOpen(true)} className="rounded-md">
-                  <Edit className="mr-2 h-4 w-4" />
-                  Modifier le plan
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => {
+            {/* Desktop: Show direct buttons with labels */}
+            <div className="hidden sm:flex items-center gap-2">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsEditOpen(true)}
+                className="h-10"
+              >
+                <Edit className="mr-2 h-4 w-4" />
+                Modifier
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => {
                   setDuplicateForm({
                     name: `${mealPlan.name} (Copie)`,
                     client_id: mealPlan.client_id
                   })
                   setIsDuplicateOpen(true)
-                }} className="rounded-md">
-                  <Copy className="mr-2 h-4 w-4" />
-                  Dupliquer
-                </DropdownMenuItem>
-                {clientHasAccount && (
-                  <DropdownMenuItem onClick={handleSharePlan} className="rounded-md">
-                    <Share2 className="mr-2 h-4 w-4" />
-                    Partager le plan
-                  </DropdownMenuItem>
-                )}
-                <DropdownMenuItem onClick={handleExportPDF} className="rounded-md">
-                  <Download className="mr-2 h-4 w-4" />
-                  Exporter en PDF
-                </DropdownMenuItem>
-                <DropdownMenuSeparator />
-                <DropdownMenuItem 
-                  onClick={() => setIsDeleteOpen(true)}
-                  className="text-red-600 hover:bg-red-50 rounded-md"
+                }}
+                className="h-10"
+              >
+                <Copy className="mr-2 h-4 w-4" />
+                Dupliquer
+              </Button>
+              {clientHasAccount && (
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  onClick={handleSharePlan}
+                  className="h-10"
                 >
-                  <Trash2 className="mr-2 h-4 w-4" />
-                  Supprimer le plan
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+                  <Share2 className="mr-2 h-4 w-4" />
+                  Partager
+                </Button>
+              )}
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={handleExportPDF}
+                className="h-10"
+              >
+                <Download className="mr-2 h-4 w-4" />
+                PDF
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                onClick={() => setIsDeleteOpen(true)}
+                className="h-10 text-red-600 hover:bg-red-50 border-red-200 hover:border-red-300"
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                Supprimer
+              </Button>
+            </div>
           </div>
         </div>
 
