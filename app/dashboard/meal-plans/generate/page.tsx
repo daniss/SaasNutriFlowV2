@@ -469,15 +469,31 @@ export default function GenerateMealPlanPage() {
         if (!originalDay) continue
         
         for (const meal of day.meals) {
-          // Find matching recipe by meal name
-          const matchingRecipe = createdRecipes.find(recipe => 
-            recipe.name === meal.name || 
-            recipe.name.toLowerCase().trim() === meal.name.toLowerCase().trim()
-          )
+          // Find matching recipe by comparing with original AI meal data
+          // The dynamic meal uses meal.name as meal type, but we need to match with original meal.name
+          const originalMeal = originalDay.meals?.find((origMeal: any) => {
+            const mealTypeMap: Record<string, string> = {
+              breakfast: 'Petit-déjeuner',
+              lunch: 'Déjeuner', 
+              dinner: 'Dîner',
+              snack: 'Collation',
+              snacks: 'Collation'
+            }
+            const expectedType = mealTypeMap[origMeal.type] || origMeal.type
+            return expectedType === meal.name
+          })
           
-          if (matchingRecipe) {
-            // Simple: just add the recipe_id to the meal
-            meal.recipe_id = matchingRecipe.id
+          if (originalMeal) {
+            // Find matching recipe by original meal name (used during recipe creation)
+            const matchingRecipe = createdRecipes.find(recipe => 
+              recipe.name === originalMeal.name || 
+              recipe.name.toLowerCase().trim() === originalMeal.name.toLowerCase().trim()
+            )
+            
+            if (matchingRecipe) {
+              // Link the recipe to the meal
+              meal.recipe_id = matchingRecipe.id
+            }
           }
         }
       }
