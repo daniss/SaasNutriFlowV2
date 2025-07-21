@@ -1345,9 +1345,66 @@ export default function MealPlanDetailPage() {
             <Badge className={`${getStatusColor(mealPlan.status)} border font-medium px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm`}>
               {getStatusText(mealPlan.status)}
             </Badge>
+            
+            {/* Mobile: Show primary actions directly */}
+            <div className="flex sm:hidden gap-1">
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9 px-2"
+                onClick={() => setIsEditOpen(true)}
+              >
+                <Edit className="h-3 w-3" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9 px-2"
+                onClick={() => {
+                  setDuplicateForm({
+                    name: `${mealPlan.name} (Copie)`,
+                    client_id: mealPlan.client_id
+                  })
+                  setIsDuplicateOpen(true)
+                }}
+              >
+                <Copy className="h-3 w-3" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9 px-2"
+                onClick={handleSharePlan}
+              >
+                <Share2 className="h-3 w-3" />
+              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="outline" size="sm" className="h-9 px-2">
+                    <MoreHorizontal className="h-3 w-3" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48 rounded-lg">
+                  <DropdownMenuItem onClick={handleExportPDF} className="rounded-md">
+                    <Download className="mr-2 h-4 w-4" />
+                    Exporter en PDF
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem 
+                    onClick={() => setIsDeleteOpen(true)}
+                    className="text-red-600 hover:bg-red-50 rounded-md"
+                  >
+                    <Trash2 className="mr-2 h-4 w-4" />
+                    Supprimer le plan
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            </div>
+
+            {/* Desktop: Keep dropdown menu */}
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="outline" size="sm" className="h-10">
+                <Button variant="outline" size="sm" className="h-10 hidden sm:flex">
                   <MoreHorizontal className="h-4 w-4" />
                 </Button>
               </DropdownMenuTrigger>
