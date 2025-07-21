@@ -80,6 +80,11 @@ export default function GenerateMealPlanPage() {
   // Send to client loading states
   const [isSendingToClient, setIsSendingToClient] = useState(false)
   const [sendingProgress, setSendingProgress] = useState(0)
+  
+  // Safe progress setter that caps at 100%
+  const setSafeProgress = (progress: number) => {
+    setSendingProgress(Math.min(100, Math.max(0, progress)))
+  }
   const [sendingStep, setSendingStep] = useState("")
   const [planFeedback, setPlanFeedback] = useState<{ planId: string; rating: 'good' | 'bad' | null }>({ planId: '', rating: null })
   const [viewMode, setViewMode] = useState<'cards' | 'timeline' | 'compact' | 'nutrition'>('cards')
@@ -408,13 +413,13 @@ export default function GenerateMealPlanPage() {
     }
 
     setIsSendingToClient(true)
-    setSendingProgress(0)
+    setSafeProgress(0)
     setSendingStep("Préparation...")
 
     try {
       // Step 1: Get client information for notification
       setSendingStep("Récupération des informations client...")
-      setSendingProgress(10)
+      setSafeProgress(10)
       
       const { data: client, error: clientError } = await supabase
         .from("clients")
@@ -430,19 +435,22 @@ export default function GenerateMealPlanPage() {
       
       // Step 2: Save ingredients to database first
       setSendingStep("Création des ingrédients...")
-      setSendingProgress(20)
+      setSafeProgress(20)
+      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay for smooth UI
       
       const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
       
       // Step 3: Create recipes for each meal with full ingredient data
       setSendingStep("Création des recettes...")
-      setSendingProgress(40)
+      setSafeProgress(40)
+      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay for smooth UI
       
       const createdRecipes = await createRecipesFromMeals(generatedPlan.days, user!.id)
       
       // Step 4: Convert AI plan to dynamic format
       setSendingStep("Traitement du plan alimentaire...")
-      setSendingProgress(50)
+      setSafeProgress(50)
+      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay for smooth UI
       
       const dynamicPlan = convertAIToDynamicMealPlan({
         ...generatedPlan,
@@ -457,7 +465,8 @@ export default function GenerateMealPlanPage() {
 
       // Step 5: Link recipes to meals
       setSendingStep("Liaison des recettes aux repas...")
-      setSendingProgress(60)
+      setSafeProgress(60)
+      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay for smooth UI
       
       // IMPORTANT: Add created recipes to the dynamic plan structure
       // Map recipes to their corresponding meals using the ORIGINAL plan structure
@@ -511,7 +520,7 @@ export default function GenerateMealPlanPage() {
       
       // Step 6: Save the meal plan to database
       setSendingStep("Sauvegarde du plan alimentaire...")
-      setSendingProgress(75)
+      setSafeProgress(75)
       
       
       const { data: savedPlan, error: saveError } = await supabase
@@ -532,7 +541,7 @@ export default function GenerateMealPlanPage() {
       
       // Step 7: Send notification to client
       setSendingStep("Envoi de la notification au client...")
-      setSendingProgress(90)
+      setSafeProgress(90)
       
       try {
         const response = await fetch("/api/notifications/meal-plan", {
@@ -557,7 +566,7 @@ export default function GenerateMealPlanPage() {
       
       // Step 8: Complete
       setSendingStep("Finalisation...")
-      setSendingProgress(100)
+      setSafeProgress(100)
       
       toast({
         title: "Succès",
@@ -578,7 +587,7 @@ export default function GenerateMealPlanPage() {
     } finally {
       // Reset loading state
       setIsSendingToClient(false)
-      setSendingProgress(0)
+      setSafeProgress(0)
       setSendingStep("")
     }
   }
