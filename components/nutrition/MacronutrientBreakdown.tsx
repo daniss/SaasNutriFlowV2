@@ -17,6 +17,9 @@ import {
   BarChart3
 } from "lucide-react"
 import { type GeneratedMealPlan, type Meal, type DayPlan } from "@/lib/gemini"
+import { type DynamicMealPlan, isDynamicMealPlan } from "@/lib/meal-plan-types"
+import { supabase } from "@/lib/supabase"
+import { useState, useEffect } from "react"
 import NutritionalAnalysisCharts from "./NutritionalAnalysisCharts"
 
 interface SelectedFood {
@@ -32,7 +35,7 @@ interface SelectedFood {
 }
 
 interface MacronutrientBreakdownProps {
-  mealPlan: GeneratedMealPlan
+  mealPlan: GeneratedMealPlan | DynamicMealPlan
   selectedFoods?: Record<number, { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }>
   dynamicMealFoods?: Record<string, SelectedFood[]>
   className?: string
@@ -99,6 +102,84 @@ const safeNumber = (value: any): number => {
 }
 
 export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynamicMealFoods, className = "" }: MacronutrientBreakdownProps) {
+  // State for recipe nutrition data
+  const [recipeNutrition, setRecipeNutrition] = useState<MacroData>({ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 })
+  const [loadingRecipes, setLoadingRecipes] = useState(true)
+
+  // Fetch nutrition data from linked recipes
+  useEffect(() => {
+    const fetchRecipeNutrition = async () => {
+      if (!isDynamicMealPlan(mealPlan)) {
+        setLoadingRecipes(false)
+        return
+      }
+
+      try {
+        // Collect all recipe IDs from the meal plan
+        const recipeIds = new Set<string>()
+        mealPlan.days.forEach(day => {
+          day.meals.forEach(meal => {
+            if (meal.recipe_id) {
+              recipeIds.add(meal.recipe_id)
+            }
+          })
+        })
+
+        if (recipeIds.size === 0) {
+          setLoadingRecipes(false)
+          return
+        }
+
+        // Fetch recipe nutrition data
+        const { data: recipes, error } = await supabase
+          .from('recipes')
+          .select('id, calories_per_serving, protein_per_serving, carbs_per_serving, fat_per_serving, fiber_per_serving, servings')
+          .in('id', Array.from(recipeIds))
+
+        if (error) {
+          console.error('Error fetching recipe nutrition:', error)
+          setLoadingRecipes(false)
+          return
+        }
+
+        // Calculate total nutrition from all linked recipes
+        let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0, totalFiber = 0
+
+        mealPlan.days.forEach(day => {
+          day.meals.forEach(meal => {
+            if (meal.recipe_id) {
+              const recipe = recipes?.find(r => r.id === meal.recipe_id)
+              if (recipe) {
+                // Use per-serving values
+                totalCalories += safeNumber(recipe.calories_per_serving)
+                totalProtein += safeNumber(recipe.protein_per_serving)
+                totalCarbs += safeNumber(recipe.carbs_per_serving)
+                totalFat += safeNumber(recipe.fat_per_serving)
+                totalFiber += safeNumber(recipe.fiber_per_serving)
+              }
+            }
+          })
+        })
+
+        // Calculate daily averages from total recipe nutrition
+        const numDays = mealPlan.days.length || 1
+        setRecipeNutrition({
+          calories: Math.round(totalCalories / numDays),
+          protein: Math.round((totalProtein / numDays) * 10) / 10,
+          carbs: Math.round((totalCarbs / numDays) * 10) / 10,
+          fat: Math.round((totalFat / numDays) * 10) / 10,
+          fiber: Math.round((totalFiber / numDays) * 10) / 10
+        })
+
+      } catch (error) {
+        console.error('Error calculating recipe nutrition:', error)
+      } finally {
+        setLoadingRecipes(false)
+      }
+    }
+
+    fetchRecipeNutrition()
+  }, [mealPlan])
   // Function to calculate nutrition from selected foods
   const calculateSelectedFoodsNutrition = () => {
     let totalCalories = 0
@@ -162,16 +243,16 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
     avgFat: 0
   }
   
-  // Add selected foods nutrition to the base averages
+  // Add selected foods AND recipe nutrition to the base averages
   const dailyAverages = {
-    avgCalories: safeNumber(baseDailyAverages.avgCalories + selectedFoodsNutrition.calories),
-    avgProtein: safeNumber(baseDailyAverages.avgProtein + selectedFoodsNutrition.protein),
-    avgCarbs: safeNumber(baseDailyAverages.avgCarbs + selectedFoodsNutrition.carbs),
-    avgFat: safeNumber(baseDailyAverages.avgFat + selectedFoodsNutrition.fat)
+    avgCalories: safeNumber(baseDailyAverages.avgCalories + selectedFoodsNutrition.calories + recipeNutrition.calories),
+    avgProtein: safeNumber(baseDailyAverages.avgProtein + selectedFoodsNutrition.protein + recipeNutrition.protein),
+    avgCarbs: safeNumber(baseDailyAverages.avgCarbs + selectedFoodsNutrition.carbs + recipeNutrition.carbs),
+    avgFat: safeNumber(baseDailyAverages.avgFat + selectedFoodsNutrition.fat + recipeNutrition.fat)
   }
 
-  const targetMacros = mealPlan.nutritionalGoals || {
-    dailyCalories: 2000,
+  const targetMacros = (mealPlan as GeneratedMealPlan).nutritionalGoals || {
+    dailyCalories: dailyAverages.avgCalories || 2000, // Use actual average if no target set
     proteinPercentage: 25,
     carbPercentage: 45,
     fatPercentage: 30
@@ -240,15 +321,21 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
                 <span className="truncate">Analyse Nutritionnelle</span>
               </CardTitle>
               <CardDescription className="mt-1">
-                Moyennes sur {mealPlan.duration} jours
-                {selectedFoodsNutrition.calories > 0 && (
-                  <div className="flex flex-wrap items-center gap-2 mt-2">
+                Moyennes sur {(mealPlan as DynamicMealPlan).days?.length || (mealPlan as GeneratedMealPlan).duration || 1} jours
+                <div className="flex flex-wrap items-center gap-2 mt-2">
+                  {selectedFoodsNutrition.calories > 0 && (
                     <Badge variant="secondary" className="text-xs bg-emerald-100 text-emerald-700">
                       <Info className="h-3 w-3 mr-1 flex-shrink-0" />
-                      <span className="truncate">+{selectedFoodsNutrition.calories} kcal/jour ANSES-CIQUAL</span>
+                      <span className="truncate">+{selectedFoodsNutrition.calories} kcal ANSES-CIQUAL</span>
                     </Badge>
-                  </div>
-                )}
+                  )}
+                  {recipeNutrition.calories > 0 && (
+                    <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
+                      <Target className="h-3 w-3 mr-1 flex-shrink-0" />
+                      <span className="truncate">{loadingRecipes ? 'Calcul...' : `${recipeNutrition.calories} kcal recettes`}</span>
+                    </Badge>
+                  )}
+                </div>
               </CardDescription>
             </div>
             <Badge variant="outline" className="text-sm flex-shrink-0 w-fit">
