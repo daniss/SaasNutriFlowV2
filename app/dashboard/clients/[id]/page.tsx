@@ -123,6 +123,7 @@ export default function ClientDetailPage() {
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [hasClientAccount, setHasClientAccount] = useState<boolean | null>(null);
   const [sendingPassword, setSendingPassword] = useState(false);
+  const [passwordCooldown, setPasswordCooldown] = useState(0);
 
   // Form states
   const [editForm, setEditForm] = useState<Partial<Client>>({});
@@ -157,6 +158,30 @@ export default function ClientDetailPage() {
       fetchClientData();
     }
   }, [clientId]);
+
+  // Check password cooldown status
+  useEffect(() => {
+    if (!client) return;
+
+    const checkCooldown = () => {
+      const lastSentKey = `password_sent_${client.id}`;
+      const lastSent = localStorage.getItem(lastSentKey);
+      const now = Date.now();
+      const cooldownPeriod = 2 * 60 * 1000; // 2 minutes
+
+      if (lastSent && now - parseInt(lastSent) < cooldownPeriod) {
+        const remainingSeconds = Math.ceil((cooldownPeriod - (now - parseInt(lastSent))) / 1000);
+        setPasswordCooldown(remainingSeconds);
+      } else {
+        setPasswordCooldown(0);
+      }
+    };
+
+    checkCooldown();
+    const interval = setInterval(checkCooldown, 1000); // Update every second
+    
+    return () => clearInterval(interval);
+  }, [client]);
 
   const fetchClientData = async () => {
     try {
@@ -315,6 +340,18 @@ export default function ClientDetailPage() {
   const handleSendPassword = async () => {
     if (!client) return;
 
+    // Rate limiting check - prevent sending password more than once per 2 minutes per client
+    const lastSentKey = `password_sent_${client.id}`;
+    const lastSent = localStorage.getItem(lastSentKey);
+    const now = Date.now();
+    const cooldownPeriod = 2 * 60 * 1000; // 2 minutes in milliseconds
+
+    if (lastSent && now - parseInt(lastSent) < cooldownPeriod) {
+      const remainingTime = Math.ceil((cooldownPeriod - (now - parseInt(lastSent))) / 1000);
+      setError(`Veuillez attendre ${remainingTime} secondes avant de renvoyer le mot de passe.`);
+      return;
+    }
+
     try {
       setSendingPassword(true);
       setError("");
@@ -335,6 +372,10 @@ export default function ClientDetailPage() {
         throw new Error(data.error || "Erreur lors de l'envoi");
       }
 
+      // Record the timestamp for rate limiting
+      localStorage.setItem(lastSentKey, now.toString());
+      setPasswordCooldown(120); // Start 2-minute cooldown
+      
       setSuccess("Le mot de passe a été envoyé par email avec succès!");
       setTimeout(() => setSuccess(""), 5000);
     } catch (error) {
@@ -983,13 +1024,31 @@ export default function ClientDetailPage() {
             {client.status !== "inactive" && hasClientAccount === true && (
               <Button
                 onClick={handleSendPassword}
-                disabled={sendingPassword}
+                disabled={sendingPassword || passwordCooldown > 0}
                 variant="outline"
-                className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-md transition-all duration-200 flex-shrink-0"
+                className={`${
+                  passwordCooldown > 0 
+                    ? "bg-gray-50 text-gray-400 border-gray-200 cursor-not-allowed"
+                    : "bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 hover:border-blue-300"
+                } shadow-sm hover:shadow-md transition-all duration-200 flex-shrink-0`}
               >
                 <Send className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">{sendingPassword ? "Envoi..." : "Envoyer mot de passe"}</span>
-                <span className="sm:hidden">{sendingPassword ? "Envoi..." : "Mot de passe"}</span>
+                <span className="hidden sm:inline">
+                  {sendingPassword 
+                    ? "Envoi..." 
+                    : passwordCooldown > 0 
+                      ? `Attendre ${passwordCooldown}s` 
+                      : "Envoyer mot de passe"
+                  }
+                </span>
+                <span className="sm:hidden">
+                  {sendingPassword 
+                    ? "Envoi..." 
+                    : passwordCooldown > 0 
+                      ? `${passwordCooldown}s` 
+                      : "Mot de passe"
+                  }
+                </span>
               </Button>
             )}
             
