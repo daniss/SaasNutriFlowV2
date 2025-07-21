@@ -15,16 +15,39 @@ function generateTemporaryPassword(): string {
 
 export async function POST(request: NextRequest) {
   try {
+    console.log("=== SEND PASSWORD API DEBUG START ===")
+    console.log("Request headers:", Object.fromEntries(request.headers.entries()))
+    console.log("Request cookies:", request.cookies.getAll())
+    
     // Authentication check
     const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    console.log("Created Supabase client")
     
-    if (authError || !user) {
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    console.log("Auth result:", { user: user ? { id: user.id, email: user.email } : null, error: authError })
+    
+    if (authError) {
+      console.error("Auth error details:", {
+        message: authError.message,
+        status: authError.status,
+        name: authError.name,
+        stack: authError.stack
+      })
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Authentication failed: " + authError.message },
         { status: 401 }
       )
     }
+    
+    if (!user) {
+      console.error("No user found in session - full auth data:", { user, authError })
+      return NextResponse.json(
+        { error: "No user session found" },
+        { status: 401 }
+      )
+    }
+
+    console.log("Successfully authenticated user:", { id: user.id, email: user.email })
 
     // Get dietitian profile to verify user is a dietitian
     const { data: dietitian, error: dietitianError } = await supabase
@@ -33,12 +56,23 @@ export async function POST(request: NextRequest) {
       .eq('auth_user_id', user.id)
       .single()
 
-    if (dietitianError || !dietitian) {
+    if (dietitianError) {
+      console.error("Dietitian lookup error:", dietitianError)
       return NextResponse.json(
-        { error: "Unauthorized" },
+        { error: "Dietitian profile not found: " + dietitianError.message },
         { status: 401 }
       )
     }
+
+    if (!dietitian) {
+      console.error("No dietitian profile found for user:", user.id)
+      return NextResponse.json(
+        { error: "Dietitian profile not found" },
+        { status: 401 }
+      )
+    }
+
+    console.log("Found dietitian:", dietitian.id, dietitian.name)
 
     const body = await request.json()
     const { clientId } = body
@@ -50,6 +84,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    console.log("Looking up client:", clientId, "for dietitian:", dietitian.id)
+
     // Get client details and verify it belongs to this dietitian
     const { data: client, error: clientError } = await supabase
       .from('clients')
@@ -58,12 +94,23 @@ export async function POST(request: NextRequest) {
       .eq('dietitian_id', dietitian.id)
       .single()
 
-    if (clientError || !client) {
+    if (clientError) {
+      console.error("Client lookup error:", clientError)
+      return NextResponse.json(
+        { error: "Client lookup failed: " + clientError.message },
+        { status: 404 }
+      )
+    }
+
+    if (!client) {
+      console.error("Client not found for ID:", clientId)
       return NextResponse.json(
         { error: "Client not found" },
         { status: 404 }
       )
     }
+
+    console.log("Found client:", client.name, "status:", client.status)
 
     // Check if client is not inactive
     if (client.status === 'inactive') {
@@ -191,14 +238,17 @@ L'équipe NutriFlow
       )
     }
 
+    console.log("=== SEND PASSWORD API SUCCESS ===")
     return NextResponse.json({ 
       success: true,
       message: "Password sent successfully"
     })
   } catch (error) {
+    console.error("=== SEND PASSWORD API ERROR ===")
     console.error("Error in send password API:", error)
+    const errorMessage = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
-      { error: "Internal server error" },
+      { error: "Internal server error: " + errorMessage },
       { status: 500 }
     )
   }
