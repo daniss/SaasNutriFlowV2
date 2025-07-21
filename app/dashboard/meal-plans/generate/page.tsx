@@ -1015,22 +1015,40 @@ export default function GenerateMealPlanPage() {
           day: day.day,
           meals: {
             breakfast: Array.isArray(day.meals) 
-              ? day.meals.filter((m: any) => m.name === 'Petit-déjeuner').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              ? day.meals.filter((m: any) => m.type === 'breakfast').map((m: any) => ({
+                  name: m.name || 'Petit-déjeuner',
+                  calories: m.calories || 0,
+                  description: m.description,
+                  ingredients: m.ingredients || [],
+                  instructions: m.instructions || []
+                }))
               : (day.meals?.breakfast || []),
             lunch: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.name === 'Déjeuner').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              ? day.meals.filter((m: any) => m.type === 'lunch').map((m: any) => ({
+                  name: m.name || 'Déjeuner',
+                  calories: m.calories || 0,
+                  description: m.description,
+                  ingredients: m.ingredients || [],
+                  instructions: m.instructions || []
+                }))
               : (day.meals?.lunch || []),
             dinner: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.name === 'Dîner').map((m: any) => m.original_meal_name || m.description || 'Repas')
+              ? day.meals.filter((m: any) => m.type === 'dinner').map((m: any) => ({
+                  name: m.name || 'Dîner',
+                  calories: m.calories || 0,
+                  description: m.description,
+                  ingredients: m.ingredients || [],
+                  instructions: m.instructions || []
+                }))
               : (day.meals?.dinner || []),
             snacks: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => 
-                  m.name && (
-                    m.name.includes('Collation') || 
-                    m.name === 'Pré-entraînement' || 
-                    m.name === 'Post-entraînement'
-                  )
-                ).map((m: any) => m.original_meal_name || m.description || 'Repas')
+              ? day.meals.filter((m: any) => m.type === 'snack').map((m: any) => ({
+                  name: m.name || 'Collation',
+                  calories: m.calories || 0,
+                  description: m.description,
+                  ingredients: m.ingredients || [],
+                  instructions: m.instructions || []
+                }))
               : (day.meals?.snacks || [])
           },
           notes: day.notes
