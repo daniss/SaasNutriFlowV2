@@ -604,16 +604,6 @@ export class ModernPDFGenerator {
   }
 
   private drawDayPlan(dayPlan: any, dayIndex: number) {
-    // Debug: Log the day plan structure
-    console.log(`🐛 Drawing day ${dayPlan.day}:`, {
-      day: dayPlan.day,
-      mealsKeys: Object.keys(dayPlan.meals || {}),
-      meals: dayPlan.meals,
-      breakfastCount: dayPlan.meals?.breakfast?.length || 0,
-      lunchCount: dayPlan.meals?.lunch?.length || 0,
-      dinnerCount: dayPlan.meals?.dinner?.length || 0,
-      snacksCount: dayPlan.meals?.snacks?.length || 0
-    })
     
     this.addNewPageIfNeeded(250)
     
@@ -743,7 +733,6 @@ export class ModernPDFGenerator {
 
       // Food items
       const foods = dayPlan.meals[mealType.key]
-      console.log(`🐛 ${mealType.name} foods:`, foods)
       
       foods.forEach((food: any, index: number) => {
         this.addNewPageIfNeeded(30) // Increase space needed for recipes
@@ -768,17 +757,6 @@ export class ModernPDFGenerator {
         })
         
         // Add recipe details if available
-        console.log(`🐛 PDF: Checking recipe for food "${foodText}":`, { 
-          hasRecipe: !!food.recipe, 
-          hasIngredients: !!(food.recipe && food.recipe.ingredients),
-          hasInstructions: !!(food.recipe && food.recipe.instructions),
-          ingredientsCount: food.recipe?.ingredients?.length || 0,
-          instructionsCount: food.recipe?.instructions?.length || 0,
-          ingredientsTypes: food.recipe?.ingredients?.map((ing: any) => typeof ing) || [],
-          ingredientsSample: food.recipe?.ingredients?.slice(0, 2) || [], // Show first 2 ingredients for debugging
-          instructionsTypes: food.recipe?.instructions?.map((inst: any) => typeof inst) || [],
-          recipe: food.recipe 
-        })
         
         if (food.recipe) {
           this.currentY += 3
