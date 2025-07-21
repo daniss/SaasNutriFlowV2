@@ -426,27 +426,26 @@ export default function ClientsPage() {
             console.log("🔑 Temporary Password:", tempPassword);
             console.log("🔒 Password Hash:", hashedPassword);
             
-            // Send welcome email with account credentials
+            // Send password email with the account credentials we just created
             try {
-              const response = await fetch("/api/notifications/welcome", {
+              const response = await fetch("/api/notifications/send-password", {
                 method: "POST",
                 headers: {
                   "Content-Type": "application/json",
                 },
                 body: JSON.stringify({
-                  clientEmail: newClient.email,
-                  clientName: newClient.name,
-                  dietitianName: user.email?.split('@')[0] || "Votre nutritionniste",
-                  accountEmail: accountEmail,
-                  tempPassword: tempPassword,
+                  clientId: data.id,
+                  useExistingPassword: true, // Tell the API to not generate a new password
                 }),
               })
               
               if (!response.ok) {
-                console.error("Failed to send welcome notification")
+                console.error("Failed to send password notification")
+              } else {
+                console.log("📧 Password email sent successfully to new client")
               }
             } catch (notifError) {
-              console.error("Error sending welcome notification:", notifError)
+              console.error("Error sending password notification:", notifError)
             }
           }
         } catch (accountError) {

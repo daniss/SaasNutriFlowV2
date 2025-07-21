@@ -59,7 +59,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { clientId } = body
+    const { clientId, useExistingPassword } = body
 
     if (!clientId) {
       return NextResponse.json(
@@ -122,37 +122,72 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Generate new temporary password
-    const newTempPassword = generateTemporaryPassword()
-    const saltRounds = 12
-    const hashedPassword = await bcryptjs.hash(newTempPassword, saltRounds)
+    let newTempPassword: string
+    
+    if (useExistingPassword) {
+      // For new accounts, generate a fresh password but don't update the database
+      // (the password was already set during client creation)
+      newTempPassword = generateTemporaryPassword()
+      const saltRounds = 12
+      const hashedPassword = await bcryptjs.hash(newTempPassword, saltRounds)
 
-    // Update the client account with new password
-    const { error: updateError } = await supabase
-      .from('client_accounts')
-      .update({
-        password_hash: hashedPassword,
-        updated_at: new Date().toISOString()
-      })
-      .eq('client_id', clientId)
+      // Update the client account with the new password for sending
+      const { error: updateError } = await supabase
+        .from('client_accounts')
+        .update({
+          password_hash: hashedPassword,
+          updated_at: new Date().toISOString()
+        })
+        .eq('client_id', clientId)
 
-    if (updateError) {
-      console.error('Error updating client password:', updateError)
-      return NextResponse.json(
-        { error: "Failed to update password" },
-        { status: 500 }
-      )
+      if (updateError) {
+        console.error('Error updating client password:', updateError)
+        return NextResponse.json(
+          { error: "Failed to update password" },
+          { status: 500 }
+        )
+      }
+    } else {
+      // Generate new temporary password for existing accounts
+      newTempPassword = generateTemporaryPassword()
+      const saltRounds = 12
+      const hashedPassword = await bcryptjs.hash(newTempPassword, saltRounds)
+
+      // Update the client account with new password
+      const { error: updateError } = await supabase
+        .from('client_accounts')
+        .update({
+          password_hash: hashedPassword,
+          updated_at: new Date().toISOString()
+        })
+        .eq('client_id', clientId)
+
+      if (updateError) {
+        console.error('Error updating client password:', updateError)
+        return NextResponse.json(
+          { error: "Failed to update password" },
+          { status: 500 }
+        )
+      }
     }
 
-    // Prepare email content
+    // Prepare email content based on whether this is a new account or password reset
+    const isNewAccount = useExistingPassword
+    const emailSubject = isNewAccount ? 
+      "Bienvenue sur NutriFlow - Vos identifiants de connexion" : 
+      "Nouveau mot de passe - NutriFlow"
+    
     const emailContent = `
 Bonjour ${client.name},
 
-Votre nutritionniste ${dietitian.name} vous a envoyé un nouveau mot de passe pour accéder à votre portail client NutriFlow.
+${isNewAccount ? 
+  `Bienvenue ! Votre nutritionniste ${dietitian.name} a créé votre compte sur NutriFlow. Voici vos identifiants de connexion pour accéder à votre portail client.` :
+  `Votre nutritionniste ${dietitian.name} vous a envoyé un nouveau mot de passe pour accéder à votre portail client NutriFlow.`
+}
 
 Vos identifiants de connexion :
 📧 Email : ${clientAccount.email}
-🔑 Nouveau mot de passe : ${newTempPassword}
+🔑 ${isNewAccount ? 'Mot de passe' : 'Nouveau mot de passe'} : ${newTempPassword}
 
 Pour des raisons de sécurité, nous vous recommandons de changer votre mot de passe lors de votre prochaine connexion.
 
@@ -162,6 +197,8 @@ Connectez-vous à votre espace client pour consulter :
 • Vos messages avec votre nutritionniste
 • Vos factures et rendez-vous
 
+${isNewAccount ? 'Bienvenue dans votre parcours nutritionnel !' : ''}
+
 Cordialement,
 L'équipe NutriFlow
 `.trim()
@@ -170,9 +207,12 @@ L'équipe NutriFlow
 <html>
 <body style="font-family: Arial, sans-serif; color: #333; line-height: 1.6;">
   <div style="max-width: 600px; margin: 0 auto; padding: 20px;">
-    <h2 style="color: #10b981;">Nouveau mot de passe - NutriFlow</h2>
+    <h2 style="color: #10b981;">${emailSubject}</h2>
     <p>Bonjour ${client.name},</p>
-    <p>Votre nutritionniste <strong>${dietitian.name}</strong> vous a envoyé un nouveau mot de passe pour accéder à votre portail client NutriFlow.</p>
+    <p>${isNewAccount ? 
+      `Bienvenue ! Votre nutritionniste <strong>${dietitian.name}</strong> a créé votre compte sur NutriFlow. Voici vos identifiants de connexion pour accéder à votre portail client.` :
+      `Votre nutritionniste <strong>${dietitian.name}</strong> vous a envoyé un nouveau mot de passe pour accéder à votre portail client NutriFlow.`
+    }</p>
     
     <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 20px; margin: 20px 0;">
       <h3 style="color: #1f2937; margin-top: 0;">Vos identifiants de connexion :</h3>
@@ -180,7 +220,7 @@ L'équipe NutriFlow
         <strong>📧 Email :</strong> <code style="background-color: #e5e7eb; padding: 2px 6px; border-radius: 4px;">${clientAccount.email}</code>
       </p>
       <p style="margin: 10px 0;">
-        <strong>🔑 Nouveau mot de passe :</strong> <code style="background-color: #e5e7eb; padding: 2px 6px; border-radius: 4px;">${newTempPassword}</code>
+        <strong>🔑 ${isNewAccount ? 'Mot de passe' : 'Nouveau mot de passe'} :</strong> <code style="background-color: #e5e7eb; padding: 2px 6px; border-radius: 4px;">${newTempPassword}</code>
       </p>
     </div>
     
@@ -198,6 +238,8 @@ L'équipe NutriFlow
       </ul>
     </div>
 
+    ${isNewAccount ? '<p style="color: #059669; font-weight: bold;">Bienvenue dans votre parcours nutritionnel !</p>' : ''}
+
     <p>Cordialement,<br>L'équipe NutriFlow</p>
   </div>
 </body>
@@ -207,7 +249,7 @@ L'équipe NutriFlow
     // Send the notification
     const result = await smtpEmailService.sendEmail({
       to: clientAccount.email,
-      subject: "Nouveau mot de passe - NutriFlow",
+      subject: emailSubject,
       text: emailContent,
       html: emailHtml
     })
