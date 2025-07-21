@@ -5,6 +5,7 @@ export interface MealSlot {
   id: string
   name: string
   time: string
+  original_meal_name?: string // Preserve original AI meal name for recipe linking
   description?: string
   calories_target?: number | null
   enabled: boolean
@@ -304,6 +305,7 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
         meals.push({
           id: generateMealId(day.day, mealName),
           name: mealType, // Use the proper meal type for categorization
+          original_meal_name: meal.name, // PRESERVE original AI meal name for recipe linking
           time: time,
           description: formatMealDescription(meal),
           calories_target: meal.calories,
@@ -319,7 +321,8 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
         const mealName = meal.name || 'Petit-déjeuner'
         meals.push({
           id: generateMealId(day.day, mealName),
-          name: mealName,
+          name: 'Petit-déjeuner',
+          original_meal_name: meal.name, // PRESERVE original AI meal name
           time: '08:00',
           description: formatMealDescription(meal),
           calories_target: meal.calories,
@@ -334,7 +337,8 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
         const mealName = meal.name || 'Déjeuner'
         meals.push({
           id: generateMealId(day.day, mealName),
-          name: mealName,
+          name: 'Déjeuner',
+          original_meal_name: meal.name, // PRESERVE original AI meal name
           time: '12:00',
           description: formatMealDescription(meal),
           calories_target: meal.calories,
@@ -349,7 +353,8 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
         const mealName = meal.name || 'Dîner'
         meals.push({
           id: generateMealId(day.day, mealName),
-          name: mealName,
+          name: 'Dîner',
+          original_meal_name: meal.name, // PRESERVE original AI meal name
           time: '19:00',
           description: formatMealDescription(meal),
           calories_target: meal.calories,
@@ -365,7 +370,8 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
             const snackName = snack.name || (index === 0 ? 'Collation après-midi' : `Collation ${index + 1}`)
             meals.push({
               id: generateMealId(day.day, snackName),
-              name: snackName,
+              name: index === 0 ? 'Collation après-midi' : `Collation ${index + 1}`,
+              original_meal_name: snack.name, // PRESERVE original AI meal name
               time: index === 0 ? '16:00' : '21:00',
               description: formatMealDescription(snack),
               calories_target: snack.calories,
@@ -378,7 +384,8 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
           const snackName = day.meals.snacks.name || 'Collation après-midi'
           meals.push({
             id: generateMealId(day.day, snackName),
-            name: snackName,
+            name: 'Collation après-midi',
+            original_meal_name: day.meals.snacks.name, // PRESERVE original AI meal name
             time: '16:00',
             description: formatMealDescription(day.meals.snacks),
             calories_target: day.meals.snacks.calories,

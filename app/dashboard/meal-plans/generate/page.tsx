@@ -483,11 +483,14 @@ export default function GenerateMealPlanPage() {
             return expectedType === meal.name
           })
           
-          if (originalMeal) {
+          // Use the original_meal_name if available (new approach) or fallback to originalMeal lookup
+          const originalMealName = meal.original_meal_name || (originalMeal ? originalMeal.name : null)
+          
+          if (originalMealName) {
             // Find matching recipe by original meal name (used during recipe creation)
             const matchingRecipe = createdRecipes.find(recipe => 
-              recipe.name === originalMeal.name || 
-              recipe.name.toLowerCase().trim() === originalMeal.name.toLowerCase().trim()
+              recipe.name === originalMealName || 
+              recipe.name.toLowerCase().trim() === originalMealName.toLowerCase().trim()
             )
             
             if (matchingRecipe) {
