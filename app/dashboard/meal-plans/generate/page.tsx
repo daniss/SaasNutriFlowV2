@@ -79,6 +79,9 @@ export default function GenerateMealPlanPage() {
   const [isSendingToClient, setIsSendingToClient] = useState(false)
   const [sendingProgress, setSendingProgress] = useState(0)
   
+  // Save only loading state
+  const [isSavingOnly, setIsSavingOnly] = useState(false)
+  
   // Safe progress setter that caps at 100%
   const setSafeProgress = (progress: number) => {
     setSendingProgress(Math.min(100, Math.max(0, progress)))
@@ -530,7 +533,7 @@ export default function GenerateMealPlanPage() {
           description: generatedPlan.description,
           duration_days: generatedPlan.duration,
           plan_content: dynamicPlan,
-          status: "Active",
+          status: "active",
         })
         .select()
         .single()
@@ -587,6 +590,118 @@ export default function GenerateMealPlanPage() {
       setIsSendingToClient(false)
       setSafeProgress(0)
       setSendingStep("")
+    }
+  }
+
+  // Save plan without activating it for the client
+  const handleSaveOnly = async () => {
+    if (!generatedPlan || !formData.clientId) {
+      toast({
+        title: "Erreur",
+        description: "Veuillez sélectionner un client d'abord",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsSavingOnly(true)
+
+    try {
+      // Get client information
+      const { data: client, error: clientError } = await supabase
+        .from("clients")
+        .select("name, email")
+        .eq("id", formData.clientId)
+        .single()
+      
+      if (clientError) throw clientError
+      
+      // Save ingredients and create recipes (same as the original function)
+      const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
+      const createdRecipes = await createRecipesFromMeals(generatedPlan.days, user!.id)
+      
+      // Convert AI plan to dynamic format
+      const dynamicPlan = convertAIToDynamicMealPlan({
+        ...generatedPlan,
+        totalDays: generatedPlan.duration,
+        averageCaloriesPerDay: generatedPlan.targetCalories || generatedPlan.nutritionalGoals?.dailyCalories,
+        nutritionSummary: generatedPlan.nutritionSummary || {
+          protein: `${generatedPlan.nutritionalGoals?.proteinPercentage || 25}%`,
+          carbohydrates: `${generatedPlan.nutritionalGoals?.carbPercentage || 45}%`,
+          fat: `${generatedPlan.nutritionalGoals?.fatPercentage || 30}%`
+        }
+      })
+
+      // Link recipes to meals
+      const recipesByMeal = createRecipeToMealMapping(generatedPlan.days, createdRecipes)
+      
+      for (const day of dynamicPlan.days) {
+        const originalDay = generatedPlan.days.find(d => d.day === day.day)
+        if (!originalDay) continue
+        
+        for (const meal of day.meals) {
+          const originalMeal = originalDay.meals?.find((origMeal: any) => {
+            const mealTypeMap: Record<string, string> = {
+              breakfast: 'Petit-déjeuner',
+              lunch: 'Déjeuner', 
+              dinner: 'Dîner',
+              snack: 'Collation',
+              snacks: 'Collation'
+            }
+            const expectedType = mealTypeMap[origMeal.type] || origMeal.type
+            return expectedType === meal.name
+          })
+          
+          const originalMealName = meal.original_meal_name || (originalMeal ? originalMeal.name : null)
+          
+          if (originalMealName) {
+            const matchingRecipe = createdRecipes.find(recipe => 
+              recipe.name === originalMealName || 
+              recipe.name.toLowerCase().trim() === originalMealName.toLowerCase().trim()
+            )
+            
+            if (matchingRecipe) {
+              meal.recipe_id = matchingRecipe.id
+            }
+          }
+        }
+      }
+      
+      // Save the meal plan with "paused" status (not active)
+      const { data: savedPlan, error: saveError } = await supabase
+        .from("meal_plans")
+        .insert({
+          dietitian_id: user!.id,
+          client_id: formData.clientId,
+          name: formData.planName || generatedPlan.title,
+          description: generatedPlan.description,
+          duration_days: generatedPlan.duration,
+          plan_content: dynamicPlan,
+          status: "paused", // Different from Active - not visible to client
+        })
+        .select()
+        .single()
+      
+      if (saveError) throw saveError
+      
+      toast({
+        title: "Plan sauvegardé",
+        description: `Plan alimentaire sauvegardé avec succès! ${savedIngredients.length} ingrédient(s) et ${createdRecipes.length} recette(s) créés.`,
+      })
+      
+      // Redirect to meal plans dashboard
+      setTimeout(() => {
+        router.push("/dashboard/meal-plans")
+      }, 1000)
+    } catch (error) {
+      console.error("Error saving plan:", error)
+      toast({
+        title: "Erreur",
+        description: "Échec de la sauvegarde. Veuillez réessayer.",
+        variant: "destructive",
+      })
+    } finally {
+      setIsSavingOnly(false)
     }
   }
 
@@ -1262,9 +1377,29 @@ export default function GenerateMealPlanPage() {
                           <span className="sm:hidden">✨ PDF IA</span>
                         </Button>
                         <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={handleSaveOnly}
+                          disabled={!formData.clientId || isSavingOnly || isSendingToClient}
+                          className="bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border-gray-300 hover:border-gray-400 hover:scale-105 transition-all duration-200 disabled:hover:scale-100"
+                        >
+                          {isSavingOnly ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2" />
+                              Sauvegarde...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" />
+                              <span className="hidden sm:inline">Sauvegarder seulement</span>
+                              <span className="sm:hidden">Sauvegarder</span>
+                            </>
+                          )}
+                        </Button>
+                        <Button
                           size="sm"
                           onClick={handleSendToClient}
-                          disabled={!formData.clientId || isSendingToClient}
+                          disabled={!formData.clientId || isSendingToClient || isSavingOnly}
                           className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 transition-all duration-200 disabled:hover:scale-100"
                         >
                           {isSendingToClient ? (
@@ -1275,7 +1410,8 @@ export default function GenerateMealPlanPage() {
                           ) : (
                             <>
                               <Send className="h-4 w-4 mr-2" />
-                              Envoyer au client
+                              <span className="hidden sm:inline">Sauvegarder et Activer</span>
+                              <span className="sm:hidden">Activer</span>
                             </>
                           )}
                         </Button>
