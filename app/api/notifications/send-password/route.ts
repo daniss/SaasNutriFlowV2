@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { notificationService } from "@/lib/notification-service"
+import { smtpEmailService } from "@/lib/smtp-email-service"
 import { createClient } from "@/lib/supabase/server"
 import bcryptjs from 'bcryptjs'
 
@@ -177,12 +177,12 @@ L'équipe NutriFlow
 `
 
     // Send the notification
-    const result = await notificationService.sendEmail(
-      clientAccount.email,
-      "Nouveau mot de passe - NutriFlow",
-      emailContent,
-      emailHtml
-    )
+    const result = await smtpEmailService.sendEmail({
+      to: clientAccount.email,
+      subject: "Nouveau mot de passe - NutriFlow",
+      text: emailContent,
+      html: emailHtml
+    })
 
     if (!result) {
       return NextResponse.json(
