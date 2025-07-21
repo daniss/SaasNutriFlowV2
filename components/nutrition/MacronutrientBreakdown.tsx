@@ -244,12 +244,12 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
     avgFat: 0
   }
   
-  // Add selected foods AND recipe nutrition to the base averages
+  // Add only selected foods to the base averages (recipe nutrition is already in base data)
   const dailyAverages = {
-    avgCalories: safeNumber(baseDailyAverages.avgCalories + selectedFoodsNutrition.calories + recipeNutrition.calories),
-    avgProtein: safeNumber(baseDailyAverages.avgProtein + selectedFoodsNutrition.protein + recipeNutrition.protein),
-    avgCarbs: safeNumber(baseDailyAverages.avgCarbs + selectedFoodsNutrition.carbs + recipeNutrition.carbs),
-    avgFat: safeNumber(baseDailyAverages.avgFat + selectedFoodsNutrition.fat + recipeNutrition.fat)
+    avgCalories: safeNumber(baseDailyAverages.avgCalories + selectedFoodsNutrition.calories),
+    avgProtein: safeNumber(baseDailyAverages.avgProtein + selectedFoodsNutrition.protein),
+    avgCarbs: safeNumber(baseDailyAverages.avgCarbs + selectedFoodsNutrition.carbs),
+    avgFat: safeNumber(baseDailyAverages.avgFat + selectedFoodsNutrition.fat)
   }
 
   const targetMacros = (mealPlan as GeneratedMealPlan).nutritionalGoals || {
@@ -302,20 +302,9 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
   const dailyBreakdown = planDays.map((day: any) => {
     const selectedFoodsNutrition = calculateDayTotalNutrition(day.day)
     
-    // Calculate recipe nutrition for this specific day
+    // Note: Recipe nutrition is already included in the base meal plan data (day.totalProtein, etc.)
+    // Individual recipe nutrition should not be added separately here to avoid double counting
     let dayRecipeNutrition = { calories: 0, protein: 0, carbs: 0, fat: 0 }
-    if (isDynamicMealPlan(mealPlan as any)) {
-      day.meals?.forEach((meal: any) => {
-        if (meal.recipe_id && recipeNutrition.calories > 0) {
-          // Distribute recipe nutrition proportionally across days
-          const numDays = (mealPlan as DynamicMealPlan).days.length || 1
-          dayRecipeNutrition.calories += recipeNutrition.calories / numDays
-          dayRecipeNutrition.protein += recipeNutrition.protein / numDays
-          dayRecipeNutrition.carbs += recipeNutrition.carbs / numDays
-          dayRecipeNutrition.fat += recipeNutrition.fat / numDays
-        }
-      })
-    }
     
     return {
       day: day.day,
@@ -350,7 +339,7 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
                   {recipeNutrition.calories > 0 && (
                     <Badge variant="secondary" className="text-xs bg-blue-100 text-blue-700">
                       <Target className="h-3 w-3 mr-1 flex-shrink-0" />
-                      <span className="truncate">{loadingRecipes ? 'Calcul...' : `${recipeNutrition.calories} kcal recettes`}</span>
+                      <span className="truncate">{loadingRecipes ? 'Calcul...' : 'Recettes incluses'}</span>
                     </Badge>
                   )}
                 </div>

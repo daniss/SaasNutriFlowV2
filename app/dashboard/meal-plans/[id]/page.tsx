@@ -1151,22 +1151,8 @@ export default function MealPlanDetailPage() {
       }
     })
     
-    // Calculate from meals with recipe_id in the meal plan structure
-    if (mealPlan?.plan_content?.days && isDynamicMealPlan(mealPlan.plan_content)) {
-      const targetDay = mealPlan.plan_content.days.find(day => day.day === dayNumber)
-      if (targetDay?.meals) {
-        targetDay.meals.forEach(meal => {
-          // Include nutrition from calories_target if available (AI-generated meals often have this)
-          if (meal.calories_target) {
-            totalCalories += meal.calories_target
-            // Estimate macros using standard ratios for AI-generated meals
-            totalProtein += Math.round(meal.calories_target * 0.20 / 4) // 20% protein
-            totalCarbs += Math.round(meal.calories_target * 0.50 / 4)   // 50% carbs  
-            totalFat += Math.round(meal.calories_target * 0.30 / 9)     // 30% fat
-          }
-        })
-      }
-    }
+    // Note: AI meal nutrition (calories_target, etc.) is already included in the base meal plan data
+    // and should NOT be added here to avoid double counting
     
     return {
       calories: Math.round(totalCalories),
