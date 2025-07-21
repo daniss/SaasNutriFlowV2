@@ -119,6 +119,7 @@ export default function ClientDetailPage() {
   const [success, setSuccess] = useState("");
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
+  const [hasClientAccount, setHasClientAccount] = useState<boolean | null>(null);
 
   // Form states
   const [editForm, setEditForm] = useState<Partial<Client>>({});
@@ -194,6 +195,24 @@ export default function ClientDetailPage() {
         console.error("Notes data error:", notesError);
       }
       setNotes(notesData || []);
+
+      // Check if client has an active account
+      const { data: clientAccount, error: accountError } = await supabase
+        .from("client_accounts")
+        .select("id, is_active")
+        .eq("client_id", clientId)
+        .single();
+
+      if (accountError && accountError.code !== "PGRST116") {
+        // Error other than "not found" - client account doesn't exist
+        setHasClientAccount(false);
+      } else if (clientAccount) {
+        // Client account exists and is active/inactive
+        setHasClientAccount(clientAccount.is_active);
+      } else {
+        // No client account found
+        setHasClientAccount(false);
+      }
     } catch (err) {
       console.error("Error fetching client data:", err);
       setError("Impossible de charger les données du client");
@@ -202,13 +221,52 @@ export default function ClientDetailPage() {
     }
   };
 
-  const handleStatusChange = (value: string) => {
+  const handleStatusChange = async (value: string) => {
     if (value === "inactive" && editForm.status === "active") {
       // Show confirmation dialog when deactivating
       setPendingStatus(value);
       setShowDeactivateDialog(true);
+    } else if (value === "active" && editForm.status === "inactive") {
+      // Check if client account exists before allowing reactivation
+      try {
+        const { data: clientAccount, error } = await supabase
+          .from("client_accounts")
+          .select("id, is_active")
+          .eq("client_id", clientId)
+          .single();
+
+        if (error || !clientAccount) {
+          // No client account found - cannot reactivate
+          setError("Impossible de réactiver ce client. Vous devez d'abord recréer un compte client depuis la section de gestion des comptes.");
+          setTimeout(() => setError(""), 5000);
+          return;
+        }
+
+        if (!clientAccount.is_active) {
+          // Account exists but is deactivated - reactivate it
+          const { error: updateError } = await supabase
+            .from("client_accounts")
+            .update({ is_active: true })
+            .eq("client_id", clientId);
+
+          if (updateError) {
+            setError("Erreur lors de la réactivation du compte client");
+            return;
+          }
+
+          setSuccess("Client et compte réactivés avec succès!");
+          setTimeout(() => setSuccess(""), 3000);
+          setHasClientAccount(true);
+        }
+
+        // Proceed with status change
+        setEditForm({ ...editForm, status: value });
+      } catch (error) {
+        console.error("Error checking client account:", error);
+        setError("Erreur lors de la vérification du compte client");
+      }
     } else {
-      // Direct status change for activation or other changes
+      // Direct status change for other cases
       setEditForm({ ...editForm, status: value });
     }
   };
@@ -231,6 +289,7 @@ export default function ClientDetailPage() {
 
       setShowDeactivateDialog(false);
       setPendingStatus(null);
+      setHasClientAccount(false);
       
       // Show success message
       setSuccess("Client désactivé. Le compte client a été supprimé - vous devrez recréer un compte pour réactiver l'accès.");
@@ -1493,6 +1552,24 @@ export default function ClientDetailPage() {
                           <SelectItem value="inactive">Inactif</SelectItem>
                         </SelectContent>
                       </Select>
+                      {/* Account status indicator */}
+                      {editForm.status === "inactive" && (
+                        <div className="mt-2">
+                          {hasClientAccount === false ? (
+                            <Alert className="border-red-200 bg-red-50">
+                              <AlertDescription className="text-xs text-red-700">
+                                <strong>Aucun compte client :</strong> Pour réactiver ce client, vous devez d'abord recréer un compte client.
+                              </AlertDescription>
+                            </Alert>
+                          ) : hasClientAccount === true ? (
+                            <Alert className="border-amber-200 bg-amber-50">
+                              <AlertDescription className="text-xs text-amber-700">
+                                <strong>Compte désactivé :</strong> Le compte client existe mais est désactivé. La réactivation le rendra accessible.
+                              </AlertDescription>
+                            </Alert>
+                          ) : null}
+                        </div>
+                      )}
                     </div>
                   </div>
                 ) : (
