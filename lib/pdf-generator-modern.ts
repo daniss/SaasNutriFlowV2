@@ -684,7 +684,7 @@ export class ModernPDFGenerator {
       console.log(`🐛 ${mealType.name} foods:`, foods)
       
       foods.forEach((food: any, index: number) => {
-        this.addNewPageIfNeeded(15)
+        this.addNewPageIfNeeded(30) // Increase space needed for recipes
         
         // Alternating background
         if (index % 2 === 0) {
@@ -704,6 +704,47 @@ export class ModernPDFGenerator {
           this.pdf.text(`• ${line}`, this.margin + 10, this.currentY + 3)
           this.currentY += 6
         })
+        
+        // Add recipe instructions if available
+        console.log(`🐛 PDF: Checking recipe for food "${foodText}":`, { 
+          hasRecipe: !!food.recipe, 
+          hasInstructions: !!(food.recipe && food.recipe.instructions),
+          instructionsCount: food.recipe?.instructions?.length || 0,
+          recipe: food.recipe 
+        })
+        
+        if (food.recipe && food.recipe.instructions && Array.isArray(food.recipe.instructions)) {
+          this.currentY += 3
+          
+          // Recipe instructions header
+          this.pdf.setFontSize(10)
+          this.pdf.setFont('helvetica', 'bold')
+          this.pdf.setTextColor(...this.hexToRgb(colors.primaryDark))
+          this.pdf.text('Instructions:', this.margin + 15, this.currentY + 3)
+          this.currentY += 8
+          
+          // Instructions steps
+          this.pdf.setFont('helvetica', 'normal')
+          this.pdf.setFontSize(9)
+          this.pdf.setTextColor(...this.hexToRgb(colors.textMuted))
+          
+          food.recipe.instructions.forEach((instruction: string, stepIndex: number) => {
+            if (instruction.trim()) {
+              this.addNewPageIfNeeded(12)
+              
+              const stepText = `${stepIndex + 1}. ${instruction}`
+              const stepLines = this.pdf.splitTextToSize(stepText, this.contentWidth - 25)
+              
+              stepLines.forEach((line: string, lineIndex: number) => {
+                const indent = lineIndex === 0 ? 20 : 25 // Indent continuation lines more
+                this.pdf.text(line, this.margin + indent, this.currentY + 3)
+                this.currentY += 5
+              })
+            }
+          })
+          
+          this.currentY += 5
+        }
         
         this.currentY += 4
       })

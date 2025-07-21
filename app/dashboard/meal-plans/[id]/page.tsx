@@ -1383,7 +1383,8 @@ export default function MealPlanDetailPage() {
               }).map((m: any) => ({
                 name: m.original_meal_name || m.name || m.description || 'Petit-déjeuner',
                 calories: m.calories || 0,
-                description: m.description
+                description: m.description,
+                recipe: dynamicMealRecipes[m.id]?.[0] || null // Include recipe data if available
               })) || []
               
               const lunchMeals = day.meals?.filter((m: any) => {
@@ -1403,7 +1404,8 @@ export default function MealPlanDetailPage() {
               }).map((m: any) => ({
                 name: m.original_meal_name || m.name || m.description || 'Déjeuner',
                 calories: m.calories || 0,
-                description: m.description
+                description: m.description,
+                recipe: dynamicMealRecipes[m.id]?.[0] || null // Include recipe data if available
               })) || []
               
               const dinnerMeals = day.meals?.filter((m: any) => {
@@ -1422,7 +1424,8 @@ export default function MealPlanDetailPage() {
               }).map((m: any) => ({
                 name: m.original_meal_name || m.name || m.description || 'Dîner',
                 calories: m.calories || 0,
-                description: m.description
+                description: m.description,
+                recipe: dynamicMealRecipes[m.id]?.[0] || null // Include recipe data if available
               })) || []
               
               const snackMeals = day.meals?.filter((m: any) => {
@@ -1444,7 +1447,8 @@ export default function MealPlanDetailPage() {
               }).map((m: any) => ({
                 name: m.original_meal_name || m.name || m.description || 'Collation',
                 calories: m.calories || 0,
-                description: m.description
+                description: m.description,
+                recipe: dynamicMealRecipes[m.id]?.[0] || null // Include recipe data if available
               })) || []
 
               // Log filtering results
@@ -1469,7 +1473,8 @@ export default function MealPlanDetailPage() {
                 const allMeals = day.meals.map((m: any) => ({
                   name: m.name || m.description || 'Repas',
                   calories: m.calories || 0,
-                  description: m.description
+                  description: m.description,
+                  recipe: dynamicMealRecipes[m.id]?.[0] || null // Include recipe data if available
                 }))
                 
                 // Distribute meals across the day
