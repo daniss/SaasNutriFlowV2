@@ -1334,49 +1334,101 @@ export default function MealPlanDetailPage() {
         
         // Check if this is a dynamic meal plan (meals is an array) or legacy format
         const isDynamicMeals = Array.isArray(day.meals)
-        console.log(`🐛 Processing day ${day.day || index + 1}:`, { isDynamicMeals, mealsLength: day.meals?.length })
+        console.log(`🐛 Processing day ${day.day || index + 1}:`, { 
+          isDynamicMeals, 
+          mealsLength: day.meals?.length,
+          firstMeal: day.meals?.[0],
+          mealNames: isDynamicMeals ? day.meals?.map((m: any) => ({ name: m.name, type: m.type })) : Object.keys(day.meals || {}),
+          rawMeals: day.meals
+        })
         
         return {
           day: day.day || day.day_number || index + 1,
           date: day.date,
           meals: forPDF ? (
-            isDynamicMeals ? {
+            isDynamicMeals ? (() => {
               // For dynamic meal plans - convert meals array to structured format
               // Extract meals and preserve them as objects for PDF
-              breakfast: day.meals?.filter((m: any) => {
+              const breakfastMeals = day.meals?.filter((m: any) => {
                 const name = (m.name || '').toLowerCase()
-                return name === 'petit-déjeuner' || name.includes('petit-déjeuner') || name.includes('breakfast')
+                const type = (m.type || '').toLowerCase()
+                // More flexible matching for breakfast
+                return name === 'petit-déjeuner' || name.includes('petit-déjeuner') || name.includes('breakfast') ||
+                       type === 'breakfast' || type === 'petit-déjeuner' ||
+                       name.includes('petit déjeuner') || name.includes('matin')
               }).map((m: any) => ({
                 name: m.name || m.description || 'Petit-déjeuner',
                 calories: m.calories || 0,
                 description: m.description
-              })) || [],
-              lunch: day.meals?.filter((m: any) => {
+              })) || []
+              
+              const lunchMeals = day.meals?.filter((m: any) => {
                 const name = (m.name || '').toLowerCase()
-                return (name === 'déjeuner' || (name.includes('déjeuner') && !name.includes('petit')) || name.includes('lunch'))
+                const type = (m.type || '').toLowerCase()
+                // More flexible matching for lunch
+                return (name === 'déjeuner' || (name.includes('déjeuner') && !name.includes('petit')) || name.includes('lunch')) ||
+                       type === 'lunch' || type === 'déjeuner' ||
+                       name.includes('midi') || name.includes('dejeuner')
               }).map((m: any) => ({
                 name: m.name || m.description || 'Déjeuner',
                 calories: m.calories || 0,
                 description: m.description
-              })) || [],
-              dinner: day.meals?.filter((m: any) => {
+              })) || []
+              
+              const dinnerMeals = day.meals?.filter((m: any) => {
                 const name = (m.name || '').toLowerCase()
-                return name === 'dîner' || name.includes('dîner') || name.includes('dinner')
+                const type = (m.type || '').toLowerCase()
+                // More flexible matching for dinner
+                return name === 'dîner' || name.includes('dîner') || name.includes('dinner') ||
+                       type === 'dinner' || type === 'dîner' ||
+                       name.includes('diner') || name.includes('soir')
               }).map((m: any) => ({
                 name: m.name || m.description || 'Dîner',
                 calories: m.calories || 0,
                 description: m.description
-              })) || [],
-              snacks: day.meals?.filter((m: any) => {
+              })) || []
+              
+              const snackMeals = day.meals?.filter((m: any) => {
                 const name = (m.name || '').toLowerCase()
+                const type = (m.type || '').toLowerCase()
+                // More flexible matching for snacks
                 return name.includes('collation') || name.includes('snack') || 
-                       name === 'pré-entraînement' || name === 'post-entraînement'
+                       name === 'pré-entraînement' || name === 'post-entraînement' ||
+                       type === 'snack' || type === 'collation' ||
+                       name.includes('encas') || name.includes('goûter')
               }).map((m: any) => ({
                 name: m.name || m.description || 'Collation',
                 calories: m.calories || 0,
                 description: m.description
               })) || []
-            } : {
+
+              // Fallback: if no meals were categorized, distribute them evenly
+              const totalFiltered = breakfastMeals.length + lunchMeals.length + dinnerMeals.length + snackMeals.length
+              if (totalFiltered === 0 && day.meals?.length > 0) {
+                console.log('🐛 No meals categorized, using fallback distribution')
+                const allMeals = day.meals.map((m: any) => ({
+                  name: m.name || m.description || 'Repas',
+                  calories: m.calories || 0,
+                  description: m.description
+                }))
+                
+                // Distribute meals across the day
+                const mealsPerCategory = Math.ceil(allMeals.length / 4)
+                return {
+                  breakfast: allMeals.slice(0, mealsPerCategory),
+                  lunch: allMeals.slice(mealsPerCategory, mealsPerCategory * 2),
+                  dinner: allMeals.slice(mealsPerCategory * 2, mealsPerCategory * 3),
+                  snacks: allMeals.slice(mealsPerCategory * 3)
+                }
+              }
+
+              return {
+                breakfast: breakfastMeals,
+                lunch: lunchMeals,
+                dinner: dinnerMeals,
+                snacks: snackMeals
+              }
+            })() : {
               // For legacy format - ensure objects for PDF
               breakfast: day.meals?.breakfast || [],
               lunch: day.meals?.lunch || [],
@@ -1392,14 +1444,26 @@ export default function MealPlanDetailPage() {
           },
           notes: day.notes,
           // Add timing and enabled properties for PDF generator
-          breakfastHour: Array.isArray(day.meals) ? day.meals.find((m: any) => m.name === 'Petit-déjeuner')?.time || '08:00' : '08:00',
-          lunchHour: Array.isArray(day.meals) ? day.meals.find((m: any) => m.name === 'Déjeuner')?.time || '12:00' : '12:00',
-          dinnerHour: Array.isArray(day.meals) ? day.meals.find((m: any) => m.name === 'Dîner')?.time || '19:00' : '19:00',
-          snacksHour: Array.isArray(day.meals) ? day.meals.find((m: any) => m.name.includes('Collation'))?.time || '16:00' : '16:00',
-          breakfastEnabled: Array.isArray(day.meals) ? day.meals.some((m: any) => m.name === 'Petit-déjeuner') : true,
-          lunchEnabled: Array.isArray(day.meals) ? day.meals.some((m: any) => m.name === 'Déjeuner') : true,
-          dinnerEnabled: Array.isArray(day.meals) ? day.meals.some((m: any) => m.name === 'Dîner') : true,
-          snacksEnabled: Array.isArray(day.meals) ? day.meals.some((m: any) => m.name.includes('Collation') || m.name === 'Pré-entraînement' || m.name === 'Post-entraînement') : false,
+          breakfastHour: Array.isArray(day.meals) ? day.meals.find((m: any) => {
+            const name = (m.name || '').toLowerCase()
+            return name === 'petit-déjeuner' || name.includes('petit-déjeuner') || name.includes('breakfast') || name.includes('matin')
+          })?.time || '08:00' : '08:00',
+          lunchHour: Array.isArray(day.meals) ? day.meals.find((m: any) => {
+            const name = (m.name || '').toLowerCase()
+            return name === 'déjeuner' || (name.includes('déjeuner') && !name.includes('petit')) || name.includes('lunch') || name.includes('midi')
+          })?.time || '12:00' : '12:00',
+          dinnerHour: Array.isArray(day.meals) ? day.meals.find((m: any) => {
+            const name = (m.name || '').toLowerCase()
+            return name === 'dîner' || name.includes('dîner') || name.includes('dinner') || name.includes('soir')
+          })?.time || '19:00' : '19:00',
+          snacksHour: Array.isArray(day.meals) ? day.meals.find((m: any) => {
+            const name = (m.name || '').toLowerCase()
+            return name.includes('collation') || name.includes('snack') || name.includes('encas') || name.includes('goûter')
+          })?.time || '16:00' : '16:00',
+          breakfastEnabled: Array.isArray(day.meals) ? day.meals.length > 0 : true, // If we have meals, assume breakfast is enabled
+          lunchEnabled: Array.isArray(day.meals) ? day.meals.length > 0 : true, // If we have meals, assume lunch is enabled
+          dinnerEnabled: Array.isArray(day.meals) ? day.meals.length > 0 : true, // If we have meals, assume dinner is enabled
+          snacksEnabled: Array.isArray(day.meals) ? day.meals.length > 3 : false, // Enable snacks only if we have more than 3 meals
           // Combine original nutrition with selected foods nutrition
           totalCalories: (day.totalCalories || 0) + selectedFoodsNutrition.calories,
           totalProtein: (day.totalProtein || 0) + selectedFoodsNutrition.protein,
