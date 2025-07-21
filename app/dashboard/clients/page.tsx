@@ -80,6 +80,8 @@ export default function ClientsPage() {
     goal: "",
     tags: [] as string[], // Dietary restrictions and preferences
   });
+  
+  const [customTag, setCustomTag] = useState("");
 
   // Form validation states for new client
   const [clientValidation, setClientValidation] = useState({
@@ -164,10 +166,10 @@ export default function ClientsPage() {
     if (!user) return;
 
     try {
+      // RLS policies will automatically filter clients for the authenticated user
       const { data, error } = await supabase
         .from("clients")
         .select("*")
-        .eq("dietitian_id", user.id)
         .order("created_at", { ascending: false });
 
       if (error) {
@@ -323,8 +325,19 @@ export default function ClientsPage() {
     }
 
     try {
+      // First, get the dietitian ID from the dietitians table
+      const { data: dietitian, error: dietitianError } = await supabase
+        .from("dietitians")
+        .select("id")
+        .eq("auth_user_id", user.id)
+        .single();
+
+      if (dietitianError || !dietitian) {
+        throw new Error("Dietitian profile not found");
+      }
+
       const clientData = {
-        dietitian_id: user.id,
+        dietitian_id: dietitian.id,
         name: newClient.name,
         email: newClient.email,
         phone: newClient.phone || null,
@@ -996,6 +1009,51 @@ export default function ClientsPage() {
                           </div>
                         </div>
                       )}
+                      
+                      {/* Custom Tag Input */}
+                      <div className="mt-4 space-y-2">
+                        <Label className="text-xs font-medium text-gray-600">
+                          Ajouter une restriction personnalisée
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="text"
+                            placeholder="Ex: Faible en FODMAP, Sans viande rouge..."
+                            value={customTag}
+                            onChange={(e) => setCustomTag(e.target.value)}
+                            className="flex-1 text-sm"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (customTag.trim() && !newClient.tags.includes(customTag.trim())) {
+                                  setNewClient({ 
+                                    ...newClient, 
+                                    tags: [...newClient.tags, customTag.trim()] 
+                                  });
+                                  setCustomTag("");
+                                }
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (customTag.trim() && !newClient.tags.includes(customTag.trim())) {
+                                setNewClient({ 
+                                  ...newClient, 
+                                  tags: [...newClient.tags, customTag.trim()] 
+                                });
+                                setCustomTag("");
+                              }
+                            }}
+                            className="px-3 py-1 text-xs"
+                          >
+                            Ajouter
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                   </div>
                 )}
