@@ -426,7 +426,7 @@ export default function MealPlanDetailPage() {
     if (!mealPlan) return
 
     try {
-      const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7)
+      const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7, true) // forPDF = true
       
       const pdfData: MealPlanPDFData = {
         id: mealPlan.id,
@@ -562,7 +562,7 @@ export default function MealPlanDetailPage() {
       }
 
       // First generate and download the PDF
-      const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7)
+      const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7, true) // forPDF = true
       const pdfData: MealPlanPDFData = {
         id: mealPlan.id,
         name: mealPlan.name,
@@ -1176,7 +1176,7 @@ export default function MealPlanDetailPage() {
     }
   }
 
-  const getRealMealPlanDays = (duration: number): DayPlan[] => {
+  const getRealMealPlanDays = (duration: number, forPDF: boolean = false): DayPlan[] => {
     
     // First try to get data from plan_content
     if (mealPlan?.plan_content?.days && Array.isArray(mealPlan.plan_content.days)) {
@@ -1186,7 +1186,14 @@ export default function MealPlanDetailPage() {
         return {
           ...day,
           day: day.day || index + 1,
-          meals: {
+          meals: forPDF ? {
+            // For PDF, preserve original meal structure with objects
+            breakfast: day.meals?.breakfast || [],
+            lunch: day.meals?.lunch || [],
+            dinner: day.meals?.dinner || [],
+            snacks: day.meals?.snacks || []
+          } : {
+            // For display, use normalized strings
             breakfast: normalizeMealData(day.meals?.breakfast),
             lunch: normalizeMealData(day.meals?.lunch),
             dinner: normalizeMealData(day.meals?.dinner),
@@ -1210,7 +1217,14 @@ export default function MealPlanDetailPage() {
         return {
           day: day.day || day.day_number || index + 1,
           date: day.date,
-          meals: {
+          meals: forPDF ? {
+            // For PDF, preserve original meal structure
+            breakfast: day.meals?.breakfast || [],
+            lunch: day.meals?.lunch || [],
+            dinner: day.meals?.dinner || [],
+            snacks: day.meals?.snacks || []
+          } : {
+            // For display, use normalized strings
             breakfast: normalizeMealData(day.meals?.breakfast),
             lunch: normalizeMealData(day.meals?.lunch), 
             dinner: normalizeMealData(day.meals?.dinner),
@@ -1314,7 +1328,7 @@ export default function MealPlanDetailPage() {
   }
 
   const IconComponent = getPlanTypeIcon(mealPlan.name)
-  const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7)
+  const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7, false) // forPDF = false for display
 
   return (
     <div className="space-y-6">

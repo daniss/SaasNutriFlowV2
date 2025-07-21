@@ -264,12 +264,12 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
   const targetCarbsGrams = Math.round((targetMacros.dailyCalories * (targetMacros.carbPercentage / 100)) / 4)
   const targetFatGrams = Math.round((targetMacros.dailyCalories * (targetMacros.fatPercentage / 100)) / 9)
 
-  // Calculate actual percentages
+  // Calculate actual percentages using the total combined calories
   const actualPercentages = calculateMacroPercentages({
     protein: dailyAverages.avgProtein,
     carbs: dailyAverages.avgCarbs,
     fat: dailyAverages.avgFat,
-    calories: dailyAverages.avgCalories
+    calories: dailyAverages.avgCalories // This already includes all sources
   })
 
   // Helper function to calculate nutrition for a specific day including selected foods
@@ -301,13 +301,29 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
   const planDays = isDynamicMealPlan(mealPlan as any) ? (mealPlan as DynamicMealPlan).days : (mealPlan as GeneratedMealPlan).days
   const dailyBreakdown = planDays.map((day: any) => {
     const selectedFoodsNutrition = calculateDayTotalNutrition(day.day)
+    
+    // Calculate recipe nutrition for this specific day
+    let dayRecipeNutrition = { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    if (isDynamicMealPlan(mealPlan as any)) {
+      day.meals?.forEach((meal: any) => {
+        if (meal.recipe_id && recipeNutrition.calories > 0) {
+          // Distribute recipe nutrition proportionally across days
+          const numDays = (mealPlan as DynamicMealPlan).days.length || 1
+          dayRecipeNutrition.calories += recipeNutrition.calories / numDays
+          dayRecipeNutrition.protein += recipeNutrition.protein / numDays
+          dayRecipeNutrition.carbs += recipeNutrition.carbs / numDays
+          dayRecipeNutrition.fat += recipeNutrition.fat / numDays
+        }
+      })
+    }
+    
     return {
       day: day.day,
-      date: day.date,
-      calories: Math.round(safeNumber((day.totalCalories || 0) + selectedFoodsNutrition.calories)),
-      protein: Math.round(safeNumber((day.totalProtein || 0) + selectedFoodsNutrition.protein) * 10) / 10,
-      carbs: Math.round(safeNumber((day.totalCarbs || 0) + selectedFoodsNutrition.carbs) * 10) / 10,
-      fat: Math.round(safeNumber((day.totalFat || 0) + selectedFoodsNutrition.fat) * 10) / 10
+      date: day.date || `Jour ${day.day}`, // Provide fallback date
+      calories: Math.round(safeNumber((day.totalCalories || 0) + selectedFoodsNutrition.calories + dayRecipeNutrition.calories)),
+      protein: Math.round(safeNumber((day.totalProtein || 0) + selectedFoodsNutrition.protein + dayRecipeNutrition.protein) * 10) / 10,
+      carbs: Math.round(safeNumber((day.totalCarbs || 0) + selectedFoodsNutrition.carbs + dayRecipeNutrition.carbs) * 10) / 10,
+      fat: Math.round(safeNumber((day.totalFat || 0) + selectedFoodsNutrition.fat + dayRecipeNutrition.fat) * 10) / 10
     }
   })
 

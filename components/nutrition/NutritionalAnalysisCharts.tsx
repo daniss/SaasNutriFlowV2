@@ -36,9 +36,10 @@ import {
   Info
 } from "lucide-react"
 import { type GeneratedMealPlan, type DayPlan } from "@/lib/gemini"
+import { type DynamicMealPlan, isDynamicMealPlan } from "@/lib/meal-plan-types"
 
 interface NutritionalAnalysisChartsProps {
-  mealPlan: GeneratedMealPlan
+  mealPlan: GeneratedMealPlan | DynamicMealPlan
   className?: string
 }
 
@@ -53,14 +54,17 @@ const MACRO_COLORS = {
 const CHART_COLORS = ['#3B82F6', '#F97316', '#8B5CF6', '#10B981', '#F59E0B', '#EF4444', '#14B8A6', '#8B5CF6']
 
 export default function NutritionalAnalysisCharts({ mealPlan, className = "" }: NutritionalAnalysisChartsProps) {
+  // Get the correct days array based on meal plan type
+  const planDays = isDynamicMealPlan(mealPlan as any) ? (mealPlan as DynamicMealPlan).days : (mealPlan as GeneratedMealPlan).days
+  
   // Prepare data for charts
-  const dailyData = mealPlan.days.map(day => {
+  const dailyData = planDays.map((day: any) => {
     // Calculate fiber from meals - handle both object and array structures
     let totalFiber = 0
     if (day.meals && typeof day.meals === 'object') {
       if (Array.isArray(day.meals)) {
         // Array structure (legacy)
-        totalFiber = day.meals.reduce((total, meal) => total + (meal.fiber || 0), 0)
+        totalFiber = day.meals.reduce((total: number, meal: any) => total + (meal.fiber || 0), 0)
       } else {
         // Object structure: { breakfast: [...], lunch: [...], etc. }
         Object.values(day.meals).forEach((mealArray: any) => {
@@ -78,7 +82,7 @@ export default function NutritionalAnalysisCharts({ mealPlan, className = "" }: 
     return {
       day: `J${day.day}`,
       fullDay: `Jour ${day.day}`,
-      date: day.date,
+      date: day.date || `Jour ${day.day}`, // Provide fallback date
       calories: day.totalCalories || 0,
       protein: day.totalProtein || 0,
       carbs: day.totalCarbs || 0,
@@ -104,7 +108,7 @@ export default function NutritionalAnalysisCharts({ mealPlan, className = "" }: 
   ]
 
   // Target vs actual comparison
-  const targetMacros = mealPlan.nutritionalGoals || {
+  const targetMacros = (mealPlan as GeneratedMealPlan).nutritionalGoals || {
     dailyCalories: 2000,
     proteinPercentage: 25,
     carbPercentage: 45,
@@ -164,7 +168,7 @@ export default function NutritionalAnalysisCharts({ mealPlan, className = "" }: 
     },
     {
       subject: 'Variété',
-      A: Math.min(100, mealPlan.days.length * 15), // Assume variety increases with plan length
+      A: Math.min(100, planDays.length * 15), // Assume variety increases with plan length
       B: 80,
       fullMark: 100
     },
@@ -397,7 +401,9 @@ export default function NutritionalAnalysisCharts({ mealPlan, className = "" }: 
                 <Card className="border-purple-200 bg-purple-50">
                   <CardContent className="p-4">
                     <div className="text-center">
-                      <div className="text-2xl font-bold text-purple-600">{mealPlan.duration}</div>
+                      <div className="text-2xl font-bold text-purple-600">
+                        {isDynamicMealPlan(mealPlan as any) ? (mealPlan as DynamicMealPlan).days.length : (mealPlan as GeneratedMealPlan).duration}
+                      </div>
                       <div className="text-sm text-purple-800">Jours de plan</div>
                       <Badge variant="outline" className="mt-2">Personnalisé</Badge>
                     </div>
