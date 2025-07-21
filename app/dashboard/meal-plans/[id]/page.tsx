@@ -1296,34 +1296,46 @@ export default function MealPlanDetailPage() {
 
   const getRealMealPlanDays = (duration: number, forPDF: boolean = false): DayPlan[] => {
     
-    // First try to get data from plan_content
+    // First try to get data from plan_content - but check if meals are already structured properly
     if (mealPlan?.plan_content?.days && Array.isArray(mealPlan.plan_content.days)) {
-      return mealPlan.plan_content.days.slice(0, duration).map((day: any, index: number) => {
+      const firstDay = mealPlan.plan_content.days[0]
+      const hasStructuredMeals = firstDay?.meals && !Array.isArray(firstDay.meals) && 
+                                (firstDay.meals.breakfast !== undefined || firstDay.meals.lunch !== undefined)
+      
+      console.log('🐛 Checking meal structure:', { 
+        hasStructuredMeals, 
+        firstDayMealsType: Array.isArray(firstDay?.meals) ? 'array' : typeof firstDay?.meals,
+        firstDayMeals: firstDay?.meals 
+      })
+      
+      if (hasStructuredMeals) {
+        return mealPlan.plan_content.days.slice(0, duration).map((day: any, index: number) => {
         const selectedFoodsNutrition = calculateDayNutrition(day.day || index + 1)
         
-        return {
-          ...day,
-          day: day.day || index + 1,
-          meals: forPDF ? {
-            // For PDF, preserve original meal structure with objects
-            breakfast: Array.isArray(day.meals?.breakfast) ? day.meals.breakfast : [],
-            lunch: Array.isArray(day.meals?.lunch) ? day.meals.lunch : [],
-            dinner: Array.isArray(day.meals?.dinner) ? day.meals.dinner : [],
-            snacks: Array.isArray(day.meals?.snacks) ? day.meals.snacks : []
-          } : {
-            // For display, use normalized strings
-            breakfast: normalizeMealData(day.meals?.breakfast),
-            lunch: normalizeMealData(day.meals?.lunch),
-            dinner: normalizeMealData(day.meals?.dinner),
-            snacks: normalizeMealData(day.meals?.snacks)
-          },
-          // Combine original nutrition with selected foods nutrition
-          totalCalories: (day.totalCalories || 0) + selectedFoodsNutrition.calories,
-          totalProtein: (day.totalProtein || 0) + selectedFoodsNutrition.protein,
-          totalCarbs: (day.totalCarbs || 0) + selectedFoodsNutrition.carbs,
-          totalFat: (day.totalFat || 0) + selectedFoodsNutrition.fat
-        }
-      })
+          return {
+            ...day,
+            day: day.day || index + 1,
+            meals: forPDF ? {
+              // For PDF, preserve original meal structure with objects
+              breakfast: Array.isArray(day.meals?.breakfast) ? day.meals.breakfast : [],
+              lunch: Array.isArray(day.meals?.lunch) ? day.meals.lunch : [],
+              dinner: Array.isArray(day.meals?.dinner) ? day.meals.dinner : [],
+              snacks: Array.isArray(day.meals?.snacks) ? day.meals.snacks : []
+            } : {
+              // For display, use normalized strings
+              breakfast: normalizeMealData(day.meals?.breakfast),
+              lunch: normalizeMealData(day.meals?.lunch),
+              dinner: normalizeMealData(day.meals?.dinner),
+              snacks: normalizeMealData(day.meals?.snacks)
+            },
+            // Combine original nutrition with selected foods nutrition
+            totalCalories: (day.totalCalories || 0) + selectedFoodsNutrition.calories,
+            totalProtein: (day.totalProtein || 0) + selectedFoodsNutrition.protein,
+            totalCarbs: (day.totalCarbs || 0) + selectedFoodsNutrition.carbs,
+            totalFat: (day.totalFat || 0) + selectedFoodsNutrition.fat
+          }
+        })
+      }
     }
 
     // Check if plan_content has a different structure (AI generated format)

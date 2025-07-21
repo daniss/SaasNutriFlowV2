@@ -50,6 +50,7 @@ import {
   Plus,
   Ruler,
   Save,
+  Send,
   Target,
   Trash2,
   TrendingDown,
@@ -120,6 +121,7 @@ export default function ClientDetailPage() {
   const [showDeactivateDialog, setShowDeactivateDialog] = useState(false);
   const [pendingStatus, setPendingStatus] = useState<string | null>(null);
   const [hasClientAccount, setHasClientAccount] = useState<boolean | null>(null);
+  const [sendingPassword, setSendingPassword] = useState(false);
 
   // Form states
   const [editForm, setEditForm] = useState<Partial<Client>>({});
@@ -306,6 +308,40 @@ export default function ClientDetailPage() {
     setPendingStatus(null);
     // Reset the select back to current status
     setEditForm({ ...editForm, status: client?.status || "active" });
+  };
+
+  const handleSendPassword = async () => {
+    if (!client) return;
+
+    try {
+      setSendingPassword(true);
+      setError("");
+
+      const response = await fetch("/api/notifications/send-password", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          clientId: client.id,
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || "Erreur lors de l'envoi");
+      }
+
+      setSuccess("Le mot de passe a été envoyé par email avec succès!");
+      setTimeout(() => setSuccess(""), 5000);
+    } catch (error) {
+      console.error("Error sending password:", error);
+      setError(error instanceof Error ? error.message : "Erreur lors de l'envoi du mot de passe");
+      setTimeout(() => setError(""), 5000);
+    } finally {
+      setSendingPassword(false);
+    }
   };
 
   const handleSaveClient = async () => {
@@ -940,29 +976,45 @@ export default function ClientDetailPage() {
               <p className="text-slate-600 text-sm sm:text-base truncate">{client.email}</p>
             </div>
           </div>
-          <Button
-            onClick={() => (editing ? handleSaveClient() : setEditing(true))}
-            disabled={loading}
-            className={
-              editing
-                ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow-md transition-all duration-200 flex-shrink-0"
-                : "bg-slate-100 hover:bg-slate-200 text-slate-700 shadow-sm hover:shadow-md transition-all duration-200 flex-shrink-0"
-            }
-          >
-            {editing ? (
-              <>
-                <Save className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Enregistrer</span>
-                <span className="sm:hidden">Sauver</span>
-              </>
-            ) : (
-              <>
-                <Edit className="h-4 w-4 mr-2" />
-                <span className="hidden sm:inline">Modifier</span>
-                <span className="sm:hidden">Éditer</span>
-              </>
+          <div className="flex gap-2">
+            {/* Send Password Button - Only visible if client is not inactive and has client account */}
+            {client.status !== "inactive" && hasClientAccount === true && (
+              <Button
+                onClick={handleSendPassword}
+                disabled={sendingPassword}
+                variant="outline"
+                className="bg-blue-50 hover:bg-blue-100 text-blue-700 border-blue-200 hover:border-blue-300 shadow-sm hover:shadow-md transition-all duration-200 flex-shrink-0"
+              >
+                <Send className="h-4 w-4 mr-2" />
+                <span className="hidden sm:inline">{sendingPassword ? "Envoi..." : "Envoyer mot de passe"}</span>
+                <span className="sm:hidden">{sendingPassword ? "Envoi..." : "Mot de passe"}</span>
+              </Button>
             )}
-          </Button>
+            
+            <Button
+              onClick={() => (editing ? handleSaveClient() : setEditing(true))}
+              disabled={loading}
+              className={
+                editing
+                  ? "bg-emerald-600 hover:bg-emerald-700 text-white shadow-sm hover:shadow-md transition-all duration-200 flex-shrink-0"
+                  : "bg-slate-100 hover:bg-slate-200 text-slate-700 shadow-sm hover:shadow-md transition-all duration-200 flex-shrink-0"
+              }
+            >
+              {editing ? (
+                <>
+                  <Save className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Enregistrer</span>
+                  <span className="sm:hidden">Sauver</span>
+                </>
+              ) : (
+                <>
+                  <Edit className="h-4 w-4 mr-2" />
+                  <span className="hidden sm:inline">Modifier</span>
+                  <span className="sm:hidden">Éditer</span>
+                </>
+              )}
+            </Button>
+          </div>
         </div>
 
         {/* Alerts */}
