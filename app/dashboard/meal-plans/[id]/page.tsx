@@ -1389,8 +1389,8 @@ export default function MealPlanDetailPage() {
   const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7, false) // forPDF = false for display
 
   return (
-    <div className="space-y-6">
-      <div className="px-4 sm:px-6 space-y-6">
+    <div className="space-y-6 overflow-x-hidden">
+      <div className="px-4 sm:px-6 space-y-6 max-w-full">
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:justify-between">
           <div className="flex items-center gap-3 sm:gap-4 min-w-0 flex-1">
@@ -1516,9 +1516,9 @@ export default function MealPlanDetailPage() {
           </div>
         </div>
 
-        <div className="grid gap-6 lg:gap-8 lg:grid-cols-3">
+        <div className="grid gap-6 lg:gap-8 grid-cols-1 lg:grid-cols-3">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6 lg:space-y-8">
+          <div className="lg:col-span-2 space-y-6 lg:space-y-8 overflow-hidden">
             {/* Plan Overview */}
             <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl">
               <CardHeader>
@@ -1535,7 +1535,7 @@ export default function MealPlanDetailPage() {
                   </div>
                 )}
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
                   <div className="bg-slate-50/80 rounded-lg p-4">
                     <div className="flex items-center gap-2 mb-2">
                       <Clock className="h-4 w-4 text-slate-500" />
@@ -1577,7 +1577,7 @@ export default function MealPlanDetailPage() {
 
             {/* AI-Generated Plan Nutritional Analysis */}
             {mealPlan.plan_content && typeof mealPlan.plan_content === 'object' && 'days' in mealPlan.plan_content && (mealPlan.plan_content as GeneratedMealPlan).days && (
-              <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl">
+              <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl overflow-hidden">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
                     <Activity className="h-5 w-5 text-purple-600" />
@@ -1587,7 +1587,7 @@ export default function MealPlanDetailPage() {
                     Analyse détaillée des macronutriments et graphiques professionnels
                   </CardDescription>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="overflow-x-auto">
                   <MacronutrientBreakdown 
                     mealPlan={mealPlan.plan_content as GeneratedMealPlan} 
                     selectedFoods={selectedFoods}
@@ -1682,9 +1682,9 @@ export default function MealPlanDetailPage() {
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4 lg:space-y-6">
+          <div className="space-y-4 lg:space-y-6 overflow-hidden">
             {/* Client Info */}
-            <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl">
+            <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl overflow-hidden">
               <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                   <Users className="h-5 w-5 text-slate-600" />
