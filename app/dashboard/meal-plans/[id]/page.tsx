@@ -491,15 +491,32 @@ export default function MealPlanDetailPage() {
       }
 
       // Debug: Log the data being sent to PDF generator
-      console.log('🐛 PDF Data being sent:', JSON.stringify(pdfData, null, 2))
+      console.log('🐛 PDF Data being sent:', {
+        id: pdfData.id,
+        name: pdfData.name,
+        duration_days: pdfData.duration_days,
+        daysCount: pdfData.dayPlans.length
+      })
       console.log('🐛 Day Plans structure:', pdfData.dayPlans.map(d => ({
         day: d.day,
         mealsKeys: Object.keys(d.meals),
+        breakfastCount: d.meals.breakfast?.length || 0,
+        lunchCount: d.meals.lunch?.length || 0,
+        dinnerCount: d.meals.dinner?.length || 0,
+        snacksCount: d.meals.snacks?.length || 0,
         breakfast: d.meals.breakfast,
         lunch: d.meals.lunch,
         dinner: d.meals.dinner,
         snacks: d.meals.snacks
       })))
+      
+      // Log the raw meal plan structure to understand the data
+      console.log('🐛 Raw meal plan content:', {
+        hasContent: !!mealPlan.plan_content,
+        hasDays: !!mealPlan.plan_content?.days,
+        daysCount: mealPlan.plan_content?.days?.length || 0,
+        firstDay: mealPlan.plan_content?.days?.[0]
+      })
 
       // Use the modern PDF generator for a beautiful, magazine-style layout
       downloadModernMealPlanPDF(pdfData)
@@ -1284,10 +1301,10 @@ export default function MealPlanDetailPage() {
           day: day.day || index + 1,
           meals: forPDF ? {
             // For PDF, preserve original meal structure with objects
-            breakfast: day.meals?.breakfast || [],
-            lunch: day.meals?.lunch || [],
-            dinner: day.meals?.dinner || [],
-            snacks: day.meals?.snacks || []
+            breakfast: Array.isArray(day.meals?.breakfast) ? day.meals.breakfast : [],
+            lunch: Array.isArray(day.meals?.lunch) ? day.meals.lunch : [],
+            dinner: Array.isArray(day.meals?.dinner) ? day.meals.dinner : [],
+            snacks: Array.isArray(day.meals?.snacks) ? day.meals.snacks : []
           } : {
             // For display, use normalized strings
             breakfast: normalizeMealData(day.meals?.breakfast),
@@ -1310,30 +1327,73 @@ export default function MealPlanDetailPage() {
       return aiDays.map((day: any, index: number) => {
         const selectedFoodsNutrition = calculateDayNutrition(day.day || index + 1)
         
+        // Check if this is a dynamic meal plan (meals is an array) or legacy format
+        const isDynamicMeals = Array.isArray(day.meals)
+        console.log(`🐛 Processing day ${day.day || index + 1}:`, { isDynamicMeals, mealsLength: day.meals?.length })
+        
         return {
           day: day.day || day.day_number || index + 1,
           date: day.date,
-          meals: forPDF ? {
-            // For PDF, extract meal names from AI-generated structure based on French meal names
-            breakfast: Array.isArray(day.meals) 
-              ? day.meals.filter((m: any) => m.name === 'Petit-déjeuner').map((m: any) => m.original_meal_name || m.description || 'Repas')
-              : (day.meals?.breakfast || []),
-            lunch: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.name === 'Déjeuner').map((m: any) => m.original_meal_name || m.description || 'Repas')
-              : (day.meals?.lunch || []),
-            dinner: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.name === 'Dîner').map((m: any) => m.original_meal_name || m.description || 'Repas')
-              : (day.meals?.dinner || []),
-            snacks: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => 
-                  m.name && (
-                    m.name.includes('Collation') || 
-                    m.name === 'Pré-entraînement' || 
-                    m.name === 'Post-entraînement'
-                  )
-                ).map((m: any) => m.original_meal_name || m.description || 'Repas')
-              : (day.meals?.snacks || [])
-          } : {
+          meals: forPDF ? (
+            isDynamicMeals ? {
+              // For dynamic meal plans, extract meal names from array structure
+              breakfast: (() => {
+                const breakfastMeals = day.meals.filter((m: any) => {
+                  const name = (m.name || '').toLowerCase()
+                  const isBreakfast = name === 'petit-déjeuner' || name.includes('petit-déjeuner') || name.includes('breakfast')
+                  if (isBreakfast) console.log(`🐛 Found breakfast meal:`, m)
+                  return isBreakfast
+                })
+                return breakfastMeals.map((m: any) => {
+                  // Return the full meal object with name and nutrition for PDF
+                  return {
+                    name: m.original_meal_name || m.description || m.name || 'Petit-déjeuner',
+                    calories: m.calories_target || m.calories || 0
+                  }
+                })
+              })(),
+              lunch: day.meals
+                .filter((m: any) => {
+                  const name = (m.name || '').toLowerCase()
+                  return (name === 'déjeuner' || (name.includes('déjeuner') && !name.includes('petit')) || name.includes('lunch'))
+                })
+                .map((m: any) => {
+                  return {
+                    name: m.original_meal_name || m.description || m.name || 'Déjeuner',
+                    calories: m.calories_target || m.calories || 0
+                  }
+                }),
+              dinner: day.meals
+                .filter((m: any) => {
+                  const name = (m.name || '').toLowerCase()
+                  return name === 'dîner' || name.includes('dîner') || name.includes('dinner')
+                })
+                .map((m: any) => {
+                  return {
+                    name: m.original_meal_name || m.description || m.name || 'Dîner',
+                    calories: m.calories_target || m.calories || 0
+                  }
+                }),
+              snacks: day.meals
+                .filter((m: any) => {
+                  const name = (m.name || '').toLowerCase()
+                  return name.includes('collation') || name.includes('snack') || 
+                         name === 'pré-entraînement' || name === 'post-entraînement'
+                })
+                .map((m: any) => {
+                  return {
+                    name: m.original_meal_name || m.description || m.name || 'Collation',
+                    calories: m.calories_target || m.calories || 0
+                  }
+                })
+            } : {
+              // For legacy format, ensure arrays
+              breakfast: Array.isArray(day.meals?.breakfast) ? day.meals.breakfast : [],
+              lunch: Array.isArray(day.meals?.lunch) ? day.meals.lunch : [],
+              dinner: Array.isArray(day.meals?.dinner) ? day.meals.dinner : [],
+              snacks: Array.isArray(day.meals?.snacks) ? day.meals.snacks : []
+            }
+          ) : {
             // For display, use normalized strings
             breakfast: normalizeMealData(day.meals?.breakfast),
             lunch: normalizeMealData(day.meals?.lunch), 
