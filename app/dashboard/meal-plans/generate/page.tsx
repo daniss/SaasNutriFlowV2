@@ -893,16 +893,22 @@ export default function GenerateMealPlanPage() {
           day: day.day,
           meals: {
             breakfast: Array.isArray(day.meals) 
-              ? day.meals.filter((m: any) => m.name === 'breakfast').map((m: any) => m.original_meal_name || m.description)
+              ? day.meals.filter((m: any) => m.name === 'Petit-déjeuner').map((m: any) => m.original_meal_name || m.description || 'Repas')
               : (day.meals?.breakfast || []),
             lunch: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.name === 'lunch').map((m: any) => m.original_meal_name || m.description)
+              ? day.meals.filter((m: any) => m.name === 'Déjeuner').map((m: any) => m.original_meal_name || m.description || 'Repas')
               : (day.meals?.lunch || []),
             dinner: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.name === 'dinner').map((m: any) => m.original_meal_name || m.description)
+              ? day.meals.filter((m: any) => m.name === 'Dîner').map((m: any) => m.original_meal_name || m.description || 'Repas')
               : (day.meals?.dinner || []),
             snacks: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.name === 'snack').map((m: any) => m.original_meal_name || m.description)
+              ? day.meals.filter((m: any) => 
+                  m.name && (
+                    m.name.includes('Collation') || 
+                    m.name === 'Pré-entraînement' || 
+                    m.name === 'Post-entraînement'
+                  )
+                ).map((m: any) => m.original_meal_name || m.description || 'Repas')
               : (day.meals?.snacks || [])
           },
           notes: day.notes
