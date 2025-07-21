@@ -487,6 +487,70 @@ export class ModernPDFGenerator {
     return String(food)
   }
 
+  private formatIngredientText(ingredient: any): string {
+    // If it's already a string, return it
+    if (typeof ingredient === 'string') {
+      return ingredient
+    }
+    
+    // If it's an object, try to extract meaningful text
+    if (typeof ingredient === 'object' && ingredient !== null) {
+      // Try common ingredient object properties
+      if (ingredient.name) {
+        let result = ingredient.name
+        // Add quantity if available
+        if (ingredient.quantity) {
+          result = `${ingredient.quantity} ${result}`
+        } else if (ingredient.amount) {
+          result = `${ingredient.amount} ${result}`
+        }
+        // Add unit if available
+        if (ingredient.unit) {
+          result = `${result} ${ingredient.unit}`
+        }
+        return result
+      }
+      
+      // Try other common properties
+      if (ingredient.ingredient) {
+        return ingredient.ingredient
+      }
+      
+      if (ingredient.description) {
+        return ingredient.description
+      }
+      
+      if (ingredient.text) {
+        return ingredient.text
+      }
+      
+      // If it has properties, try to construct a readable string
+      const keys = Object.keys(ingredient)
+      if (keys.length > 0) {
+        // Try to find the most likely ingredient name property
+        const nameKey = keys.find(key => 
+          key.toLowerCase().includes('name') || 
+          key.toLowerCase().includes('ingredient') ||
+          key.toLowerCase().includes('item')
+        )
+        if (nameKey) {
+          return String(ingredient[nameKey])
+        }
+        
+        // Otherwise, use the first non-empty string property
+        for (const key of keys) {
+          const value = ingredient[key]
+          if (typeof value === 'string' && value.trim()) {
+            return value
+          }
+        }
+      }
+    }
+    
+    // Fallback to string conversion
+    return String(ingredient || '')
+  }
+
   private calculateMealNutrition(foods: any[]): {
     calories: number
     protein: number
@@ -713,6 +777,7 @@ export class ModernPDFGenerator {
           ingredientsCount: food.recipe?.ingredients?.length || 0,
           instructionsCount: food.recipe?.instructions?.length || 0,
           ingredientsTypes: food.recipe?.ingredients?.map((ing: any) => typeof ing) || [],
+          ingredientsSample: food.recipe?.ingredients?.slice(0, 2) || [], // Show first 2 ingredients for debugging
           instructionsTypes: food.recipe?.instructions?.map((inst: any) => typeof inst) || [],
           recipe: food.recipe 
         })
@@ -736,7 +801,7 @@ export class ModernPDFGenerator {
             this.pdf.setTextColor(...this.hexToRgb(colors.textMuted))
             
             food.recipe.ingredients.forEach((ingredient: any) => {
-              const ingredientText = typeof ingredient === 'string' ? ingredient : String(ingredient || '')
+              const ingredientText = this.formatIngredientText(ingredient)
               if (ingredientText.trim()) {
                 this.addNewPageIfNeeded(8)
                 
