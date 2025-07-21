@@ -78,6 +78,7 @@ export default function ClientsPage() {
     current_weight: "",
     goal_weight: "",
     goal: "",
+    tags: [] as string[], // Dietary restrictions and preferences
   });
 
   // Form validation states for new client
@@ -113,6 +114,7 @@ export default function ClientsPage() {
       current_weight: "",
       goal_weight: "",
       goal: "",
+      tags: [],
     });
     setClientValidation({
       name: { isValid: true, message: "" },
@@ -338,7 +340,7 @@ export default function ClientsPage() {
         goal: newClient.goal || null,
         plan_type: null,
         status: "active",
-        tags: [],
+        tags: newClient.tags,
         notes: null,
         emergency_contact: null,
         join_date: new Date().toISOString().split("T")[0],
@@ -934,6 +936,66 @@ export default function ClientsPage() {
                           </SelectItem>
                         </SelectContent>
                       </Select>
+                    </div>
+
+                    {/* Dietary Restrictions Tags */}
+                    <div className="space-y-3">
+                      <Label className="text-sm font-medium text-gray-700">
+                        Restrictions alimentaires et préférences
+                      </Label>
+                      <p className="text-xs text-gray-500 mb-3">
+                        Sélectionnez les allergies, intolérances ou restrictions alimentaires du client
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          "Sans gluten", "Sans lactose", "Végétarien", "Végétalien", "Sans noix",
+                          "Sans fruits de mer", "Diabétique", "Faible en sodium", "Sans œufs",
+                          "Halal", "Casher", "Sans porc", "Sans alcool", "Paléo", "Cétogène"
+                        ].map((tag) => {
+                          const isSelected = newClient.tags.includes(tag);
+                          return (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() => {
+                                const updatedTags = isSelected
+                                  ? newClient.tags.filter(t => t !== tag)
+                                  : [...newClient.tags, tag];
+                                setNewClient({ ...newClient, tags: updatedTags });
+                              }}
+                              className={`px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
+                                isSelected
+                                  ? 'bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-200'
+                                  : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300'
+                              }`}
+                            >
+                              {tag}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {newClient.tags.length > 0 && (
+                        <div className="mt-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                          <p className="text-xs text-emerald-700 mb-2">Tags sélectionnés:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {newClient.tags.map((tag) => (
+                              <Badge key={tag} variant="secondary" className="bg-emerald-100 text-emerald-700 text-xs">
+                                {tag}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updatedTags = newClient.tags.filter(t => t !== tag);
+                                    setNewClient({ ...newClient, tags: updatedTags });
+                                  }}
+                                  className="ml-1 hover:text-emerald-900"
+                                >
+                                  ×
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}

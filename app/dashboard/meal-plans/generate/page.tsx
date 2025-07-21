@@ -217,10 +217,12 @@ export default function GenerateMealPlanPage() {
 
     try {
       // Real AI generation with Google Gemini!
+      const selectedClient = clients.find(c => c.id === formData.clientId)
       const mealPlanRequest = {
         prompt: formData.prompt,
         dietitianId: user?.id || '',
         clientId: formData.clientId || undefined,
+        clientDietaryTags: selectedClient?.tags || [], // Include dietary restrictions
       }
 
       const { transformed: plan, raw: rawPlan } = await generateMealPlan(mealPlanRequest)

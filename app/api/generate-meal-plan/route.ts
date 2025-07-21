@@ -54,6 +54,7 @@ export async function POST(request: NextRequest) {
       dietType = "balanced",
       restrictions = [],
       goals = "",
+      clientDietaryTags = [], // Dietary restrictions from client profile
     } = body;
 
     // Fetch available ingredients from the global database
@@ -149,7 +150,7 @@ export async function POST(request: NextRequest) {
         const chunkPrompt = `Crée ${chunkDays} jours de plan alimentaire méditerranéen JSON français.
 
 ${prompt} - Jours ${startDay} à ${endDay}, ${targetCalories} cal/jour
-${restrictions.length > 0 ? `Restrictions: ${restrictions.join(", ")}` : ""}
+${[...restrictions, ...clientDietaryTags].length > 0 ? `Restrictions et préférences alimentaires: ${[...restrictions, ...clientDietaryTags].join(", ")}` : ""}
 
 ${ingredientsPromptSection}
 
@@ -362,7 +363,7 @@ Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numér
       const enhancedPrompt = `Plan alimentaire JSON français concis.
 
 ${prompt} - ${duration} jours, ${targetCalories} cal/jour
-${restrictions.length > 0 ? `Restrictions: ${restrictions.join(", ")}` : ""}
+${[...restrictions, ...clientDietaryTags].length > 0 ? `Restrictions et préférences alimentaires: ${[...restrictions, ...clientDietaryTags].join(", ")}` : ""}
 
 ${ingredientsPromptSection}
 

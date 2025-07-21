@@ -83,6 +83,7 @@ interface Client {
   goal?: string;
   notes?: string;
   status: string;
+  tags?: string[]; // Dietary restrictions and preferences
   created_at: string;
   updated_at: string;
 }
@@ -1556,6 +1557,67 @@ export default function ClientDetailPage() {
                         <p className="text-red-500 text-sm mt-1">
                           {profileValidation.goal_weight.message}
                         </p>
+                      )}
+                    </div>
+
+                    {/* Dietary Restrictions Tags */}
+                    <div className="space-y-3">
+                      <Label className="text-sm font-semibold text-slate-700">
+                        Restrictions alimentaires et préférences
+                      </Label>
+                      <p className="text-xs text-slate-500 mb-3">
+                        Allergies, intolérances ou restrictions alimentaires du client
+                      </p>
+                      <div className="flex flex-wrap gap-2">
+                        {[
+                          "Sans gluten", "Sans lactose", "Végétarien", "Végétalien", "Sans noix",
+                          "Sans fruits de mer", "Diabétique", "Faible en sodium", "Sans œufs",
+                          "Halal", "Casher", "Sans porc", "Sans alcool", "Paléo", "Cétogène"
+                        ].map((tag) => {
+                          const isSelected = (editForm.tags || []).includes(tag);
+                          return (
+                            <button
+                              key={tag}
+                              type="button"
+                              onClick={() => {
+                                const currentTags = editForm.tags || [];
+                                const updatedTags = isSelected
+                                  ? currentTags.filter(t => t !== tag)
+                                  : [...currentTags, tag];
+                                setEditForm({ ...editForm, tags: updatedTags });
+                              }}
+                              className={`px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
+                                isSelected
+                                  ? 'bg-emerald-100 border-emerald-300 text-emerald-700 hover:bg-emerald-200'
+                                  : 'bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100 hover:border-slate-300'
+                              }`}
+                            >
+                              {tag}
+                            </button>
+                          );
+                        })}
+                      </div>
+                      {editForm.tags && editForm.tags.length > 0 && (
+                        <div className="mt-3 p-3 bg-emerald-50 rounded-lg border border-emerald-200">
+                          <p className="text-xs text-emerald-700 mb-2">Tags sélectionnés:</p>
+                          <div className="flex flex-wrap gap-1">
+                            {editForm.tags.map((tag) => (
+                              <Badge key={tag} variant="secondary" className="bg-emerald-100 text-emerald-700 text-xs">
+                                {tag}
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    const updatedTags = (editForm.tags || []).filter(t => t !== tag);
+                                    setEditForm({ ...editForm, tags: updatedTags });
+                                  }}
+                                  className="ml-1 hover:text-emerald-900"
+                                >
+                                  ×
+                                </button>
+                              </Badge>
+                            ))}
+                          </div>
+                        </div>
                       )}
                     </div>
                     <div className="space-y-2">

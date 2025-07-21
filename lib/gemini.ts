@@ -10,6 +10,7 @@ export interface MealPlanRequest {
   duration?: number;
   preferences?: string[];
   restrictions?: string[];
+  clientDietaryTags?: string[]; // Dietary restrictions from client profile
 }
 
 export interface Meal {
