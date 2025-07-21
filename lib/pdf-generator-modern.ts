@@ -228,8 +228,6 @@ export class ModernPDFGenerator {
       { title: 'Vue d\'ensemble', page: 3, icon: '•' },
       { title: 'Objectifs nutritionnels', page: 4, icon: '•' },
       { title: 'Plans de repas quotidiens', page: 5, icon: '•' },
-      { title: 'Liste de courses', page: 5 + plan.duration_days, icon: '•' },
-      { title: 'Suivi et notes', page: 6 + plan.duration_days, icon: '•' },
     ]
 
     sections.forEach((section) => {
@@ -902,185 +900,10 @@ export class ModernPDFGenerator {
     }
   }
 
-  private drawShoppingList(plan: ModernMealPlan) {
-    this.pdf.addPage()
-    this.currentY = 30
-
-    // Title
-    this.pdf.setFillColor(...this.hexToRgb(colors.accent))
-    this.pdf.rect(this.margin, this.currentY - 10, 5, 25, 'F')
-    
-    this.pdf.setTextColor(...this.hexToRgb(colors.text))
-    this.pdf.setFontSize(24)
-    this.pdf.setFont('helvetica', 'bold')
-    this.pdf.text('Liste de courses', this.margin + 10, this.currentY)
-    this.currentY += 35
-
-    // Check if we have AI-generated meals (no detailed ingredients)
-    const hasAIMeals = plan.dayPlans.some(day => 
-      Object.values(day.meals).some(meals => 
-        Array.isArray(meals) && meals.some(meal => meal.name && !meal.name_fr)
-      )
-    )
-
-    if (hasAIMeals) {
-      // For AI-generated meal plans, show a note about ingredients
-      this.pdf.setFillColor(...this.hexToRgb(colors.bgLight))
-      this.pdf.roundedRect(this.margin, this.currentY - 5, this.contentWidth, 80, 5, 5, 'F')
-      
-      this.pdf.setTextColor(...this.hexToRgb(colors.textMuted))
-      this.pdf.setFontSize(14)
-      this.pdf.setFont('helvetica', 'normal')
-      
-      const noteLines = [
-        'Ce plan alimentaire contient des repas générés par IA.',
-        '',
-        'Pour obtenir une liste de courses détaillée avec les ingrédients',
-        'et quantités précises, vous pouvez :',
-        '',
-        '• Convertir les repas en recettes dans l\'interface',
-        '• Ajouter des aliments spécifiques depuis la base ANSES-CIQUAL',
-        '• Consulter les détails nutritionnels de chaque repas'
-      ]
-      
-      noteLines.forEach(line => {
-        this.pdf.text(line, this.margin + 10, this.currentY + 5)
-        this.currentY += 8
-      })
-      
-      return
-    }
-
-    // Gather all foods (for traditional meal plans with specific ingredients)
-    const foodMap = new Map<string, { days: Set<number>, quantity: number }>()
-    
-    plan.dayPlans.forEach((day) => {
-      Object.entries(day.meals).forEach(([mealType, foods]) => {
-        const isEnabled = day[`${mealType}Enabled` as keyof typeof day] !== false
-        if (isEnabled && Array.isArray(foods)) {
-          foods.forEach((food: any) => {
-            const name = typeof food === 'string' ? food : food.name_fr || food.name || String(food)
-            const quantity = food.quantity || 0
-            
-            if (!foodMap.has(name)) {
-              foodMap.set(name, { days: new Set(), quantity: 0 })
-            }
-            
-            const item = foodMap.get(name)!
-            item.days.add(day.day)
-            item.quantity += quantity
-          })
-        }
-      })
-    })
-
-    // Categorize foods
-    const categories: Record<string, Array<{ name: string, info: string }>> = {
-      'Fruits et légumes': [],
-      'Protéines': [],
-      'Produits laitiers': [],
-      'Céréales et féculents': [],
-      'Condiments et autres': [],
-    }
-
-    foodMap.forEach((info, foodName) => {
-      let category = 'Condiments et autres'
-      
-      // Simple categorization
-      if (foodName.match(/tomate|carotte|pomme|banane|salade|concombre|courgette|brocoli|épinard|avocat|orange|fraise|poivron|oignon|ail/i)) {
-        category = 'Fruits et légumes'
-      } else if (foodName.match(/poulet|bœuf|poisson|saumon|thon|œuf|tofu|porc|dinde|jambon|viande/i)) {
-        category = 'Protéines'
-      } else if (foodName.match(/lait|yaourt|fromage|crème|beurre/i)) {
-        category = 'Produits laitiers'
-      } else if (foodName.match(/pain|pâte|riz|quinoa|avoine|farine|pomme de terre/i)) {
-        category = 'Céréales et féculents'
-      }
-      
-      const infoText = info.quantity > 0 
-        ? `${info.quantity}g total (jours ${Array.from(info.days).join(', ')})`
-        : `jours ${Array.from(info.days).join(', ')}`
-      
-      categories[category].push({ name: foodName, info: infoText })
-    })
-
-    // Draw categories
-    Object.entries(categories).forEach(([category, items]) => {
-      if (items.length === 0) return
-      
-      this.addNewPageIfNeeded(30 + items.length * 8)
-      
-      // Category header
-      this.pdf.setFillColor(...this.hexToRgb(colors.bgMedium))
-      this.pdf.roundedRect(this.margin, this.currentY - 5, this.contentWidth, 20, 5, 5, 'F')
-      
-      this.pdf.setTextColor(...this.hexToRgb(colors.text))
-      this.pdf.setFontSize(14)
-      this.pdf.setFont('helvetica', 'bold')
-      this.pdf.text(category, this.margin + 10, this.currentY + 5)
-      this.currentY += 25
-
-      // Items
-      items.sort((a, b) => a.name.localeCompare(b.name))
-      
-      this.pdf.setFont('helvetica', 'normal')
-      this.pdf.setFontSize(11)
-      
-      items.forEach((item) => {
-        this.addNewPageIfNeeded(10)
-        
-        // Checkbox
-        this.pdf.setDrawColor(...this.hexToRgb(colors.border))
-        this.pdf.rect(this.margin + 10, this.currentY - 3, 4, 4, 'D')
-        
-        // Item name
-        this.pdf.setTextColor(...this.hexToRgb(colors.text))
-        this.pdf.text(item.name, this.margin + 20, this.currentY)
-        
-        // Info
-        this.pdf.setTextColor(...this.hexToRgb(colors.textLight))
-        this.pdf.setFontSize(9)
-        this.pdf.text(item.info, this.pageWidth - this.margin - 10, this.currentY, { align: 'right' })
-        this.pdf.setFontSize(11)
-        
-        this.currentY += 8
-      })
-      
-      this.currentY += 10
-    })
-  }
+  // Shopping list method removed for MVP
 
 
-  private drawNotesSection() {
-    this.pdf.addPage()
-    this.currentY = 30
-
-    // Title
-    this.pdf.setFillColor(...this.hexToRgb(colors.primary))
-    this.pdf.rect(this.margin, this.currentY - 10, 5, 25, 'F')
-    
-    this.pdf.setTextColor(...this.hexToRgb(colors.text))
-    this.pdf.setFontSize(24)
-    this.pdf.setFont('helvetica', 'bold')
-    this.pdf.text('Suivi et notes', this.margin + 10, this.currentY)
-    this.currentY += 35
-
-    // Instructions
-    this.pdf.setTextColor(...this.hexToRgb(colors.textMuted))
-    this.pdf.setFontSize(12)
-    this.pdf.setFont('helvetica', 'italic')
-    this.pdf.text('Utilisez cet espace pour noter vos impressions, ajustements et observations.', this.margin, this.currentY)
-    this.currentY += 20
-
-    // Note lines
-    const lineCount = 20
-    this.pdf.setDrawColor(...this.hexToRgb(colors.border))
-    
-    for (let i = 0; i < lineCount; i++) {
-      this.pdf.line(this.margin, this.currentY, this.pageWidth - this.margin, this.currentY)
-      this.currentY += 10
-    }
-  }
+  // Notes section method removed for MVP
 
   private drawFooter() {
     const totalPages = this.pdf.getNumberOfPages()
@@ -1138,12 +961,7 @@ export class ModernPDFGenerator {
       this.drawDayPlan(day, index)
     })
     
-    // 5. Shopping list
-    this.drawShoppingList(plan)
-    
-    
-    // 7. Notes section
-    this.drawNotesSection()
+    // Removed shopping list and notes sections for MVP
     
     // 8. Add footer to all pages
     this.drawFooter()
