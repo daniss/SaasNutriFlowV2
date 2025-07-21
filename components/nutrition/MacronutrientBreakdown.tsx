@@ -103,6 +103,7 @@ const safeNumber = (value: any): number => {
 export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynamicMealFoods, className = "" }: MacronutrientBreakdownProps) {
   // State for recipe nutrition data
   const [recipeNutrition, setRecipeNutrition] = useState<MacroData>({ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 })
+  const [recipeNutritionMap, setRecipeNutritionMap] = useState<Record<string, MacroData>>({})
   const [loadingRecipes, setLoadingRecipes] = useState(true)
 
   // Fetch nutrition data from linked recipes
@@ -141,21 +142,32 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
           return
         }
 
-        // Calculate total nutrition from all linked recipes
+        // Store individual recipe nutrition data
+        const nutritionMap: Record<string, MacroData> = {}
         let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0, totalFiber = 0
 
+        recipes?.forEach(recipe => {
+          nutritionMap[recipe.id] = {
+            calories: safeNumber(recipe.calories_per_serving),
+            protein: safeNumber(recipe.protein_per_serving),
+            carbs: safeNumber(recipe.carbs_per_serving),
+            fat: safeNumber(recipe.fat_per_serving),
+            fiber: safeNumber(recipe.fiber_per_serving)
+          }
+        })
+
+        setRecipeNutritionMap(nutritionMap)
+
+        // Also calculate totals for the average display
         ;(mealPlan as DynamicMealPlan).days.forEach(day => {
           day.meals.forEach(meal => {
-            if (meal.recipe_id) {
-              const recipe = recipes?.find(r => r.id === meal.recipe_id)
-              if (recipe) {
-                // Use per-serving values
-                totalCalories += safeNumber(recipe.calories_per_serving)
-                totalProtein += safeNumber(recipe.protein_per_serving)
-                totalCarbs += safeNumber(recipe.carbs_per_serving)
-                totalFat += safeNumber(recipe.fat_per_serving)
-                totalFiber += safeNumber(recipe.fiber_per_serving)
-              }
+            if (meal.recipe_id && nutritionMap[meal.recipe_id]) {
+              const nutrition = nutritionMap[meal.recipe_id]
+              totalCalories += nutrition.calories
+              totalProtein += nutrition.protein
+              totalCarbs += nutrition.carbs
+              totalFat += nutrition.fat
+              totalFiber += nutrition.fiber || 0
             }
           })
         })
@@ -282,12 +294,15 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
         dayCalories += meal.calories_target || meal.calories || 0
       })
       
-      // For protein, carbs, fat - use the average daily values from recipes if available
-      if (recipeNutrition.calories > 0) {
-        dayProtein = recipeNutrition.protein || 0
-        dayCarbs = recipeNutrition.carbs || 0
-        dayFat = recipeNutrition.fat || 0
-      }
+      // For protein, carbs, fat - use actual recipe nutrition data
+      day.meals.forEach((meal: any) => {
+        if (meal.recipe_id && recipeNutritionMap[meal.recipe_id]) {
+          const nutrition = recipeNutritionMap[meal.recipe_id]
+          dayProtein += nutrition.protein
+          dayCarbs += nutrition.carbs
+          dayFat += nutrition.fat
+        }
+      })
     } else if (day.meals && typeof day.meals === 'object') {
       // Legacy format: use existing totals if available
       dayCalories = day.totalCalories || 0
