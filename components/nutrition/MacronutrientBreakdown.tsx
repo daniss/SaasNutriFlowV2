@@ -109,7 +109,7 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
   // Fetch nutrition data from linked recipes
   useEffect(() => {
     const fetchRecipeNutrition = async () => {
-      if (!isDynamicMealPlan(mealPlan)) {
+      if (!isDynamicMealPlan(mealPlan as any)) {
         setLoadingRecipes(false)
         return
       }
@@ -117,7 +117,7 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
       try {
         // Collect all recipe IDs from the meal plan
         const recipeIds = new Set<string>()
-        mealPlan.days.forEach(day => {
+        ;(mealPlan as DynamicMealPlan).days.forEach(day => {
           day.meals.forEach(meal => {
             if (meal.recipe_id) {
               recipeIds.add(meal.recipe_id)
@@ -145,7 +145,7 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
         // Calculate total nutrition from all linked recipes
         let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0, totalFiber = 0
 
-        mealPlan.days.forEach(day => {
+        ;(mealPlan as DynamicMealPlan).days.forEach(day => {
           day.meals.forEach(meal => {
             if (meal.recipe_id) {
               const recipe = recipes?.find(r => r.id === meal.recipe_id)
@@ -162,7 +162,7 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
         })
 
         // Calculate daily averages from total recipe nutrition
-        const numDays = mealPlan.days.length || 1
+        const numDays = (mealPlan as DynamicMealPlan).days.length || 1
         setRecipeNutrition({
           calories: Math.round(totalCalories / numDays),
           protein: Math.round((totalProtein / numDays) * 10) / 10,
@@ -231,11 +231,12 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
   const selectedFoodsNutrition = calculateSelectedFoodsNutrition()
   
   // Calculate average daily macros (including selected foods)
-  const baseDailyAverages = mealPlan.nutritionSummary ? {
-    avgCalories: safeNumber(mealPlan.nutritionSummary.avgCalories),
-    avgProtein: safeNumber(mealPlan.nutritionSummary.avgProtein),
-    avgCarbs: safeNumber(mealPlan.nutritionSummary.avgCarbs),
-    avgFat: safeNumber(mealPlan.nutritionSummary.avgFat)
+  const nutritionSummary = (mealPlan as GeneratedMealPlan).nutritionSummary
+  const baseDailyAverages = nutritionSummary ? {
+    avgCalories: safeNumber(nutritionSummary.avgCalories),
+    avgProtein: safeNumber(nutritionSummary.avgProtein),
+    avgCarbs: safeNumber(nutritionSummary.avgCarbs),
+    avgFat: safeNumber(nutritionSummary.avgFat)
   } : {
     avgCalories: 0,
     avgProtein: 0,
@@ -297,7 +298,8 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
   }
 
   // Calculate daily breakdown for chart with selected foods included
-  const dailyBreakdown = mealPlan.days.map(day => {
+  const planDays = isDynamicMealPlan(mealPlan as any) ? (mealPlan as DynamicMealPlan).days : (mealPlan as GeneratedMealPlan).days
+  const dailyBreakdown = planDays.map((day: any) => {
     const selectedFoodsNutrition = calculateDayTotalNutrition(day.day)
     return {
       day: day.day,
@@ -370,7 +372,7 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
               <div className="space-y-4">
                 <h4 className="text-sm font-semibold text-gray-700 flex items-center gap-2">
                   <Target className="h-4 w-4" />
-                  Répartition moyenne des macronutriments (sur {mealPlan.duration} jours)
+                  Répartition moyenne des macronutriments (sur {(mealPlan as DynamicMealPlan).days?.length || (mealPlan as GeneratedMealPlan).duration || 1} jours)
                 </h4>
                 
                 {/* Visual representation */}
@@ -524,13 +526,13 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
                 days: dailyBreakdown.map(day => ({
                   day: day.day,
                   date: day.date,
-                  meals: mealPlan.days.find(d => d.day === day.day)?.meals || [],
+                  meals: planDays.find((d: any) => d.day === day.day)?.meals || [],
                   totalCalories: day.calories,
                   totalProtein: day.protein,
                   totalCarbs: day.carbs,
                   totalFat: day.fat
                 }))
-              }} />
+              } as any} />
             </TabsContent>
 
             <TabsContent value="recommendations" className="space-y-4">
