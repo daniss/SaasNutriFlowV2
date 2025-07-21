@@ -1111,8 +1111,16 @@ export default function MealPlanDetailPage() {
     const dayPlan = mealPlan?.plan_content?.days?.find((d: any) => d.day === dayNumber)
     if (!dayPlan) return { calories: 0, protein: 0, carbs: 0, fat: 0 }
     
-    // Go through each meal type (breakfast, lunch, dinner, snacks)
-    if (dayPlan.meals) {
+    // Handle AI-generated meal plans with dynamic meal structure
+    if (Array.isArray(dayPlan.meals)) {
+      // For each meal in the day, use calories_target (from AI generation)
+      dayPlan.meals.forEach((meal: any) => {
+        totalCalories += meal.calories_target || meal.calories || 0
+        // For protein, carbs, fat - we need to get this from the linked recipes
+        // This will be added below in the dynamic meal recipes section
+      })
+    } else if (dayPlan.meals && typeof dayPlan.meals === 'object') {
+      // Legacy format: Go through each meal type (breakfast, lunch, dinner, snacks)
       const mealTypes = ['breakfast', 'lunch', 'dinner', 'snacks']
       
       mealTypes.forEach(mealType => {

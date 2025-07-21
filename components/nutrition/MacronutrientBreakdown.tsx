@@ -269,19 +269,44 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
     }
   }
 
-  // Calculate daily breakdown - simple approach: get base nutrition + add selected foods
+  // Calculate daily breakdown - use the average recipe nutrition distributed across days
   const planDays = isDynamicMealPlan(mealPlan as any) ? (mealPlan as DynamicMealPlan).days : (mealPlan as GeneratedMealPlan).days
+  const numDays = planDays.length || 1
+  
   const dailyBreakdown = planDays.map((day: any) => {
-    // Get nutrition from selected foods for this day only
+    let dayCalories = 0, dayProtein = 0, dayCarbs = 0, dayFat = 0
+    
+    // Handle AI-generated meal plans with dynamic meal structure
+    if (Array.isArray(day.meals)) {
+      // Use calories_target from AI generation for calories
+      day.meals.forEach((meal: any) => {
+        dayCalories += meal.calories_target || meal.calories || 0
+      })
+      
+      // For protein, carbs, fat - use the average daily values from recipes if available
+      if (recipeNutrition.calories > 0) {
+        dayProtein = recipeNutrition.protein || 0
+        dayCarbs = recipeNutrition.carbs || 0
+        dayFat = recipeNutrition.fat || 0
+      }
+    } else if (day.meals && typeof day.meals === 'object') {
+      // Legacy format: use existing totals if available
+      dayCalories = day.totalCalories || 0
+      dayProtein = day.totalProtein || 0
+      dayCarbs = day.totalCarbs || 0
+      dayFat = day.totalFat || 0
+    }
+    
+    // Get nutrition from selected foods for this day
     const selectedFoodsForDay = calculateDayTotalNutrition(day.day)
     
     return {
       day: day.day,
       date: day.date || `Jour ${day.day}`,
-      calories: Math.round(safeNumber((day.totalCalories || 0) + selectedFoodsForDay.calories)),
-      protein: Math.round(safeNumber((day.totalProtein || 0) + selectedFoodsForDay.protein) * 10) / 10,
-      carbs: Math.round(safeNumber((day.totalCarbs || 0) + selectedFoodsForDay.carbs) * 10) / 10,
-      fat: Math.round(safeNumber((day.totalFat || 0) + selectedFoodsForDay.fat) * 10) / 10
+      calories: Math.round(safeNumber(dayCalories + selectedFoodsForDay.calories)),
+      protein: Math.round(safeNumber(dayProtein + selectedFoodsForDay.protein) * 10) / 10,
+      carbs: Math.round(safeNumber(dayCarbs + selectedFoodsForDay.carbs) * 10) / 10,
+      fat: Math.round(safeNumber(dayFat + selectedFoodsForDay.fat) * 10) / 10
     }
   })
 
