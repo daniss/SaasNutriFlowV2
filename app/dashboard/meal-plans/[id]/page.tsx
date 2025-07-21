@@ -462,6 +462,17 @@ export default function MealPlanDetailPage() {
         dayPlans: cleanedDayPlans
       }
 
+      // Debug: Log the data being sent to PDF generator
+      console.log('🐛 PDF Data being sent:', JSON.stringify(pdfData, null, 2))
+      console.log('🐛 Day Plans structure:', pdfData.dayPlans.map(d => ({
+        day: d.day,
+        mealsKeys: Object.keys(d.meals),
+        breakfast: d.meals.breakfast,
+        lunch: d.meals.lunch,
+        dinner: d.meals.dinner,
+        snacks: d.meals.snacks
+      })))
+
       // Use the modern PDF generator for a beautiful, magazine-style layout
       downloadModernMealPlanPDF(pdfData)
       
