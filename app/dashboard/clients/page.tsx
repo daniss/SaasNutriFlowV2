@@ -209,6 +209,93 @@ export default function ClientsPage() {
     }
   };
 
+  const handleDeleteClient = async (client: Client) => {
+    const confirmMessage = `Êtes-vous sûr de vouloir supprimer ${client.name}?\n\nCette action va :\n• Supprimer définitivement le client\n• Supprimer son compte d'accès au portail\n• Supprimer toutes ses données (historique de poids, messages, etc.)\n\nCette action est irréversible.`;
+    
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+
+      // 1. Delete client account first (removes portal access)
+      const { error: accountError } = await supabase
+        .from("client_accounts")
+        .delete()
+        .eq("client_id", client.id);
+
+      if (accountError && accountError.code !== "PGRST116") {
+        console.error("Error deleting client account:", accountError);
+        // Continue with deletion even if account deletion fails
+      }
+
+      // 2. Delete related data (weight history, messages, etc.)
+      // Delete weight history
+      const { error: weightError } = await supabase
+        .from("weight_history")
+        .delete()
+        .eq("client_id", client.id);
+
+      if (weightError && weightError.code !== "PGRST116") {
+        console.error("Error deleting weight history:", weightError);
+      }
+
+      // Delete messages
+      const { error: messagesError } = await supabase
+        .from("messages")
+        .delete()
+        .eq("client_id", client.id);
+
+      if (messagesError && messagesError.code !== "PGRST116") {
+        console.error("Error deleting messages:", messagesError);
+      }
+
+      // Delete documents
+      const { error: documentsError } = await supabase
+        .from("documents")
+        .delete()
+        .eq("client_id", client.id);
+
+      if (documentsError && documentsError.code !== "PGRST116") {
+        console.error("Error deleting documents:", documentsError);
+      }
+
+      // Delete progress photos
+      const { error: photosError } = await supabase
+        .from("progress_photos")
+        .delete()
+        .eq("client_id", client.id);
+
+      if (photosError && photosError.code !== "PGRST116") {
+        console.error("Error deleting progress photos:", photosError);
+      }
+
+      // 3. Finally delete the client record
+      const { error: clientError } = await supabase
+        .from("clients")
+        .delete()
+        .eq("id", client.id)
+        .eq("dietitian_id", user!.id); // Extra security check
+
+      if (clientError) {
+        throw clientError;
+      }
+
+      // 4. Update local state
+      setClients(prevClients => prevClients.filter(c => c.id !== client.id));
+      
+      // Show success message
+      alert(`${client.name} a été supprimé avec succès, ainsi que toutes ses données associées.`);
+
+    } catch (error) {
+      console.error("Error deleting client:", error);
+      alert("Erreur lors de la suppression du client. Veuillez réessayer.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleAddClient = async () => {
     if (!user) return;
 
@@ -1178,11 +1265,7 @@ export default function ClientsPage() {
                             </DropdownMenuItem>
                             <DropdownMenuItem 
                               className="text-red-600 hover:bg-red-50 rounded-md"
-                              onClick={() => {
-                                if (confirm(`Êtes-vous sûr de vouloir supprimer ${client.name}?`)) {
-                                  // Delete logic would go here
-                                }
-                              }}
+                              onClick={() => handleDeleteClient(client)}
                             >
                               <Trash2 className="mr-2 h-4 w-4" />
                               Supprimer
