@@ -20,7 +20,6 @@ import { type GeneratedMealPlan, type Meal, type DayPlan } from "@/lib/gemini"
 import { type DynamicMealPlan, isDynamicMealPlan } from "@/lib/meal-plan-types"
 import { supabase } from "@/lib/supabase"
 import { useState, useEffect } from "react"
-import NutritionalAnalysisCharts from "./NutritionalAnalysisCharts"
 
 interface SelectedFood {
   id: string
@@ -385,10 +384,6 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
                 <span className="hidden sm:inline">Analyse par jour</span>
                 <span className="sm:hidden">Par jour</span>
               </TabsTrigger>
-              <TabsTrigger value="charts" className="text-xs sm:text-sm data-[state=active]:bg-background">
-                <span className="hidden lg:inline">Graphiques Pro</span>
-                <span className="lg:hidden">Graphiques</span>
-              </TabsTrigger>
               <TabsTrigger value="recommendations" className="text-xs sm:text-sm data-[state=active]:bg-background">
                 <span className="hidden lg:inline">Recommandations</span>
                 <span className="lg:hidden">Conseils</span>
@@ -548,20 +543,6 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
               </div>
             </TabsContent>
 
-            <TabsContent value="charts" className="space-y-4">
-              <NutritionalAnalysisCharts mealPlan={{
-                ...mealPlan,
-                days: dailyBreakdown.map(day => ({
-                  day: day.day,
-                  date: day.date,
-                  meals: planDays.find((d: any) => d.day === day.day)?.meals || [],
-                  totalCalories: day.calories,
-                  totalProtein: day.protein,
-                  totalCarbs: day.carbs,
-                  totalFat: day.fat
-                }))
-              } as any} />
-            </TabsContent>
 
             <TabsContent value="recommendations" className="space-y-4">
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
