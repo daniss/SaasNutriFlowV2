@@ -658,25 +658,15 @@ export default function MealPlanDetailPage() {
         throw new Error('Impossible de définir ce plan comme actif pour le client')
       }
 
-      // 2. Send notification to client
-      const response = await fetch('/api/notifications', {
+      // 2. Send notification to client using the new meal plan shared API
+      const response = await fetch('/api/notifications/meal-plan-shared', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          type: 'meal_plan_notification',
-          recipient: {
-            email: mealPlan.clients.email,
-            name: mealPlan.clients.name,
-          },
-          data: {
-            planName: mealPlan.name,
-            clientName: mealPlan.clients.name,
-            duration: mealPlan.duration_days || 7,
-            calories: mealPlan.calories_range || 'Non spécifié',
-            description: mealPlan.description || '',
-          },
+          clientId: mealPlan.client_id,
+          mealPlanName: mealPlan.name,
         }),
       })
 
