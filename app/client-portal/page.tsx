@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { clientGet, clientPost } from "@/lib/client-api";
+import { downloadModernMealPlanPDF, type MealPlanPDFData } from "@/lib/pdf-generator-modern";
 import {
   Bell,
   Calendar,
@@ -445,12 +446,51 @@ function ClientPortalContent() {
     setSelectedProgressPhoto(photo);
   };
 
-  const downloadMealPlan = () => {
-    // In real implementation, this would generate and download the meal plan PDF
-    toast({
-      title: "Téléchargement démarré",
-      description: "Votre plan alimentaire est en cours de téléchargement",
-    });
+  const downloadMealPlan = async () => {
+    if (!portalData?.currentPlan || !portalData.profile) {
+      toast({
+        title: "Erreur",
+        description: "Aucun plan alimentaire disponible pour le téléchargement",
+        variant: "destructive"
+      });
+      return;
+    }
+
+    try {
+      toast({
+        title: "Génération du PDF",
+        description: "Préparation de votre plan alimentaire...",
+      });
+
+      // Transform meal plan data to PDF format
+      const pdfData: MealPlanPDFData = {
+        id: portalData.currentPlan.id,
+        name: portalData.currentPlan.name,
+        description: portalData.currentPlan.description,
+        clientName: portalData.profile.name,
+        clientEmail: portalData.profile.email,
+        duration_days: portalData.currentPlan.duration,
+        calories_range: portalData.currentPlan.caloriesRange,
+        status: portalData.currentPlan.status,
+        created_at: new Date().toISOString(),
+        dayPlans: portalData.currentPlan.content?.days || []
+      };
+
+      // Generate and download PDF
+      downloadModernMealPlanPDF(pdfData);
+      
+      toast({
+        title: "PDF téléchargé",
+        description: "Votre plan alimentaire a été généré avec succès",
+      });
+    } catch (error) {
+      console.error('Error downloading meal plan PDF:', error);
+      toast({
+        title: "Erreur",
+        description: "Impossible de générer le PDF. Veuillez réessayer.",
+        variant: "destructive"
+      });
+    }
   };
 
   if (loading) {
@@ -757,6 +797,7 @@ function ClientPortalContent() {
                                   </p>
                                 </div>
                                 <Button
+                                  onClick={downloadMealPlan}
                                   size="sm"
                                   className="bg-emerald-600 hover:bg-emerald-700"
                                 >
