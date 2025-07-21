@@ -244,34 +244,6 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
     avgFat: 0
   }
   
-  // Add only selected foods to the base averages (recipe nutrition is already in base data)
-  const dailyAverages = {
-    avgCalories: safeNumber(baseDailyAverages.avgCalories + selectedFoodsNutrition.calories),
-    avgProtein: safeNumber(baseDailyAverages.avgProtein + selectedFoodsNutrition.protein),
-    avgCarbs: safeNumber(baseDailyAverages.avgCarbs + selectedFoodsNutrition.carbs),
-    avgFat: safeNumber(baseDailyAverages.avgFat + selectedFoodsNutrition.fat)
-  }
-
-  const targetMacros = (mealPlan as GeneratedMealPlan).nutritionalGoals || {
-    dailyCalories: dailyAverages.avgCalories || 2000, // Use actual average if no target set
-    proteinPercentage: 25,
-    carbPercentage: 45,
-    fatPercentage: 30
-  }
-
-  // Calculate target grams based on percentages
-  const targetProteinGrams = Math.round((targetMacros.dailyCalories * (targetMacros.proteinPercentage / 100)) / 4)
-  const targetCarbsGrams = Math.round((targetMacros.dailyCalories * (targetMacros.carbPercentage / 100)) / 4)
-  const targetFatGrams = Math.round((targetMacros.dailyCalories * (targetMacros.fatPercentage / 100)) / 9)
-
-  // Calculate actual percentages using the total combined calories
-  const actualPercentages = calculateMacroPercentages({
-    protein: dailyAverages.avgProtein,
-    carbs: dailyAverages.avgCarbs,
-    fat: dailyAverages.avgFat,
-    calories: dailyAverages.avgCalories // This already includes all sources
-  })
-
   // Helper function to calculate nutrition for a specific day including selected foods
   const calculateDayTotalNutrition = (dayNumber: number) => {
     const dayFoods = selectedFoods?.[dayNumber]
@@ -297,23 +269,49 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
     }
   }
 
-  // Calculate daily breakdown for chart with selected foods included
+  // Calculate daily breakdown - simple approach: get base nutrition + add selected foods
   const planDays = isDynamicMealPlan(mealPlan as any) ? (mealPlan as DynamicMealPlan).days : (mealPlan as GeneratedMealPlan).days
   const dailyBreakdown = planDays.map((day: any) => {
-    const selectedFoodsNutrition = calculateDayTotalNutrition(day.day)
-    
-    // Note: Recipe nutrition is already included in the base meal plan data (day.totalProtein, etc.)
-    // Individual recipe nutrition should not be added separately here to avoid double counting
-    let dayRecipeNutrition = { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    // Get nutrition from selected foods for this day only
+    const selectedFoodsForDay = calculateDayTotalNutrition(day.day)
     
     return {
       day: day.day,
-      date: day.date || `Jour ${day.day}`, // Provide fallback date
-      calories: Math.round(safeNumber((day.totalCalories || 0) + selectedFoodsNutrition.calories + dayRecipeNutrition.calories)),
-      protein: Math.round(safeNumber((day.totalProtein || 0) + selectedFoodsNutrition.protein + dayRecipeNutrition.protein) * 10) / 10,
-      carbs: Math.round(safeNumber((day.totalCarbs || 0) + selectedFoodsNutrition.carbs + dayRecipeNutrition.carbs) * 10) / 10,
-      fat: Math.round(safeNumber((day.totalFat || 0) + selectedFoodsNutrition.fat + dayRecipeNutrition.fat) * 10) / 10
+      date: day.date || `Jour ${day.day}`,
+      calories: Math.round(safeNumber((day.totalCalories || 0) + selectedFoodsForDay.calories)),
+      protein: Math.round(safeNumber((day.totalProtein || 0) + selectedFoodsForDay.protein) * 10) / 10,
+      carbs: Math.round(safeNumber((day.totalCarbs || 0) + selectedFoodsForDay.carbs) * 10) / 10,
+      fat: Math.round(safeNumber((day.totalFat || 0) + selectedFoodsForDay.fat) * 10) / 10
     }
+  })
+
+  // Simple approach: use the calculated daily breakdown totals
+  const totalDays = dailyBreakdown.length || 1
+  const dailyAverages = {
+    avgCalories: Math.round(dailyBreakdown.reduce((sum, day) => sum + day.calories, 0) / totalDays),
+    avgProtein: Math.round((dailyBreakdown.reduce((sum, day) => sum + day.protein, 0) / totalDays) * 10) / 10,
+    avgCarbs: Math.round((dailyBreakdown.reduce((sum, day) => sum + day.carbs, 0) / totalDays) * 10) / 10,
+    avgFat: Math.round((dailyBreakdown.reduce((sum, day) => sum + day.fat, 0) / totalDays) * 10) / 10
+  }
+
+  const targetMacros = (mealPlan as GeneratedMealPlan).nutritionalGoals || {
+    dailyCalories: dailyAverages.avgCalories || 2000, // Use actual average if no target set
+    proteinPercentage: 25,
+    carbPercentage: 45,
+    fatPercentage: 30
+  }
+
+  // Calculate target grams based on percentages
+  const targetProteinGrams = Math.round((targetMacros.dailyCalories * (targetMacros.proteinPercentage / 100)) / 4)
+  const targetCarbsGrams = Math.round((targetMacros.dailyCalories * (targetMacros.carbPercentage / 100)) / 4)
+  const targetFatGrams = Math.round((targetMacros.dailyCalories * (targetMacros.fatPercentage / 100)) / 9)
+
+  // Calculate actual percentages using the total combined calories
+  const actualPercentages = calculateMacroPercentages({
+    protein: dailyAverages.avgProtein,
+    carbs: dailyAverages.avgCarbs,
+    fat: dailyAverages.avgFat,
+    calories: dailyAverages.avgCalories
   })
 
   return (

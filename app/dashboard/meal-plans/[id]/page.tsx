@@ -1103,11 +1103,33 @@ export default function MealPlanDetailPage() {
     return []
   }
 
-  // Helper function to calculate nutrition from selected foods and recipes for a specific day
+  // Helper function to calculate nutrition from each meal for a specific day
   const calculateDayNutrition = (dayNumber: number) => {
     let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0
     
-    // Calculate from legacy foods
+    // Get the day data from meal plan
+    const dayPlan = mealPlan?.plan_content?.days?.find((d: any) => d.day === dayNumber)
+    if (!dayPlan) return { calories: 0, protein: 0, carbs: 0, fat: 0 }
+    
+    // Go through each meal type (breakfast, lunch, dinner, snacks)
+    if (dayPlan.meals) {
+      const mealTypes = ['breakfast', 'lunch', 'dinner', 'snacks']
+      
+      mealTypes.forEach(mealType => {
+        const meals = dayPlan.meals[mealType]
+        if (!meals || !Array.isArray(meals)) return
+        
+        meals.forEach((meal: any) => {
+          // Add nutrition from each meal
+          totalCalories += meal.calories || 0
+          totalProtein += meal.protein || 0
+          totalCarbs += meal.carbs || 0  
+          totalFat += meal.fat || 0
+        })
+      })
+    }
+    
+    // Add nutrition from selected foods (ANSES-CIQUAL database)
     const dayFoods = selectedFoods[dayNumber]
     if (dayFoods) {
       Object.values(dayFoods).forEach(mealFoods => {
@@ -1121,9 +1143,8 @@ export default function MealPlanDetailPage() {
       })
     }
     
-    // Calculate from dynamic meal foods
+    // Add nutrition from dynamic meal foods  
     Object.entries(dynamicMealFoods).forEach(([mealId, foods]) => {
-      // Check if this meal belongs to the current day
       const dayFromId = parseInt(mealId.split('-')[0])
       if (dayFromId === dayNumber) {
         foods.forEach(food => {
@@ -1136,13 +1157,11 @@ export default function MealPlanDetailPage() {
       }
     })
     
-    // Calculate from dynamic meal recipes
+    // Add nutrition from dynamic meal recipes
     Object.entries(dynamicMealRecipes).forEach(([mealId, recipes]) => {
-      // Check if this meal belongs to the current day
       const dayFromId = parseInt(mealId.split('-')[0])
       if (dayFromId === dayNumber) {
         recipes.forEach(recipe => {
-          // Use recipe nutritional data per serving
           totalCalories += recipe.calories_per_serving || 0
           totalProtein += recipe.protein_per_serving || 0
           totalCarbs += recipe.carbs_per_serving || 0
@@ -1150,9 +1169,6 @@ export default function MealPlanDetailPage() {
         })
       }
     })
-    
-    // Note: AI meal nutrition (calories_target, etc.) is already included in the base meal plan data
-    // and should NOT be added here to avoid double counting
     
     return {
       calories: Math.round(totalCalories),
