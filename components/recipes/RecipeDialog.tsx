@@ -611,7 +611,7 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
             <div className="flex items-center justify-between">
               <Label className="text-lg font-medium">Valeurs nutritionnelles par portion</Label>
               <Badge variant="secondary" className="text-xs">
-                Calculé automatiquement
+                Manuel ou automatique
               </Badge>
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
@@ -620,9 +620,9 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
                 <Input
                   id="calories"
                   type="number"
-                  value={formData.calories_per_serving || 0}
-                  readOnly
-                  className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                  value={formData.calories_per_serving || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, calories_per_serving: e.target.value ? parseInt(e.target.value) : null }))}
+                  placeholder="0"
                 />
               </div>
               <div className="space-y-2">
@@ -630,9 +630,9 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
                 <Input
                   id="protein"
                   type="number"
-                  value={formData.protein_per_serving || 0}
-                  readOnly
-                  className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                  value={formData.protein_per_serving || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, protein_per_serving: e.target.value ? parseInt(e.target.value) : null }))}
+                  placeholder="0"
                 />
               </div>
               <div className="space-y-2">
@@ -640,9 +640,9 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
                 <Input
                   id="carbs"
                   type="number"
-                  value={formData.carbs_per_serving || 0}
-                  readOnly
-                  className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                  value={formData.carbs_per_serving || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, carbs_per_serving: e.target.value ? parseInt(e.target.value) : null }))}
+                  placeholder="0"
                 />
               </div>
               <div className="space-y-2">
@@ -650,9 +650,9 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
                 <Input
                   id="fat"
                   type="number"
-                  value={formData.fat_per_serving || 0}
-                  readOnly
-                  className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                  value={formData.fat_per_serving || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, fat_per_serving: e.target.value ? parseInt(e.target.value) : null }))}
+                  placeholder="0"
                 />
               </div>
               <div className="space-y-2">
@@ -660,14 +660,14 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
                 <Input
                   id="fiber"
                   type="number"
-                  value={formData.fiber_per_serving || 0}
-                  readOnly
-                  className="bg-gray-50 text-gray-700 cursor-not-allowed"
+                  value={formData.fiber_per_serving || ''}
+                  onChange={(e) => setFormData(prev => ({ ...prev, fiber_per_serving: e.target.value ? parseInt(e.target.value) : null }))}
+                  placeholder="0"
                 />
               </div>
             </div>
             <p className="text-xs text-gray-500">
-              💡 Les valeurs nutritionnelles sont calculées automatiquement en fonction des ingrédients et de leurs quantités
+              💡 Les valeurs nutritionnelles seront calculées automatiquement si les ingrédients sont ajoutés, ou peuvent être saisies manuellement
             </p>
           </div>
 
