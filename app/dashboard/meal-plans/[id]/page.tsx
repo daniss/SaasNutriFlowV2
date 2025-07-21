@@ -1677,27 +1677,27 @@ export default function MealPlanDetailPage() {
 
         {/* Edit Dialog */}
         <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
-          <DialogContent className="sm:max-w-[540px] rounded-xl">
-            <DialogHeader>
-              <DialogTitle>Modifier le plan alimentaire</DialogTitle>
-              <DialogDescription>
+          <DialogContent className="w-[95vw] max-w-[540px] max-h-[90vh] overflow-y-auto rounded-xl mx-auto">
+            <DialogHeader className="space-y-3 pb-4">
+              <DialogTitle className="text-lg">Modifier le plan alimentaire</DialogTitle>
+              <DialogDescription className="text-sm">
                 Mettre à jour les détails et paramètres du plan alimentaire.
               </DialogDescription>
             </DialogHeader>
-            <div className="grid gap-6 py-4">
+            <div className="space-y-4 px-1">
               <div className="space-y-2">
-                <Label htmlFor="edit-name">Nom du plan *</Label>
+                <Label htmlFor="edit-name" className="text-sm font-medium">Nom du plan *</Label>
                 <Input
                   id="edit-name"
                   value={editForm.name}
                   onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
-                  className="h-11"
+                  className="h-10"
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-client">Client *</Label>
+                <Label htmlFor="edit-client" className="text-sm font-medium">Client *</Label>
                 <Select value={editForm.client_id} onValueChange={(value: string) => setEditForm({ ...editForm, client_id: value })}>
-                  <SelectTrigger className="h-11">
+                  <SelectTrigger className="h-10">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1709,31 +1709,31 @@ export default function MealPlanDetailPage() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div className="space-y-2">
-                  <Label htmlFor="edit-calories">Gamme de calories</Label>
+                  <Label htmlFor="edit-calories" className="text-sm font-medium">Gamme de calories</Label>
                   <Input
                     id="edit-calories"
                     value={editForm.calories_range}
                     onChange={(e) => setEditForm({ ...editForm, calories_range: e.target.value })}
-                    className="h-11"
+                    className="h-10"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="edit-duration">Durée (jours)</Label>
+                  <Label htmlFor="edit-duration" className="text-sm font-medium">Durée (jours)</Label>
                   <Input
                     id="edit-duration"
                     type="number"
                     value={editForm.duration_days}
                     onChange={(e) => setEditForm({ ...editForm, duration_days: e.target.value })}
-                    className="h-11"
+                    className="h-10"
                   />
                 </div>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-status">Statut</Label>
+                <Label htmlFor="edit-status" className="text-sm font-medium">Statut</Label>
                 <Select value={editForm.status} onValueChange={(value: string) => setEditForm({ ...editForm, status: value })}>
-                  <SelectTrigger className="h-11">
+                  <SelectTrigger className="h-10">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -1744,20 +1744,21 @@ export default function MealPlanDetailPage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <Label htmlFor="edit-description">Description</Label>
+                <Label htmlFor="edit-description" className="text-sm font-medium">Description</Label>
                 <Textarea
                   id="edit-description"
                   value={editForm.description}
                   onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
                   rows={3}
+                  className="resize-none"
                 />
               </div>
             </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+            <DialogFooter className="flex-col sm:flex-row gap-2 sm:gap-0 pt-4">
+              <Button variant="outline" onClick={() => setIsEditOpen(false)} className="w-full sm:w-auto">
                 Annuler
               </Button>
-              <Button onClick={handleEdit}>
+              <Button onClick={handleEdit} className="w-full sm:w-auto">
                 Enregistrer les modifications
               </Button>
             </DialogFooter>
