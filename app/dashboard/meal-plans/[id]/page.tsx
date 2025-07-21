@@ -1483,27 +1483,22 @@ export default function MealPlanDetailPage() {
               >
                 <Share2 className="h-3 w-3" />
               </Button>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" size="sm" className="h-9 px-2">
-                    <MoreHorizontal className="h-3 w-3" />
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48 rounded-lg">
-                  <DropdownMenuItem onClick={handleExportPDF} className="rounded-md">
-                    <Download className="mr-2 h-4 w-4" />
-                    Exporter en PDF
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem 
-                    onClick={() => setIsDeleteOpen(true)}
-                    className="text-red-600 hover:bg-red-50 rounded-md"
-                  >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Supprimer le plan
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9 px-2"
+                onClick={handleExportPDF}
+              >
+                <Download className="h-3 w-3" />
+              </Button>
+              <Button 
+                variant="outline" 
+                size="sm" 
+                className="h-9 px-2"
+                onClick={() => setIsDeleteOpen(true)}
+              >
+                <Trash2 className="h-3 w-3 text-red-600" />
+              </Button>
             </div>
 
             {/* Desktop: Keep dropdown menu */}
