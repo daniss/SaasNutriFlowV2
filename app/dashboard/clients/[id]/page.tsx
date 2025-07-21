@@ -130,6 +130,7 @@ export default function ClientDetailPage() {
   const [newWeightNotes, setNewWeightNotes] = useState("");
   const [newNote, setNewNote] = useState("");
   const [documentRefresh, setDocumentRefresh] = useState(0);
+  const [customTag, setCustomTag] = useState("");
 
   // Form validation states
   const [weightValidation, setWeightValidation] = useState({
@@ -1619,6 +1620,51 @@ export default function ClientDetailPage() {
                           </div>
                         </div>
                       )}
+                      
+                      {/* Custom Tag Input */}
+                      <div className="mt-4 space-y-2">
+                        <Label className="text-xs font-medium text-gray-600">
+                          Ajouter une restriction personnalisée
+                        </Label>
+                        <div className="flex gap-2">
+                          <Input
+                            type="text"
+                            placeholder="Ex: Faible en FODMAP, Sans viande rouge..."
+                            value={customTag}
+                            onChange={(e) => setCustomTag(e.target.value)}
+                            className="flex-1 text-sm"
+                            onKeyPress={(e) => {
+                              if (e.key === 'Enter') {
+                                e.preventDefault();
+                                if (customTag.trim() && !(editForm.tags || []).includes(customTag.trim())) {
+                                  setEditForm({ 
+                                    ...editForm, 
+                                    tags: [...(editForm.tags || []), customTag.trim()] 
+                                  });
+                                  setCustomTag("");
+                                }
+                              }
+                            }}
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              if (customTag.trim() && !(editForm.tags || []).includes(customTag.trim())) {
+                                setEditForm({ 
+                                  ...editForm, 
+                                  tags: [...(editForm.tags || []), customTag.trim()] 
+                                });
+                                setCustomTag("");
+                              }
+                            }}
+                            className="px-3 py-1 text-xs"
+                          >
+                            Ajouter
+                          </Button>
+                        </div>
+                      </div>
                     </div>
                     <div className="space-y-2">
                       <Label
