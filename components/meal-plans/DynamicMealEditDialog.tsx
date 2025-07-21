@@ -7,11 +7,12 @@ import { Label } from "@/components/ui/label"
 import { Textarea } from "@/components/ui/textarea"
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { X, Plus, Clock, Info, ChefHat } from "lucide-react"
+import { X, Plus, Clock, Info, ChefHat, Search } from "lucide-react"
 import { toast } from "@/hooks/use-toast"
 import { MealSlot, DynamicMealPlanDay, generateMealId } from "@/lib/meal-plan-types"
 import { RecipeSearchModal } from "@/components/meal-plans/RecipeSearchModal"
 import { RecipeCard } from "@/components/meal-plans/RecipeCard"
+import RecipeDialog from "@/components/recipes/RecipeDialog"
 
 // Professional limits consistent with templates
 const MAX_MEALS_PER_DAY = 8
@@ -72,6 +73,10 @@ export function DynamicMealEditDialog({
   const [recipeSearchOpen, setRecipeSearchOpen] = useState(false)
   const [recipeSearchMealId, setRecipeSearchMealId] = useState<string | null>(null)
   const [localMealRecipes, setLocalMealRecipes] = useState<Record<string, Recipe[]>>(dynamicMealRecipes || {})
+  
+  // Recipe creation dialog state
+  const [recipeCreateOpen, setRecipeCreateOpen] = useState(false)
+  const [recipeCreateMealId, setRecipeCreateMealId] = useState<string | null>(null)
 
   // Sync localMealRecipes with dynamicMealRecipes prop updates
   useEffect(() => {
@@ -191,6 +196,40 @@ export function DynamicMealEditDialog({
     }
   }
 
+  const handleRecipeCreate = (recipe: any) => {
+    if (recipeCreateMealId) {
+      // Transform recipe to match our Recipe interface
+      const recipeToAdd: Recipe = {
+        id: recipe.id,
+        name: recipe.name,
+        description: recipe.description,
+        servings: recipe.servings,
+        prep_time: recipe.prep_time,
+        cook_time: recipe.cook_time,
+        calories_per_serving: recipe.calories_per_serving,
+        protein_per_serving: recipe.protein_per_serving,
+        carbs_per_serving: recipe.carbs_per_serving,
+        fat_per_serving: recipe.fat_per_serving,
+        fiber_per_serving: recipe.fiber_per_serving,
+        ingredients: [] // We'll populate this if needed
+      }
+
+      setLocalMealRecipes(prev => ({
+        ...prev,
+        [recipeCreateMealId]: [...(prev[recipeCreateMealId] || []), recipeToAdd]
+      }))
+      
+      toast({
+        title: "Recette créée et ajoutée",
+        description: `${recipe.name} créée et ajoutée au repas.`
+      })
+
+      // Close the create dialog
+      setRecipeCreateOpen(false)
+      setRecipeCreateMealId(null)
+    }
+  }
+
   const handleRemoveRecipe = (mealId: string, recipeIndex: number) => {
     setLocalMealRecipes(prev => ({
       ...prev,
@@ -201,6 +240,11 @@ export function DynamicMealEditDialog({
   const openRecipeSearch = (mealId: string) => {
     setRecipeSearchMealId(mealId)
     setRecipeSearchOpen(true)
+  }
+
+  const openRecipeCreate = (mealId: string) => {
+    setRecipeCreateMealId(mealId)
+    setRecipeCreateOpen(true)
   }
 
   const handleSave = () => {
@@ -418,16 +462,27 @@ export function DynamicMealEditDialog({
                     className="resize-none"
                   />
                   
-                  {/* Recipe Selection Button */}
-                  <div className="pt-2">
+                  {/* Recipe Buttons */}
+                  <div className="pt-2 grid grid-cols-2 gap-2">
                     <Button
                       size="sm"
                       variant="outline"
                       onClick={() => openRecipeSearch(meal.id)}
-                      className="w-full bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
+                      className="bg-emerald-50 border-emerald-200 text-emerald-700 hover:bg-emerald-100"
                     >
-                      <ChefHat className="h-3 w-3 mr-1" />
-                      Ajouter une recette
+                      <Search className="h-3 w-3 mr-1" />
+                      <span className="hidden sm:inline">Choisir</span>
+                      <span className="sm:hidden text-xs">Choisir</span>
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => openRecipeCreate(meal.id)}
+                      className="bg-blue-50 border-blue-200 text-blue-700 hover:bg-blue-100"
+                    >
+                      <Plus className="h-3 w-3 mr-1" />
+                      <span className="hidden sm:inline">Créer</span>
+                      <span className="sm:hidden text-xs">Créer</span>
                     </Button>
                   </div>
 
@@ -488,6 +543,16 @@ export function DynamicMealEditDialog({
         }}
         onSelectRecipe={handleRecipeSelect}
         excludeRecipeIds={localMealRecipes[recipeSearchMealId || '']?.map(r => r.id) || []}
+      />
+
+      {/* Recipe Creation Dialog */}
+      <RecipeDialog
+        isOpen={recipeCreateOpen}
+        onClose={() => {
+          setRecipeCreateOpen(false)
+          setRecipeCreateMealId(null)
+        }}
+        onSave={handleRecipeCreate}
       />
     </Dialog>
   )
