@@ -664,7 +664,35 @@ export default function MealPlanDetailPage() {
         await createRecipesFromSelectedRecipes()
       }
 
-      // First generate and download the PDF
+      // 1. Set this meal plan as the client's current active plan
+      // First, set all other meal plans for this client as inactive
+      const { error: deactivateError } = await supabase
+        .from('meal_plans')
+        .update({ status: 'completed' })
+        .eq('client_id', mealPlan.client_id)
+        .eq('dietitian_id', user?.id)
+        .neq('id', mealPlan.id)
+
+      if (deactivateError) {
+        console.error('Error deactivating other meal plans:', deactivateError)
+        // Continue anyway - not critical
+      }
+
+      // Then set this plan as active
+      const { error: activateError } = await supabase
+        .from('meal_plans')
+        .update({ 
+          status: 'active',
+          updated_at: new Date().toISOString()
+        })
+        .eq('id', mealPlan.id)
+        .eq('dietitian_id', user?.id)
+
+      if (activateError) {
+        throw new Error('Impossible de définir ce plan comme actif pour le client')
+      }
+
+      // 2. Generate and download the PDF for the dietitian
       const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7, true) // forPDF = true
       const pdfData: MealPlanPDFData = {
         id: mealPlan.id,
@@ -674,7 +702,7 @@ export default function MealPlanDetailPage() {
         clientEmail: mealPlan.clients.email,
         duration_days: mealPlan.duration_days || 7,
         calories_range: mealPlan.calories_range || undefined,
-        status: mealPlan.status,
+        status: 'active', // Now active
         created_at: mealPlan.created_at,
         dayPlans: dayPlans
       }
@@ -682,7 +710,7 @@ export default function MealPlanDetailPage() {
       // Download the PDF for the dietitian using the modern generator
       downloadModernMealPlanPDF(pdfData)
 
-      // Send notification to client
+      // 3. Send notification to client
       const response = await fetch('/api/notifications', {
         method: 'POST',
         headers: {
@@ -708,9 +736,12 @@ export default function MealPlanDetailPage() {
         throw new Error('Erreur lors de l\'envoi de la notification')
       }
 
+      // 4. Update the local state to reflect the change
+      setMealPlan(prev => prev ? { ...prev, status: 'active' } : null)
+
       toast({
-        title: "Plan partagé",
-        description: `Le plan alimentaire a été partagé avec ${mealPlan.clients.name} par email.`
+        title: "Plan partagé et activé",
+        description: `Le plan alimentaire est maintenant le plan actif de ${mealPlan.clients.name} et a été partagé par email.`
       })
     } catch (error) {
       console.error('Error sharing meal plan:', error)

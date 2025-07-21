@@ -103,7 +103,7 @@ export async function GET(request: NextRequest) {
       `
       )
       .eq("client_id", clientId)
-      .eq("status", "Active")
+      .eq("status", "active")
       .order("created_at", { ascending: false })
       .limit(1)
       .single();
