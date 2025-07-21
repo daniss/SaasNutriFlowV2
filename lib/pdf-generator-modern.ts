@@ -444,6 +444,16 @@ export class ModernPDFGenerator {
       return food
     }
     
+    // Handle AI-generated meals (with name and nutrition)
+    if (food.name) {
+      let result = food.name
+      if (food.calories) {
+        result += ` - ${food.calories} kcal`
+      }
+      return result
+    }
+    
+    // Handle ANSES-CIQUAL foods 
     if (food.name_fr) {
       let result = food.name_fr
       if (food.quantity) {
@@ -475,7 +485,15 @@ export class ModernPDFGenerator {
     }
 
     foods.forEach(food => {
-      if (food.quantity && food.energy_kcal) {
+      // Handle AI-generated meals (with direct nutrition values)
+      if (food.calories || food.protein || food.carbs || food.fat) {
+        totals.calories += food.calories || 0
+        totals.protein += food.protein || 0
+        totals.carbs += food.carbs || 0
+        totals.fat += food.fat || 0
+      }
+      // Handle ANSES-CIQUAL foods (with quantity and per-100g values)
+      else if (food.quantity && food.energy_kcal) {
         const factor = food.quantity / 100
         totals.calories += Math.round((food.energy_kcal || 0) * factor)
         totals.protein += Math.round((food.protein_g || 0) * factor * 10) / 10
@@ -696,7 +714,42 @@ export class ModernPDFGenerator {
     this.pdf.text('Liste de courses', this.margin + 10, this.currentY)
     this.currentY += 35
 
-    // Gather all foods
+    // Check if we have AI-generated meals (no detailed ingredients)
+    const hasAIMeals = plan.dayPlans.some(day => 
+      Object.values(day.meals).some(meals => 
+        Array.isArray(meals) && meals.some(meal => meal.name && !meal.name_fr)
+      )
+    )
+
+    if (hasAIMeals) {
+      // For AI-generated meal plans, show a note about ingredients
+      this.pdf.setFillColor(...this.hexToRgb(colors.bgLight))
+      this.pdf.roundedRect(this.margin, this.currentY - 5, this.contentWidth, 80, 5, 5, 'F')
+      
+      this.pdf.setTextColor(...this.hexToRgb(colors.textMuted))
+      this.pdf.setFontSize(14)
+      this.pdf.setFont('helvetica', 'normal')
+      
+      const noteLines = [
+        'Ce plan alimentaire contient des repas générés par IA.',
+        '',
+        'Pour obtenir une liste de courses détaillée avec les ingrédients',
+        'et quantités précises, vous pouvez :',
+        '',
+        '• Convertir les repas en recettes dans l\'interface',
+        '• Ajouter des aliments spécifiques depuis la base ANSES-CIQUAL',
+        '• Consulter les détails nutritionnels de chaque repas'
+      ]
+      
+      noteLines.forEach(line => {
+        this.pdf.text(line, this.margin + 10, this.currentY + 5)
+        this.currentY += 8
+      })
+      
+      return
+    }
+
+    // Gather all foods (for traditional meal plans with specific ingredients)
     const foodMap = new Map<string, { days: Set<number>, quantity: number }>()
     
     plan.dayPlans.forEach((day) => {
@@ -704,7 +757,7 @@ export class ModernPDFGenerator {
         const isEnabled = day[`${mealType}Enabled` as keyof typeof day] !== false
         if (isEnabled && Array.isArray(foods)) {
           foods.forEach((food: any) => {
-            const name = typeof food === 'string' ? food : food.name_fr || String(food)
+            const name = typeof food === 'string' ? food : food.name_fr || food.name || String(food)
             const quantity = food.quantity || 0
             
             if (!foodMap.has(name)) {
