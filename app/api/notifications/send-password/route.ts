@@ -1,8 +1,17 @@
 import { NextRequest, NextResponse } from "next/server"
 import { notificationService } from "@/lib/notification-service"
 import { createClient } from "@/lib/supabase/server"
-import { generateTemporaryPassword } from "@/lib/client-auth-security"
 import bcryptjs from 'bcryptjs'
+
+// Generate a simple temporary password
+function generateTemporaryPassword(): string {
+  const chars = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789';
+  let password = '';
+  for (let i = 0; i < 8; i++) {
+    password += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return password;
+}
 
 export async function POST(request: NextRequest) {
   try {
