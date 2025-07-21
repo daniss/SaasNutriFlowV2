@@ -528,7 +528,7 @@ export default function AppointmentsPage() {
                 <span className="sm:hidden">Nouveau</span>
               </Button>
             </DialogTrigger>
-            <DialogContent className="sm:max-w-[500px] shadow-soft-lg border-0 max-h-[90vh] overflow-y-auto">
+            <DialogContent className="w-[95vw] max-w-[500px] max-h-[90vh] overflow-y-auto shadow-soft-lg border-0 rounded-xl mx-auto">
               <DialogHeader className="space-y-3">
                 <DialogTitle className="text-xl font-semibold text-gray-900">
                   Nouveau rendez-vous
@@ -746,7 +746,7 @@ export default function AppointmentsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] shadow-soft-lg border-0 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-[500px] max-h-[90vh] overflow-y-auto shadow-soft-lg border-0 rounded-xl mx-auto">
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-xl font-semibold text-gray-900">
               Modifier le rendez-vous
@@ -1254,7 +1254,7 @@ export default function AppointmentsPage() {
 
       {/* Edit Dialog */}
       <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] shadow-soft-lg border-0 max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-[500px] max-h-[90vh] overflow-y-auto shadow-soft-lg border-0 rounded-xl mx-auto">
           <DialogHeader className="space-y-3">
             <DialogTitle className="text-xl font-semibold text-gray-900">
               Modifier le rendez-vous

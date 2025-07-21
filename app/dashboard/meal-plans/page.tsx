@@ -342,29 +342,31 @@ export default function MealPlansPage() {
               onClick={() => setIsTemplateDialogOpen(true)}
               variant="outline"
               size="sm"
-              className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs px-2 sm:px-3 flex-shrink-0"
+              className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
             >
-              <BookOpen className="h-3 w-3 flex-shrink-0" />
-              <span className="ml-1 hidden sm:inline">Modèle</span>
+              <BookOpen className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Utiliser un modèle</span>
+              <span className="sm:hidden">Modèle</span>
             </Button>
             <Button 
               asChild
               variant="outline"
               size="sm"
-              className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 text-xs px-2 sm:px-3 flex-shrink-0"
+              className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
             >
               <Link href="/dashboard/meal-plans/generate">
-                <Sparkles className="h-3 w-3 flex-shrink-0" />
-                <span className="ml-1 hidden sm:inline">IA</span>
+                <Sparkles className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Générer avec IA</span>
+                <span className="sm:hidden">IA</span>
               </Link>
             </Button>
             <Button 
               onClick={() => setIsAddDialogOpen(true)}
-              size="sm"
-              className="bg-emerald-600 hover:bg-emerald-700 text-white text-xs px-2 sm:px-3 flex-shrink-0"
+              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
             >
-              <Plus className="h-3 w-3 flex-shrink-0" />
-              <span className="ml-1 hidden sm:inline">Plan</span>
+              <Plus className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+              <span className="hidden sm:inline">Nouveau plan</span>
+              <span className="sm:hidden">Nouveau</span>
             </Button>
           </div>
         }
@@ -646,7 +648,7 @@ export default function MealPlansPage() {
 
       {/* Create Meal Plan Dialog */}
       <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-        <DialogContent className="sm:max-w-[500px] max-h-[90vh] overflow-y-auto">
+        <DialogContent className="w-[95vw] max-w-[500px] max-h-[90vh] overflow-y-auto rounded-xl mx-auto">
           <DialogHeader>
             <DialogTitle>Créer un nouveau plan alimentaire</DialogTitle>
             <DialogDescription>

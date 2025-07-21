@@ -26,6 +26,13 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuthNew";
 import { generateTemporaryPassword, hashPassword, formatClientAccountEmail } from "@/lib/client-account-utils";
 import { supabase, type Client } from "@/lib/supabase";
@@ -40,6 +47,10 @@ import {
   Target,
   TrendingUp,
   Users,
+  MoreHorizontal,
+  Edit,
+  Eye,
+  Trash2,
 } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
@@ -505,9 +516,10 @@ export default function ClientsPage() {
         action={
           <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
             <DialogTrigger asChild>
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
-                <Plus className="mr-2 h-4 w-4" />
-                Nouveau client
+              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5">
+                <Plus className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Nouveau client</span>
+                <span className="sm:hidden">Nouveau</span>
               </Button>
             </DialogTrigger>
             <DialogContent className="w-[95vw] sm:max-w-[600px] max-h-[90vh] sm:max-h-[80vh] overflow-y-auto shadow-soft-lg border-0">
@@ -1138,18 +1150,53 @@ export default function ClientsPage() {
                           </p>
                         </div>
                       </div>
-                      <Badge
-                        variant={
-                          client.status === "active" ? "default" : "secondary"
-                        }
-                        className={`${
-                          client.status === "active"
-                            ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
-                            : "bg-gray-100 text-gray-600"
-                        } border-0 font-medium px-3 py-1 flex-shrink-0`}
-                      >
-                        {client.status === "active" ? "Actif" : "Inactif"}
-                      </Badge>
+                      <div className="flex items-center gap-2">
+                        <Badge
+                          variant={
+                            client.status === "active" ? "default" : "secondary"
+                          }
+                          className={`${
+                            client.status === "active"
+                              ? "bg-emerald-100 text-emerald-700 hover:bg-emerald-200"
+                              : "bg-gray-100 text-gray-600"
+                          } border-0 font-medium px-3 py-1 flex-shrink-0`}
+                        >
+                          {client.status === "active" ? "Actif" : "Inactif"}
+                        </Badge>
+                        <DropdownMenu>
+                          <DropdownMenuTrigger asChild>
+                            <Button variant="ghost" size="sm" className="h-8 w-8 p-0">
+                              <MoreHorizontal className="h-4 w-4" />
+                            </Button>
+                          </DropdownMenuTrigger>
+                          <DropdownMenuContent align="end" className="w-48 rounded-lg">
+                            <DropdownMenuItem asChild className="rounded-md">
+                              <Link href={`/dashboard/clients/${client.id}`}>
+                                <Eye className="mr-2 h-4 w-4" />
+                                Voir le profil
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild className="rounded-md">
+                              <Link href={`/dashboard/clients/${client.id}?edit=true`}>
+                                <Edit className="mr-2 h-4 w-4" />
+                                Modifier
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuSeparator />
+                            <DropdownMenuItem 
+                              className="text-red-600 hover:bg-red-50 rounded-md"
+                              onClick={() => {
+                                if (confirm(`Êtes-vous sûr de vouloir supprimer ${client.name}?`)) {
+                                  // Delete logic would go here
+                                }
+                              }}
+                            >
+                              <Trash2 className="mr-2 h-4 w-4" />
+                              Supprimer
+                            </DropdownMenuItem>
+                          </DropdownMenuContent>
+                        </DropdownMenu>
+                      </div>
                     </div>
 
                     {/* Client Info */}

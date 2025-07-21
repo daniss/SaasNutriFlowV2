@@ -223,9 +223,10 @@ export default function RecipesPage() {
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
-          <Button onClick={handleCreateRecipe} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium">
-            <Plus className="h-4 w-4 mr-2" />
-            Nouvelle recette
+          <Button onClick={handleCreateRecipe} className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5">
+            <Plus className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Nouvelle recette</span>
+            <span className="sm:hidden">Nouvelle</span>
           </Button>
         }
       />
