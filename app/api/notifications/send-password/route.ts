@@ -15,24 +15,12 @@ function generateTemporaryPassword(): string {
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("=== SEND PASSWORD API DEBUG START ===")
-    console.log("Request headers:", Object.fromEntries(request.headers.entries()))
-    console.log("Request cookies:", request.cookies.getAll())
-    
     // Authentication check
     const supabase = await createClient()
-    console.log("Created Supabase client")
-    
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    console.log("Auth result:", { user: user ? { id: user.id, email: user.email } : null, error: authError })
     
     if (authError) {
-      console.error("Auth error details:", {
-        message: authError.message,
-        status: authError.status,
-        name: authError.name,
-        stack: authError.stack
-      })
+      console.error("Auth error:", authError)
       return NextResponse.json(
         { error: "Authentication failed: " + authError.message },
         { status: 401 }
@@ -40,14 +28,12 @@ export async function POST(request: NextRequest) {
     }
     
     if (!user) {
-      console.error("No user found in session - full auth data:", { user, authError })
+      console.error("No user found in session")
       return NextResponse.json(
         { error: "No user session found" },
         { status: 401 }
       )
     }
-
-    console.log("Successfully authenticated user:", { id: user.id, email: user.email })
 
     // Get dietitian profile to verify user is a dietitian
     const { data: dietitian, error: dietitianError } = await supabase
@@ -72,8 +58,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("Found dietitian:", dietitian.id, dietitian.name)
-
     const body = await request.json()
     const { clientId } = body
 
@@ -83,8 +67,6 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
-
-    console.log("Looking up client:", clientId, "for dietitian:", dietitian.id)
 
     // Get client details and verify it belongs to this dietitian
     const { data: client, error: clientError } = await supabase
@@ -110,7 +92,6 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log("Found client:", client.name, "status:", client.status)
 
     // Check if client is not inactive
     if (client.status === 'inactive') {
@@ -238,13 +219,11 @@ L'équipe NutriFlow
       )
     }
 
-    console.log("=== SEND PASSWORD API SUCCESS ===")
     return NextResponse.json({ 
       success: true,
       message: "Password sent successfully"
     })
   } catch (error) {
-    console.error("=== SEND PASSWORD API ERROR ===")
     console.error("Error in send password API:", error)
     const errorMessage = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
