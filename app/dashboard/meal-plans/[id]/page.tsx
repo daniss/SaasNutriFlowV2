@@ -480,6 +480,32 @@ export default function MealPlanDetailPage() {
             continue
           }
 
+          // Extract meal type from mealId to determine proper French category
+          const mealIdParts = mealId.split('-')
+          const mealType = mealIdParts.slice(1).join('-') // Everything after the day number
+          
+          // Map meal ID patterns to French meal categories  
+          let mealCategory = 'generated'
+          if (mealType.toLowerCase().includes('petit-déjeuner') || mealType.toLowerCase().includes('breakfast')) {
+            mealCategory = 'Petit-déjeuner'
+          } else if (mealType.toLowerCase().includes('collation-matin')) {
+            mealCategory = 'Collation matin'
+          } else if (mealType.toLowerCase().includes('déjeuner') && !mealType.toLowerCase().includes('petit')) {
+            mealCategory = 'Déjeuner'
+          } else if (mealType.toLowerCase().includes('collation-après-midi')) {
+            mealCategory = 'Collation après-midi'
+          } else if (mealType.toLowerCase().includes('dîner') || mealType.toLowerCase().includes('dinner')) {
+            mealCategory = 'Dîner'
+          } else if (mealType.toLowerCase().includes('collation-soir')) {
+            mealCategory = 'Collation soir'
+          } else if (mealType.toLowerCase().includes('pré-entraînement')) {
+            mealCategory = 'Pré-entraînement'
+          } else if (mealType.toLowerCase().includes('post-entraînement')) {
+            mealCategory = 'Post-entraînement'
+          } else if (mealType.toLowerCase().includes('collation') || mealType.toLowerCase().includes('snack')) {
+            mealCategory = 'Collation après-midi' // Default for generic snacks
+          }
+
           // Create the recipe
           const { data: newRecipe, error: recipeError } = await supabase
             .from('recipes')
@@ -495,7 +521,7 @@ export default function MealPlanDetailPage() {
               carbs_per_serving: recipe.carbs_per_serving,
               fat_per_serving: recipe.fat_per_serving,
               fiber_per_serving: recipe.fiber_per_serving,
-              category: 'generated',
+              category: mealCategory,
               instructions: `Recette créée automatiquement à partir du plan alimentaire.`
             })
             .select()

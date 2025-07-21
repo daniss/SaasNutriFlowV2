@@ -283,28 +283,48 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
     const meals: MealSlot[] = []
     let order = 0
 
-    // Map meal types to French names
+    // Map meal types to specific French meal categories
     const mealTypeMap: Record<string, string> = {
       breakfast: 'Petit-déjeuner',
       lunch: 'Déjeuner',
       dinner: 'Dîner',
-      snack: 'Collation',
-      snacks: 'Collation'
+      snack: 'Collation après-midi',
+      snacks: 'Collation après-midi'
+    }
+
+    // Function to get more specific meal category based on time
+    const getSpecificMealCategory = (mealType: string, time: string, mealIndex: number = 0): string => {
+      switch (mealType) {
+        case 'breakfast':
+          return 'Petit-déjeuner'
+        case 'lunch':
+          return 'Déjeuner'
+        case 'dinner':
+          return 'Dîner'
+        case 'snack':
+        case 'snacks':
+          // Use time or index to determine specific snack type
+          const hour = parseInt(time.split(':')[0])
+          if (hour < 10) return 'Collation matin'
+          else if (hour >= 14 && hour < 18) return 'Collation après-midi'
+          else if (hour >= 18) return 'Collation soir'
+          else return 'Collation après-midi' // default
+        default:
+          return mealTypeMap[mealType] || 'Collation après-midi'
+      }
     }
 
     // Handle both formats: array of meals (transformed) or object with meal properties (raw API)
     if (Array.isArray(day.meals)) {
       // Transformed format: meals is an array with type field
-      day.meals.forEach((meal: any) => {
-        // Use the actual meal name instead of generic type name for AI-generated plans
-        const mealName = meal.name || mealTypeMap[meal.type] || meal.type
-        // Use the AI-provided meal type if available, otherwise infer from the structure
-        const mealType = meal.type || mealTypeMap[meal.type] || 'Petit-déjeuner'
+      day.meals.forEach((meal: any, index: number) => {
         const time = getMealTime(meal.type)
+        // Get specific French meal category based on type and time
+        const specificMealCategory = getSpecificMealCategory(meal.type, time, index)
         
         meals.push({
-          id: generateMealId(day.day, mealName),
-          name: mealType, // Use the proper meal type for categorization
+          id: generateMealId(day.day, meal.name),
+          name: specificMealCategory, // Use specific French meal category
           original_meal_name: meal.name, // PRESERVE original AI meal name for recipe linking
           time: time,
           description: formatMealDescription(meal),
@@ -367,12 +387,14 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
       if (day.meals.snacks) {
         if (Array.isArray(day.meals.snacks)) {
           day.meals.snacks.forEach((snack: any, index: number) => {
-            const snackName = snack.name || (index === 0 ? 'Collation après-midi' : `Collation ${index + 1}`)
+            const time = index === 0 ? '16:00' : '21:00'
+            const specificCategory = getSpecificMealCategory('snack', time, index)
+            
             meals.push({
-              id: generateMealId(day.day, snackName),
-              name: index === 0 ? 'Collation après-midi' : `Collation ${index + 1}`,
+              id: generateMealId(day.day, snack.name),
+              name: specificCategory, // Use specific French meal category
               original_meal_name: snack.name, // PRESERVE original AI meal name
-              time: index === 0 ? '16:00' : '21:00',
+              time: time,
               description: formatMealDescription(snack),
               calories_target: snack.calories,
               enabled: true,
@@ -381,12 +403,14 @@ export function convertAIToDynamicMealPlan(aiPlan: any): DynamicMealPlan {
           })
         } else if (typeof day.meals.snacks === 'object') {
           // Single snack object
-          const snackName = day.meals.snacks.name || 'Collation après-midi'
+          const time = '16:00'
+          const specificCategory = getSpecificMealCategory('snack', time, 0)
+          
           meals.push({
-            id: generateMealId(day.day, snackName),
-            name: 'Collation après-midi',
+            id: generateMealId(day.day, day.meals.snacks.name),
+            name: specificCategory, // Use specific French meal category
             original_meal_name: day.meals.snacks.name, // PRESERVE original AI meal name
-            time: '16:00',
+            time: time,
             description: formatMealDescription(day.meals.snacks),
             calories_target: day.meals.snacks.calories,
             enabled: true,
