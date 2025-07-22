@@ -524,13 +524,24 @@ export class PaymentService {
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY
     const stripePublicKey = process.env.STRIPE_PUBLIC_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
     
+    console.log('Payment service initialization:', {
+      hasStripeSecret: !!stripeSecretKey,
+      hasStripePublic: !!stripePublicKey,
+      secretKeyPrefix: stripeSecretKey?.substring(0, 8),
+      publicKeyPrefix: stripePublicKey?.substring(0, 8)
+    })
+    
     if (stripeSecretKey && stripePublicKey) {
       this.provider = new StripeProvider(stripeSecretKey, stripePublicKey)
       this.providerName = 'stripe'
+      console.log('Stripe provider initialized successfully')
     } else if (process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
       const sandbox = process.env.NODE_ENV !== 'production'
       this.provider = new PayPalProvider(process.env.PAYPAL_CLIENT_ID, process.env.PAYPAL_CLIENT_SECRET, sandbox)
       this.providerName = 'paypal'
+      console.log('PayPal provider initialized successfully')
+    } else {
+      console.error('No payment provider could be initialized - missing environment variables')
     }
   }
 
