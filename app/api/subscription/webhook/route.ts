@@ -2,8 +2,18 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import crypto from 'crypto'
 
+// Add GET handler to verify endpoint is reachable
+export async function GET() {
+  return NextResponse.json({ 
+    message: 'Stripe webhook endpoint is active',
+    timestamp: new Date().toISOString()
+  })
+}
+
 // Stripe webhook handler for subscription events
 export async function POST(request: NextRequest) {
+  console.log('Webhook received at:', new Date().toISOString())
+  
   try {
     const supabase = await createClient()
     const body = await request.text()
@@ -17,8 +27,10 @@ export async function POST(request: NextRequest) {
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
     if (!webhookSecret) {
       console.error('STRIPE_WEBHOOK_SECRET not configured')
-      return NextResponse.json({ error: 'Webhook not configured' }, { status: 500 })
+      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
     }
+    
+    console.log('Processing webhook with signature:', signature?.substring(0, 20) + '...')
 
     let event
     try {
