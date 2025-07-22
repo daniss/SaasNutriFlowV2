@@ -114,7 +114,7 @@ export function UpgradePrompt({
             <Button asChild size="sm" className="bg-emerald-600 hover:bg-emerald-700">
               <Link href={`/dashboard/upgrade?feature=${feature}`}>
                 <CreditCard className="h-4 w-4 mr-2" />
-                Passer au Pro
+                S'abonner
               </Link>
             </Button>
             {dismissible && (

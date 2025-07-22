@@ -144,7 +144,7 @@ export function SubscriptionStatusCard({
               <Button asChild size="sm" variant="outline">
                 <Link href="/dashboard/upgrade?feature=pro">
                   <CreditCard className="h-4 w-4 mr-2" />
-                  Passer au Pro
+                  S'abonner
                 </Link>
               </Button>
             )}
@@ -277,7 +277,7 @@ export function SubscriptionStatusCard({
               <Button asChild className="flex-1">
                 <Link href="/dashboard/upgrade?feature=pro">
                   <CreditCard className="h-4 w-4 mr-2" />
-                  Passer au Pro
+                  S'abonner
                 </Link>
               </Button>
             )}

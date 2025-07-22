@@ -77,7 +77,7 @@ export function SubscriptionStatusBadge({
   };
 
   const shouldShowWarning = () => {
-    return isTrialing && subscription?.trialDaysLeft && subscription.trialDaysLeft <= 3;
+    return isTrialing && subscription?.trialDaysLeft && subscription.trialDaysLeft > 0 && subscription.trialDaysLeft <= 3;
   };
 
   return (
@@ -124,7 +124,7 @@ export function SubscriptionStatusBadge({
               Plan {getPlanLabel()}
               {isTrialing && ` (Essai)`}
             </p>
-            {isTrialing && subscription?.trialDaysLeft && (
+            {isTrialing && subscription?.trialDaysLeft && subscription.trialDaysLeft > 0 && (
               <p className="text-sm text-muted-foreground">
                 {subscription.trialDaysLeft} jour{subscription.trialDaysLeft > 1 ? 's' : ''} d'essai restant{subscription.trialDaysLeft > 1 ? 's' : ''}
               </p>
@@ -138,7 +138,7 @@ export function SubscriptionStatusBadge({
         </TooltipContent>
       </Tooltip>
 
-      {showUpgradeButton && expanded && (isTrialExpired || (isTrialing && subscription?.trialDaysLeft && subscription.trialDaysLeft <= 7)) && (
+      {showUpgradeButton && expanded && (isTrialExpired || (isTrialing && subscription?.trialDaysLeft && subscription.trialDaysLeft > 0 && subscription.trialDaysLeft <= 7)) && (
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}
@@ -154,7 +154,7 @@ export function SubscriptionStatusBadge({
             >
               <Link href="/dashboard/upgrade?feature=pro">
                 <CreditCard className="h-3 w-3 mr-1" />
-                Passer au Pro
+                S'abonner
               </Link>
             </Button>
           </motion.div>

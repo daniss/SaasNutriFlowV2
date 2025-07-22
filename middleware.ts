@@ -65,8 +65,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Check subscription status for ALL dashboard routes (except upgrade page)
-  if (user && isProtectedRoute && !request.nextUrl.pathname.startsWith('/dashboard/upgrade')) {
+  // List of dashboard routes that are accessible even without active subscription
+  const alwaysAccessibleRoutes = [
+    '/dashboard/upgrade',
+    '/dashboard/settings',
+    '/dashboard/help'
+  ];
+  
+  const isAlwaysAccessible = alwaysAccessibleRoutes.some(route => 
+    request.nextUrl.pathname.startsWith(route)
+  );
+
+  // Check subscription status for protected dashboard routes
+  if (user && isProtectedRoute && !isAlwaysAccessible) {
     try {
       // Get dietitian subscription status
       const { data: dietitian } = await supabase
