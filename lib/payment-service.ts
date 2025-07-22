@@ -247,8 +247,8 @@ class StripeProvider implements PaymentProvider {
         'line_items[0][price]': priceId,
         'line_items[0][quantity]': '1',
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
-        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/pricing`,
-        'subscription_data[trial_period_days]': '14'
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/pricing`
+        // No trial_period_days for expired trial users - they should pay immediately
       })
 
       if (metadata) {
@@ -269,7 +269,8 @@ class StripeProvider implements PaymentProvider {
       const data = await response.json()
       
       if (!response.ok) {
-        throw new Error(data.error?.message || 'Checkout session creation failed')
+        console.error('Stripe API error response:', data)
+        throw new Error(data.error?.message || `Stripe API error: ${response.status}`)
       }
 
       return {
@@ -520,8 +521,11 @@ export class PaymentService {
 
   private initializeProvider() {
     // Initialize based on environment variables
-    if (process.env.STRIPE_SECRET_KEY && process.env.STRIPE_PUBLIC_KEY) {
-      this.provider = new StripeProvider(process.env.STRIPE_SECRET_KEY, process.env.STRIPE_PUBLIC_KEY)
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY
+    const stripePublicKey = process.env.STRIPE_PUBLIC_KEY || process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+    
+    if (stripeSecretKey && stripePublicKey) {
+      this.provider = new StripeProvider(stripeSecretKey, stripePublicKey)
       this.providerName = 'stripe'
     } else if (process.env.PAYPAL_CLIENT_ID && process.env.PAYPAL_CLIENT_SECRET) {
       const sandbox = process.env.NODE_ENV !== 'production'
