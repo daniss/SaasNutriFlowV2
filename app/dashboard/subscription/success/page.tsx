@@ -88,7 +88,7 @@ export default function SubscriptionSuccessPage() {
   }
 
   const getFeatureList = () => {
-    if (!subscription || subscription.plan === 'free') return []
+    if (!subscription) return []
 
     const features = []
     

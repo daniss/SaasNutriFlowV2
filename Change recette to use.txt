@@ -3,4 +3,6 @@
 - Add our recipes to be accesible in building the meal plan
 - Their is an instruction and ingrédient in recipes so should it be accesible ?
 - Scheduled in appointements is in english
-- remove Ø<ß from the generated pdf in ia
+- 
+
+

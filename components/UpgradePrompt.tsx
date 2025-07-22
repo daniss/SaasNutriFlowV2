@@ -78,7 +78,7 @@ export function UpgradePrompt({
   onDismiss,
   showPlans = true
 }: UpgradePromptProps) {
-  const { subscription, loading, isFree, isTrialing } = useSubscription()
+  const { subscription, loading, isTrialing, isActive } = useSubscription()
   const [dismissed, setDismissed] = useState(false)
 
   const featureConfig = FEATURE_CONFIG[feature as keyof typeof FEATURE_CONFIG] || FEATURE_CONFIG.pro
@@ -90,8 +90,8 @@ export function UpgradePrompt({
     onDismiss?.()
   }
 
-  // Don't show if user already has Pro access
-  if (loading || (!isFree && !isTrialing) || dismissed) {
+  // Don't show if user already has active subscription that's not in trial, or if dismissed
+  if (loading || (isActive && !isTrialing) || dismissed) {
     return null
   }
 

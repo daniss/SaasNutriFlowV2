@@ -31,7 +31,7 @@ export function SubscriptionStatusCard({
   showActions = true,
   variant = "default"
 }: SubscriptionStatusCardProps) {
-  const { subscription, loading, isFree, isTrialing, isActive, openBillingPortal } = useSubscription();
+  const { subscription, loading, isTrialing, isActive, openBillingPortal } = useSubscription();
   const { isAtLimit: clientsAtLimit, limit: clientsLimit } = useUsageLimit('clients');
   const { isAtLimit: mealPlansAtLimit, limit: mealPlansLimit } = useUsageLimit('meal_plans');
 
@@ -56,7 +56,7 @@ export function SubscriptionStatusCard({
   }
 
   const getPlanIcon = () => {
-    if (!subscription || isFree) return <Star className="h-5 w-5" />;
+    if (!subscription) return <Star className="h-5 w-5" />;
     
     switch (subscription.plan) {
       case 'starter':
@@ -69,7 +69,7 @@ export function SubscriptionStatusCard({
   };
 
   const getPlanLabel = () => {
-    if (!subscription || isFree) return 'Plan Gratuit';
+    if (!subscription) return 'Aucun plan actif';
     
     switch (subscription.plan) {
       case 'starter':
@@ -83,14 +83,14 @@ export function SubscriptionStatusCard({
 
   const getBadgeVariant = (): "default" | "secondary" | "destructive" | "outline" => {
     if (isTrialing) return "outline";
-    if (isFree) return "secondary";
+    if (!subscription) return "secondary";
     if (isActive) return "default";
     return "destructive";
   };
 
   const getBadgeClassName = () => {
     if (isTrialing) return "border-emerald-300 text-emerald-700 bg-emerald-50";
-    if (isFree) return "border-gray-300 text-gray-700 bg-gray-50";
+    if (!subscription) return "border-gray-300 text-gray-700 bg-gray-50";
     if (isActive && subscription?.plan === 'professional') return "border-purple-300 text-purple-700 bg-purple-50";
     if (isActive) return "border-emerald-300 text-emerald-700 bg-emerald-50";
     return "border-red-300 text-red-700 bg-red-50";
@@ -98,9 +98,9 @@ export function SubscriptionStatusCard({
 
   const getStatusText = () => {
     if (isTrialing) return "Période d'essai";
-    if (!isActive && !isFree) return "Expiré";
+    if (!isActive && subscription) return "Expiré";
     if (isActive) return "Actif";
-    return "Gratuit";
+    return "Inactif";
   };
 
   const shouldShowWarning = () => {
@@ -147,7 +147,7 @@ export function SubscriptionStatusCard({
               </div>
             </div>
             
-            {showActions && (isFree || shouldShowWarning()) && (
+            {showActions && (!subscription || shouldShowWarning()) && (
               <Button asChild size="sm" variant="outline">
                 <Link href="/dashboard/upgrade?feature=pro">
                   <CreditCard className="h-4 w-4 mr-2" />
@@ -222,7 +222,7 @@ export function SubscriptionStatusCard({
         )}
 
         {/* Subscription Details */}
-        {isActive && !isFree && subscription?.currentPeriodEnd && (
+        {isActive && subscription && subscription?.currentPeriodEnd && (
           <div className="p-3 rounded-lg border border-gray-200 bg-gray-50">
             <div className="flex items-center gap-2 mb-2">
               <TrendingUp className="h-4 w-4 text-emerald-600" />
@@ -282,7 +282,7 @@ export function SubscriptionStatusCard({
         {/* Actions */}
         {showActions && (
           <div className="flex gap-2 pt-2">
-            {(isFree || shouldShowWarning()) && (
+            {(!subscription || shouldShowWarning()) && (
               <Button asChild className="flex-1">
                 <Link href="/dashboard/upgrade?feature=pro">
                   <CreditCard className="h-4 w-4 mr-2" />
@@ -291,7 +291,7 @@ export function SubscriptionStatusCard({
               </Button>
             )}
             
-            {isActive && !isFree && (
+            {isActive && subscription && (
               <Button variant="outline" onClick={openBillingPortal} className="flex-1">
                 Gérer l'abonnement
               </Button>
@@ -299,14 +299,14 @@ export function SubscriptionStatusCard({
           </div>
         )}
 
-        {/* Free Plan Information */}
-        {isFree && (
+        {/* No Active Subscription Information */}
+        {!subscription && (
           <div className="p-3 rounded-lg border border-gray-200 bg-gray-50">
             <p className="text-sm text-muted-foreground mb-2">
-              Vous utilisez actuellement le plan gratuit.
+              Vous n'avez pas d'abonnement actif.
             </p>
             <p className="text-sm font-medium text-gray-700">
-              Passez au plan payant pour débloquer l'IA, les clients illimités, et plus encore.
+              Souscrivez à un plan pour débloquer toutes les fonctionnalités.
             </p>
           </div>
         )}
