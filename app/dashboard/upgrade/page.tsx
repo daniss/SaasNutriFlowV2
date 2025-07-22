@@ -221,7 +221,7 @@ export default function UpgradePage() {
         </div>
 
         {/* Plans */}
-        <div className="grid md:grid-cols-2 gap-8 max-w-4xl mx-auto">
+        <div className="flex justify-center max-w-md mx-auto">
           {plans.map((plan) => (
             <Card
               key={plan.id}
@@ -310,7 +310,7 @@ export default function UpgradePage() {
         {/* Benefits */}
         <div className="mt-16 max-w-4xl mx-auto">
           <h2 className="text-2xl font-bold text-center text-gray-900 mb-8">
-            Pourquoi passer au Pro ?
+            Pourquoi choisir NutriFlow ?
           </h2>
           
           <div className="grid md:grid-cols-3 gap-6">
@@ -349,9 +349,9 @@ export default function UpgradePage() {
                     <Users className="h-6 w-6" />
                   </div>
                 </div>
-                <h3 className="font-semibold text-lg mb-2">Clients Illimités</h3>
+                <h3 className="font-semibold text-lg mb-2">Gestion Complète</h3>
                 <p className="text-gray-600 text-sm">
-                  Développez votre pratique sans limites sur le nombre de clients
+                  Gérez jusqu'à 25 clients avec tous leurs documents et suivis
                 </p>
               </CardContent>
             </Card>
