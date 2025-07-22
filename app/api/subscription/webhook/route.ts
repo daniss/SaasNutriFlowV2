@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@/lib/supabase/server'
+import { createClient } from '@supabase/supabase-js'
 import crypto from 'crypto'
 
 // Add GET handler to verify endpoint is reachable
@@ -15,7 +15,11 @@ export async function POST(request: NextRequest) {
   console.log('Webhook received at:', new Date().toISOString())
   
   try {
-    const supabase = await createClient()
+    // Use service role client to bypass RLS for webhooks
+    const supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      process.env.SUPABASE_SERVICE_ROLE_KEY!
+    )
     const body = await request.text()
     const signature = request.headers.get('stripe-signature')
 
