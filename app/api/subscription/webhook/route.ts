@@ -72,6 +72,7 @@ export async function POST(request: NextRequest) {
 
     // Handle the event
     console.log('Processing webhook event:', event.type, event.id)
+    console.log('Event data object keys:', Object.keys(event.data.object))
 
     try {
       switch (event.type) {
