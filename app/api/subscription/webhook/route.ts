@@ -123,13 +123,10 @@ export async function POST(request: NextRequest) {
 // Event handlers
 async function handleCheckoutSessionCompleted(supabase: any, session: any) {
   console.log('Handling checkout session completed:', session.id)
-  console.log('Session object:', JSON.stringify(session, null, 2))
 
   const customerId = session.customer
   const subscriptionId = session.subscription
   const metadata = session.metadata
-
-  console.log('Extracted data:', { customerId, subscriptionId, metadata })
 
   if (!customerId || !subscriptionId || !metadata?.dietitian_id) {
     console.error('Missing required data in checkout session:', { customerId, subscriptionId, metadata })
@@ -167,9 +164,6 @@ async function handleCheckoutSessionCompleted(supabase: any, session: any) {
     updateData.trial_ends_at = trialEndsAt
   }
 
-  console.log('Updating dietitian with data:', updateData)
-  console.log('For dietitian ID:', metadata.dietitian_id)
-
   const { error: updateError } = await supabase
     .from('dietitians')
     .update(updateData)
@@ -179,8 +173,6 @@ async function handleCheckoutSessionCompleted(supabase: any, session: any) {
     console.error('Failed to update dietitian subscription:', updateError)
     throw updateError
   }
-
-  console.log('Successfully updated dietitian subscription')
 
   // Log subscription event
   await logSubscriptionEvent(
@@ -200,28 +192,41 @@ async function handleCheckoutSessionCompleted(supabase: any, session: any) {
 async function handleSubscriptionCreated(supabase: any, subscription: any) {
   console.log('Handling subscription created:', subscription.id)
 
-  const { data: dietitian } = await supabase
+  const { data: dietitian, error: findError } = await supabase
     .from('dietitians')
-    .select('id')
+    .select('id, subscription_status, trial_ends_at')
     .eq('stripe_customer_id', subscription.customer)
     .single()
 
-  if (!dietitian) {
-    console.error('Dietitian not found for customer:', subscription.customer)
+  if (!dietitian || findError) {
+    console.error('Dietitian not found for customer:', subscription.customer, findError)
     return
   }
 
+  // Check if user's trial was already expired (same logic as checkout handler)
+  const now = new Date()
+  const trialExpired = dietitian.trial_ends_at 
+    ? new Date(dietitian.trial_ends_at) < now 
+    : false
+
+  // If trial was expired, activate subscription immediately
+  const newStatus = trialExpired ? 'active' : subscription.status
   const trialEnd = subscription.trial_end ? new Date(subscription.trial_end * 1000) : null
-  const status = subscription.status
+
+  const updateData: any = {
+    subscription_id: subscription.id,
+    subscription_status: newStatus,
+    subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString(),
+    subscription_started_at: new Date().toISOString()
+  }
+
+  if (!trialExpired && trialEnd) {
+    updateData.trial_ends_at = trialEnd.toISOString()
+  }
 
   const { error } = await supabase
     .from('dietitians')
-    .update({
-      subscription_id: subscription.id,
-      subscription_status: status,
-      trial_ends_at: trialEnd?.toISOString(),
-      subscription_current_period_end: new Date(subscription.current_period_end * 1000).toISOString()
-    })
+    .update(updateData)
     .eq('id', dietitian.id)
 
   if (error) {
