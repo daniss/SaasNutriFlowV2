@@ -123,10 +123,13 @@ export async function POST(request: NextRequest) {
 // Event handlers
 async function handleCheckoutSessionCompleted(supabase: any, session: any) {
   console.log('Handling checkout session completed:', session.id)
+  console.log('Session object:', JSON.stringify(session, null, 2))
 
   const customerId = session.customer
   const subscriptionId = session.subscription
   const metadata = session.metadata
+
+  console.log('Extracted data:', { customerId, subscriptionId, metadata })
 
   if (!customerId || !subscriptionId || !metadata?.dietitian_id) {
     console.error('Missing required data in checkout session:', { customerId, subscriptionId, metadata })
@@ -164,6 +167,9 @@ async function handleCheckoutSessionCompleted(supabase: any, session: any) {
     updateData.trial_ends_at = trialEndsAt
   }
 
+  console.log('Updating dietitian with data:', updateData)
+  console.log('For dietitian ID:', metadata.dietitian_id)
+
   const { error: updateError } = await supabase
     .from('dietitians')
     .update(updateData)
@@ -173,6 +179,8 @@ async function handleCheckoutSessionCompleted(supabase: any, session: any) {
     console.error('Failed to update dietitian subscription:', updateError)
     throw updateError
   }
+
+  console.log('Successfully updated dietitian subscription')
 
   // Log subscription event
   await logSubscriptionEvent(
