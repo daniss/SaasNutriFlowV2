@@ -19,15 +19,51 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get dietitian record
-    const { data: dietitian, error: dietitianError } = await supabase
+    // Get or create dietitian record
+    let { data: dietitian, error: dietitianError } = await supabase
       .from('dietitians')
       .select('id, email, first_name, last_name, stripe_customer_id, subscription_status')
       .eq('auth_user_id', user.id)
       .single()
 
-    if (dietitianError || !dietitian) {
-      return NextResponse.json({ error: 'Dietitian not found' }, { status: 404 })
+    // If dietitian record doesn't exist, create one
+    if (dietitianError?.code === 'PGRST116' || !dietitian) {
+      // Get user profile data first
+      const { data: profile } = await supabase
+        .from('profiles')
+        .select('email, first_name, last_name, phone, address, city, state, zip_code')
+        .eq('id', user.id)
+        .single()
+
+      const dietitianData = {
+        auth_user_id: user.id,
+        email: profile?.email || user.email || '',
+        first_name: profile?.first_name,
+        last_name: profile?.last_name,
+        phone: profile?.phone,
+        address: profile?.address,
+        city: profile?.city,
+        state: profile?.state,
+        zip_code: profile?.zip_code,
+        subscription_status: 'free',
+        subscription_plan: 'free'
+      }
+
+      const { data: newDietitian, error: createError } = await supabase
+        .from('dietitians')
+        .insert(dietitianData)
+        .select('id, email, first_name, last_name, stripe_customer_id, subscription_status')
+        .single()
+
+      if (createError) {
+        console.error('Error creating dietitian record:', createError)
+        return NextResponse.json({ error: 'Failed to create dietitian profile' }, { status: 500 })
+      }
+
+      dietitian = newDietitian
+    } else if (dietitianError) {
+      console.error('Error fetching dietitian:', dietitianError)
+      return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
     // Check if already has active subscription
