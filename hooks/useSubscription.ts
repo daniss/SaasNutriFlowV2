@@ -38,18 +38,6 @@ const PLAN_FEATURES = {
     ai_meal_plans: true,
     email_support: true,
     support: 'email'
-  },
-  professional: {
-    client_management: true,
-    meal_plans: true,
-    document_storage: true,
-    messaging: true,
-    ai_meal_plans: true,
-    email_support: true,
-    priority_support: true,
-    api_access: true,
-    custom_branding: true,
-    support: 'priority'
   }
 } as const
 

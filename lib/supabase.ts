@@ -1018,4 +1018,4 @@ export interface Document {
 }
 
 export type SubscriptionStatus = 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired';
-export type SubscriptionPlanName = 'starter' | 'professional';
+export type SubscriptionPlanName = 'starter';

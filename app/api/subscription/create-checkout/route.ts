@@ -5,7 +5,7 @@ import { z } from 'zod'
 
 const createCheckoutSchema = z.object({
   priceId: z.string(),
-  planName: z.enum(['starter', 'professional'])
+  planName: z.enum(['starter'])
 })
 
 export async function POST(request: NextRequest) {

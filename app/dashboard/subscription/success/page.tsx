@@ -67,8 +67,6 @@ export default function SubscriptionSuccessPage() {
     switch (subscription.plan) {
       case 'starter':
         return <Zap className="h-8 w-8" />
-      case 'professional':
-        return <Crown className="h-8 w-8" />
       default:
         return <Star className="h-8 w-8" />
     }
@@ -80,8 +78,6 @@ export default function SubscriptionSuccessPage() {
     switch (subscription.plan) {
       case 'starter':
         return 'Starter'
-      case 'professional':
-        return 'Professional'
       default:
         return 'Plan'
     }
@@ -92,7 +88,7 @@ export default function SubscriptionSuccessPage() {
 
     const features = []
     
-    if (subscription.plan === 'starter' || subscription.plan === 'professional') {
+    if (subscription.plan === 'starter') {
       features.push(
         { icon: <Bot className="h-5 w-5" />, text: 'Génération IA de plans alimentaires' },
         { icon: <Users className="h-5 w-5" />, text: '25 clients (Starter) / Illimité (Pro)' },
@@ -100,13 +96,6 @@ export default function SubscriptionSuccessPage() {
       )
     }
 
-    if (subscription.plan === 'professional') {
-      features.push(
-        { icon: <Crown className="h-5 w-5" />, text: 'Clients illimités' },
-        { icon: <Sparkles className="h-5 w-5" />, text: 'Personnalisation de marque' },
-        { icon: <Zap className="h-5 w-5" />, text: 'Accès API' }
-      )
-    }
 
     return features
   }

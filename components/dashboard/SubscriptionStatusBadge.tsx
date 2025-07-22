@@ -40,8 +40,6 @@ export function SubscriptionStatusBadge({
     switch (subscription.plan) {
       case 'starter':
         return <Zap className="h-3 w-3" />;
-      case 'professional':
-        return <Crown className="h-3 w-3" />;
       default:
         return <Star className="h-3 w-3" />;
     }
@@ -53,8 +51,6 @@ export function SubscriptionStatusBadge({
     switch (subscription.plan) {
       case 'starter':
         return 'Starter';
-      case 'professional':
-        return 'Pro';
       default:
         return 'Starter';
     }
@@ -68,13 +64,14 @@ export function SubscriptionStatusBadge({
 
   const getBadgeClassName = () => {
     if (isTrialing && !isTrialExpired) return "border-emerald-300 text-emerald-700 bg-emerald-50";
-    if (isActive && subscription?.plan === 'professional') return "border-purple-300 text-purple-700 bg-purple-50";
     if (isActive) return "border-emerald-300 text-emerald-700 bg-emerald-50";
     return "border-red-300 text-red-700 bg-red-50";
   };
 
   const getStatusText = () => {
-    if (isTrialing && !isTrialExpired) return `Essai - ${subscription?.trialDaysLeft}j`;
+    if (isTrialing && !isTrialExpired && subscription?.trialDaysLeft && subscription.trialDaysLeft > 0) {
+      return `Essai - ${subscription.trialDaysLeft}j`;
+    }
     if (isTrialExpired || !isActive) return "Expiré";
     return getPlanLabel();
   };

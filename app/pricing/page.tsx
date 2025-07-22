@@ -46,7 +46,7 @@ export default function PricingPage() {
     
     try {
       const checkoutUrl = await createCheckoutSession(
-        plan.name as 'starter' | 'professional',
+        plan.name as 'starter',
         plan.stripe_price_id
       )
       
@@ -67,8 +67,6 @@ export default function PricingPage() {
     switch (planName) {
       case 'starter':
         return <Zap className="h-6 w-6" />
-      case 'professional':
-        return <Star className="h-6 w-6" />
       default:
         return <Users className="h-6 w-6" />
     }
@@ -187,9 +185,7 @@ export default function PricingPage() {
               <CardHeader className="text-center pb-6">
                 <div className="flex justify-center mb-4">
                   <div className={`p-3 rounded-full ${
-                    plan.name === 'professional' ? 'bg-purple-100 text-purple-600' :
-                    plan.name === 'starter' ? 'bg-emerald-100 text-emerald-600' :
-                    'bg-gray-100 text-gray-600'
+                    plan.name === 'starter' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600'
                   }`}>
                     {getPlanIcon(plan.name)}
                   </div>
@@ -265,9 +261,7 @@ export default function PricingPage() {
                 ) : (
                   <Button
                     className={`w-full ${
-                      plan.name === 'starter' 
-                        ? 'bg-emerald-600 hover:bg-emerald-700' 
-                        : 'bg-purple-600 hover:bg-purple-700'
+                      'bg-emerald-600 hover:bg-emerald-700'
                     }`}
                     onClick={() => handleUpgrade(plan)}
                     disabled={checkoutLoading === plan.name}

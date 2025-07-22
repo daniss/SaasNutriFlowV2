@@ -78,7 +78,7 @@ export default function UpgradePage() {
     
     try {
       const checkoutUrl = await createCheckoutSession(
-        plan.name as 'starter' | 'professional',
+        plan.name as 'starter',
         plan.stripe_price_id
       )
       
@@ -239,11 +239,8 @@ export default function UpgradePage() {
               
               <CardHeader className="text-center pb-6">
                 <div className="flex justify-center mb-4">
-                  <div className={`p-3 rounded-full ${
-                    plan.name === 'professional' ? 'bg-purple-100 text-purple-600' :
-                    'bg-emerald-100 text-emerald-600'
-                  }`}>
-                    {plan.name === 'professional' ? <Star className="h-6 w-6" /> : <Zap className="h-6 w-6" />}
+                  <div className="p-3 rounded-full bg-emerald-100 text-emerald-600">
+                    <Zap className="h-6 w-6" />
                   </div>
                 </div>
                 
@@ -258,9 +255,11 @@ export default function UpgradePage() {
                   <span className="text-gray-600">/mois</span>
                 </div>
                 
-                <p className="text-sm text-emerald-600 font-medium mt-2">
-                  Essai gratuit de 14 jours
-                </p>
+                {!isTrialExpired && (
+                  <p className="text-sm text-emerald-600 font-medium mt-2">
+                    Essai gratuit de 14 jours
+                  </p>
+                )}
               </CardHeader>
 
               <CardContent className="space-y-4">
@@ -287,11 +286,7 @@ export default function UpgradePage() {
 
               <CardFooter>
                 <Button
-                  className={`w-full ${
-                    plan.name === 'starter' 
-                      ? 'bg-emerald-600 hover:bg-emerald-700' 
-                      : 'bg-purple-600 hover:bg-purple-700'
-                  }`}
+                  className="w-full bg-emerald-600 hover:bg-emerald-700"
                   onClick={() => handleUpgrade(plan)}
                   disabled={checkoutLoading === plan.name}
                 >
@@ -303,7 +298,7 @@ export default function UpgradePage() {
                   ) : (
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-4 w-4" />
-                      Commencer l'essai gratuit
+                      {isTrialExpired ? 'Choisir ce plan' : 'Commencer l\'essai gratuit'}
                     </div>
                   )}
                 </Button>

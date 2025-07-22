@@ -61,8 +61,6 @@ export function SubscriptionStatusCard({
     switch (subscription.plan) {
       case 'starter':
         return <Zap className="h-5 w-5" />;
-      case 'professional':
-        return <Crown className="h-5 w-5" />;
       default:
         return <Star className="h-5 w-5" />;
     }
@@ -74,10 +72,8 @@ export function SubscriptionStatusCard({
     switch (subscription.plan) {
       case 'starter':
         return 'Plan Starter';
-      case 'professional':
-        return 'Plan Professional';
       default:
-        return 'Plan Gratuit';
+        return 'Aucun plan actif';
     }
   };
 
@@ -91,7 +87,6 @@ export function SubscriptionStatusCard({
   const getBadgeClassName = () => {
     if (isTrialing) return "border-emerald-300 text-emerald-700 bg-emerald-50";
     if (!subscription) return "border-gray-300 text-gray-700 bg-gray-50";
-    if (isActive && subscription?.plan === 'professional') return "border-purple-300 text-purple-700 bg-purple-50";
     if (isActive) return "border-emerald-300 text-emerald-700 bg-emerald-50";
     return "border-red-300 text-red-700 bg-red-50";
   };
@@ -123,9 +118,7 @@ export function SubscriptionStatusCard({
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className={`p-2 rounded-full ${
-                subscription?.plan === 'professional' ? 'bg-purple-100 text-purple-600' :
-                subscription?.plan === 'starter' ? 'bg-emerald-100 text-emerald-600' :
-                'bg-gray-100 text-gray-600'
+                subscription?.plan === 'starter' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600'
               }`}>
                 {getPlanIcon()}
               </div>
@@ -167,9 +160,7 @@ export function SubscriptionStatusCard({
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className={`p-3 rounded-full ${
-              subscription?.plan === 'professional' ? 'bg-purple-100 text-purple-600' :
-              subscription?.plan === 'starter' ? 'bg-emerald-100 text-emerald-600' :
-              'bg-gray-100 text-gray-600'
+              subscription?.plan === 'starter' ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-100 text-gray-600'
             }`}>
               {getPlanIcon()}
             </div>
