@@ -120,16 +120,40 @@ async function handleCheckoutSessionCompleted(supabase: any, session: any) {
     return
   }
 
+  // Check if user's trial was already expired
+  const { data: currentDietitian } = await supabase
+    .from('dietitians')
+    .select('trial_ends_at, subscription_status')
+    .eq('id', metadata.dietitian_id)
+    .single()
+
+  const now = new Date()
+  const trialExpired = currentDietitian?.trial_ends_at 
+    ? new Date(currentDietitian.trial_ends_at) < now 
+    : false
+
+  // If trial was expired, activate subscription immediately
+  // If trial was not expired or no trial, let Stripe handle the trial period
+  const newStatus = trialExpired ? 'active' : 'trialing'
+  const trialEndsAt = trialExpired 
+    ? null 
+    : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+
   // Update dietitian subscription status
+  const updateData: any = {
+    subscription_id: subscriptionId,
+    subscription_status: newStatus,
+    subscription_plan: metadata.plan_name,
+    subscription_started_at: new Date().toISOString()
+  }
+
+  if (trialEndsAt) {
+    updateData.trial_ends_at = trialEndsAt
+  }
+
   const { error: updateError } = await supabase
     .from('dietitians')
-    .update({
-      subscription_id: subscriptionId,
-      subscription_status: 'trialing',
-      subscription_plan: metadata.plan_name,
-      subscription_started_at: new Date().toISOString(),
-      trial_ends_at: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString() // 14 days trial
-    })
+    .update(updateData)
     .eq('id', metadata.dietitian_id)
 
   if (updateError) {
@@ -144,11 +168,11 @@ async function handleCheckoutSessionCompleted(supabase: any, session: any) {
     'checkout_completed',
     session.id,
     subscriptionId,
-    null,
-    'trialing',
+    currentDietitian?.subscription_status,
+    newStatus,
     null,
     metadata.plan_name,
-    { session_id: session.id }
+    { session_id: session.id, trial_expired: trialExpired }
   )
 }
 
