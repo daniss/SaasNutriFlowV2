@@ -32,6 +32,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { SubscriptionStatusBadge } from "@/components/dashboard/SubscriptionStatusBadge";
 import { useAuth } from "@/hooks/useAuthNew";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { cn } from "@/lib/utils";
@@ -170,16 +171,19 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
             >
               <div className="flex flex-col h-full p-4">
                 {/* Header */}
-                <div className="flex items-center gap-3 mb-8">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-bold shadow-lg">
-                    N
+                <div className="flex items-center justify-between mb-8">
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-bold shadow-lg">
+                      N
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="font-semibold text-emerald-900">NutriFlow</span>
+                      <span className="text-xs text-emerald-600">
+                        Tableau de bord diététicien
+                      </span>
+                    </div>
                   </div>
-                  <div className="flex flex-col">
-                    <span className="font-semibold text-emerald-900">NutriFlow</span>
-                    <span className="text-xs text-emerald-600">
-                      Tableau de bord diététicien
-                    </span>
-                  </div>
+                  <SubscriptionStatusBadge expanded={true} />
                 </div>
 
                 {/* Navigation */}
@@ -285,26 +289,33 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
         >
           <div className="flex flex-col h-full p-3 min-w-0">
             {/* Header */}
-            <div className="flex items-center mb-6 relative h-10">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-bold shadow-lg flex-shrink-0 relative z-10">
-                N
+            <div className="flex flex-col gap-3 mb-6">
+              <div className="flex items-center relative h-10">
+                <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-600 text-white font-bold shadow-lg flex-shrink-0 relative z-10">
+                  N
+                </div>
+                <AnimatePresence>
+                  {expanded && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      exit={{ opacity: 0, x: -10 }}
+                      transition={{ duration: 0.2, delay: 0.1 }}
+                      className="absolute left-12 flex flex-col"
+                    >
+                      <span className="font-semibold text-emerald-900 whitespace-nowrap">NutriFlow</span>
+                      <span className="text-xs text-emerald-600 whitespace-nowrap">
+                        Tableau de bord diététicien
+                      </span>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
               </div>
-              <AnimatePresence>
-                {expanded && (
-                  <motion.div
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -10 }}
-                    transition={{ duration: 0.2, delay: 0.1 }}
-                    className="absolute left-12 flex flex-col"
-                  >
-                    <span className="font-semibold text-emerald-900 whitespace-nowrap">NutriFlow</span>
-                    <span className="text-xs text-emerald-600 whitespace-nowrap">
-                      Tableau de bord diététicien
-                    </span>
-                  </motion.div>
-                )}
-              </AnimatePresence>
+              
+              {/* Subscription Status */}
+              <div className="flex justify-center">
+                <SubscriptionStatusBadge expanded={expanded} showUpgradeButton={true} />
+              </div>
             </div>
 
             {/* Navigation */}

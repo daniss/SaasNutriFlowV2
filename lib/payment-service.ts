@@ -8,6 +8,10 @@ export interface PaymentProvider {
   confirmPayment(paymentIntentId: string): Promise<PaymentResult>
   createCustomer(email: string, name: string): Promise<Customer>
   createSubscription(customerId: string, priceId: string): Promise<Subscription>
+  createCheckoutSession(customerId: string, priceId: string, metadata?: Record<string, string>): Promise<CheckoutSession>
+  createBillingPortalSession(customerId: string, returnUrl?: string): Promise<BillingPortalSession>
+  getSubscription(subscriptionId: string): Promise<Subscription | null>
+  cancelSubscription(subscriptionId: string): Promise<Subscription>
 }
 
 export interface PaymentIntent {
@@ -36,8 +40,24 @@ export interface Customer {
 export interface Subscription {
   id: string
   customerId: string
-  status: 'active' | 'canceled' | 'incomplete' | 'past_due'
+  status: 'active' | 'canceled' | 'incomplete' | 'past_due' | 'trialing' | 'incomplete_expired'
   currentPeriodEnd: Date
+  currentPeriodStart: Date
+  priceId: string
+  trialEnd?: Date
+}
+
+export interface CheckoutSession {
+  id: string
+  url: string
+  customerId: string
+  metadata?: Record<string, string>
+}
+
+export interface BillingPortalSession {
+  id: string
+  url: string
+  customerId: string
 }
 
 // Stripe Provider
@@ -192,7 +212,9 @@ class StripeProvider implements PaymentProvider {
         },
         body: new URLSearchParams({
           customer: customerId,
-          'items[0][price]': priceId
+          'items[0][price]': priceId,
+          trial_period_days: '14', // 14-day trial
+          expand: JSON.stringify(['latest_invoice.payment_intent'])
         })
       })
 
@@ -206,10 +228,153 @@ class StripeProvider implements PaymentProvider {
         id: data.id,
         customerId: data.customer,
         status: data.status,
-        currentPeriodEnd: new Date(data.current_period_end * 1000)
+        currentPeriodEnd: new Date(data.current_period_end * 1000),
+        currentPeriodStart: new Date(data.current_period_start * 1000),
+        priceId: data.items.data[0].price.id,
+        trialEnd: data.trial_end ? new Date(data.trial_end * 1000) : undefined
       }
     } catch (error) {
       console.error('Stripe subscription creation error:', error)
+      throw error
+    }
+  }
+
+  async createCheckoutSession(customerId: string, priceId: string, metadata?: Record<string, string>): Promise<CheckoutSession> {
+    try {
+      const params = new URLSearchParams({
+        customer: customerId,
+        mode: 'subscription',
+        'line_items[0][price]': priceId,
+        'line_items[0][quantity]': '1',
+        success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
+        cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/pricing`,
+        'subscription_data[trial_period_days]': '14'
+      })
+
+      if (metadata) {
+        Object.entries(metadata).forEach(([key, value]) => {
+          params.append(`metadata[${key}]`, value)
+        })
+      }
+
+      const response = await fetch('https://api.stripe.com/v1/checkout/sessions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.secretKey}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params
+      })
+
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Checkout session creation failed')
+      }
+
+      return {
+        id: data.id,
+        url: data.url,
+        customerId: data.customer,
+        metadata: data.metadata
+      }
+    } catch (error) {
+      console.error('Stripe checkout session creation error:', error)
+      throw error
+    }
+  }
+
+  async createBillingPortalSession(customerId: string, returnUrl?: string): Promise<BillingPortalSession> {
+    try {
+      const response = await fetch('https://api.stripe.com/v1/billing_portal/sessions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${this.secretKey}`,
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          customer: customerId,
+          return_url: returnUrl || `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard/settings`
+        })
+      })
+
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Billing portal session creation failed')
+      }
+
+      return {
+        id: data.id,
+        url: data.url,
+        customerId: data.customer
+      }
+    } catch (error) {
+      console.error('Stripe billing portal session creation error:', error)
+      throw error
+    }
+  }
+
+  async getSubscription(subscriptionId: string): Promise<Subscription | null> {
+    try {
+      const response = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+        method: 'GET',
+        headers: {
+          'Authorization': `Bearer ${this.secretKey}`,
+        }
+      })
+
+      if (response.status === 404) {
+        return null
+      }
+
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Failed to fetch subscription')
+      }
+
+      return {
+        id: data.id,
+        customerId: data.customer,
+        status: data.status,
+        currentPeriodEnd: new Date(data.current_period_end * 1000),
+        currentPeriodStart: new Date(data.current_period_start * 1000),
+        priceId: data.items.data[0].price.id,
+        trialEnd: data.trial_end ? new Date(data.trial_end * 1000) : undefined
+      }
+    } catch (error) {
+      console.error('Stripe get subscription error:', error)
+      throw error
+    }
+  }
+
+  async cancelSubscription(subscriptionId: string): Promise<Subscription> {
+    try {
+      const response = await fetch(`https://api.stripe.com/v1/subscriptions/${subscriptionId}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${this.secretKey}`,
+        }
+      })
+
+      const data = await response.json()
+      
+      if (!response.ok) {
+        throw new Error(data.error?.message || 'Subscription cancellation failed')
+      }
+
+      return {
+        id: data.id,
+        customerId: data.customer,
+        status: data.status,
+        currentPeriodEnd: new Date(data.current_period_end * 1000),
+        currentPeriodStart: new Date(data.current_period_start * 1000),
+        priceId: data.items.data[0].price.id,
+        trialEnd: data.trial_end ? new Date(data.trial_end * 1000) : undefined
+      }
+    } catch (error) {
+      console.error('Stripe subscription cancellation error:', error)
       throw error
     }
   }
@@ -326,6 +491,22 @@ class PayPalProvider implements PaymentProvider {
     // Simplified implementation - would need proper PayPal subscription setup
     throw new Error('PayPal subscriptions not implemented in this example')
   }
+
+  async createCheckoutSession(customerId: string, priceId: string, metadata?: Record<string, string>): Promise<CheckoutSession> {
+    throw new Error('PayPal checkout sessions not implemented in this example')
+  }
+
+  async createBillingPortalSession(customerId: string, returnUrl?: string): Promise<BillingPortalSession> {
+    throw new Error('PayPal billing portal not implemented in this example')
+  }
+
+  async getSubscription(subscriptionId: string): Promise<Subscription | null> {
+    throw new Error('PayPal get subscription not implemented in this example')
+  }
+
+  async cancelSubscription(subscriptionId: string): Promise<Subscription> {
+    throw new Error('PayPal cancel subscription not implemented in this example')
+  }
 }
 
 // Main Payment Service
@@ -383,6 +564,38 @@ export class PaymentService {
     }
 
     return await this.provider.createSubscription(customerId, priceId)
+  }
+
+  async createCheckoutSession(customerId: string, priceId: string, metadata?: Record<string, string>): Promise<CheckoutSession> {
+    if (!this.provider) {
+      throw new Error('No payment provider configured')
+    }
+
+    return await this.provider.createCheckoutSession(customerId, priceId, metadata)
+  }
+
+  async createBillingPortalSession(customerId: string, returnUrl?: string): Promise<BillingPortalSession> {
+    if (!this.provider) {
+      throw new Error('No payment provider configured')
+    }
+
+    return await this.provider.createBillingPortalSession(customerId, returnUrl)
+  }
+
+  async getSubscription(subscriptionId: string): Promise<Subscription | null> {
+    if (!this.provider) {
+      throw new Error('No payment provider configured')
+    }
+
+    return await this.provider.getSubscription(subscriptionId)
+  }
+
+  async cancelSubscription(subscriptionId: string): Promise<Subscription> {
+    if (!this.provider) {
+      throw new Error('No payment provider configured')
+    }
+
+    return await this.provider.cancelSubscription(subscriptionId)
   }
 
   // Webhook handlers

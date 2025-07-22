@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Badge } from "@/components/ui/badge"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { SubscriptionStatusBadge } from "@/components/dashboard/SubscriptionStatusBadge"
 
 interface DashboardHeaderProps {
   title: string
@@ -98,6 +99,11 @@ export function DashboardHeader({
                 />
               </div>
             )}
+            
+            {/* Subscription Status */}
+            <div className="hidden sm:block">
+              <SubscriptionStatusBadge expanded={true} showUpgradeButton={false} />
+            </div>
 
 
             {showNotifications && (

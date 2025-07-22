@@ -65,6 +65,53 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // Pro routes that require active subscription
+  const proRoutes = [
+    "/dashboard/meal-plans/generate", // AI meal plan generation
+    "/dashboard/analytics", // Advanced analytics
+    "/dashboard/api", // API access
+    "/dashboard/branding" // Custom branding
+  ];
+  
+  const isProRoute = proRoutes.some((route) =>
+    request.nextUrl.pathname.startsWith(route)
+  );
+
+  // Check subscription status for Pro routes
+  if (user && isProRoute) {
+    try {
+      // Get dietitian subscription status
+      const { data: dietitian } = await supabase
+        .from('dietitians')
+        .select('subscription_status, subscription_plan, trial_ends_at')
+        .eq('auth_user_id', user.id)
+        .single();
+
+      if (dietitian) {
+        const { subscription_status, subscription_plan, trial_ends_at } = dietitian;
+        const now = new Date();
+        const trialEnd = trial_ends_at ? new Date(trial_ends_at) : null;
+        
+        // Check if user has access to Pro features
+        const hasProAccess = 
+          subscription_status === 'active' ||
+          (subscription_status === 'trialing' && trialEnd && trialEnd > now) ||
+          subscription_plan !== 'free';
+
+        // Redirect to upgrade page if no Pro access
+        if (!hasProAccess) {
+          const url = request.nextUrl.clone();
+          url.pathname = "/dashboard/upgrade";
+          url.searchParams.set('feature', request.nextUrl.pathname.split('/').pop() || 'pro');
+          return NextResponse.redirect(url);
+        }
+      }
+    } catch (error) {
+      console.error('Error checking subscription status:', error);
+      // On error, allow access but log the issue
+    }
+  }
+
   // If user is authenticated and trying to access auth pages, redirect to dashboard
   if (
     user &&

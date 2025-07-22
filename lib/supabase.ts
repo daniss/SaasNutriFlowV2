@@ -801,6 +801,180 @@ export interface Database {
           created_at?: string;
         };
       };
+      dietitians: {
+        Row: {
+          id: string;
+          auth_user_id: string;
+          email: string;
+          first_name: string | null;
+          last_name: string | null;
+          phone: string | null;
+          title: string | null;
+          bio: string | null;
+          address: string | null;
+          city: string | null;
+          state: string | null;
+          zip_code: string | null;
+          license_number: string | null;
+          years_experience: number | null;
+          avatar_url: string | null;
+          stripe_customer_id: string | null;
+          subscription_status: string;
+          subscription_id: string | null;
+          subscription_plan: string;
+          subscription_started_at: string | null;
+          subscription_ends_at: string | null;
+          trial_ends_at: string | null;
+          subscription_current_period_end: string | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          auth_user_id: string;
+          email: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          phone?: string | null;
+          title?: string | null;
+          bio?: string | null;
+          address?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip_code?: string | null;
+          license_number?: string | null;
+          years_experience?: number | null;
+          avatar_url?: string | null;
+          stripe_customer_id?: string | null;
+          subscription_status?: string;
+          subscription_id?: string | null;
+          subscription_plan?: string;
+          subscription_started_at?: string | null;
+          subscription_ends_at?: string | null;
+          trial_ends_at?: string | null;
+          subscription_current_period_end?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          auth_user_id?: string;
+          email?: string;
+          first_name?: string | null;
+          last_name?: string | null;
+          phone?: string | null;
+          title?: string | null;
+          bio?: string | null;
+          address?: string | null;
+          city?: string | null;
+          state?: string | null;
+          zip_code?: string | null;
+          license_number?: string | null;
+          years_experience?: number | null;
+          avatar_url?: string | null;
+          stripe_customer_id?: string | null;
+          subscription_status?: string;
+          subscription_id?: string | null;
+          subscription_plan?: string;
+          subscription_started_at?: string | null;
+          subscription_ends_at?: string | null;
+          trial_ends_at?: string | null;
+          subscription_current_period_end?: string | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      subscription_plans: {
+        Row: {
+          id: string;
+          name: string;
+          display_name: string;
+          stripe_price_id: string;
+          price_monthly: number;
+          currency: string;
+          features: any;
+          max_clients: number | null;
+          max_meal_plans: number | null;
+          ai_generations_per_month: number | null;
+          is_active: boolean;
+          sort_order: number;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          name: string;
+          display_name: string;
+          stripe_price_id: string;
+          price_monthly: number;
+          currency?: string;
+          features?: any;
+          max_clients?: number | null;
+          max_meal_plans?: number | null;
+          ai_generations_per_month?: number | null;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          id?: string;
+          name?: string;
+          display_name?: string;
+          stripe_price_id?: string;
+          price_monthly?: number;
+          currency?: string;
+          features?: any;
+          max_clients?: number | null;
+          max_meal_plans?: number | null;
+          ai_generations_per_month?: number | null;
+          is_active?: boolean;
+          sort_order?: number;
+          created_at?: string;
+          updated_at?: string;
+        };
+      };
+      subscription_events: {
+        Row: {
+          id: string;
+          dietitian_id: string;
+          event_type: string;
+          stripe_event_id: string | null;
+          stripe_subscription_id: string | null;
+          previous_status: string | null;
+          new_status: string | null;
+          previous_plan: string | null;
+          new_plan: string | null;
+          metadata: any | null;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          dietitian_id: string;
+          event_type: string;
+          stripe_event_id?: string | null;
+          stripe_subscription_id?: string | null;
+          previous_status?: string | null;
+          new_status?: string | null;
+          previous_plan?: string | null;
+          new_plan?: string | null;
+          metadata?: any | null;
+          created_at?: string;
+        };
+        Update: {
+          id?: string;
+          dietitian_id?: string;
+          event_type?: string;
+          stripe_event_id?: string | null;
+          stripe_subscription_id?: string | null;
+          previous_status?: string | null;
+          new_status?: string | null;
+          previous_plan?: string | null;
+          new_plan?: string | null;
+          metadata?: any | null;
+          created_at?: string;
+        };
+      };
     };
   };
 }
@@ -822,6 +996,9 @@ export type Message = Database["public"]["Tables"]["messages"]["Row"];
 export type Recipe = Database["public"]["Tables"]["recipes"]["Row"];
 export type RecipeIngredient = Database["public"]["Tables"]["recipe_ingredients"]["Row"];
 export type MealPlanRecipe = Database["public"]["Tables"]["meal_plan_recipes"]["Row"];
+export type Dietitian = Database["public"]["Tables"]["dietitians"]["Row"];
+export type SubscriptionPlan = Database["public"]["Tables"]["subscription_plans"]["Row"];
+export type SubscriptionEvent = Database["public"]["Tables"]["subscription_events"]["Row"];
 
 export interface Document {
   id: string;
@@ -839,3 +1016,6 @@ export interface Document {
   created_at: string;
   updated_at: string;
 }
+
+export type SubscriptionStatus = 'free' | 'trialing' | 'active' | 'past_due' | 'canceled' | 'incomplete' | 'incomplete_expired';
+export type SubscriptionPlanName = 'free' | 'starter' | 'professional';

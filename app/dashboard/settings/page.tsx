@@ -5,6 +5,7 @@ import type React from "react";
 import { DashboardHeader } from "@/components/dashboard-header";
 import { PasswordSettings } from "@/components/security/PasswordSettings";
 import { TwoFactorSettings } from "@/components/security/TwoFactorSettings";
+import { SubscriptionStatusCard } from "@/components/dashboard/SubscriptionStatusCard";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import {
@@ -23,6 +24,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuth } from "@/hooks/useAuthNew";
 import {
   Bell,
+  CreditCard,
   Loader2,
   Mail,
   MapPin,
@@ -149,7 +151,7 @@ export default function SettingsPage() {
         defaultValue="profile"
         className="space-y-6 animate-slide-up animate-delay-100"
       >
-        <TabsList className="grid grid-cols-2 w-full max-w-md">
+        <TabsList className="grid grid-cols-3 w-full max-w-lg">
           <TabsTrigger value="profile" className="flex items-center gap-1 sm:gap-2">
             <User className="h-4 w-4" />
             Profil
@@ -157,6 +159,10 @@ export default function SettingsPage() {
           <TabsTrigger value="security" className="flex items-center gap-1 sm:gap-2">
             <Shield className="h-4 w-4" />
             Sécurité
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="flex items-center gap-1 sm:gap-2">
+            <CreditCard className="h-4 w-4" />
+            Abonnement
           </TabsTrigger>
         </TabsList>
 
@@ -465,6 +471,10 @@ export default function SettingsPage() {
         <TabsContent value="security" className="space-y-8">
           <PasswordSettings />
           <TwoFactorSettings />
+        </TabsContent>
+
+        <TabsContent value="billing" className="space-y-8">
+          <SubscriptionStatusCard showUsage={true} showActions={true} variant="default" />
         </TabsContent>
 
       </Tabs>
