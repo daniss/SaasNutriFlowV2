@@ -350,7 +350,7 @@ export default function ClientsPage() {
         goal_weight: newClient.goal_weight
           ? Number.parseFloat(newClient.goal_weight)
           : null,
-        goal: newClient.goal || null,
+        goal: newClient.goal || "health_improvement",
         plan_type: null,
         status: "active",
         tags: newClient.tags,
