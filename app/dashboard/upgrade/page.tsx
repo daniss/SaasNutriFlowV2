@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { ArrowLeft, Check, Star, Zap, CreditCard, Bot, Users, BarChart3, Lock } from 'lucide-react'
+import { Check, Star, Zap, CreditCard, Bot, Users, BarChart3, Lock } from 'lucide-react'
 import { useSubscription } from '@/hooks/useSubscription'
 import { SubscriptionPlan } from '@/lib/supabase'
 import { toast } from 'sonner'
@@ -153,18 +153,6 @@ export default function UpgradePage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <div className="container mx-auto px-4 py-8">
-        {/* Header */}
-        <div className="flex items-center gap-4 mb-8">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => router.back()}
-            className="flex items-center gap-2"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Retour
-          </Button>
-        </div>
 
         {/* Feature Hero */}
         <div className="text-center mb-12">
