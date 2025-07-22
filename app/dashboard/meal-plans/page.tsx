@@ -75,6 +75,7 @@ interface MealPlanWithClient extends MealPlan {
 interface ClientOption {
   id: string
   name: string
+  status: string
 }
 
 interface StatsData {
@@ -157,34 +158,20 @@ export default function MealPlansPage() {
         })
       }
 
-      // Fetch clients for the dropdown
+      // Fetch clients for the dropdown - RLS policies will automatically filter for the authenticated user
       const { data: clientData, error: clientError } = await supabase
         .from("clients")
-        .select("id, name")
-        .eq("dietitian_id", user.id)
-        .eq("status", "active")
+        .select("id, name, status")
         .order("name", { ascending: true })
 
       if (clientError) {
         console.error("❌ Error fetching clients:", clientError)
         throw clientError
       } else {
-        console.log("✅ Clients fetched for meal plan creation:", clientData?.length || 0, "clients")
+        console.log("✅ All clients fetched for meal plan creation:", clientData?.length || 0, "clients")
+        console.log("📊 Client statuses:", clientData?.map(c => ({ name: c.name, status: c.status })))
         
-        // If no active clients found, try fetching all clients for debugging
-        if (!clientData || clientData.length === 0) {
-          console.log("🔍 No active clients found, fetching all clients for debugging...")
-          const { data: allClients, error: allClientsError } = await supabase
-            .from("clients")
-            .select("id, name, status")
-            .eq("dietitian_id", user.id)
-            .order("name", { ascending: true })
-          
-          if (!allClientsError && allClients) {
-            console.log("📊 All clients with statuses:", allClients.map(c => ({ name: c.name, status: c.status })))
-          }
-        }
-        
+        // Set all clients (let the user see what clients exist and their statuses)
         setClients(clientData || [])
       }
     } catch (error) {
@@ -708,7 +695,14 @@ export default function MealPlansPage() {
                 <SelectContent>
                   {clients.map((client) => (
                     <SelectItem key={client.id} value={client.id}>
-                      {client.name}
+                      <div className="flex items-center justify-between w-full">
+                        <span>{client.name}</span>
+                        <span className={`text-xs px-2 py-1 rounded ${
+                          client.status === 'active' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
+                        }`}>
+                          {client.status}
+                        </span>
+                      </div>
                     </SelectItem>
                   ))}
                 </SelectContent>
