@@ -22,7 +22,7 @@ export async function POST(request: NextRequest) {
     // Get or create dietitian record
     let { data: dietitian, error: dietitianError } = await supabase
       .from('dietitians')
-      .select('id, email, first_name, last_name, stripe_customer_id, subscription_status')
+      .select('id, email, name, stripe_customer_id, subscription_status')
       .eq('auth_user_id', user.id)
       .single()
 
@@ -37,16 +37,15 @@ export async function POST(request: NextRequest) {
 
       const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
       
+      const fullName = profile?.first_name && profile?.last_name 
+        ? `${profile.first_name} ${profile.last_name}` 
+        : profile?.first_name || profile?.last_name || profile?.email || user.email || 'User'
+      
       const dietitianData = {
         auth_user_id: user.id,
         email: profile?.email || user.email || '',
-        first_name: profile?.first_name,
-        last_name: profile?.last_name,
+        name: fullName,
         phone: profile?.phone,
-        address: profile?.address,
-        city: profile?.city,
-        state: profile?.state,
-        zip_code: profile?.zip_code,
         subscription_status: 'trialing',
         subscription_plan: 'starter',
         trial_ends_at: trialEndsAt
@@ -55,7 +54,7 @@ export async function POST(request: NextRequest) {
       const { data: newDietitian, error: createError } = await supabase
         .from('dietitians')
         .insert(dietitianData)
-        .select('id, email, first_name, last_name, stripe_customer_id, subscription_status')
+        .select('id, email, name, stripe_customer_id, subscription_status')
         .single()
 
       if (createError) {
@@ -103,7 +102,7 @@ export async function POST(request: NextRequest) {
     if (!stripeCustomerId) {
       const customer = await paymentService.createCustomer(
         dietitian.email,
-        `${dietitian.first_name || ''} ${dietitian.last_name || ''}`.trim() || dietitian.email
+        dietitian.name || dietitian.email
       )
       
       stripeCustomerId = customer.id
