@@ -106,8 +106,11 @@ export default function UpgradePage() {
     if (features.document_storage) {
       featureList.push('Stockage de documents')
     }
-    if (features.messaging) {
-      featureList.push('Messagerie intégrée')
+    if (features.ingredient_database) {
+      featureList.push('Accès base de données d\'ingrédients')
+    }
+    if (features.recipe_database) {
+      featureList.push('Accès base de données de recettes')
     }
     if (features.api_access) {
       featureList.push('Accès API complet')
@@ -117,8 +120,6 @@ export default function UpgradePage() {
     }
     if (features.priority_support) {
       featureList.push('Support prioritaire')
-    } else if (features.email_support) {
-      featureList.push('Support email')
     }
     
     return featureList
