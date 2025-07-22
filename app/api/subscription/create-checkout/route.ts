@@ -35,6 +35,8 @@ export async function POST(request: NextRequest) {
         .eq('id', user.id)
         .single()
 
+      const trialEndsAt = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
+      
       const dietitianData = {
         auth_user_id: user.id,
         email: profile?.email || user.email || '',
@@ -45,8 +47,9 @@ export async function POST(request: NextRequest) {
         city: profile?.city,
         state: profile?.state,
         zip_code: profile?.zip_code,
-        subscription_status: 'free',
-        subscription_plan: 'free'
+        subscription_status: 'trialing',
+        subscription_plan: 'starter',
+        trial_ends_at: trialEndsAt
       }
 
       const { data: newDietitian, error: createError } = await supabase

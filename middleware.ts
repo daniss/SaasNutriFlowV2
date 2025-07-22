@@ -65,20 +65,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Pro routes that require active subscription
-  const proRoutes = [
-    "/dashboard/meal-plans/generate", // AI meal plan generation
-    "/dashboard/analytics", // Advanced analytics
-    "/dashboard/api", // API access
-    "/dashboard/branding" // Custom branding
-  ];
-  
-  const isProRoute = proRoutes.some((route) =>
-    request.nextUrl.pathname.startsWith(route)
-  );
-
-  // Check subscription status for Pro routes
-  if (user && isProRoute) {
+  // Check subscription status for ALL dashboard routes (except upgrade page)
+  if (user && isProtectedRoute && !request.nextUrl.pathname.startsWith('/dashboard/upgrade')) {
     try {
       // Get dietitian subscription status
       const { data: dietitian } = await supabase
@@ -92,23 +80,41 @@ export async function middleware(request: NextRequest) {
         const now = new Date();
         const trialEnd = trial_ends_at ? new Date(trial_ends_at) : null;
         
-        // Check if user has access to Pro features
-        const hasProAccess = 
+        // Check if user has valid subscription or active trial
+        const hasValidAccess = 
           subscription_status === 'active' ||
-          (subscription_status === 'trialing' && trialEnd && trialEnd > now) ||
-          subscription_plan !== 'free';
+          (subscription_status === 'trialing' && trialEnd && trialEnd > now);
 
-        // Redirect to upgrade page if no Pro access
-        if (!hasProAccess) {
+        // Redirect to upgrade page if no valid access
+        if (!hasValidAccess) {
           const url = request.nextUrl.clone();
           url.pathname = "/dashboard/upgrade";
-          url.searchParams.set('feature', request.nextUrl.pathname.split('/').pop() || 'pro');
+          
+          // Add context based on subscription status
+          if (subscription_status === 'trialing' && trialEnd && trialEnd <= now) {
+            url.searchParams.set('reason', 'trial_expired');
+          } else if (subscription_status === 'canceled' || subscription_status === 'past_due') {
+            url.searchParams.set('reason', 'subscription_required');
+          } else {
+            url.searchParams.set('reason', 'access_required');
+          }
+          
           return NextResponse.redirect(url);
         }
+      } else {
+        // No dietitian record found, redirect to upgrade
+        const url = request.nextUrl.clone();
+        url.pathname = "/dashboard/upgrade";
+        url.searchParams.set('reason', 'profile_incomplete');
+        return NextResponse.redirect(url);
       }
     } catch (error) {
       console.error('Error checking subscription status:', error);
-      // On error, allow access but log the issue
+      // On error, redirect to upgrade page to be safe
+      const url = request.nextUrl.clone();
+      url.pathname = "/dashboard/upgrade";
+      url.searchParams.set('reason', 'verification_error');
+      return NextResponse.redirect(url);
     }
   }
 

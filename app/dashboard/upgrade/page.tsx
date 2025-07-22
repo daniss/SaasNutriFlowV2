@@ -42,7 +42,8 @@ export default function UpgradePage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const feature = searchParams.get('feature') || 'pro'
-  const { subscription, createCheckoutSession } = useSubscription()
+  const reason = searchParams.get('reason')
+  const { subscription, createCheckoutSession, isTrialing, isTrialExpired } = useSubscription()
   const [plans, setPlans] = useState<SubscriptionPlan[]>([])
   const [loading, setLoading] = useState(true)
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
@@ -181,21 +182,40 @@ export default function UpgradePage() {
             {featureInfo.description}
           </p>
 
-          {subscription?.isTrialing && (
+          {/* Trial Status */}
+          {isTrialing && !isTrialExpired && subscription?.trialDaysLeft && (
             <div className="inline-flex items-center gap-2 bg-emerald-100 text-emerald-800 px-4 py-2 rounded-full text-sm font-medium mb-8">
               <Star className="h-4 w-4" />
               Période d'essai: {subscription.trialDaysLeft} jours restants
             </div>
           )}
 
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 max-w-2xl mx-auto">
-            <div className="flex items-center gap-2 text-yellow-800">
+          {/* Upgrade Reason Messages */}
+          <div className={`rounded-lg p-4 max-w-2xl mx-auto ${
+            reason === 'trial_expired' 
+              ? 'bg-red-50 border border-red-200' 
+              : 'bg-yellow-50 border border-yellow-200'
+          }`}>
+            <div className={`flex items-center gap-2 ${
+              reason === 'trial_expired' ? 'text-red-800' : 'text-yellow-800'
+            }`}>
               <Lock className="h-5 w-5" />
-              <span className="font-medium">Fonctionnalité Pro requise</span>
+              <span className="font-medium">
+                {reason === 'trial_expired' 
+                  ? 'Période d\'essai expirée' 
+                  : reason === 'subscription_required'
+                  ? 'Abonnement requis'
+                  : 'Abonnement nécessaire'
+                }
+              </span>
             </div>
-            <p className="text-yellow-700 mt-2">
-              Cette fonctionnalité nécessite un abonnement Starter ou Professional. 
-              Choisissez votre plan ci-dessous pour débloquer l'accès.
+            <p className={`mt-2 ${
+              reason === 'trial_expired' ? 'text-red-700' : 'text-yellow-700'
+            }`}>
+              {reason === 'trial_expired' 
+                ? 'Votre période d\'essai gratuite de 2 semaines est terminée. Choisissez un plan pour continuer à utiliser NutriFlow.'
+                : 'Pour accéder à toutes les fonctionnalités de NutriFlow, veuillez choisir un plan d\'abonnement ci-dessous.'
+              }
             </p>
           </div>
         </div>

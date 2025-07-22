@@ -21,7 +21,7 @@ export function SubscriptionStatusBadge({
   expanded = false, 
   showUpgradeButton = false 
 }: SubscriptionStatusBadgeProps) {
-  const { subscription, loading, isFree, isTrialing, isActive } = useSubscription();
+  const { subscription, loading, isTrialing, isActive, isTrialExpired } = useSubscription();
 
   if (loading) {
     return (
@@ -35,7 +35,7 @@ export function SubscriptionStatusBadge({
   }
 
   const getPlanIcon = () => {
-    if (!subscription || isFree) return <Star className="h-3 w-3" />;
+    if (!subscription) return <Star className="h-3 w-3" />;
     
     switch (subscription.plan) {
       case 'starter':
@@ -48,7 +48,7 @@ export function SubscriptionStatusBadge({
   };
 
   const getPlanLabel = () => {
-    if (!subscription || isFree) return 'Gratuit';
+    if (!subscription) return 'Starter';
     
     switch (subscription.plan) {
       case 'starter':
@@ -56,28 +56,26 @@ export function SubscriptionStatusBadge({
       case 'professional':
         return 'Pro';
       default:
-        return 'Gratuit';
+        return 'Starter';
     }
   };
 
   const getBadgeVariant = (): "default" | "secondary" | "destructive" | "outline" => {
-    if (isTrialing) return "outline";
-    if (isFree) return "secondary";
+    if (isTrialing && !isTrialExpired) return "outline";
     if (isActive) return "default";
     return "destructive";
   };
 
   const getBadgeClassName = () => {
-    if (isTrialing) return "border-emerald-300 text-emerald-700 bg-emerald-50";
-    if (isFree) return "border-gray-300 text-gray-700 bg-gray-50";
+    if (isTrialing && !isTrialExpired) return "border-emerald-300 text-emerald-700 bg-emerald-50";
     if (isActive && subscription?.plan === 'professional') return "border-purple-300 text-purple-700 bg-purple-50";
     if (isActive) return "border-emerald-300 text-emerald-700 bg-emerald-50";
     return "border-red-300 text-red-700 bg-red-50";
   };
 
   const getStatusText = () => {
-    if (isTrialing) return `Essai - ${subscription?.trialDaysLeft}j`;
-    if (!isActive && !isFree) return "Expiré";
+    if (isTrialing && !isTrialExpired) return `Essai - ${subscription?.trialDaysLeft}j`;
+    if (isTrialExpired || !isActive) return "Expiré";
     return getPlanLabel();
   };
 
@@ -134,21 +132,16 @@ export function SubscriptionStatusBadge({
                 {subscription.trialDaysLeft} jour{subscription.trialDaysLeft > 1 ? 's' : ''} d'essai restant{subscription.trialDaysLeft > 1 ? 's' : ''}
               </p>
             )}
-            {!isActive && !isFree && (
+            {(isTrialExpired || !isActive) && (
               <p className="text-sm text-red-600">
-                Abonnement expiré
-              </p>
-            )}
-            {isFree && (
-              <p className="text-sm text-muted-foreground">
-                Passez au plan payant pour débloquer toutes les fonctionnalités
+                {isTrialExpired ? "Période d'essai expirée" : "Abonnement expiré"}
               </p>
             )}
           </div>
         </TooltipContent>
       </Tooltip>
 
-      {showUpgradeButton && expanded && (isFree || (isTrialing && subscription?.trialDaysLeft && subscription.trialDaysLeft <= 7)) && (
+      {showUpgradeButton && expanded && (isTrialExpired || (isTrialing && subscription?.trialDaysLeft && subscription.trialDaysLeft <= 7)) && (
         <AnimatePresence>
           <motion.div
             initial={{ opacity: 0, scale: 0.8 }}

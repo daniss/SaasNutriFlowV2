@@ -20,8 +20,8 @@ export interface UseSubscriptionReturn {
   loading: boolean
   error: string | null
   isActive: boolean
-  isFree: boolean
   isTrialing: boolean
+  isTrialExpired: boolean
   canUseFeature: (feature: string) => boolean
   hasReachedLimit: (limitType: 'clients' | 'meal_plans') => Promise<boolean>
   createCheckoutSession: (planName: SubscriptionPlanName, priceId: string) => Promise<string>
@@ -30,13 +30,6 @@ export interface UseSubscriptionReturn {
 }
 
 const PLAN_FEATURES = {
-  free: {
-    client_management: true,
-    meal_plans: true,
-    document_storage: true,
-    messaging: true,
-    support: 'community'
-  },
   starter: {
     client_management: true,
     meal_plans: true,
@@ -76,14 +69,19 @@ export function useSubscription(): UseSubscriptionReturn {
 
   const subscription = data?.subscription || null
   const isActive = subscription?.status === 'active'
-  const isFree = subscription?.plan === 'free' || !subscription
-  const isTrialing = subscription?.isTrialing || false
+  const isTrialing = subscription?.status === 'trialing' || false
+  const isTrialExpired = subscription?.isTrialing === false && subscription?.status === 'trialing' && subscription?.trialEndsAt && new Date(subscription.trialEndsAt) < new Date()
 
   const canUseFeature = (feature: string): boolean => {
     if (!subscription) return false
     
-    const planFeatures = subscription.planDetails?.features || PLAN_FEATURES[subscription.plan as keyof typeof PLAN_FEATURES] || PLAN_FEATURES.free
-    return planFeatures[feature as keyof typeof planFeatures] === true
+    // During active trial or active subscription, user can use features
+    if (isActive || (isTrialing && !isTrialExpired)) {
+      const planFeatures = subscription.planDetails?.features || PLAN_FEATURES[subscription.plan as keyof typeof PLAN_FEATURES] || PLAN_FEATURES.starter
+      return planFeatures[feature as keyof typeof planFeatures] === true
+    }
+    
+    return false
   }
 
   const hasReachedLimit = async (limitType: 'clients' | 'meal_plans'): Promise<boolean> => {
@@ -166,8 +164,8 @@ export function useSubscription(): UseSubscriptionReturn {
     loading: loading || !data,
     error: error?.message || null,
     isActive,
-    isFree,
     isTrialing,
+    isTrialExpired,
     canUseFeature,
     hasReachedLimit,
     createCheckoutSession,
@@ -182,7 +180,7 @@ export function useFeatureAccess(feature: string) {
   
   return {
     hasAccess: canUseFeature(feature),
-    plan: subscription?.plan || 'free',
+    plan: subscription?.plan || 'starter',
     loading
   }
 }
@@ -215,6 +213,6 @@ export function useUsageLimit(limitType: 'clients' | 'meal_plans') {
     isAtLimit,
     loading: checkingLimit,
     limit: subscription?.planDetails?.[limitType === 'clients' ? 'max_clients' : 'max_meal_plans'] || 0,
-    plan: subscription?.plan || 'free'
+    plan: subscription?.plan || 'starter'
   }
 }
