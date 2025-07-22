@@ -169,6 +169,22 @@ export default function MealPlansPage() {
         console.error("❌ Error fetching clients:", clientError)
         throw clientError
       } else {
+        console.log("✅ Clients fetched for meal plan creation:", clientData?.length || 0, "clients")
+        
+        // If no active clients found, try fetching all clients for debugging
+        if (!clientData || clientData.length === 0) {
+          console.log("🔍 No active clients found, fetching all clients for debugging...")
+          const { data: allClients, error: allClientsError } = await supabase
+            .from("clients")
+            .select("id, name, status")
+            .eq("dietitian_id", user.id)
+            .order("name", { ascending: true })
+          
+          if (!allClientsError && allClients) {
+            console.log("📊 All clients with statuses:", allClients.map(c => ({ name: c.name, status: c.status })))
+          }
+        }
+        
         setClients(clientData || [])
       }
     } catch (error) {

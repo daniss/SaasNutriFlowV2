@@ -163,7 +163,12 @@ export default function GenerateMealPlanPage() {
   }
 
   const loadClients = async () => {
-    if (!user) return
+    if (!user) {
+      console.log("🔍 loadClients: No user found")
+      return
+    }
+
+    console.log("🔍 loadClients: Starting to load clients for user:", user.id)
 
     try {
       // RLS policies will automatically filter clients for the authenticated user
@@ -172,10 +177,13 @@ export default function GenerateMealPlanPage() {
         .select("*")
         .order("name")
 
+      console.log("🔍 loadClients query result:", { data, error, count: data?.length })
+
       if (error) throw error
       setClients(data || [])
+      console.log("🔍 loadClients: Successfully set clients:", data?.length || 0)
     } catch (error) {
-      console.error("Error loading clients:", error)
+      console.error("🔍 loadClients Error:", error)
     }
   }
 

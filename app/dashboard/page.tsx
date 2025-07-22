@@ -52,26 +52,30 @@ export default function DashboardPage() {
       setLoading(true);
       setError(null);
 
-      // Fetch clients
+      // Fetch clients - RLS policies will automatically filter for the authenticated user
       const { data: clients, error: clientsError } = await supabase
         .from("clients")
         .select("*")
-        .eq("dietitian_id", user.id)
         .order("created_at", { ascending: false });
 
+      console.log("🏠 Dashboard clients fetched:", { count: clients?.length || 0, clients });
+
       if (clientsError) {
+        console.error("🏠 Dashboard client fetch error:", clientsError);
         throw clientsError;
       }
 
-      // Fetch meal plans
+      // Fetch meal plans - RLS policies will automatically filter for the authenticated user
       const { data: mealPlans, error: mealPlansError } = await supabase
         .from("meal_plans")
         .select("*")
-        .eq("dietitian_id", user.id)
         .in("status", ["Active", "Draft"])
         .order("created_at", { ascending: false });
 
+      console.log("🏠 Dashboard meal plans fetched:", { count: mealPlans?.length || 0, mealPlans });
+
       if (mealPlansError) {
+        console.error("🏠 Dashboard meal plans fetch error:", mealPlansError);
         throw mealPlansError;
       }
 
