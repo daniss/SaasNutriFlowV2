@@ -238,7 +238,12 @@ export default function GenerateMealPlanPage() {
       setAiUsage(prev => ({ ...prev, loading: true }))
       
       const response = await fetch('/api/subscription/usage?type=ai_generations')
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`)
+      }
+      
       const data = await response.json()
+      console.log('AI usage data:', data) // Debug log
       
       setAiUsage({
         current: data.current || 0,
@@ -324,8 +329,8 @@ export default function GenerateMealPlanPage() {
         setGeneratedPlan(plan)
         setPlanFeedback({ planId: plan.title + Date.now(), rating: null })
         clearInterval(progressInterval)
-        // Refresh AI usage counter after successful generation
-        fetchAIUsage()
+        // Refresh AI usage counter after successful generation with delay to ensure DB update
+        setTimeout(() => fetchAIUsage(), 1000)
       }, 500)
       
     } catch (error: any) {

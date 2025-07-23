@@ -600,7 +600,6 @@ Répète pour ${duration} jours avec variations:`;
           calories_range: `${targetCalories} calories/jour`,
           status: 'generated',
           generation_method: 'ai',
-          ai_prompt: sanitizedPrompt,
           client_id: clientId || null,
         });
 
