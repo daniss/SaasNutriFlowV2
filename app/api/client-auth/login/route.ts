@@ -58,7 +58,6 @@ export async function POST(request: NextRequest) {
       .select("id, email, is_active")
       .limit(10);
 
-    console.log("🔍 All client accounts in database:", allAccounts);
 
     const { data: clientAccount, error: accountError } = await supabase
       .from("client_accounts")
@@ -81,7 +80,6 @@ export async function POST(request: NextRequest) {
       .eq("is_active", true)
       .single();
 
-    console.log("🔍 Supabase query result:", { clientAccount, accountError });
 
     if (accountError || !clientAccount) {
       console.log("❌ No client account found or error:", accountError);
@@ -95,10 +93,6 @@ export async function POST(request: NextRequest) {
     const isPasswordValid = await comparePassword(password, clientAccount.password_hash);
 
     // Debug logging (without exposing sensitive data)
-    console.log("🔍 Login Debug:", {
-      email: email.toLowerCase(),
-      isPasswordValid,
-    });
 
     if (!isPasswordValid) {
       return NextResponse.json(

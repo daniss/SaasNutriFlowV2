@@ -171,8 +171,6 @@ export default function MealPlansPage() {
         console.error("❌ Error fetching clients:", clientError)
         throw clientError
       } else {
-        console.log("✅ All clients fetched for meal plan creation:", clientData?.length || 0, "clients")
-        console.log("📊 Client statuses:", clientData?.map(c => ({ name: c.name, status: c.status })))
         
         // Set all clients (let the user see what clients exist and their statuses)
         setClients(clientData || [])

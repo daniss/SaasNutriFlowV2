@@ -233,11 +233,9 @@ export default function GenerateMealPlanPage() {
 
   const loadClients = async () => {
     if (!user) {
-      console.log("🔍 loadClients: No user found")
       return
     }
 
-    console.log("🔍 loadClients: Starting to load clients for user:", user.id)
 
     try {
       // RLS policies will automatically filter clients for the authenticated user
@@ -246,11 +244,9 @@ export default function GenerateMealPlanPage() {
         .select("*")
         .order("name")
 
-      console.log("🔍 loadClients query result:", { data, error, count: data?.length })
 
       if (error) throw error
       setClients(data || [])
-      console.log("🔍 loadClients: Successfully set clients:", data?.length || 0)
     } catch (error) {
       console.error("🔍 loadClients Error:", error)
     }
@@ -275,7 +271,6 @@ export default function GenerateMealPlanPage() {
       }
       
       const data = await response.json()
-      console.log('AI usage data:', data) // Debug log
       
       setAiUsage({
         current: data.current || 0,
@@ -356,7 +351,6 @@ export default function GenerateMealPlanPage() {
 
       const result = await generateMealPlan(mealPlanRequest)
       const { transformed: plan, raw: rawPlan } = result
-      console.log('Meal plan generation result:', result)
 
       setGenerationProgress(100)
       setTimeout(() => {
@@ -471,14 +465,10 @@ export default function GenerateMealPlanPage() {
         description: "Création du modèle en cours",
       })
       // Step 1: Save ingredients to database (same as regular save)
-      console.log("Saving ingredients to database...")
       const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
-      console.log("Saved ingredients:", savedIngredients.length)
 
       // Step 2: Create recipes from AI-generated meals (same as regular save)
-      console.log("Creating recipes from meals...")
       const createdRecipes = await createRecipesFromMeals(generatedPlan.days, user!.id)
-      console.log("Created recipes:", createdRecipes.length)
 
       // Step 3: Create recipe-to-meal mapping for template structure
       const recipeMapping = createRecipeToMealMapping(generatedPlan.days, createdRecipes)

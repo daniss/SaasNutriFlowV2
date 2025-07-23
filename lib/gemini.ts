@@ -94,7 +94,6 @@ export interface GeneratedMealPlan {
 export async function generateMealPlan(
   request: MealPlanRequest
 ): Promise<{ transformed: GeneratedMealPlan; raw: APIGeneratedMealPlan }> {
-  console.log("🤖 Generating meal plan via server API...");
 
   try {
     // Get the current session using Supabase client
@@ -118,7 +117,6 @@ export async function generateMealPlan(
     });
 
     const result = await response.json();
-    console.log("🔍 API Response:", { status: response.status, result });
 
     if (!response.ok || !result.success) {
       const error = new Error(result.error || "Failed to generate meal plan") as any;

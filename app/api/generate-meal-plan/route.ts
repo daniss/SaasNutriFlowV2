@@ -56,7 +56,6 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
 
     // Comprehensive input validation using Zod schema
-    console.log('🔍 Validating request input...');
     const validationResult = await validateInput(body, mealPlanRequestSchema);
     
     if (!validationResult.success) {
@@ -92,7 +91,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Get dietitian profile for subscription checking
-    console.log('🔍 Checking subscription limits...');
     const { data: dietitian, error: dietitianError } = await supabase
       .from('dietitians')
       .select('id, subscription_status, subscription_plan')
@@ -169,7 +167,6 @@ export async function POST(request: NextRequest) {
         );
       }
 
-      console.log(`✅ AI generation allowed: ${currentUsage}/${planData.ai_generations_per_month} used`);
     }
 
     // Sanitize and check prompt for malicious content
@@ -243,7 +240,6 @@ export async function POST(request: NextRequest) {
     const ingredientsPromptSection = formatIngredientsForAI(availableIngredients);
 
     // Input validation is now handled above with Zod schema
-    console.log(`✅ Input validated: ${duration} days, ${targetCalories} calories, ${restrictions.length} restrictions`);
 
     // Generate meal plan using Gemini
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -453,7 +449,6 @@ Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numér
           
           if (chunkData.days && Array.isArray(chunkData.days)) {
             allDays.push(...chunkData.days);
-            console.log(`✅ Chunk ${chunk + 1} successful: ${chunkData.days.length} days`);
           } else {
             throw new Error(`Invalid chunk structure ${chunk + 1}`);
           }
@@ -475,7 +470,6 @@ Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numér
         days: allDays
       };
       
-      console.log(`✅ Combined plan: ${allDays.length} days total`);
       
     } else {
       // For shorter plans (≤4 days), use single request
@@ -519,7 +513,6 @@ Répète pour ${duration} jours avec variations:`;
 
       while (attempts < maxAttempts) {
         attempts++;
-        console.log(`🤖 Attempt ${attempts}/${maxAttempts} for short plan...`);
 
         try {
           const result = await model.generateContent(enhancedPrompt);
@@ -557,7 +550,6 @@ Répète pour ${duration} jours avec variations:`;
             continue;
           }
 
-          console.log(`✅ Short plan successful on attempt ${attempts}`);
           break;
 
         } catch (error) {
@@ -570,7 +562,6 @@ Répète pour ${duration} jours avec variations:`;
     }
 
     // Validate AI response for security issues
-    console.log('🔍 Validating AI response...');
     const responseValidation = validateAIResponse(generatedPlan);
     
     if (!responseValidation.isValid) {
@@ -586,11 +577,9 @@ Répète pour ${duration} jours avec variations:`;
       );
     }
 
-    console.log('✅ AI response validated successfully');
 
     // Track AI usage in database for subscription limits
     try {
-      console.log('📊 Tracking AI generation usage...');
       const { error: trackingError } = await supabase
         .from('meal_plans')
         .insert({
@@ -609,7 +598,6 @@ Répète pour ${duration} jours avec variations:`;
         console.error('⚠️ Failed to track AI usage:', trackingError);
         // Don't fail the request if tracking fails, just log it
       } else {
-        console.log('✅ AI usage tracked successfully');
       }
     } catch (trackingError) {
       console.error('⚠️ Unexpected error tracking AI usage:', trackingError);

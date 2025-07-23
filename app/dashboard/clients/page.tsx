@@ -402,7 +402,6 @@ export default function ClientsPage() {
             notes: "Poids initial lors de la création du profil",
           });
 
-          console.log("✅ Initial weight measurement created");
         } catch (weightError) {
           console.error(
             "⚠️ Error creating initial weight measurement:",
@@ -440,10 +439,6 @@ export default function ClientsPage() {
             console.error("⚠️ Error creating client account:", accountError);
             // Don't fail the client creation if account creation fails
           } else {
-            console.log("✅ Client account created!");
-            console.log("📧 Login Email:", accountEmail);
-            console.log("🔑 Temporary Password:", tempPassword);
-            console.log("🔒 Password Hash:", hashedPassword);
             
             // Send password email with the account credentials we just created
             try {
@@ -461,7 +456,6 @@ export default function ClientsPage() {
               if (!response.ok) {
                 console.error("Failed to send password notification")
               } else {
-                console.log("📧 Password email sent successfully to new client")
               }
             } catch (notifError) {
               console.error("Error sending password notification:", notifError)

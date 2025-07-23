@@ -58,7 +58,6 @@ export default function DashboardPage() {
         .select("*")
         .order("created_at", { ascending: false });
 
-      console.log("🏠 Dashboard clients fetched:", { count: clients?.length || 0, clients });
 
       if (clientsError) {
         console.error("🏠 Dashboard client fetch error:", clientsError);
@@ -72,7 +71,6 @@ export default function DashboardPage() {
         .in("status", ["Active", "Draft"])
         .order("created_at", { ascending: false });
 
-      console.log("🏠 Dashboard meal plans fetched:", { count: mealPlans?.length || 0, mealPlans });
 
       if (mealPlansError) {
         console.error("🏠 Dashboard meal plans fetch error:", mealPlansError);

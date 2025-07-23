@@ -26,7 +26,6 @@ import {
   ChefHat,
   Clock,
   Users,
-  Share2,
   BookOpen,
   Zap
 } from "lucide-react"
@@ -51,7 +50,6 @@ import {
   getGoalTypeInfo
 } from "@/lib/template-categories"
 import MealPlanTemplateDialog from "@/components/templates/MealPlanTemplateDialog"
-import ShareTemplateDialog from "@/components/templates/ShareTemplateDialog"
 import MealPrepInstructionsDialog from "@/components/meal-prep/MealPrepInstructionsDialog"
 import { useRouter } from "next/navigation"
 
@@ -67,8 +65,6 @@ export default function TemplatesPage() {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false)
   const [editingTemplate, setEditingTemplate] = useState<MealPlanTemplate | null>(null)
-  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false)
-  const [sharingTemplate, setSharingTemplate] = useState<MealPlanTemplate | null>(null)
   const [isMealPrepDialogOpen, setIsMealPrepDialogOpen] = useState(false)
   const [mealPrepTemplate, setMealPrepTemplate] = useState<MealPlanTemplate | null>(null)
   const [isGeneratingFromTemplate, setIsGeneratingFromTemplate] = useState(false)
@@ -238,10 +234,6 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
                   setIsEditDialogOpen(true)
                 }}
                 onDelete={(id: string) => handleDeleteTemplate(id)}
-                onShare={(template: MealPlanTemplate) => {
-                  setSharingTemplate(template)
-                  setIsShareDialogOpen(true)
-                }}
                 onMealPrep={(template: MealPlanTemplate) => {
                   setMealPrepTemplate(template)
                   setIsMealPrepDialogOpen(true)
@@ -280,23 +272,6 @@ Utilisez cette structure comme guide et adaptez-la avec des recettes appropriée
         />
       )}
 
-      {/* Share Dialog */}
-      {sharingTemplate && (
-        <ShareTemplateDialog
-          isOpen={isShareDialogOpen}
-          onClose={() => {
-            setIsShareDialogOpen(false)
-            setSharingTemplate(null)
-          }}
-          template={sharingTemplate}
-          templateType="meal_plan"
-          onShared={() => {
-            setIsShareDialogOpen(false)
-            setSharingTemplate(null)
-            fetchTemplates()
-          }}
-        />
-      )}
 
       {/* Meal Prep Instructions Dialog */}
       {mealPrepTemplate && (
@@ -323,14 +298,12 @@ function TemplateCard({
   template, 
   onEdit, 
   onDelete,
-  onShare,
   onMealPrep,
   onGenerate 
 }: { 
   template: MealPlanTemplate
   onEdit: (template: MealPlanTemplate) => void
   onDelete: (id: string) => void
-  onShare: (template: MealPlanTemplate) => void
   onMealPrep: (template: MealPlanTemplate) => void
   onGenerate: (template: MealPlanTemplate) => void
 }) {
@@ -395,10 +368,6 @@ function TemplateCard({
               <DropdownMenuItem>
                 <Copy className="mr-2 h-4 w-4" />
                 Dupliquer
-              </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onShare(template)}>
-                <Share2 className="mr-2 h-4 w-4" />
-                Partager
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => onMealPrep(template)}>
                 <BookOpen className="mr-2 h-4 w-4" />

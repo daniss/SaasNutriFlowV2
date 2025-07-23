@@ -85,6 +85,11 @@ const navItems = [
     url: "/dashboard/help",
     icon: HelpCircle,
   },
+  {
+    title: "Signaler un bug",
+    url: "/dashboard/feedback",
+    icon: MessageSquare,
+  },
 ];
 
 const quickActions = [
