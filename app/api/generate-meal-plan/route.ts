@@ -144,7 +144,7 @@ export async function POST(request: NextRequest) {
       const { count: currentUsage, error: usageError } = await supabase
         .from('meal_plans')
         .select('id', { count: 'exact' })
-        .eq('dietitian_id', dietitian.id)
+        .eq('dietitian_id', user.id) // Use profile ID, not dietitian.id
         .eq('generation_method', 'ai')
         .gte('created_at', startOfMonth.toISOString());
 
@@ -593,7 +593,7 @@ Répète pour ${duration} jours avec variations:`;
       const { error: trackingError } = await supabase
         .from('meal_plans')
         .insert({
-          dietitian_id: dietitian.id,
+          dietitian_id: user.id, // Use profile ID, not dietitian.id
           name: generatedPlan.name || 'Plan généré par IA',
           description: generatedPlan.description || sanitizedPrompt.substring(0, 500),
           duration_days: duration,
@@ -620,7 +620,8 @@ Répète pour ${duration} jours avec variations:`;
       data: generatedPlan,
       debug: {
         trackingAttempted: true,
-        dietitianId: dietitian.id
+        profileId: user.id,
+        dietitianRecordId: dietitian.id
       }
     });
   } catch (error) {

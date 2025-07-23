@@ -14,16 +14,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Get dietitian record
-    const { data: dietitian, error: dietitianError } = await supabase
-      .from('dietitians')
-      .select('id')
-      .eq('auth_user_id', user.id)
-      .single()
-
-    if (dietitianError || !dietitian) {
-      return NextResponse.json({ error: 'Dietitian not found' }, { status: 404 })
-    }
+    // Use the user's profile ID directly (meal_plans.dietitian_id references profiles.id)
+    const profileId = user.id
 
     let current = 0
 
@@ -32,7 +24,7 @@ export async function GET(request: NextRequest) {
         const { count: clientCount, error: clientError } = await supabase
           .from('clients')
           .select('id', { count: 'exact' })
-          .eq('dietitian_id', dietitian.id)
+          .eq('dietitian_id', profileId)
 
         if (clientError) throw clientError
         current = clientCount || 0
@@ -42,7 +34,7 @@ export async function GET(request: NextRequest) {
         const { count: planCount, error: planError } = await supabase
           .from('meal_plans')
           .select('id', { count: 'exact' })
-          .eq('dietitian_id', dietitian.id)
+          .eq('dietitian_id', profileId)
           .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Last 30 days
 
         if (planError) throw planError
@@ -58,7 +50,7 @@ export async function GET(request: NextRequest) {
         const { count: aiCount, error: aiError } = await supabase
           .from('meal_plans')
           .select('id', { count: 'exact' })
-          .eq('dietitian_id', dietitian.id)
+          .eq('dietitian_id', profileId)
           .eq('generation_method', 'ai')
           .gte('created_at', startOfMonth.toISOString())
 
