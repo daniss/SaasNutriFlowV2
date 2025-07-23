@@ -124,17 +124,17 @@ export default function GenerateMealPlanPage() {
     }
   }, [searchParams])
 
-  // Quick preset prompts for inspiration (no duration/calories specified)
+  // Quick preset prompts for inspiration (focus on style and health goals only)
   const presetPrompts = [
-    "Plan méditerranéen pour la santé cardiaque avec poissons gras et légumes",
-    "Plan de perte de poids avec jeûne intermittent (16:8) et riche en protéines",
-    "Plan nutritionnel végétalien pour sportif et développement musculaire",
-    "Plan anti-inflammatoire pour la santé articulaire avec aliments riches en oméga-3",
-    "Plan adapté aux diabétiques avec aliments à faible index glycémique",
-    "Plan familial de préparation de repas avec options de cuisson par lots",
-    "Plan sans gluten pour personne cœliaque avec alternatives nutritives",
-    "Plan végétarien équilibré riche en fer et vitamine B12 pour femme enceinte",
-    "Plan hypoallergénique pour sensibilités multiples avec aliments simples",
+    "Plan méditerranéen riche en poissons gras, huile d'olive et légumes colorés pour la santé cardiaque",
+    "Plan protéiné avec jeûne intermittent (16:8), privilégiant viandes maigres et légumineuses",
+    "Plan végétalien équilibré avec sources complètes de protéines et superaliments",
+    "Plan anti-inflammatoire avec curcuma, gingembre, baies et poissons gras",
+    "Plan à faible index glycémique avec céréales complètes et fibres pour diabétiques",
+    "Plan batch cooking familial avec préparations simples et réchauffables",
+    "Plan cœliaque avec quinoa, sarrasin et alternatives naturellement sans gluten",
+    "Plan grossesse végétarien riche en fer, B12 et acide folique",
+    "Plan simple et digeste pour sensibilités alimentaires multiples",
   ]
 
   // Enhanced validation to match backend security
@@ -1224,7 +1224,7 @@ export default function GenerateMealPlanPage() {
                 <div className="relative">
                   <Textarea
                     ref={textareaRef}
-                    placeholder="ex: Plan méditerranéen pour la perte de poids, riche en acides gras oméga-3, adapté à une personne pré-diabétique..."
+                    placeholder="ex: Plan méditerranéen riche en oméga-3, adapté à une personne pré-diabétique avec focus sur les légumes verts et poissons gras..."
                     value={formData.prompt}
                     onChange={(e) => {
                       handleInputChange("prompt", e.target.value)
