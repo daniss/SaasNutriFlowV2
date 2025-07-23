@@ -222,41 +222,6 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
                   ))}
                 </div>
 
-                {/* User Profile */}
-                <div className="pt-4 border-t border-emerald-200/50">
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <button className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium text-emerald-700 hover:bg-emerald-100 hover:text-emerald-800 w-full">
-                        <div className="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-sm font-medium">
-                          {profile?.first_name?.[0] || profile?.email?.[0] || "U"}
-                        </div>
-                        <div className="flex flex-col text-left">
-                          <span className="text-sm font-medium">
-                            {profile?.first_name && profile?.last_name
-                              ? `${profile.first_name} ${profile.last_name}`
-                              : profile?.email || "Utilisateur"}
-                          </span>
-                          <span className="text-xs text-emerald-600">
-                            Diététicien(ne)
-                          </span>
-                        </div>
-                      </button>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent side="top" className="w-48">
-                      <DropdownMenuItem asChild>
-                        <Link href="/dashboard/settings">
-                          <Settings className="h-4 w-4 mr-2" />
-                          Paramètres
-                        </Link>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem onClick={handleSignOut}>
-                        <LogOut className="h-4 w-4 mr-2" />
-                        Se déconnecter
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
-                </div>
               </div>
             </motion.div>
           </>
@@ -415,51 +380,6 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
               ))}
             </div>
 
-            {/* User Profile */}
-            <div className="pt-4 border-t border-emerald-200/50">
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium text-emerald-700 hover:bg-emerald-100/80 hover:text-emerald-800 w-full relative min-h-[48px]">
-                    <div className="h-8 w-8 rounded-full bg-gradient-to-br from-emerald-500 to-emerald-600 flex items-center justify-center text-white text-sm font-medium flex-shrink-0 absolute left-1/2 transform -translate-x-1/2 z-10">
-                      {profile?.first_name?.[0] || profile?.email?.[0] || "U"}
-                    </div>
-                    <AnimatePresence>
-                      {expanded && (
-                        <motion.div
-                          initial={{ opacity: 0, x: -10 }}
-                          animate={{ opacity: 1, x: 0 }}
-                          exit={{ opacity: 0, x: -10 }}
-                          transition={{ duration: 0.2, delay: 0.1 }}
-                          className="absolute left-12 flex flex-col text-left"
-                        >
-                          <span className="text-sm font-medium whitespace-nowrap">
-                            {profile?.first_name && profile?.last_name
-                              ? `${profile.first_name} ${profile.last_name}`
-                              : profile?.email || "Utilisateur"}
-                          </span>
-                          <span className="text-xs text-emerald-600 whitespace-nowrap">
-                            Diététicien(ne)
-                          </span>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent side="top" className="w-48">
-                  <DropdownMenuItem asChild>
-                    <Link href="/dashboard/settings">
-                      <Settings className="h-4 w-4 mr-2" />
-                      Paramètres
-                    </Link>
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut}>
-                    <LogOut className="h-4 w-4 mr-2" />
-                    Se déconnecter
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
           </div>
         </motion.div>
       </div>
