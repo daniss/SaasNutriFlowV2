@@ -601,6 +601,7 @@ Répète pour ${duration} jours avec variations:`;
           status: 'generated',
           generation_method: 'ai',
           client_id: clientId || null,
+          plan_content: generatedPlan, // Store the full generated plan
         });
 
       if (trackingError) {
