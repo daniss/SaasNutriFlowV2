@@ -84,6 +84,9 @@ export default function GenerateMealPlanPage() {
   // Save only loading state
   const [isSavingOnly, setIsSavingOnly] = useState(false)
   
+  // Save as template loading state
+  const [isSavingTemplate, setIsSavingTemplate] = useState(false)
+  
   // Safe progress setter that caps at 100%
   const setSafeProgress = (progress: number) => {
     setSendingProgress(Math.min(100, Math.max(0, progress)))
@@ -459,7 +462,14 @@ export default function GenerateMealPlanPage() {
   const handleSaveAsTemplate = async () => {
     if (!generatedPlan || !user) return
 
+    setIsSavingTemplate(true)
+    
     try {
+      // Show initial toast
+      toast({
+        title: "Sauvegarde en cours...",
+        description: "Création du modèle en cours",
+      })
       // Step 1: Save ingredients to database (same as regular save)
       console.log("Saving ingredients to database...")
       const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
@@ -533,6 +543,8 @@ export default function GenerateMealPlanPage() {
         description: "Impossible de sauvegarder le modèle. Veuillez réessayer.",
         variant: "destructive",
       })
+    } finally {
+      setIsSavingTemplate(false)
     }
   }
 
@@ -813,6 +825,11 @@ export default function GenerateMealPlanPage() {
     setIsSavingOnly(true)
 
     try {
+      // Show initial toast
+      toast({
+        title: "Sauvegarde en cours...",
+        description: "Création du plan alimentaire",
+      })
       // Get client information
       const { data: client, error: clientError } = await supabase
         .from("clients")
@@ -1774,10 +1791,20 @@ export default function GenerateMealPlanPage() {
                           variant="outline"
                           size="sm"
                           onClick={handleSaveAsTemplate}
-                          className="bg-white/80 hover:bg-white border-gray-200 hover:border-gray-300 hover:scale-105 transition-all duration-200"
+                          disabled={isSavingTemplate || isSavingOnly || isSendingToClient}
+                          className="bg-white/80 hover:bg-white border-gray-200 hover:border-gray-300 hover:scale-105 transition-all duration-200 disabled:hover:scale-100"
                         >
-                          <Save className="h-4 w-4 mr-2" />
-                          Sauvegarder le modèle
+                          {isSavingTemplate ? (
+                            <>
+                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-600 mr-2" />
+                              Sauvegarde...
+                            </>
+                          ) : (
+                            <>
+                              <Save className="h-4 w-4 mr-2" />
+                              Sauvegarder le modèle
+                            </>
+                          )}
                         </Button>
                         <Button
                           variant="outline"

@@ -184,9 +184,20 @@ export function DynamicMealEditDialog({
   // Recipe handling functions
   const handleRecipeSelect = (recipe: Recipe) => {
     if (recipeSearchMealId) {
+      // Add recipe to local meal recipes for display
       setLocalMealRecipes(prev => ({
         ...prev,
         [recipeSearchMealId]: [...(prev[recipeSearchMealId] || []), recipe]
+      }))
+      
+      // Update the meal slot's recipe_id to enable nutritional calculations
+      setEditData(prev => ({
+        ...prev,
+        meals: prev.meals.map(meal => 
+          meal.id === recipeSearchMealId 
+            ? { ...meal, recipe_id: recipe.id }
+            : meal
+        )
       }))
       
       toast({
@@ -217,6 +228,16 @@ export function DynamicMealEditDialog({
       setLocalMealRecipes(prev => ({
         ...prev,
         [recipeCreateMealId]: [...(prev[recipeCreateMealId] || []), recipeToAdd]
+      }))
+      
+      // Update the meal slot's recipe_id to enable nutritional calculations
+      setEditData(prev => ({
+        ...prev,
+        meals: prev.meals.map(meal => 
+          meal.id === recipeCreateMealId 
+            ? { ...meal, recipe_id: recipe.id }
+            : meal
+        )
       }))
       
       toast({
