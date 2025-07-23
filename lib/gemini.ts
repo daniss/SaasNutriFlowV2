@@ -118,6 +118,7 @@ export async function generateMealPlan(
     });
 
     const result = await response.json();
+    console.log("🔍 API Response:", { status: response.status, result });
 
     if (!response.ok || !result.success) {
       const error = new Error(result.error || "Failed to generate meal plan") as any;

@@ -618,6 +618,10 @@ Répète pour ${duration} jours avec variations:`;
     return NextResponse.json({
       success: true,
       data: generatedPlan,
+      debug: {
+        trackingAttempted: true,
+        dietitianId: dietitian.id
+      }
     });
   } catch (error) {
     console.error("Meal plan generation error:", error);

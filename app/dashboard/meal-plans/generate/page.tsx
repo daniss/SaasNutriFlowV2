@@ -322,7 +322,9 @@ export default function GenerateMealPlanPage() {
         clientId: formData.clientId || undefined,
       }
 
-      const { transformed: plan, raw: rawPlan } = await generateMealPlan(mealPlanRequest)
+      const result = await generateMealPlan(mealPlanRequest)
+      const { transformed: plan, raw: rawPlan } = result
+      console.log('Meal plan generation result:', result)
 
       setGenerationProgress(100)
       setTimeout(() => {
