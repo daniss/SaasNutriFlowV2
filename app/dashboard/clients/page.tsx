@@ -1434,8 +1434,12 @@ export default function ClientsPage() {
                             <Target className="mr-3 h-3 w-3 text-gray-400" />
                             <span>Objectif:</span>
                           </div>
-                          <span className="text-sm font-semibold text-gray-900 capitalize">
-                            {client.goal.replace("_", " ")}
+                          <span className="text-sm font-semibold text-gray-900">
+                            {client.goal === 'weight_loss' && 'Perte de poids'}
+                            {client.goal === 'weight_gain' && 'Prise de poids'}
+                            {client.goal === 'muscle_gain' && 'Prise de masse musculaire'}
+                            {client.goal === 'maintenance' && 'Maintien'}
+                            {client.goal === 'health_improvement' && 'Amélioration de la santé'}
                           </span>
                         </div>
                       )}
