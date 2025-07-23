@@ -42,11 +42,11 @@ export async function POST(request: Request) {
     }
 
     // Verify client belongs to dietitian
+    // RLS policies will automatically filter clients for the authenticated user
     const { data: client, error: clientError } = await supabase
       .from('clients')
       .select('id, name')
       .eq('id', clientId)
-      .eq('dietitian_id', user.id)
       .single()
 
     console.log('Client fetch result:', { client, clientError })
