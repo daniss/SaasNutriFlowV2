@@ -53,9 +53,20 @@ export async function GET(request: NextRequest) {
         break
 
       case 'ai_generations':
-        // During transition period, show 0 AI generations used
-        // TODO: Implement proper ai_generations tracking table
-        current = 0
+        // Track AI generations from dedicated ai_generations table
+        const startOfMonth = new Date()
+        startOfMonth.setDate(1)
+        startOfMonth.setHours(0, 0, 0, 0)
+
+        const { count: aiCount, error: aiError } = await supabase
+          .from('ai_generations')
+          .select('id', { count: 'exact' })
+          .eq('dietitian_id', user.id)
+          .eq('generation_successful', true)
+          .gte('created_at', startOfMonth.toISOString())
+
+        if (aiError) throw aiError
+        current = aiCount || 0
         break
 
       default:

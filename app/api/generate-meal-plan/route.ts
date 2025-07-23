@@ -139,9 +139,21 @@ export async function POST(request: NextRequest) {
       startOfMonth.setDate(1);
       startOfMonth.setHours(0, 0, 0, 0);
 
-      // For now, allow unlimited AI generations during transition period
-      // TODO: Implement proper ai_generations tracking table
-      const currentUsage = 0;
+      // Check AI usage from the dedicated ai_generations table
+      const { count: currentUsage, error: usageError } = await supabase
+        .from('ai_generations')
+        .select('id', { count: 'exact' })
+        .eq('dietitian_id', user.id)
+        .eq('generation_successful', true)
+        .gte('created_at', startOfMonth.toISOString());
+
+      if (usageError) {
+        console.error('❌ Error checking AI usage:', usageError);
+        return NextResponse.json(
+          { error: 'Erreur lors de la vérification de l\'utilisation' },
+          { status: 500 }
+        );
+      }
 
       if ((currentUsage || 0) >= planData.ai_generations_per_month) {
         console.warn(`🚫 AI generation limit exceeded: ${currentUsage}/${planData.ai_generations_per_month}`);
@@ -567,19 +579,24 @@ Répète pour ${duration} jours avec variations:`;
     }
 
 
-    // Track AI usage without creating meal plan entries
+    // Track AI usage in dedicated ai_generations table
     try {
-      // For now, we'll track AI usage by updating a simple counter
-      // This prevents automatic meal plan creation while maintaining usage tracking
       const { error: trackingError } = await supabase
-        .from('dietitians')
-        .update({
-          updated_at: new Date().toISOString() // Simple usage timestamp update
-        })
-        .eq('auth_user_id', user.id);
+        .from('ai_generations')
+        .insert({
+          dietitian_id: user.id,
+          client_id: clientId || null,
+          generation_type: 'meal_plan',
+          prompt_used: sanitizedPrompt.substring(0, 1000), // Store first 1000 chars of prompt
+          target_calories: targetCalories,
+          duration_days: duration,
+          restrictions: restrictions || [],
+          client_dietary_tags: clientDietaryTags || [],
+          generation_successful: true,
+        });
 
       if (trackingError) {
-        console.error('⚠️ Failed to track AI usage timestamp:', trackingError);
+        console.error('⚠️ Failed to track AI usage:', trackingError);
         // Don't fail the request if tracking fails, just log it
       }
     } catch (trackingError) {
@@ -598,6 +615,26 @@ Répète pour ${duration} jours avec variations:`;
     });
   } catch (error) {
     console.error("Meal plan generation error:", error);
+
+    // Track failed AI generation for usage limits (still counts against quota)
+    try {
+      const errorMessage = error instanceof Error ? error.message : String(error);
+      await supabase
+        .from('ai_generations')
+        .insert({
+          dietitian_id: user.id,
+          client_id: clientId || null,
+          generation_type: 'meal_plan',
+          prompt_used: sanitizedPrompt?.substring(0, 1000) || 'Unknown prompt',
+          target_calories: targetCalories,
+          duration_days: duration,
+          restrictions: restrictions || [],
+          client_dietary_tags: clientDietaryTags || [],
+          generation_successful: false,
+        });
+    } catch (trackingError) {
+      console.error('⚠️ Failed to track failed AI generation:', trackingError);
+    }
 
     // Don't expose internal error details to prevent information disclosure
     let errorMessage = "Une erreur s'est produite lors de la génération du plan alimentaire";
