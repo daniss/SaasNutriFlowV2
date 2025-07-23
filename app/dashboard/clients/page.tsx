@@ -26,6 +26,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
+import { toast } from "@/hooks/use-toast";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -34,6 +35,8 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuthNew";
+import { useSubscription } from "@/hooks/useSubscription";
+import { UsageCounter } from "@/components/dashboard/UsageCounter";
 import { generateTemporaryPassword, hashPassword, formatClientAccountEmail } from "@/lib/client-account-utils";
 import { supabase, type Client } from "@/lib/supabase";
 import {
@@ -58,6 +61,7 @@ import { useEffect, useState } from "react";
 
 export default function ClientsPage() {
   const { user } = useAuth();
+  const { hasReachedLimit } = useSubscription();
   const [clients, setClients] = useState<Client[]>([]);
   const [loading, setLoading] = useState(true);
   const [emailValidationLoading, setEmailValidationLoading] = useState(false);
@@ -304,6 +308,21 @@ export default function ClientsPage() {
 
   const handleAddClient = async () => {
     if (!user) return;
+
+    // Check if client limit has been reached
+    try {
+      const limitReached = await hasReachedLimit('clients')
+      if (limitReached) {
+        toast({
+          title: "Limite atteinte",
+          description: "Vous avez atteint la limite de clients pour votre abonnement. Passez à un plan supérieur pour ajouter plus de clients.",
+          variant: "destructive"
+        })
+        return
+      }
+    } catch (error) {
+      console.error("Error checking client limit:", error)
+    }
 
     // Validate all fields (email validation is async)
     const validations = {
@@ -622,10 +641,12 @@ export default function ClientsPage() {
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
-          <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
-            <DialogTrigger asChild>
-              <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5">
-                <Plus className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <UsageCounter type="clients" />
+            <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+              <DialogTrigger asChild>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5">
+                  <Plus className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
                 <span className="hidden sm:inline">Nouveau client</span>
                 <span className="sm:hidden">Nouveau</span>
               </Button>
@@ -1189,6 +1210,7 @@ export default function ClientsPage() {
               </DialogFooter>
             </DialogContent>
           </Dialog>
+          </div>
         }
       />
 

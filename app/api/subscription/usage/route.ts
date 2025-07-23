@@ -14,27 +14,38 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Use the user's profile ID directly (meal_plans.dietitian_id references profiles.id)
-    const profileId = user.id
+    // Get the dietitian ID from the auth user ID
+    const { data: dietitian, error: dietitianError } = await supabase
+      .from('dietitians')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .single()
 
+    if (dietitianError || !dietitian) {
+      return NextResponse.json({ error: 'Dietitian not found' }, { status: 404 })
+    }
+
+    const dietitianId = dietitian.id
     let current = 0
 
     switch (type) {
       case 'clients':
+        // Clients use dietitians.id as foreign key
         const { count: clientCount, error: clientError } = await supabase
           .from('clients')
           .select('id', { count: 'exact' })
-          .eq('dietitian_id', profileId)
+          .eq('dietitian_id', dietitianId)
 
         if (clientError) throw clientError
         current = clientCount || 0
         break
 
       case 'meal_plans':
+        // Meal plans use auth_user_id directly as foreign key
         const { count: planCount, error: planError } = await supabase
           .from('meal_plans')
           .select('id', { count: 'exact' })
-          .eq('dietitian_id', profileId)
+          .eq('dietitian_id', user.id)
           .gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()) // Last 30 days
 
         if (planError) throw planError
@@ -47,10 +58,11 @@ export async function GET(request: NextRequest) {
         startOfMonth.setDate(1)
         startOfMonth.setHours(0, 0, 0, 0)
 
+        // AI generations also use auth_user_id directly like meal_plans
         const { count: aiCount, error: aiError } = await supabase
           .from('meal_plans')
           .select('id', { count: 'exact' })
-          .eq('dietitian_id', profileId)
+          .eq('dietitian_id', user.id)
           .eq('generation_method', 'ai')
           .gte('created_at', startOfMonth.toISOString())
 

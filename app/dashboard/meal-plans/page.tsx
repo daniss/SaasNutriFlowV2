@@ -65,6 +65,8 @@ import {
 import { toast } from "@/hooks/use-toast"
 import { DashboardHeader } from "@/components/dashboard-header"
 import TemplateSelectionDialog from "@/components/meal-plans/TemplateSelectionDialog"
+import { UsageCounter } from "@/components/dashboard/UsageCounter"
+import { useSubscription } from "@/hooks/useSubscription"
 import Link from "next/link"
 
 interface MealPlanWithClient extends MealPlan {
@@ -87,6 +89,7 @@ interface StatsData {
 
 export default function MealPlansPage() {
   const { user } = useAuth()
+  const { hasReachedLimit } = useSubscription()
   const [mealPlans, setMealPlans] = useState<MealPlanWithClient[]>([])
   const [clients, setClients] = useState<ClientOption[]>([])
   const [loading, setLoading] = useState(true)
@@ -194,6 +197,21 @@ export default function MealPlansPage() {
         variant: "destructive"
       })
       return
+    }
+
+    // Check if meal plan limit has been reached
+    try {
+      const limitReached = await hasReachedLimit('meal_plans')
+      if (limitReached) {
+        toast({
+          title: "Limite atteinte",
+          description: "Vous avez atteint la limite de plans alimentaires pour votre abonnement. Passez à un plan supérieur pour créer plus de plans.",
+          variant: "destructive"
+        })
+        return
+      }
+    } catch (error) {
+      console.error("Error checking meal plan limit:", error)
     }
 
     try {
@@ -340,37 +358,40 @@ export default function MealPlansPage() {
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
-          <div className="flex flex-wrap items-center gap-1 sm:gap-2">
-            <Button 
-              onClick={() => setIsTemplateDialogOpen(true)}
-              variant="outline"
-              size="sm"
-              className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
-            >
-              <BookOpen className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
-              <span className="hidden sm:inline">Utiliser un modèle</span>
-              <span className="sm:hidden">Modèle</span>
-            </Button>
-            <Button 
-              asChild
-              variant="outline"
-              size="sm"
-              className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
-            >
-              <Link href="/dashboard/meal-plans/generate">
-                <Sparkles className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
-                <span className="hidden sm:inline">Générer avec IA</span>
-                <span className="sm:hidden">IA</span>
-              </Link>
-            </Button>
-            <Button 
-              onClick={() => setIsAddDialogOpen(true)}
-              className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
-            >
-              <Plus className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
-              <span className="hidden sm:inline">Nouveau plan</span>
-              <span className="sm:hidden">Nouveau</span>
-            </Button>
+          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+            <UsageCounter type="meal_plans" />
+            <div className="flex flex-wrap items-center gap-1 sm:gap-2">
+              <Button 
+                onClick={() => setIsTemplateDialogOpen(true)}
+                variant="outline"
+                size="sm"
+                className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
+              >
+                <BookOpen className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Utiliser un modèle</span>
+                <span className="sm:hidden">Modèle</span>
+              </Button>
+              <Button 
+                asChild
+                variant="outline"
+                size="sm"
+                className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
+              >
+                <Link href="/dashboard/meal-plans/generate">
+                  <Sparkles className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">Générer avec IA</span>
+                  <span className="sm:hidden">IA</span>
+                </Link>
+              </Button>
+              <Button 
+                onClick={() => setIsAddDialogOpen(true)}
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
+              >
+                <Plus className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="hidden sm:inline">Nouveau plan</span>
+                <span className="sm:hidden">Nouveau</span>
+              </Button>
+            </div>
           </div>
         }
       />
