@@ -53,21 +53,9 @@ export async function GET(request: NextRequest) {
         break
 
       case 'ai_generations':
-        // This would track AI meal plan generations per month
-        const startOfMonth = new Date()
-        startOfMonth.setDate(1)
-        startOfMonth.setHours(0, 0, 0, 0)
-
-        // AI generations also use auth_user_id directly like meal_plans
-        const { count: aiCount, error: aiError } = await supabase
-          .from('meal_plans')
-          .select('id', { count: 'exact' })
-          .eq('dietitian_id', user.id)
-          .eq('generation_method', 'ai')
-          .gte('created_at', startOfMonth.toISOString())
-
-        if (aiError) throw aiError
-        current = aiCount || 0
+        // During transition period, show 0 AI generations used
+        // TODO: Implement proper ai_generations tracking table
+        current = 0
         break
 
       default:
