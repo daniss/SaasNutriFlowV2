@@ -431,24 +431,71 @@ export default function GenerateMealPlanPage() {
     if (!generatedPlan || !user) return
 
     try {
-      // Save to meal_plan_templates table
+      // Step 1: Save ingredients to database (same as regular save)
+      console.log("Saving ingredients to database...")
+      const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
+      console.log("Saved ingredients:", savedIngredients.length)
+
+      // Step 2: Create recipes from AI-generated meals (same as regular save)
+      console.log("Creating recipes from meals...")
+      const createdRecipes = await createRecipesFromMeals(generatedPlan.days, user!.id)
+      console.log("Created recipes:", createdRecipes.length)
+
+      // Step 3: Create recipe-to-meal mapping for template structure
+      const recipeMapping = createRecipeToMealMapping(generatedPlan.days, createdRecipes)
+
+      // Step 4: Transform AI plan to template structure with recipe references
+      const templateStructure = []
+      
+      for (let dayNum = 1; dayNum <= generatedPlan.duration; dayNum++) {
+        const dayData = generatedPlan.days.find(d => d.day === dayNum)
+        if (!dayData) continue
+
+        const dayTemplate = {
+          day: dayNum,
+          meals: dayData.meals.map((meal: any) => {
+            // Find corresponding recipe for this meal
+            const recipe = createdRecipes.find(r => r.name === meal.name)
+            
+            return {
+              name: meal.type, // Use meal type (breakfast, lunch, etc.)
+              time: meal.time || "08:00", // Default time if not provided
+              calories_target: meal.calories || null,
+              description: meal.name, // Use meal name as description
+              recipe_id: recipe?.id || null // Link to created recipe
+            }
+          })
+        }
+        
+        templateStructure.push(dayTemplate)
+      }
+
+      // Step 5: Save enhanced template with recipe references
       const { error } = await supabase.from("meal_plan_templates").insert({
         dietitian_id: user.id,
         name: formData.planName || generatedPlan.title,
         description: generatedPlan.description || '',
         category: 'general',
+        client_type: 'general',
+        goal_type: 'general',
         duration_days: generatedPlan.duration,
-        meal_structure: generatedPlan, // Changed from template_data to meal_structure
+        meal_structure: templateStructure, // Enhanced structure with recipe references
+        target_calories: generatedPlan.targetCalories?.toString() || '',
         tags: ['ai-generated'],
-        difficulty: 'medium', // Required field with default value
-        // Removed usage_count and is_favorite as they have defaults
+        difficulty: 'medium',
+        // Nutritional targets from AI plan
+        target_macros: {
+          protein: Math.round((generatedPlan.targetProtein || 0) / (generatedPlan.targetCalories || 1) * 100) || null,
+          carbs: Math.round((generatedPlan.targetCarbs || 0) / (generatedPlan.targetCalories || 1) * 100) || null,
+          fat: Math.round((generatedPlan.targetFat || 0) / (generatedPlan.targetCalories || 1) * 100) || null
+        }
       })
 
       if (error) throw error
       
       toast({
         title: "Modèle sauvegardé",
-        description: "Le plan alimentaire a été sauvegardé comme modèle avec succès!",
+        description: `Le plan alimentaire a été sauvegardé comme modèle avec ${createdRecipes.length} recettes et ${savedIngredients.length} ingrédients créés!`,
       })
     } catch (error) {
       console.error("Error saving template:", error)
