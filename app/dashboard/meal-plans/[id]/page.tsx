@@ -322,17 +322,26 @@ export default function MealPlanDetailPage() {
   }
 
   const fetchClients = async () => {
+    if (!user) {
+      console.log("fetchClients: No user found")
+      return
+    }
+
     try {
+      // RLS policies will automatically filter clients for the authenticated user
       const { data, error } = await supabase
         .from("clients")
         .select("id, name, email")
-        .eq("dietitian_id", user?.id)
         .eq("status", "active")
         .order("name", { ascending: true })
 
-      if (!error) {
-        setClients(data || [])
+      if (error) {
+        console.error("Error fetching clients:", error)
+        return
       }
+      
+      setClients(data || [])
+      console.log("fetchClients: Successfully loaded", data?.length || 0, "clients")
     } catch (error) {
       console.error("Error fetching clients:", error)
     }
