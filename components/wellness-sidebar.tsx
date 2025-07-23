@@ -86,7 +86,7 @@ const navItems = [
     icon: HelpCircle,
   },
   {
-    title: "Signaler un bug",
+    title: "Bug/Amélioration",
     url: "/dashboard/feedback",
     icon: MessageSquare,
   },
