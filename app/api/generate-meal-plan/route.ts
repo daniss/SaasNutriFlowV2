@@ -267,7 +267,7 @@ export async function POST(request: NextRequest) {
         
         const chunkPrompt = `Crée ${chunkDays} jours de plan alimentaire méditerranéen JSON français.
 
-${sanitizedPrompt} - Jours ${startDay} à ${endDay}, ${targetCalories} cal/jour
+${sanitizedPrompt} - Jours ${startDay} à ${endDay}, environ ${targetCalories} cal/jour
 ${[...restrictions, ...clientDietaryTags].length > 0 ? `Restrictions et préférences alimentaires: ${[...restrictions, ...clientDietaryTags].join(", ")}` : ""}
 
 ${ingredientsPromptSection}
@@ -286,6 +286,7 @@ IMPORTANT:
 - Noms de repas créatifs et appétissants  
 - 3-4 ingrédients par repas maximum
 - Instructions détaillées de préparation
+- Les calories peuvent varier de ±50-100 calories par repas (approximation acceptable)
 - ingredientsNutrition obligatoire avec données exactes de la base
 - OBLIGATOIRE: Numérotation correcte des jours ${startDay} à ${endDay}
 - OBLIGATOIRE: Utilisez les types de repas ci-dessus pour le champ "type"
@@ -467,7 +468,7 @@ Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numér
       // Assemble final plan
       generatedPlan = {
         name: `Plan ${duration} jours`,
-        description: `Plan équilibré ${targetCalories} calories`,
+        description: `Plan équilibré environ ${targetCalories} calories`,
         totalDays: duration,
         averageCaloriesPerDay: targetCalories,
         nutritionSummary: {"protein": "25%", "carbohydrates": "45%", "fat": "30%"},
@@ -480,16 +481,16 @@ Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numér
       // For shorter plans (≤4 days), use single request
       const enhancedPrompt = `Plan alimentaire JSON français concis.
 
-${sanitizedPrompt} - ${duration} jours, ${targetCalories} cal/jour
+${sanitizedPrompt} - ${duration} jours, environ ${targetCalories} cal/jour
 ${[...restrictions, ...clientDietaryTags].length > 0 ? `Restrictions et préférences alimentaires: ${[...restrictions, ...clientDietaryTags].join(", ")}` : ""}
 
 ${ingredientsPromptSection}
 
 PRIORITÉ: Utilisez les ingrédients de la base de données avec leurs valeurs nutritionnelles exactes.
-MAX 2 ingrédients/repas. JSON direct:
+MAX 2 ingrédients/repas. Calories approximatives (±50-100 acceptable). JSON direct:
 {
   "name": "Plan ${duration} jours",
-  "description": "Plan ${targetCalories} calories",
+  "description": "Plan environ ${targetCalories} calories",
   "totalDays": ${duration},
   "averageCaloriesPerDay": ${targetCalories},
   "nutritionSummary": {"protein": "25%", "carbohydrates": "45%", "fat": "30%"},
