@@ -110,11 +110,10 @@ export default function TemplateSelectionDialog({
       if (templatesError) throw templatesError
       setTemplates(templatesData || [])
 
-      // Fetch clients
+      // Fetch clients - RLS policies will automatically filter for the authenticated user
       const { data: clientsData, error: clientsError } = await supabase
         .from('clients')
         .select('id, name')
-        .eq('dietitian_id', user.id)
         .eq('status', 'active')
         .order('name')
 
