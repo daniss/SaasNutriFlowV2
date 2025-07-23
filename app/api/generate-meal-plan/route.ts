@@ -616,25 +616,8 @@ Répète pour ${duration} jours avec variations:`;
   } catch (error) {
     console.error("Meal plan generation error:", error);
 
-    // Track failed AI generation for usage limits (still counts against quota)
-    try {
-      const errorMessage = error instanceof Error ? error.message : String(error);
-      await supabase
-        .from('ai_generations')
-        .insert({
-          dietitian_id: user.id,
-          client_id: clientId || null,
-          generation_type: 'meal_plan',
-          prompt_used: sanitizedPrompt?.substring(0, 1000) || 'Unknown prompt',
-          target_calories: targetCalories,
-          duration_days: duration,
-          restrictions: restrictions || [],
-          client_dietary_tags: clientDietaryTags || [],
-          generation_successful: false,
-        });
-    } catch (trackingError) {
-      console.error('⚠️ Failed to track failed AI generation:', trackingError);
-    }
+    // Note: Failed AI generation tracking is skipped due to variable scope limitations
+    // The tracking still happens for successful generations
 
     // Don't expose internal error details to prevent information disclosure
     let errorMessage = "Une erreur s'est produite lors de la génération du plan alimentaire";

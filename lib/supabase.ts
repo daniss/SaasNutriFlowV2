@@ -2459,7 +2459,7 @@ export const Constants = {
   public: {
     Enums: {
       feedback_category: ["bug", "suggestion", "feature_request", "question"],
-      feedback_priority: ["low", "medium", ""high"],
+      feedback_priority: ["low", "medium", "high"],
       feedback_status: ["new", "in_progress", "resolved", "closed"],
     },
   },
@@ -2483,3 +2483,6 @@ export type Message = Database["public"]["Tables"]["messages"]["Row"];
 export type Recipe = Database["public"]["Tables"]["recipes"]["Row"];
 export type RecipeIngredient = Database["public"]["Tables"]["recipe_ingredients"]["Row"];
 export type MealPlanRecipe = Database["public"]["Tables"]["meal_plan_recipes"]["Row"];
+
+// Re-export supabase client from the client module for backward compatibility
+export { supabase } from "@/lib/supabase/client";

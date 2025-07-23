@@ -803,10 +803,10 @@ export default function GenerateMealPlanPage() {
 
   // Save plan without activating it for the client
   const handleSaveOnly = async () => {
-    if (!generatedPlan || !formData.clientId) {
+    if (!generatedPlan) {
       toast({
         title: "Erreur",
-        description: "Veuillez sélectionner un client d'abord",
+        description: "Aucun plan généré à sauvegarder",
         variant: "destructive",
       })
       return
@@ -820,14 +820,18 @@ export default function GenerateMealPlanPage() {
         title: "Sauvegarde en cours...",
         description: "Création du plan alimentaire",
       })
-      // Get client information
-      const { data: client, error: clientError } = await supabase
-        .from("clients")
-        .select("name, email")
-        .eq("id", formData.clientId)
-        .single()
-      
-      if (clientError) throw clientError
+      // Get client information (only if client is selected)
+      let client = null
+      if (formData.clientId) {
+        const { data: clientData, error: clientError } = await supabase
+          .from("clients")
+          .select("name, email")
+          .eq("id", formData.clientId)
+          .single()
+        
+        if (clientError) throw clientError
+        client = clientData
+      }
       
       // Save ingredients and create recipes (same as the original function)
       const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
@@ -885,7 +889,7 @@ export default function GenerateMealPlanPage() {
         .from("meal_plans")
         .insert({
           dietitian_id: user!.id,
-          client_id: formData.clientId,
+          client_id: formData.clientId || null, // Allow null client
           name: formData.planName || generatedPlan.title,
           description: generatedPlan.description,
           duration_days: generatedPlan.duration,
@@ -902,9 +906,9 @@ export default function GenerateMealPlanPage() {
         description: `Plan alimentaire sauvegardé avec succès! ${savedIngredients.length} ingrédient(s) et ${createdRecipes.length} recette(s) créés.`,
       })
       
-      // Redirect to meal plans dashboard
+      // Redirect to the created meal plan page
       setTimeout(() => {
-        router.push("/dashboard/meal-plans")
+        router.push(`/dashboard/meal-plans/${savedPlan.id}`)
       }, 1000)
     } catch (error) {
       console.error("Error saving plan:", error)
@@ -1775,6 +1779,18 @@ export default function GenerateMealPlanPage() {
                         </div>
                       </div>
                       
+                      {/* PDF Export Tip */}
+                      <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                        <div className="flex items-start gap-2">
+                          <div className="w-5 h-5 bg-blue-100 rounded-full flex items-center justify-center flex-shrink-0 mt-0.5">
+                            <span className="text-blue-600 text-xs font-semibold">💡</span>
+                          </div>
+                          <p className="text-sm text-blue-700">
+                            <span className="font-medium">Pour exporter en PDF :</span> Utilisez "Sauvegarder seulement" ou "Sauvegarder et activer pour le client" puis exportez en PDF dans la page du plan alimentaire.
+                          </p>
+                        </div>
+                      </div>
+                      
                       {/* Action Buttons */}
                       <div className="flex flex-wrap gap-2">
                         <Button
@@ -1810,7 +1826,7 @@ export default function GenerateMealPlanPage() {
                           variant="outline"
                           size="sm"
                           onClick={handleSaveOnly}
-                          disabled={!formData.clientId || isSavingOnly || isSendingToClient}
+                          disabled={isSavingOnly || isSendingToClient}
                           className="bg-gradient-to-r from-gray-50 to-gray-100 hover:from-gray-100 hover:to-gray-200 border-gray-300 hover:border-gray-400 hover:scale-105 transition-all duration-200 disabled:hover:scale-100"
                         >
                           {isSavingOnly ? (

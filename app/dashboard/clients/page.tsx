@@ -503,7 +503,7 @@ export default function ClientsPage() {
       const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                            client.email.toLowerCase().includes(searchTerm.toLowerCase())
       
-      const matchesStatus = filterStatus === "all" || client.status.toLowerCase() === filterStatus.toLowerCase()
+      const matchesStatus = filterStatus === "all" || (client.status || '').toLowerCase() === filterStatus.toLowerCase()
 
       return matchesSearch && matchesStatus
     }
@@ -1240,7 +1240,7 @@ export default function ClientsPage() {
                     Objectifs actifs
                   </p>
                   <p className="text-2xl font-bold text-blue-900 tabular-nums">
-                    {clients.filter((c) => c.status.toLowerCase() === "active").length}
+                    {clients.filter((c) => (c.status || '').toLowerCase() === "active").length}
                   </p>
                   <p className="text-blue-600 text-xs font-medium">En cours</p>
                 </div>
@@ -1290,7 +1290,7 @@ export default function ClientsPage() {
                   <p className="text-2xl font-bold text-purple-900 tabular-nums">
                     {
                       clients.filter((c) => {
-                        const joinDate = new Date(c.join_date);
+                        const joinDate = new Date(c.join_date || '');
                         const now = new Date();
                         return (
                           joinDate.getMonth() === now.getMonth() &&
@@ -1489,7 +1489,7 @@ export default function ClientsPage() {
                             className="bg-gradient-to-r from-emerald-500 to-emerald-600 h-2.5 rounded-full transition-all duration-700 shadow-sm"
                             style={{
                               width: `${Math.min(
-                                client.progress_percentage,
+                                client.progress_percentage || 0,
                                 100
                               )}%`,
                             }}
@@ -1503,7 +1503,7 @@ export default function ClientsPage() {
                       <div className="flex items-center text-xs text-gray-500 font-medium">
                         <Calendar className="mr-1 h-3 w-3 opacity-60" />
                         Inscrit le{" "}
-                        {new Date(client.join_date).toLocaleDateString("fr-FR")}
+                        {new Date(client.join_date || '').toLocaleDateString("fr-FR")}
                       </div>
                       <Button
                         variant="ghost"

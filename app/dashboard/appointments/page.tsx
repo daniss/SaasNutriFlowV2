@@ -402,10 +402,10 @@ export default function AppointmentsPage() {
       client_id: appointment.client_id,
       appointment_date: appointment.appointment_date,
       appointment_time: appointment.appointment_time,
-      duration_minutes: appointment.duration_minutes,
+      duration_minutes: appointment.duration_minutes || 60,
       type: appointment.type as AppointmentType,
       location: appointment.location || "",
-      is_virtual: appointment.is_virtual,
+      is_virtual: appointment.is_virtual || false,
       meeting_link: appointment.meeting_link || "",
       notes: appointment.notes || "",
     });
@@ -1072,7 +1072,7 @@ export default function AppointmentsPage() {
                         appointment.appointment_date + "T00:00:00"
                       ), // Ensure local timezone
                       title: appointment.title,
-                      type: appointment.type,
+                      type: appointment.type || undefined,
                     }))}
                   />
                 </CardContent>
@@ -1517,10 +1517,10 @@ function AppointmentCard({
               </h3>
               <div className="flex flex-wrap gap-1 sm:gap-2">
                 <Badge variant="outline" className="text-xs">
-                  {getTypeLabel(appointment.type)}
+                  {getTypeLabel(appointment.type || '')}
                 </Badge>
-                <Badge variant={getStatusVariant(appointment.status)} className="text-xs">
-                  {getStatusDisplay(appointment.status)}
+                <Badge variant={getStatusVariant(appointment.status || '')} className="text-xs">
+                  {getStatusDisplay(appointment.status || '')}
                 </Badge>
               </div>
             </div>
