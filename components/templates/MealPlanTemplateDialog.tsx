@@ -922,8 +922,8 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
       
       {/* Recipe Search Modal */}
       <RecipeSearchModal
-        isOpen={recipeSearchOpen}
-        onClose={() => setRecipeSearchOpen(false)}
+        isOpen={isRecipeModalOpen}
+        onClose={() => setIsRecipeModalOpen(false)}
         onSelectRecipe={handleRecipeSelect}
         excludeRecipeIds={[]}
       />
