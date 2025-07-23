@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { useSubscription, useUsageLimit } from "@/hooks/useSubscription";
+import { useUsageCounts } from "@/hooks/useUsageCounts";
 import { 
   Crown, 
   Star, 
@@ -34,6 +35,7 @@ export function SubscriptionStatusCard({
   const { subscription, loading, isTrialing, isActive, openBillingPortal } = useSubscription();
   const { isAtLimit: clientsAtLimit, limit: clientsLimit } = useUsageLimit('clients');
   const { isAtLimit: mealPlansAtLimit, limit: mealPlansLimit } = useUsageLimit('meal_plans');
+  const { clients, mealPlans, aiGenerations } = useUsageCounts();
 
   if (loading) {
     return (
@@ -239,12 +241,14 @@ export function SubscriptionStatusCard({
                     <span>Clients</span>
                   </div>
                   <span className={`font-medium ${clientsAtLimit ? 'text-red-600' : ''}`}>
-                    {/* Usage count would need to be fetched */}
-                    {subscription.planDetails.max_clients === -1 ? 'Illimité' : `0/${subscription.planDetails.max_clients}`}
+                    {subscription.planDetails.max_clients === -1 ? 'Illimité' : `${clients.current}/${subscription.planDetails.max_clients}`}
                   </span>
                 </div>
                 {subscription.planDetails.max_clients !== -1 && (
-                  <Progress value={0} className="h-2" />
+                  <Progress 
+                    value={(clients.current / subscription.planDetails.max_clients) * 100} 
+                    className="h-2" 
+                  />
                 )}
               </div>
             )}
@@ -258,12 +262,35 @@ export function SubscriptionStatusCard({
                     <span>Plans alimentaires</span>
                   </div>
                   <span className={`font-medium ${mealPlansAtLimit ? 'text-red-600' : ''}`}>
-                    {/* Usage count would need to be fetched */}
-                    {subscription.planDetails.max_meal_plans === -1 ? 'Illimité' : `0/${subscription.planDetails.max_meal_plans}`}
+                    {subscription.planDetails.max_meal_plans === -1 ? 'Illimité' : `${mealPlans.current}/${subscription.planDetails.max_meal_plans}`}
                   </span>
                 </div>
                 {subscription.planDetails.max_meal_plans !== -1 && (
-                  <Progress value={0} className="h-2" />
+                  <Progress 
+                    value={(mealPlans.current / subscription.planDetails.max_meal_plans) * 100} 
+                    className="h-2" 
+                  />
+                )}
+              </div>
+            )}
+
+            {/* AI Generations Usage */}
+            {subscription.planDetails.ai_generations_per_month !== null && subscription.planDetails.ai_generations_per_month !== -1 && (
+              <div className="space-y-2">
+                <div className="flex items-center justify-between text-sm">
+                  <div className="flex items-center gap-2">
+                    <Zap className="h-4 w-4 text-muted-foreground" />
+                    <span>IA générations (ce mois)</span>
+                  </div>
+                  <span className={`font-medium ${aiGenerations.current >= subscription.planDetails.ai_generations_per_month ? 'text-red-600' : ''}`}>
+                    {subscription.planDetails.ai_generations_per_month === -1 ? 'Illimité' : `${aiGenerations.current}/${subscription.planDetails.ai_generations_per_month}`}
+                  </span>
+                </div>
+                {subscription.planDetails.ai_generations_per_month !== -1 && (
+                  <Progress 
+                    value={(aiGenerations.current / subscription.planDetails.ai_generations_per_month) * 100} 
+                    className="h-2" 
+                  />
                 )}
               </div>
             )}
