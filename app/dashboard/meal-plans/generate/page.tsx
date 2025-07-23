@@ -485,9 +485,9 @@ export default function GenerateMealPlanPage() {
         difficulty: 'medium',
         // Nutritional targets from AI plan
         target_macros: {
-          protein: Math.round((generatedPlan.targetProtein || 0) / (generatedPlan.targetCalories || 1) * 100) || null,
-          carbs: Math.round((generatedPlan.targetCarbs || 0) / (generatedPlan.targetCalories || 1) * 100) || null,
-          fat: Math.round((generatedPlan.targetFat || 0) / (generatedPlan.targetCalories || 1) * 100) || null
+          protein: generatedPlan.nutritionalGoals?.proteinPercentage || null,
+          carbs: generatedPlan.nutritionalGoals?.carbPercentage || null,
+          fat: generatedPlan.nutritionalGoals?.fatPercentage || null
         }
       })
 
