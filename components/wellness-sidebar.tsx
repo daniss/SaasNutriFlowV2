@@ -222,6 +222,17 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
                   ))}
                 </div>
 
+                {/* Logout Button */}
+                <div className="pt-4 border-t border-emerald-200/50">
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium text-red-600 hover:bg-red-50 hover:text-red-700 w-full"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    <span>Se déconnecter</span>
+                  </button>
+                </div>
+
               </div>
             </motion.div>
           </>
@@ -378,6 +389,38 @@ export function WellnessSidebar({ isOpen = false, onToggle }: WellnessSidebarPro
                   )}
                 </Tooltip>
               ))}
+            </div>
+
+            {/* Logout Button */}
+            <div className="pt-4 border-t border-emerald-200/50">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleSignOut}
+                    className="flex items-center px-3 py-2.5 rounded-xl transition-all duration-200 text-sm font-medium text-red-600 hover:bg-red-50/80 hover:text-red-700 w-full relative"
+                  >
+                    <LogOut className="h-4 w-4 flex-shrink-0 relative z-10" />
+                    <AnimatePresence>
+                      {expanded && (
+                        <motion.span
+                          initial={{ opacity: 0, x: -10 }}
+                          animate={{ opacity: 1, x: 0 }}
+                          exit={{ opacity: 0, x: -10 }}
+                          transition={{ duration: 0.2, delay: 0.1 }}
+                          className="absolute left-10 whitespace-nowrap"
+                        >
+                          Se déconnecter
+                        </motion.span>
+                      )}
+                    </AnimatePresence>
+                  </button>
+                </TooltipTrigger>
+                {!expanded && (
+                  <TooltipContent side="right" className="ml-2">
+                    Se déconnecter
+                  </TooltipContent>
+                )}
+              </Tooltip>
             </div>
 
           </div>
