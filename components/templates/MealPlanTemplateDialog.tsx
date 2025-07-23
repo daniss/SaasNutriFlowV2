@@ -418,7 +418,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] sm:max-w-[900px] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="w-[95vw] sm:max-w-[900px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
             <Calendar className="h-5 w-5 flex-shrink-0" />
@@ -620,12 +620,12 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
             {Array.isArray(formData.meal_structure) && formData.meal_structure.length > 0 ? (
               <div className="space-y-4">
                 {/* Day Navigation Tabs */}
-                <div className="flex flex-wrap gap-2 border-b border-gray-200 pb-3">
+                <div className="flex flex-wrap gap-1 sm:gap-2 border-b border-gray-200 pb-3 overflow-x-auto">
                   {formData.meal_structure.map((day: DayStructure) => (
                     <button
                       key={day.day}
                       onClick={() => setActiveDay(day.day)}
-                      className={`px-3 py-2 text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-2 ${
+                      className={`px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${
                         activeDay === day.day
                           ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm'
                           : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
@@ -642,9 +642,9 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
 
                 {/* Overview Bar showing meal counts per day */}
                 <div className="bg-gray-50 rounded-lg p-3">
-                  <div className="flex items-center justify-between text-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
                     <span className="font-medium text-gray-700">Aperçu des repas par jour :</span>
-                    <div className="flex gap-4">
+                    <div className="flex flex-wrap gap-2 sm:gap-4">
                       {formData.meal_structure.map((day: DayStructure) => (
                         <div key={day.day} className="flex items-center gap-1 text-gray-600">
                           <span>J{day.day}:</span>
@@ -684,13 +684,13 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                         </Button>
                       </div>
                     </CardHeader>
-                    <CardContent className="space-y-4 bg-white">
+                    <CardContent className="space-y-3 sm:space-y-4 bg-white p-3 sm:p-6">
                       {/* Meals Grid - 3 columns for cleaner layout */}
                       <div className="space-y-4">
                         {getActiveDayData()?.meals?.map((meal: MealSlot, mealIndex: number) => (
-                          <div key={mealIndex} className="grid grid-cols-1 lg:grid-cols-3 gap-4 p-4 border border-gray-200 rounded-lg bg-gray-50/50">
+                          <div key={mealIndex} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-4 border border-gray-200 rounded-lg bg-gray-50/50 overflow-hidden">
                             {/* Column 1: Meal Type and Time */}
-                            <div className="space-y-3">
+                            <div className="space-y-2 sm:space-y-3 min-w-0">
                               <div className="space-y-1">
                                 <Label className="text-sm font-medium">
                                   Type de repas *
@@ -724,7 +724,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                             </div>
 
                             {/* Column 2: Calories and Description */}
-                            <div className="space-y-3">
+                            <div className="space-y-2 sm:space-y-3 min-w-0">
                               <div className="space-y-1">
                                 <Label className="text-sm font-medium">Calories cibles</Label>
                                 <Input
@@ -782,7 +782,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                             </div>
 
                             {/* Column 3: Meal Badge and Actions */}
-                            <div className="flex flex-col justify-between">
+                            <div className="flex flex-col justify-between min-w-0 md:col-span-2 xl:col-span-1">
                               <div className="flex flex-wrap gap-2 mb-3">
                                 {meal.name && (
                                   <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300">
