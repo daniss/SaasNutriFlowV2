@@ -5,12 +5,11 @@ import { createClient } from "@/lib/supabase/client";
 
 export interface MealPlanRequest {
   prompt: string;
-  dietitianId: string;
+  duration: number;
+  targetCalories: number;
+  restrictions: string[];
+  clientDietaryTags: string[];
   clientId?: string;
-  duration?: number;
-  preferences?: string[];
-  restrictions?: string[];
-  clientDietaryTags?: string[]; // Dietary restrictions from client profile
 }
 
 export interface Meal {
@@ -121,7 +120,14 @@ export async function generateMealPlan(
     const result = await response.json();
 
     if (!response.ok || !result.success) {
-      throw new Error(result.error || "Failed to generate meal plan");
+      const error = new Error(result.error || "Failed to generate meal plan") as any;
+      
+      // Pass through rate limit information if available
+      if (result.resetTime) {
+        error.resetTime = result.resetTime;
+      }
+      
+      throw error;
     }
 
     // Transform API response to frontend format

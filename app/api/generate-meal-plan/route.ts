@@ -1,6 +1,15 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
+import { 
+  validateInput, 
+  mealPlanRequestSchema, 
+  sanitizeAIPrompt, 
+  checkRateLimit, 
+  validateAIResponse,
+  logSuspiciousRequest,
+  containsMaliciousContent
+} from "@/lib/security-validation";
 
 export async function POST(request: NextRequest) {
   try {
@@ -46,16 +55,59 @@ export async function POST(request: NextRequest) {
 
     const body = await request.json();
 
+    // Comprehensive input validation using Zod schema
+    console.log('🔍 Validating request input...');
+    const validationResult = await validateInput(body, mealPlanRequestSchema);
+    
+    if (!validationResult.success) {
+      console.warn('❌ Input validation failed:', validationResult.error);
+      return NextResponse.json(
+        { error: validationResult.error },
+        { status: 400 }
+      );
+    }
+
     const {
       prompt,
       clientId,
-      duration = 7,
-      targetCalories = 2000,
-      dietType = "balanced",
-      restrictions = [],
-      goals = "",
-      clientDietaryTags = [], // Dietary restrictions from client profile
-    } = body;
+      duration,
+      targetCalories,
+      restrictions,
+      clientDietaryTags,
+    } = validationResult.data;
+
+    // Rate limiting: 3 AI generation requests per hour per user
+    console.log('⏱️ Checking rate limits...');
+    const rateLimitResult = checkRateLimit(`ai-generation:${user.id}`, 3, 60 * 60 * 1000);
+    
+    if (!rateLimitResult.success) {
+      console.warn(`🚫 Rate limit exceeded for user ${user.id}`);
+      return NextResponse.json(
+        { 
+          error: "Limite de génération dépassée. Veuillez attendre avant de refaire une demande.",
+          resetTime: rateLimitResult.resetTime
+        },
+        { status: 429 }
+      );
+    }
+
+    // Sanitize and check prompt for malicious content
+    console.log('🛡️ Sanitizing AI prompt...');
+    const sanitizedPrompt = sanitizeAIPrompt(prompt);
+    
+    if (containsMaliciousContent(prompt)) {
+      logSuspiciousRequest(user.id, prompt, "Malicious content detected in prompt");
+      return NextResponse.json(
+        { error: "Contenu invalide détecté dans la description" },
+        { status: 400 }
+      );
+    }
+
+    // Log if the prompt was sanitized (content was filtered)
+    if (sanitizedPrompt !== prompt) {
+      console.warn(`⚠️ Prompt sanitized for user ${user.id}`);
+      logSuspiciousRequest(user.id, prompt, "Prompt injection patterns detected and sanitized");
+    }
 
     // Fetch available ingredients from the global database
     let availableIngredients: any[] = [];
@@ -109,23 +161,8 @@ export async function POST(request: NextRequest) {
 
     const ingredientsPromptSection = formatIngredientsForAI(availableIngredients);
 
-    // Validate input
-    if (!prompt || typeof prompt !== "string") {
-      return NextResponse.json(
-        { error: "Prompt is required" },
-        { status: 400 }
-      );
-    }
-
-    if (prompt.length < 10 || prompt.length > 1000) {
-      return NextResponse.json(
-        { error: "Prompt must be between 10 and 1000 characters" },
-        { status: 400 }
-      );
-    }
-
-    // Rate limiting check (basic implementation)
-    // In production, you'd want to use a more sophisticated rate limiting solution
+    // Input validation is now handled above with Zod schema
+    console.log(`✅ Input validated: ${duration} days, ${targetCalories} calories, ${restrictions.length} restrictions`);
 
     // Generate meal plan using Gemini
     const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
@@ -149,7 +186,7 @@ export async function POST(request: NextRequest) {
         
         const chunkPrompt = `Crée ${chunkDays} jours de plan alimentaire méditerranéen JSON français.
 
-${prompt} - Jours ${startDay} à ${endDay}, ${targetCalories} cal/jour
+${sanitizedPrompt} - Jours ${startDay} à ${endDay}, ${targetCalories} cal/jour
 ${[...restrictions, ...clientDietaryTags].length > 0 ? `Restrictions et préférences alimentaires: ${[...restrictions, ...clientDietaryTags].join(", ")}` : ""}
 
 ${ingredientsPromptSection}
@@ -362,7 +399,7 @@ Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numér
       // For shorter plans (≤4 days), use single request
       const enhancedPrompt = `Plan alimentaire JSON français concis.
 
-${prompt} - ${duration} jours, ${targetCalories} cal/jour
+${sanitizedPrompt} - ${duration} jours, ${targetCalories} cal/jour
 ${[...restrictions, ...clientDietaryTags].length > 0 ? `Restrictions et préférences alimentaires: ${[...restrictions, ...clientDietaryTags].join(", ")}` : ""}
 
 ${ingredientsPromptSection}
@@ -450,6 +487,25 @@ Répète pour ${duration} jours avec variations:`;
       }
     }
 
+    // Validate AI response for security issues
+    console.log('🔍 Validating AI response...');
+    const responseValidation = validateAIResponse(generatedPlan);
+    
+    if (!responseValidation.isValid) {
+      console.error('🚨 Suspicious AI response detected:', responseValidation.reason);
+      logSuspiciousRequest(user.id, JSON.stringify(generatedPlan).substring(0, 200), `Suspicious AI response: ${responseValidation.reason}`);
+      
+      return NextResponse.json(
+        { 
+          success: false,
+          error: "Réponse générée invalide. Veuillez réessayer avec une description différente." 
+        },
+        { status: 500 }
+      );
+    }
+
+    console.log('✅ AI response validated successfully');
+
     return NextResponse.json({
       success: true,
       data: generatedPlan,
@@ -457,15 +513,31 @@ Répète pour ${duration} jours avec variations:`;
   } catch (error) {
     console.error("Meal plan generation error:", error);
 
+    // Don't expose internal error details to prevent information disclosure
+    let errorMessage = "Une erreur s'est produite lors de la génération du plan alimentaire";
+    let statusCode = 500;
+
+    // Only expose safe, user-friendly error messages
+    if (error instanceof Error) {
+      if (error.message.includes("rate limit") || error.message.includes("quota")) {
+        errorMessage = "Service temporairement indisponible. Veuillez réessayer plus tard.";
+        statusCode = 503;
+      } else if (error.message.includes("timeout")) {
+        errorMessage = "La génération a pris trop de temps. Veuillez réduire la durée du plan.";
+        statusCode = 408;
+      } else if (error.message.includes("validation")) {
+        errorMessage = "Données de requête invalides";
+        statusCode = 400;
+      }
+      // For all other errors, use generic message to prevent info disclosure
+    }
+
     return NextResponse.json(
       {
         success: false,
-        error:
-          error instanceof Error
-            ? error.message
-            : "Failed to generate meal plan",
+        error: errorMessage,
       },
-      { status: 500 }
+      { status: statusCode }
     );
   }
 }

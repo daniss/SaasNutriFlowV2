@@ -224,3 +224,160 @@ setInterval(() => {
     }
   }
 }, 5 * 60 * 1000); // Clean up every 5 minutes
+
+/**
+ * AI Prompt Security Functions
+ * Prevents prompt injection and ensures safe AI interactions
+ */
+
+// Dangerous patterns that could indicate prompt injection
+const PROMPT_INJECTION_PATTERNS = [
+  /ignore\s+(previous\s+)?instructions?/gi,
+  /system\s+(prompt|message|role)/gi,
+  /\[INST\]|\[\/INST\]/gi,
+  /###?\s*(system|user|assistant)/gi,
+  /^\s*role\s*:/gmi,
+  /pretend\s+you\s+are/gi,
+  /act\s+as\s+(if\s+you\s+are\s+)?/gi,
+  /forget\s+(everything|all|previous)/gi,
+  /override\s+(instructions|settings|rules)/gi,
+  /reveal\s+(your\s+)?(system|internal|hidden)/gi,
+  /tell\s+me\s+(your|the)\s+(system|internal)/gi,
+  /what\s+(are\s+)?(your|the)\s+(instructions|rules)/gi,
+];
+
+// Suspicious content patterns
+const MALICIOUS_CONTENT_PATTERNS = [
+  /api\s*key/gi,
+  /password/gi,
+  /secret/gi,
+  /token/gi,
+  /credentials/gi,
+  /database/gi,
+  /sql/gi,
+  /javascript/gi,
+  /<script/gi,
+  /eval\s*\(/gi,
+];
+
+/**
+ * Sanitize AI prompts to prevent injection attacks
+ */
+export function sanitizeAIPrompt(prompt: string): string {
+  if (typeof prompt !== "string") return "";
+  
+  let sanitized = prompt.trim();
+  
+  // Replace dangerous patterns with safe alternatives
+  PROMPT_INJECTION_PATTERNS.forEach(pattern => {
+    sanitized = sanitized.replace(pattern, '[CONTENU_FILTRE]');
+  });
+  
+  // Remove excessive whitespace and normalize
+  sanitized = sanitized.replace(/\s+/g, ' ').trim();
+  
+  return sanitized;
+}
+
+/**
+ * Check if content contains malicious patterns
+ */
+export function containsMaliciousContent(content: string): boolean {
+  if (typeof content !== "string") return false;
+  
+  const lowerContent = content.toLowerCase();
+  
+  // Check for prompt injection patterns
+  const hasInjection = PROMPT_INJECTION_PATTERNS.some(pattern => 
+    pattern.test(content)
+  );
+  
+  // Check for malicious content
+  const hasMalicious = MALICIOUS_CONTENT_PATTERNS.some(pattern =>
+    pattern.test(content)
+  );
+  
+  return hasInjection || hasMalicious;
+}
+
+/**
+ * Validate AI response for suspicious content
+ */
+export function validateAIResponse(response: any): { 
+  isValid: boolean; 
+  reason?: string;
+} {
+  try {
+    const responseText = JSON.stringify(response).toLowerCase();
+    
+    // Check for leaked system information
+    const suspiciousPatterns = [
+      'system prompt',
+      'internal instructions',
+      'api key',
+      'password',
+      'secret',
+      'database schema',
+      'ignore instructions',
+      'previous instructions'
+    ];
+    
+    for (const pattern of suspiciousPatterns) {
+      if (responseText.includes(pattern)) {
+        return { 
+          isValid: false, 
+          reason: `Suspicious content detected: ${pattern}` 
+        };
+      }
+    }
+    
+    return { isValid: true };
+  } catch (error) {
+    return { 
+      isValid: false, 
+      reason: 'Failed to validate response format' 
+    };
+  }
+}
+
+/**
+ * AI Meal Plan Request Validation Schema
+ */
+export const mealPlanRequestSchema = z.object({
+  prompt: z.string()
+    .min(10, "La description doit contenir au moins 10 caractères")
+    .max(500, "La description ne peut pas dépasser 500 caractères")
+    .refine(val => !containsMaliciousContent(val), {
+      message: "Contenu invalide détecté dans la description"
+    }),
+  duration: z.number()
+    .int("La durée doit être un nombre entier")
+    .min(1, "La durée minimum est de 1 jour")
+    .max(14, "La durée maximum est de 14 jours"),
+  targetCalories: z.number()
+    .int("Les calories doivent être un nombre entier")
+    .min(800, "Minimum 800 calories par jour pour la sécurité")
+    .max(4000, "Maximum 4000 calories par jour"),
+  restrictions: z.array(z.string().max(50, "Restriction trop longue"))
+    .max(10, "Maximum 10 restrictions alimentaires"),
+  clientDietaryTags: z.array(z.string().max(50, "Tag trop long"))
+    .max(10, "Maximum 10 tags alimentaires"),
+  clientId: uuidSchema.optional(),
+});
+
+/**
+ * Log suspicious AI requests for monitoring
+ */
+export function logSuspiciousRequest(
+  userId: string, 
+  request: string, 
+  reason: string
+): void {
+  console.warn(`🚨 SUSPICIOUS AI REQUEST DETECTED`, {
+    userId,
+    timestamp: new Date().toISOString(),
+    reason,
+    requestPreview: request.substring(0, 100),
+    // In production, this should go to a security monitoring service
+  });
+}

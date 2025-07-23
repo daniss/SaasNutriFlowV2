@@ -92,12 +92,21 @@ export default function GenerateMealPlanPage() {
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([1]))
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
-  // Form state
+  // Form state - Updated for new security validation
   const [formData, setFormData] = useState({
     prompt: "",
     planName: "",
     clientId: "",
+    duration: 7,
+    targetCalories: 2000,
+    restrictions: [] as string[],
   })
+  
+  // Rate limit state
+  const [rateLimitInfo, setRateLimitInfo] = useState<{
+    isLimited: boolean;
+    resetTime?: number;
+  }>({ isLimited: false })
 
   // Initialize form data from URL parameters (for template-based generation)
   useEffect(() => {
@@ -115,34 +124,53 @@ export default function GenerateMealPlanPage() {
     }
   }, [searchParams])
 
-  // Quick preset prompts for inspiration
+  // Quick preset prompts for inspiration (no duration/calories specified)
   const presetPrompts = [
-    "Plan méditerranéen de 7 jours pour la santé cardiaque avec 1800 calories par jour",
+    "Plan méditerranéen pour la santé cardiaque avec poissons gras et légumes",
     "Plan de perte de poids avec jeûne intermittent (16:8) et riche en protéines",
-    "Plan nutritionnel végétalien pour sportif et développement musculaire (2500 calories)",
+    "Plan nutritionnel végétalien pour sportif et développement musculaire",
     "Plan anti-inflammatoire pour la santé articulaire avec aliments riches en oméga-3",
-    "Plan adapté aux diabétiques avec aliments à faible index glycémique (1600 calories)",
+    "Plan adapté aux diabétiques avec aliments à faible index glycémique",
     "Plan familial de préparation de repas avec options de cuisson par lots",
-    "Plan sans gluten pour personne cœliaque avec alternatives nutritives et fibres",
+    "Plan sans gluten pour personne cœliaque avec alternatives nutritives",
     "Plan végétarien équilibré riche en fer et vitamine B12 pour femme enceinte",
-    "Plan hypoallergénique sans lactose, œufs et noix pour enfant de 8 ans actif",
+    "Plan hypoallergénique pour sensibilités multiples avec aliments simples",
   ]
 
-  // Anti-abuse validation
-  const validatePrompt = (prompt: string): string | null => {
-    if (!prompt.trim()) return "Veuillez entrer une description de plan alimentaire"
-    if (prompt.length < 10) return "Veuillez fournir plus de détails (au moins 10 caractères)"
-    if (prompt.length > 1000) return "Veuillez garder votre demande sous 1000 caractères"
+  // Enhanced validation to match backend security
+  const validateFormData = (data: typeof formData): string | null => {
+    // Prompt validation
+    if (!data.prompt.trim()) return "Veuillez entrer une description de plan alimentaire"
+    if (data.prompt.length < 10) return "Veuillez fournir plus de détails (au moins 10 caractères)"
+    if (data.prompt.length > 500) return "Veuillez garder votre demande sous 500 caractères"
     
-    // Check for offensive content (basic keywords)
-    const offensiveWords = ['spam', 'hack', 'illegal', 'drug', 'weapon']
-    const lowerPrompt = prompt.toLowerCase()
-    if (offensiveWords.some(word => lowerPrompt.includes(word))) {
-      return "Veuillez vous assurer que votre demande concerne la planification de repas"
+    // Duration validation  
+    if (data.duration < 1 || data.duration > 14) return "La durée doit être entre 1 et 14 jours"
+    
+    // Calories validation
+    if (data.targetCalories < 800 || data.targetCalories > 4000) return "Les calories doivent être entre 800 et 4000 par jour"
+    
+    // Restrictions validation
+    if (data.restrictions.length > 10) return "Maximum 10 restrictions alimentaires"
+    
+    // Check for malicious content patterns (basic client-side check)
+    const suspiciousPatterns = [
+      /ignore\s+(previous\s+)?instructions?/gi,
+      /system\s+(prompt|message|role)/gi,
+      /pretend\s+you\s+are/gi,
+      /act\s+as\s+(if\s+you\s+are\s+)?/gi,
+      /api\s*key/gi,
+      /password/gi,
+      /secret/gi,
+    ]
+    
+    const lowerPrompt = data.prompt.toLowerCase()
+    if (suspiciousPatterns.some(pattern => pattern.test(data.prompt))) {
+      return "Contenu invalide détecté dans la description"
     }
     
     // Check if it's meal/nutrition related
-    const nutritionKeywords = ['meal', 'diet', 'food', 'nutrition', 'calorie', 'protéines', 'carb', 'fat', 'vegetarian', 'vegan', 'keto', 'weight', 'healthy', 'breakfast', 'lunch', 'dinner', 'snack', 'plan']
+    const nutritionKeywords = ['meal', 'diet', 'food', 'nutrition', 'calorie', 'protéines', 'carb', 'fat', 'vegetarian', 'vegan', 'keto', 'weight', 'healthy', 'breakfast', 'lunch', 'dinner', 'snack', 'plan', 'alimentaire', 'repas']
     if (!nutritionKeywords.some(keyword => lowerPrompt.includes(keyword))) {
       return "Veuillez décrire un plan alimentaire ou une demande liée à la nutrition"
     }
@@ -200,15 +228,28 @@ export default function GenerateMealPlanPage() {
 
 
   const handleGenerate = async () => {
-    // Validation
-    const validation = validatePrompt(formData.prompt)
+    // Enhanced validation
+    const validation = validateFormData(formData)
     if (validation) {
       setValidationError(validation)
       textareaRef.current?.focus()
       return
     }
 
-    // Cooldown check
+    // Check if rate limited
+    if (rateLimitInfo.isLimited) {
+      const now = Date.now()
+      if (rateLimitInfo.resetTime && now < rateLimitInfo.resetTime) {
+        const remainingSeconds = Math.ceil((rateLimitInfo.resetTime - now) / 1000)
+        setValidationError(`Limite de génération atteinte. Réessayez dans ${remainingSeconds} secondes.`)
+        return
+      } else {
+        // Reset rate limit info if time has passed
+        setRateLimitInfo({ isLimited: false })
+      }
+    }
+
+    // Cooldown check (5 seconds between requests)
     if (!canSubmit()) {
       setValidationError(`Veuillez attendre ${getCooldownTimeLeft()} secondes avant de générer à nouveau`)
       return
@@ -228,13 +269,15 @@ export default function GenerateMealPlanPage() {
     }, 800)
 
     try {
-      // Real AI generation with Google Gemini!
+      // Updated request structure for new security validation
       const selectedClient = clients.find(c => c.id === formData.clientId)
       const mealPlanRequest = {
         prompt: formData.prompt,
-        dietitianId: user?.id || '',
+        duration: formData.duration,
+        targetCalories: formData.targetCalories,
+        restrictions: formData.restrictions,
+        clientDietaryTags: selectedClient?.tags || [],
         clientId: formData.clientId || undefined,
-        clientDietaryTags: selectedClient?.tags || [], // Include dietary restrictions
       }
 
       const { transformed: plan, raw: rawPlan } = await generateMealPlan(mealPlanRequest)
@@ -246,9 +289,36 @@ export default function GenerateMealPlanPage() {
         clearInterval(progressInterval)
       }, 500)
       
-    } catch (error) {
+    } catch (error: any) {
       console.error("Error generating meal plan:", error)
-      setValidationError("Échec de la génération du plan alimentaire. Veuillez réessayer.")
+      
+      // Enhanced error handling for security responses
+      let errorMessage = "Échec de la génération du plan alimentaire. Veuillez réessayer."
+      
+      if (error?.message) {
+        const message = error.message.toLowerCase()
+        
+        if (message.includes('rate limit') || message.includes('limite de génération')) {
+          errorMessage = "Limite de génération atteinte. Veuillez attendre avant de réessayer."
+          // Set rate limit info if available
+          if (error.resetTime) {
+            setRateLimitInfo({ 
+              isLimited: true, 
+              resetTime: error.resetTime 
+            })
+          }
+        } else if (message.includes('contenu invalide') || message.includes('suspicious')) {
+          errorMessage = "Contenu invalide détecté. Veuillez reformuler votre demande."
+        } else if (message.includes('validation') || message.includes('invalide')) {
+          errorMessage = "Données invalides. Vérifiez votre saisie."
+        } else if (message.includes('timeout')) {
+          errorMessage = "La génération a pris trop de temps. Essayez avec moins de jours."
+        } else if (message.includes('service') || message.includes('indisponible')) {
+          errorMessage = "Service temporairement indisponible. Veuillez réessayer plus tard."
+        }
+      }
+      
+      setValidationError(errorMessage)
       clearInterval(progressInterval)
     } finally {
       setTimeout(() => {
@@ -1154,7 +1224,7 @@ export default function GenerateMealPlanPage() {
                 <div className="relative">
                   <Textarea
                     ref={textareaRef}
-                    placeholder="ex: Créez un plan méditerranéen de 7 jours pour la perte de poids avec 1600 calories par jour, riche en acides gras oméga-3, adapté à une personne pré-diabétique..."
+                    placeholder="ex: Plan méditerranéen pour la perte de poids, riche en acides gras oméga-3, adapté à une personne pré-diabétique..."
                     value={formData.prompt}
                     onChange={(e) => {
                       handleInputChange("prompt", e.target.value)
@@ -1165,10 +1235,17 @@ export default function GenerateMealPlanPage() {
                     aria-describedby={validationError ? "prompt-error" : "prompt-help"}
                   />
                   <div className="absolute bottom-3 right-3 flex items-center gap-2">
-                    <span className={`text-xs transition-colors ${formData.prompt.length > 800 ? 'text-red-500' : 'text-gray-400'}`}>
-                      {formData.prompt.length}/1000
+                    <span className={`text-xs transition-colors ${formData.prompt.length > 400 ? 'text-red-500' : 'text-gray-400'}`}>
+                      {formData.prompt.length}/500
                     </span>
                   </div>
+                </div>
+                
+                <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-xs text-blue-700 font-medium mb-1">💡 Conseil</p>
+                  <p className="text-xs text-blue-600">
+                    Décrivez le style alimentaire et les objectifs. La durée et les calories seront configurées ci-dessous.
+                  </p>
                 </div>
 
                 {validationError && (
@@ -1212,8 +1289,8 @@ export default function GenerateMealPlanPage() {
                     <Settings className="h-4 w-4 text-white" />
                   </div>
                   <div>
-                    <CardTitle className="text-lg">Configuration essentielle</CardTitle>
-                    <CardDescription className="text-sm">Informations d'organisation</CardDescription>
+                    <CardTitle className="text-lg">Configuration du plan</CardTitle>
+                    <CardDescription className="text-sm">Durée, calories et paramètres spécifiques</CardDescription>
                   </div>
                 </div>
               </CardHeader>
@@ -1253,6 +1330,101 @@ export default function GenerateMealPlanPage() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+
+                {/* Duration Field */}
+                <div className="grid grid-cols-2 gap-4">
+                  <div>
+                    <Label htmlFor="duration" className="text-sm font-medium">Durée (jours)</Label>
+                    <Select 
+                      value={formData.duration.toString()} 
+                      onValueChange={(value: string) => handleInputChange("duration", parseInt(value))}
+                      disabled={isGenerating}
+                    >
+                      <SelectTrigger className="mt-1 border-gray-200 focus:border-blue-500">
+                        <SelectValue placeholder="Nombre de jours" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {Array.from({ length: 14 }, (_, i) => i + 1).map((days) => (
+                          <SelectItem key={days} value={days.toString()}>
+                            {days} jour{days > 1 ? 's' : ''}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {/* Target Calories Field */}
+                  <div>
+                    <Label htmlFor="targetCalories" className="text-sm font-medium">Calories/jour</Label>
+                    <Input
+                      id="targetCalories"
+                      type="number"
+                      min="800"
+                      max="4000"
+                      step="50"
+                      placeholder="2000"
+                      value={formData.targetCalories}
+                      onChange={(e) => handleInputChange("targetCalories", parseInt(e.target.value) || 2000)}
+                      className="mt-1 border-gray-200 focus:border-blue-500"
+                      disabled={isGenerating}
+                    />
+                    <p className="text-xs text-gray-500 mt-1">Entre 800 et 4000 calories</p>
+                  </div>
+                </div>
+
+                {/* Dietary Restrictions Field */}
+                <div>
+                  <Label className="text-sm font-medium">Restrictions alimentaires (optionnel)</Label>
+                  <div className="mt-2 space-y-2">
+                    <div className="flex flex-wrap gap-2">
+                      {['Sans gluten', 'Sans lactose', 'Végétarien', 'Végétalien', 'Sans noix', 'Sans fruits de mer', 'Diabétique', 'Faible en sodium', 'Sans œufs', 'Halal', 'Casher'].map((restriction) => {
+                        const isSelected = formData.restrictions.includes(restriction)
+                        return (
+                          <button
+                            key={restriction}
+                            type="button"
+                            onClick={() => {
+                              if (isSelected) {
+                                handleInputChange("restrictions", formData.restrictions.filter(r => r !== restriction))
+                              } else if (formData.restrictions.length < 10) {
+                                handleInputChange("restrictions", [...formData.restrictions, restriction])
+                              }
+                            }}
+                            disabled={isGenerating || (!isSelected && formData.restrictions.length >= 10)}
+                            className={`px-3 py-1 text-xs rounded-full border transition-all duration-200 ${
+                              isSelected
+                                ? 'bg-blue-100 border-blue-300 text-blue-700 hover:bg-blue-200'
+                                : 'bg-gray-50 border-gray-200 text-gray-600 hover:bg-gray-100 hover:border-gray-300 disabled:opacity-50 disabled:cursor-not-allowed'
+                            }`}
+                          >
+                            {restriction}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {formData.restrictions.length > 0 && (
+                      <div className="mt-2 p-3 bg-blue-50 rounded-lg border border-blue-200">
+                        <p className="text-xs text-blue-700 mb-1">Restrictions sélectionnées:</p>
+                        <div className="flex flex-wrap gap-1">
+                          {formData.restrictions.map((restriction) => (
+                            <Badge key={restriction} variant="secondary" className="bg-blue-100 text-blue-700 text-xs">
+                              {restriction}
+                              <button
+                                type="button"
+                                onClick={() => handleInputChange("restrictions", formData.restrictions.filter(r => r !== restriction))}
+                                disabled={isGenerating}
+                                className="ml-1 hover:text-blue-900 disabled:opacity-50"
+                              >
+                                ×
+                              </button>
+                            </Badge>
+                          ))}
+                        </div>
+                        <p className="text-xs text-blue-600 mt-1">{formData.restrictions.length}/10 restrictions</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
                 {/* Generation Button */}
