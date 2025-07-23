@@ -71,16 +71,61 @@ export async function POST(request: Request) {
         const templateDay = templateDays.find(d => d.day === dayNum)
         
         if (templateDay && templateDay.meals) {
-          // Transform template meals to dynamic meal slots
-          const meals: MealSlot[] = templateDay.meals.map((meal: any, index: number) => ({
-            id: generateMealId(dayNum, meal.name),
-            name: meal.name,
-            time: meal.time || '12:00',
-            description: meal.description || meal.name || 'Repas à définir',
-            calories_target: meal.calories_target || null,
-            enabled: true,
-            order: index
-          }))
+          // Transform template meals to dynamic meal slots with recipe support
+          const meals: MealSlot[] = await Promise.all(
+            templateDay.meals.map(async (meal: any, index: number) => {
+              const mealSlot: MealSlot = {
+                id: generateMealId(dayNum, meal.name),
+                name: meal.name,
+                time: meal.time || '12:00',
+                description: meal.description || meal.name || 'Repas à définir',
+                calories_target: meal.calories_target || null,
+                enabled: true,
+                order: index
+              }
+
+              // If the meal has a recipe_id, fetch recipe details
+              if (meal.recipe_id) {
+                mealSlot.recipe_id = meal.recipe_id
+                
+                // Try to fetch recipe details for better description
+                try {
+                  const { data: recipe, error } = await supabase
+                    .from('recipes')
+                    .select(`
+                      name, 
+                      description,
+                      calories_per_serving, 
+                      prep_time, 
+                      cook_time, 
+                      protein_per_serving,
+                      carbs_per_serving,
+                      fat_per_serving
+                    `)
+                    .eq('id', meal.recipe_id)
+                    .eq('dietitian_id', user!.id)
+                    .single()
+
+                  if (!error && recipe) {
+                    // Update meal description with recipe info
+                    mealSlot.description = recipe.description || recipe.name
+                    
+                    // If we have nutritional info, update calories target
+                    if (recipe.calories_per_serving) {
+                      mealSlot.calories_target = recipe.calories_per_serving
+                    }
+                    
+                    // Preserve the original meal name for recipe matching
+                    mealSlot.original_meal_name = recipe.name
+                  }
+                } catch (error) {
+                  console.error('Error fetching recipe:', error)
+                }
+              }
+
+              return mealSlot
+            })
+          )
           
           const dayPlan = {
             day: dayNum,

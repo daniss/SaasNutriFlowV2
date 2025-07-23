@@ -10,10 +10,11 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Badge } from "@/components/ui/badge"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { X, Plus, Calendar, Utensils } from "lucide-react"
+import { X, Plus, Calendar, Utensils, BookOpen, Search } from "lucide-react"
 import { useToast } from "@/hooks/use-toast"
 import { supabase, type MealPlanTemplate } from "@/lib/supabase"
 import { useAuth } from "@/hooks/useAuthNew"
+import { RecipeSearchModal } from "@/components/meal-plans/RecipeSearchModal"
 import { 
   MEAL_PLAN_CATEGORIES, 
   CLIENT_TYPES, 
@@ -36,6 +37,7 @@ interface MealSlot {
   time: string
   calories_target: number | null
   description: string
+  recipe_id?: string | null
 }
 
 interface DayStructure {
@@ -76,6 +78,11 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
       }
     ])
   })
+
+  // Recipe selection state
+  const [isRecipeModalOpen, setIsRecipeModalOpen] = useState(false)
+  const [selectedMealIndex, setSelectedMealIndex] = useState<number | null>(null)
+  const [selectedDayIndex, setSelectedDayIndex] = useState<number | null>(null)
 
   const categories = Object.entries(MEAL_PLAN_CATEGORIES).map(([key, value]) => ({
     value: key,
@@ -248,7 +255,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                 })
                 return day // Don't add meal if limit reached
               }
-              return { ...day, meals: [...currentMeals, { name: "", time: "", calories_target: null, description: "" }] }
+              return { ...day, meals: [...currentMeals, { name: "", time: "", calories_target: null, description: "", recipe_id: null }] }
             }
             return day
           })
@@ -333,6 +340,51 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
   const getActiveDayData = () => {
     if (!Array.isArray(formData.meal_structure)) return null
     return formData.meal_structure.find(day => day.day === activeDay) || null
+  }
+
+  const handleRecipeSelect = (recipe: any) => {
+    if (selectedDayIndex !== null && selectedMealIndex !== null) {
+      const dayIndex = selectedDayIndex
+      const mealIndex = selectedMealIndex
+      
+      setFormData(prev => ({
+        ...prev,
+        meal_structure: Array.isArray(prev.meal_structure) 
+          ? prev.meal_structure.map((day: DayStructure, i: number) =>
+              i === dayIndex 
+                ? {
+                    ...day,
+                    meals: (day.meals || []).map((meal: MealSlot, j: number) =>
+                      j === mealIndex 
+                        ? { 
+                            ...meal, 
+                            recipe_id: recipe.id,
+                            description: recipe.name,
+                            calories_target: recipe.calories_per_serving || meal.calories_target
+                          } 
+                        : meal
+                    )
+                  }
+                : day
+            )
+          : []
+      }))
+      
+      setIsRecipeModalOpen(false)
+      setSelectedMealIndex(null)
+      setSelectedDayIndex(null)
+      
+      toast({
+        title: "Recette ajoutée",
+        description: `${recipe.name} a été ajoutée au repas.`
+      })
+    }
+  }
+
+  const openRecipeModal = (dayIndex: number, mealIndex: number) => {
+    setSelectedDayIndex(dayIndex)
+    setSelectedMealIndex(mealIndex)
+    setIsRecipeModalOpen(true)
   }
 
   const getActiveDayIndex = () => {
@@ -692,6 +744,41 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                                   className="text-base"
                                 />
                               </div>
+                              
+                              {/* Recipe Selection */}
+                              <div className="space-y-1">
+                                <Label className="text-sm font-medium">Recette</Label>
+                                <Button
+                                  type="button"
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => openRecipeModal(getActiveDayIndex(), mealIndex)}
+                                  className="w-full justify-start"
+                                >
+                                  {meal.recipe_id ? (
+                                    <>
+                                      <BookOpen className="h-4 w-4 mr-2" />
+                                      {meal.description || "Recette sélectionnée"}
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Search className="h-4 w-4 mr-2" />
+                                      Choisir une recette
+                                    </>
+                                  )}
+                                </Button>
+                                {meal.recipe_id && (
+                                  <Button
+                                    type="button"
+                                    variant="ghost"
+                                    size="sm"
+                                    onClick={() => updateMeal(mealIndex, "recipe_id", null)}
+                                    className="text-xs text-red-600 hover:text-red-700"
+                                  >
+                                    Retirer la recette
+                                  </Button>
+                                )}
+                              </div>
                             </div>
 
                             {/* Column 3: Meal Badge and Actions */}
@@ -832,6 +919,14 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
           </Button>
         </DialogFooter>
       </DialogContent>
+      
+      {/* Recipe Search Modal */}
+      <RecipeSearchModal
+        isOpen={recipeSearchOpen}
+        onClose={() => setRecipeSearchOpen(false)}
+        onSelectRecipe={handleRecipeSelect}
+        excludeRecipeIds={[]}
+      />
     </Dialog>
   )
 }
