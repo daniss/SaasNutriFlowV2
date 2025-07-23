@@ -76,15 +76,15 @@ export async function POST(request: NextRequest) {
       clientDietaryTags,
     } = validationResult.data;
 
-    // Rate limiting: 3 AI generation requests per hour per user
+    // Rate limiting: 20 AI generation requests per hour per user (generous limit to prevent abuse)
     console.log('⏱️ Checking rate limits...');
-    const rateLimitResult = checkRateLimit(`ai-generation:${user.id}`, 3, 60 * 60 * 1000);
+    const rateLimitResult = checkRateLimit(`ai-generation:${user.id}`, 20, 60 * 60 * 1000);
     
     if (!rateLimitResult.success) {
       console.warn(`🚫 Rate limit exceeded for user ${user.id}`);
       return NextResponse.json(
         { 
-          error: "Limite de génération dépassée. Veuillez attendre avant de refaire une demande.",
+          error: "Trop de générations en peu de temps. Veuillez patienter quelques minutes.",
           resetTime: rateLimitResult.resetTime
         },
         { status: 429 }
