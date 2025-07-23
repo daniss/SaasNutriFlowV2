@@ -117,6 +117,35 @@ export default function GenerateMealPlanPage() {
     loading: boolean;
   }>({ current: 0, limit: 0, loading: true })
 
+  // Client account state
+  const [hasClientAccount, setHasClientAccount] = useState(false)
+
+  // Check if selected client has an active account
+  const checkClientAccount = async (clientId: string) => {
+    if (!clientId) {
+      setHasClientAccount(false)
+      return
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("client_accounts")
+        .select("is_active")
+        .eq("client_id", clientId)
+        .eq("is_active", true)
+        .single()
+
+      setHasClientAccount(!!data && data.is_active)
+    } catch (error) {
+      setHasClientAccount(false)
+    }
+  }
+
+  // Check client account when clientId changes
+  useEffect(() => {
+    checkClientAccount(formData.clientId)
+  }, [formData.clientId])
+
   // Initialize form data from URL parameters (for template-based generation)
   useEffect(() => {
     const prompt = searchParams.get('prompt')
@@ -1780,25 +1809,27 @@ export default function GenerateMealPlanPage() {
                             </>
                           )}
                         </Button>
-                        <Button
-                          size="sm"
-                          onClick={handleSendToClient}
-                          disabled={!formData.clientId || isSendingToClient || isSavingOnly}
-                          className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 transition-all duration-200 disabled:hover:scale-100"
-                        >
-                          {isSendingToClient ? (
-                            <>
-                              <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
-                              En cours...
-                            </>
-                          ) : (
-                            <>
-                              <Send className="h-4 w-4 mr-2" />
-                              <span className="hidden sm:inline">Sauvegarder et Activer</span>
-                              <span className="sm:hidden">Activer</span>
-                            </>
-                          )}
-                        </Button>
+                        {hasClientAccount && (
+                          <Button
+                            size="sm"
+                            onClick={handleSendToClient}
+                            disabled={!formData.clientId || isSendingToClient || isSavingOnly}
+                            className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 hover:scale-105 transition-all duration-200 disabled:hover:scale-100"
+                          >
+                            {isSendingToClient ? (
+                              <>
+                                <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
+                                En cours...
+                              </>
+                            ) : (
+                              <>
+                                <Send className="h-4 w-4 mr-2" />
+                                <span className="hidden sm:inline">Sauvegarder et Activer pour le client</span>
+                                <span className="sm:hidden">Activer</span>
+                              </>
+                            )}
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardHeader>
