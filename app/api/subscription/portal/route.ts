@@ -29,10 +29,12 @@ export async function POST(request: NextRequest) {
     }
 
     // Create billing portal session
+    console.log('Creating billing portal for customer:', dietitian.stripe_customer_id)
     const portalSession = await paymentService.createBillingPortalSession(
       dietitian.stripe_customer_id,
       `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard/settings`
     )
+    console.log('Portal session created successfully:', portalSession.id)
 
     return NextResponse.json({
       success: true,
