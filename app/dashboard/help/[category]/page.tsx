@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useParams } from "next/navigation";
 import { ArrowLeft, Clock, Eye, ThumbsUp, Search, Filter } from "lucide-react";
 import Link from "next/link";
@@ -9,8 +9,8 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { getCategoryById, searchArticles } from "@/lib/help-content";
-import type { HelpArticle } from "@/lib/help-content";
+import { getCategoryById, fetchHelpArticles } from "@/lib/help-content-api";
+import type { HelpArticle } from "@/lib/help-content-api";
 
 const difficultyColors = {
   beginner: "bg-green-100 text-green-800",
@@ -27,11 +27,45 @@ const difficultyLabels = {
 export default function CategoryPage() {
   const params = useParams();
   const categoryId = params.category as string;
-  const category = getCategoryById(categoryId);
   
+  const [category, setCategory] = useState<any>(null);
+  const [articles, setArticles] = useState<HelpArticle[]>([]);
+  const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("featured"); // featured, newest, popular, difficulty
-  const [filteredArticles, setFilteredArticles] = useState<HelpArticle[]>([]);
+
+  useEffect(() => {
+    const loadCategoryData = async () => {
+      try {
+        const [categoryData, articlesData] = await Promise.all([
+          getCategoryById(categoryId),
+          fetchHelpArticles({ category: categoryId })
+        ]);
+        
+        setCategory(categoryData);
+        setArticles(articlesData);
+      } catch (error) {
+        console.error('Error loading category data:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    loadCategoryData();
+  }, [categoryId]);
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-8 max-w-4xl">
+        <div className="text-center">
+          <div className="animate-pulse">
+            <div className="h-8 bg-gray-200 rounded w-64 mx-auto mb-4"></div>
+            <div className="h-4 bg-gray-200 rounded w-48 mx-auto"></div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   if (!category) {
     return (
@@ -51,39 +85,44 @@ export default function CategoryPage() {
 
   // Filter and sort articles
   const getFilteredAndSortedArticles = () => {
-    let articles = category.articles;
+    let filteredArticles = [...articles];
     
     // Apply search filter
     if (searchQuery.trim()) {
-      articles = searchArticles(searchQuery, [categoryId]);
+      const query = searchQuery.toLowerCase();
+      filteredArticles = filteredArticles.filter(article =>
+        article.title.toLowerCase().includes(query) ||
+        article.description.toLowerCase().includes(query) ||
+        article.tags.some(tag => tag.toLowerCase().includes(query))
+      );
     }
     
     // Apply sorting
     switch (sortBy) {
       case "featured":
-        articles = articles.sort((a, b) => {
+        filteredArticles = filteredArticles.sort((a, b) => {
           if (a.featured && !b.featured) return -1;
           if (!a.featured && b.featured) return 1;
           return (b.views || 0) - (a.views || 0);
         });
         break;
       case "newest":
-        articles = articles.sort((a, b) => 
+        filteredArticles = filteredArticles.sort((a, b) => 
           new Date(b.lastUpdated).getTime() - new Date(a.lastUpdated).getTime()
         );
         break;
       case "popular":
-        articles = articles.sort((a, b) => (b.views || 0) - (a.views || 0));
+        filteredArticles = filteredArticles.sort((a, b) => (b.views || 0) - (a.views || 0));
         break;
       case "difficulty":
         const difficultyOrder = { beginner: 0, intermediate: 1, advanced: 2 };
-        articles = articles.sort((a, b) => 
+        filteredArticles = filteredArticles.sort((a, b) => 
           difficultyOrder[a.difficulty] - difficultyOrder[b.difficulty]
         );
         break;
     }
     
-    return articles;
+    return filteredArticles;
   };
 
   const sortedArticles = getFilteredAndSortedArticles();
@@ -108,7 +147,7 @@ export default function CategoryPage() {
               <div className="w-6 h-6" /> {/* Icon placeholder */}
             </div>
             <h1 className="text-3xl font-bold text-gray-900">{category.title}</h1>
-            <Badge variant="secondary">{category.articles.length} articles</Badge>
+            <Badge variant="secondary">{articles.length} articles</Badge>
           </div>
           <p className="text-gray-600">{category.description}</p>
         </div>
@@ -240,24 +279,24 @@ export default function CategoryPage() {
           <h3 className="font-semibold text-gray-900 mb-4">Statistiques de la catégorie</h3>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
             <div>
-              <div className="text-2xl font-bold text-emerald-600">{category.articles.length}</div>
+              <div className="text-2xl font-bold text-emerald-600">{articles.length}</div>
               <div className="text-sm text-gray-600">Articles</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-blue-600">
-                {category.articles.reduce((sum, article) => sum + (article.views || 0), 0)}
+                {articles.reduce((sum, article) => sum + (article.views || 0), 0)}
               </div>
               <div className="text-sm text-gray-600">Vues totales</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-purple-600">
-                {Math.round(category.articles.reduce((sum, article) => sum + article.estimatedReadTime, 0) / category.articles.length)}
+                {articles.length > 0 ? Math.round(articles.reduce((sum, article) => sum + article.estimatedReadTime, 0) / articles.length) : 0}
               </div>
               <div className="text-sm text-gray-600">Temps moyen (min)</div>
             </div>
             <div>
               <div className="text-2xl font-bold text-amber-600">
-                {category.articles.filter(a => a.featured).length}
+                {articles.filter(a => a.featured).length}
               </div>
               <div className="text-sm text-gray-600">Recommandés</div>
             </div>
