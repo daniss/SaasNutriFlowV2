@@ -28,7 +28,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ProfessionalCalendar } from "@/components/ui/professional-calendar";
+import { AppointmentCalendar } from "@/components/ui/professional-calendar";
 import {
   Select,
   SelectContent,
@@ -1058,7 +1058,7 @@ export default function AppointmentsPage() {
             <TabsContent value="month" className="mt-6">
               <Card>
                 <CardContent className="p-6">
-                  <ProfessionalCalendar
+                  <AppointmentCalendar
                     mode="single"
                     selected={selectedDate}
                     onSelect={(date) => {

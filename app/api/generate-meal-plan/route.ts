@@ -91,6 +91,87 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Get dietitian profile for subscription checking
+    console.log('🔍 Checking subscription limits...');
+    const { data: dietitian, error: dietitianError } = await supabase
+      .from('dietitians')
+      .select('id, subscription_status, subscription_plan')
+      .eq('auth_user_id', user.id)
+      .single();
+
+    if (dietitianError || !dietitian) {
+      console.error('❌ Dietitian profile not found:', dietitianError);
+      return NextResponse.json(
+        { error: 'Profil nutritionniste non trouvé' },
+        { status: 401 }
+      );
+    }
+
+    // Get subscription plan limits
+    const { data: planData, error: planError } = await supabase
+      .from('subscription_plans')
+      .select('ai_generations_per_month, display_name')
+      .eq('name', dietitian.subscription_plan || 'free')
+      .single();
+
+    if (planError || !planData) {
+      console.error('❌ Subscription plan not found:', planError);
+      return NextResponse.json(
+        { error: 'Plan d\'abonnement non trouvé' },
+        { status: 500 }
+      );
+    }
+
+    // Check if user has AI generation access
+    if (planData.ai_generations_per_month === 0) {
+      console.warn(`🚫 AI generation not available for plan: ${dietitian.subscription_plan}`);
+      return NextResponse.json(
+        { 
+          error: 'La génération IA n\'est pas disponible avec votre plan actuel',
+          requiresUpgrade: true,
+          currentPlan: planData.display_name
+        },
+        { status: 403 }
+      );
+    }
+
+    // Check monthly usage if not unlimited
+    if (planData.ai_generations_per_month !== -1) {
+      const startOfMonth = new Date();
+      startOfMonth.setDate(1);
+      startOfMonth.setHours(0, 0, 0, 0);
+
+      const { count: currentUsage, error: usageError } = await supabase
+        .from('meal_plans')
+        .select('id', { count: 'exact' })
+        .eq('dietitian_id', dietitian.id)
+        .eq('generation_method', 'ai')
+        .gte('created_at', startOfMonth.toISOString());
+
+      if (usageError) {
+        console.error('❌ Error checking AI usage:', usageError);
+        return NextResponse.json(
+          { error: 'Erreur lors de la vérification de l\'utilisation' },
+          { status: 500 }
+        );
+      }
+
+      if ((currentUsage || 0) >= planData.ai_generations_per_month) {
+        console.warn(`🚫 AI generation limit exceeded: ${currentUsage}/${planData.ai_generations_per_month}`);
+        return NextResponse.json(
+          { 
+            error: `Limite mensuelle atteinte (${planData.ai_generations_per_month} générations)`,
+            requiresUpgrade: true,
+            currentUsage: currentUsage,
+            monthlyLimit: planData.ai_generations_per_month
+          },
+          { status: 403 }
+        );
+      }
+
+      console.log(`✅ AI generation allowed: ${currentUsage}/${planData.ai_generations_per_month} used`);
+    }
+
     // Sanitize and check prompt for malicious content
     console.log('🛡️ Sanitizing AI prompt...');
     const sanitizedPrompt = sanitizeAIPrompt(prompt);
@@ -505,6 +586,34 @@ Répète pour ${duration} jours avec variations:`;
     }
 
     console.log('✅ AI response validated successfully');
+
+    // Track AI usage in database for subscription limits
+    try {
+      console.log('📊 Tracking AI generation usage...');
+      const { error: trackingError } = await supabase
+        .from('meal_plans')
+        .insert({
+          dietitian_id: dietitian.id,
+          name: generatedPlan.name || 'Plan généré par IA',
+          description: generatedPlan.description || sanitizedPrompt.substring(0, 500),
+          duration_days: duration,
+          calories_range: `${targetCalories} calories/jour`,
+          status: 'generated',
+          generation_method: 'ai',
+          ai_prompt: sanitizedPrompt,
+          client_id: clientId || null,
+        });
+
+      if (trackingError) {
+        console.error('⚠️ Failed to track AI usage:', trackingError);
+        // Don't fail the request if tracking fails, just log it
+      } else {
+        console.log('✅ AI usage tracked successfully');
+      }
+    } catch (trackingError) {
+      console.error('⚠️ Unexpected error tracking AI usage:', trackingError);
+      // Don't fail the request if tracking fails
+    }
 
     return NextResponse.json({
       success: true,

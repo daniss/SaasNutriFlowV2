@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Badge } from "@/components/ui/badge"
 import { useToast } from "@/hooks/use-toast"
-import { Share2, Coins, Globe, Users, Lock, X } from "lucide-react"
+import { Share2, Coins, Globe, Lock, X } from "lucide-react"
 import { RecipeTemplate, MealPlanTemplate } from "@/lib/supabase"
 
 interface ShareTemplateDialogProps {
@@ -37,7 +37,7 @@ export default function ShareTemplateDialog({
     difficulty: (template as any).difficulty || 'medium',
     prep_time: (template as any).prep_time || 0,
     servings: (template as any).servings || 1,
-    sharing_level: 'public' as 'public' | 'professional' | 'private',
+    sharing_level: 'public' as 'public' | 'private',
     price_credits: 0
   })
   const [newTag, setNewTag] = useState('')
@@ -116,7 +116,6 @@ export default function ShareTemplateDialog({
   const getSharingLevelIcon = (level: string) => {
     switch (level) {
       case 'public': return <Globe className="h-4 w-4" />
-      case 'professional': return <Users className="h-4 w-4" />
       case 'private': return <Lock className="h-4 w-4" />
       default: return <Globe className="h-4 w-4" />
     }
@@ -274,12 +273,6 @@ export default function ShareTemplateDialog({
                     <div className="flex items-center gap-2">
                       <Globe className="h-4 w-4" />
                       Public - Visible par tous
-                    </div>
-                  </SelectItem>
-                  <SelectItem value="professional">
-                    <div className="flex items-center gap-2">
-                      <Users className="h-4 w-4" />
-                      Professionnel - Nutritionnistes uniquement
                     </div>
                   </SelectItem>
                   <SelectItem value="private">

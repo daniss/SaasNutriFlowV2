@@ -55,6 +55,7 @@ import { useEffect, useRef, useState } from "react"
 
 // Now restored and working with proper dynamic imports!
 import { useAuth } from "@/hooks/useAuthNew"
+import { useSubscription } from "@/hooks/useSubscription"
 import { generateMealPlan, type GeneratedMealPlan, type Meal } from "@/lib/gemini"
 import { supabase, type Client } from "@/lib/supabase"
 import { convertAIToDynamicMealPlan } from "@/lib/meal-plan-types"
@@ -64,6 +65,7 @@ import MacronutrientBreakdown from "@/components/nutrition/MacronutrientBreakdow
 
 export default function GenerateMealPlanPage() {
   const { user } = useAuth()
+  const { subscription, loading: subscriptionLoading } = useSubscription()
   const { toast } = useToast()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -107,6 +109,13 @@ export default function GenerateMealPlanPage() {
     isLimited: boolean;
     resetTime?: number;
   }>({ isLimited: false })
+
+  // AI usage tracking state
+  const [aiUsage, setAiUsage] = useState<{
+    current: number;
+    limit: number;
+    loading: boolean;
+  }>({ current: 0, limit: 0, loading: true })
 
   // Initialize form data from URL parameters (for template-based generation)
   useEffect(() => {
@@ -221,6 +230,34 @@ export default function GenerateMealPlanPage() {
     }
   }, [user])
 
+  // Fetch AI usage data
+  const fetchAIUsage = async () => {
+    if (!subscription?.planDetails) return
+
+    try {
+      setAiUsage(prev => ({ ...prev, loading: true }))
+      
+      const response = await fetch('/api/subscription/usage?type=ai_generations')
+      const data = await response.json()
+      
+      setAiUsage({
+        current: data.current || 0,
+        limit: subscription.planDetails.ai_generations_per_month || 0,
+        loading: false
+      })
+    } catch (error) {
+      console.error('Error fetching AI usage:', error)
+      setAiUsage(prev => ({ ...prev, loading: false }))
+    }
+  }
+
+  // Load AI usage when subscription data is available
+  useEffect(() => {
+    if (subscription && subscription.planDetails && !subscriptionLoading) {
+      fetchAIUsage()
+    }
+  }, [subscription, subscriptionLoading])
+
   const handleInputChange = (field: string, value: any) => {
     setFormData((prev) => ({ ...prev, [field]: value }))
   }
@@ -287,6 +324,8 @@ export default function GenerateMealPlanPage() {
         setGeneratedPlan(plan)
         setPlanFeedback({ planId: plan.title + Date.now(), rating: null })
         clearInterval(progressInterval)
+        // Refresh AI usage counter after successful generation
+        fetchAIUsage()
       }, 500)
       
     } catch (error: any) {
@@ -1426,6 +1465,93 @@ export default function GenerateMealPlanPage() {
                     )}
                   </div>
                 </div>
+
+                {/* AI Usage Counter */}
+                {subscription && subscription.planDetails && aiUsage.limit > 0 && (
+                  <div className="p-4 bg-gradient-to-r from-emerald-50 to-blue-50 rounded-lg border border-emerald-200">
+                    <div className="flex items-center justify-between mb-2">
+                      <div className="flex items-center gap-2">
+                        <div className="w-2 h-2 bg-emerald-500 rounded-full"></div>
+                        <span className="text-sm font-semibold text-gray-700">Générations IA ce mois</span>
+                      </div>
+                      <div className="flex items-center gap-1">
+                        <Sparkles className="h-4 w-4 text-emerald-600" />
+                        <span className="text-sm font-bold text-emerald-700">
+                          {aiUsage.loading ? '...' : aiUsage.current}/{aiUsage.limit === -1 ? '∞' : aiUsage.limit}
+                        </span>
+                      </div>
+                    </div>
+                    
+                    {/* Progress bar */}
+                    {aiUsage.limit !== -1 && (
+                      <div className="space-y-2">
+                        <div className="w-full bg-gray-200 rounded-full h-2">
+                          <div
+                            className={`h-2 rounded-full transition-all duration-300 ${
+                              aiUsage.current / aiUsage.limit >= 0.9 
+                                ? 'bg-gradient-to-r from-red-500 to-red-600' 
+                                : aiUsage.current / aiUsage.limit >= 0.7 
+                                ? 'bg-gradient-to-r from-orange-500 to-orange-600'
+                                : 'bg-gradient-to-r from-emerald-500 to-emerald-600'
+                            }`}
+                            style={{
+                              width: `${Math.min((aiUsage.current / aiUsage.limit) * 100, 100)}%`,
+                            }}
+                          />
+                        </div>
+                        
+                        {aiUsage.current >= aiUsage.limit && (
+                          <div className="flex items-center gap-2 text-red-600">
+                            <AlertTriangle className="h-4 w-4" />
+                            <span className="text-xs font-medium">
+                              Limite mensuelle atteinte. 
+                              <button 
+                                className="underline ml-1 hover:text-red-700"
+                                onClick={() => router.push('/dashboard/subscription')}
+                              >
+                                Passer au plan supérieur
+                              </button>
+                            </span>
+                          </div>
+                        )}
+                        
+                        {aiUsage.current / aiUsage.limit >= 0.8 && aiUsage.current < aiUsage.limit && (
+                          <div className="flex items-center gap-2 text-orange-600">
+                            <AlertTriangle className="h-4 w-4" />
+                            <span className="text-xs font-medium">
+                              Proche de la limite mensuelle ({Math.round((aiUsage.current / aiUsage.limit) * 100)}%)
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* Free Plan Upgrade Prompt */}
+                {subscription && subscription.planDetails && aiUsage.limit === 0 && (
+                  <div className="p-4 bg-gradient-to-r from-purple-50 to-pink-50 rounded-lg border border-purple-200">
+                    <div className="flex items-center gap-3">
+                      <div className="flex-shrink-0 w-10 h-10 bg-gradient-to-r from-purple-500 to-pink-500 rounded-full flex items-center justify-center">
+                        <Sparkles className="h-5 w-5 text-white" />
+                      </div>
+                      <div className="flex-1">
+                        <h4 className="text-sm font-semibold text-gray-800 mb-1">
+                          Génération IA non disponible
+                        </h4>
+                        <p className="text-xs text-gray-600 mb-2">
+                          Passez au plan Starter pour débloquer la génération automatique de plans alimentaires par IA.
+                        </p>
+                        <button
+                          onClick={() => router.push('/dashboard/subscription')}
+                          className="text-xs font-medium text-purple-600 hover:text-purple-700 underline"
+                        >
+                          Découvrir les plans →
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 {/* Generation Button */}
                 <div className="pt-4 border-t border-gray-100">

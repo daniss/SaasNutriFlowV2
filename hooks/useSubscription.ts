@@ -30,6 +30,15 @@ export interface UseSubscriptionReturn {
 }
 
 const PLAN_FEATURES = {
+  free: {
+    client_management: true,
+    meal_plans: true,
+    document_storage: false,
+    messaging: false,
+    ai_meal_plans: false,
+    email_support: false,
+    support: 'none'
+  },
   starter: {
     client_management: true,
     meal_plans: true,

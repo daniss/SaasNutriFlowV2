@@ -53,7 +53,7 @@ export async function GET(request: Request) {
         )
       `)
       .eq('is_approved', true)
-      .in('sharing_level', ['public', 'professional'])
+      .eq('sharing_level', 'public')
 
     // Apply filters
     if (category) {
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
       .from('shared_templates')
       .select('*', { count: 'exact', head: true })
       .eq('is_approved', true)
-      .in('sharing_level', ['public', 'professional'])
+      .eq('sharing_level', 'public')
 
     return NextResponse.json({
       templates: templates || [],

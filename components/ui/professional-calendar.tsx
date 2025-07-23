@@ -60,7 +60,7 @@ function isSelected(
   return false;
 }
 
-function ProfessionalCalendar({
+function AppointmentCalendar({
   mode = "single",
   selected,
   onSelect,
@@ -250,4 +250,4 @@ function ProfessionalCalendar({
   );
 }
 
-export { ProfessionalCalendar };
+export { AppointmentCalendar };
