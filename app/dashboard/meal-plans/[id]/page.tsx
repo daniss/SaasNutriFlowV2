@@ -208,7 +208,7 @@ export default function MealPlanDetailPage() {
   useEffect(() => {
     const loadMealPlanData = async () => {
       if (mealPlan?.plan_content) {
-        const planContent = mealPlan.plan_content as MealPlanContent
+        const planContent = mealPlan.plan_content as unknown as MealPlanContent
         if (planContent?.days) {
         const loadedSelectedFoods: Record<number, { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }> = {}
         const loadedDynamicMealFoods: Record<string, SelectedFood[]> = {}
@@ -868,7 +868,7 @@ export default function MealPlanDetailPage() {
 
   const handleEditDay = (dayNumber: number) => {
     // Check if meal plan is dynamic or legacy and route to appropriate dialog
-    const planContent = mealPlan?.plan_content as MealPlanContent
+    const planContent = mealPlan?.plan_content as unknown as MealPlanContent
     
     if (planContent && isDynamicMealPlan(planContent)) {
       // Use dynamic edit dialog for dynamic meal plans
@@ -880,7 +880,7 @@ export default function MealPlanDetailPage() {
       // Use legacy edit dialog for legacy meal plans
       let existingDay = null
       if (mealPlan?.plan_content) {
-        const planContent = mealPlan.plan_content as MealPlanContent
+        const planContent = mealPlan.plan_content as unknown as MealPlanContent
         if (planContent?.days && Array.isArray(planContent.days)) {
           existingDay = planContent.days.find((d: any) => d.day === dayNumber)
         }
@@ -1396,7 +1396,7 @@ export default function MealPlanDetailPage() {
     
     // First try to get data from plan_content - but check if meals are already structured properly
     if (mealPlan?.plan_content) {
-      const planContent = mealPlan.plan_content as MealPlanContent
+      const planContent = mealPlan.plan_content as unknown as MealPlanContent
       if (planContent?.days && Array.isArray(planContent.days)) {
         const firstDay = planContent.days[0]
       const hasStructuredMeals = firstDay?.meals && !Array.isArray(firstDay.meals) && 
@@ -1436,7 +1436,7 @@ export default function MealPlanDetailPage() {
 
     // Check if plan_content has a different structure (AI generated format)
     if (mealPlan?.plan_content) {
-      const planContent = mealPlan.plan_content as MealPlanContent
+      const planContent = mealPlan.plan_content as unknown as MealPlanContent
       if (planContent?.days) {
         const aiDays = planContent.days.slice(0, duration)
       return aiDays.map((day: any, index: number) => {
@@ -1976,7 +1976,7 @@ export default function MealPlanDetailPage() {
 
                       {(() => {
                         // Check if we have a modern dynamic meal plan structure
-                        const planContent = mealPlan.plan_content as MealPlanContent
+                        const planContent = mealPlan.plan_content as unknown as MealPlanContent
                         
                         if (isDynamicMealPlan(planContent)) {
                           return (
