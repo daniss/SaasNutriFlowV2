@@ -891,10 +891,10 @@ export default function MealPlanDetailPage() {
       if (existingDay) {
         // Use existing real data with normalization
         const isLegacyFormat = existingDay.meals && !Array.isArray(existingDay.meals)
-        const normalizedBreakfast = isLegacyFormat ? normalizeMealData(existingDay.meals?.breakfast) : []
-        const normalizedLunch = isLegacyFormat ? normalizeMealData(existingDay.meals?.lunch) : []
-        const normalizedDinner = isLegacyFormat ? normalizeMealData(existingDay.meals?.dinner) : []
-        const normalizedSnacks = isLegacyFormat ? normalizeMealData(existingDay.meals?.snacks) : []
+        const normalizedBreakfast = isLegacyFormat ? normalizeMealData((existingDay.meals as any)?.breakfast) : []
+        const normalizedLunch = isLegacyFormat ? normalizeMealData((existingDay.meals as any)?.lunch) : []
+        const normalizedDinner = isLegacyFormat ? normalizeMealData((existingDay.meals as any)?.dinner) : []
+        const normalizedSnacks = isLegacyFormat ? normalizeMealData((existingDay.meals as any)?.snacks) : []
         
         setEditDayForm({
           day: dayNumber,
