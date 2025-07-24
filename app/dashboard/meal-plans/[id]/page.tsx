@@ -243,7 +243,12 @@ export default function MealPlanDetailPage() {
                     name,
                     quantity,
                     unit,
-                    ingredient_id
+                    ingredient_id,
+                    ingredients (
+                      id,
+                      name,
+                      category
+                    )
                   )
                 `)
                 .eq('id', meal.recipe_id)
