@@ -62,10 +62,12 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
     client_type: template?.client_type || "general",
     goal_type: template?.goal_type || "general",
     target_calories: template?.target_calories || "",
-    target_macros: template?.target_macros || { protein: null, carbs: null, fat: null },
+    target_macros: (template?.target_macros && typeof template.target_macros === 'object' && !Array.isArray(template.target_macros)) 
+      ? template.target_macros as { protein: number | null, carbs: number | null, fat: number | null }
+      : { protein: null, carbs: null, fat: null },
     difficulty: template?.difficulty || "medium",
     tags: template?.tags || [],
-    meal_structure: (Array.isArray(template?.meal_structure) ? template.meal_structure : [
+    meal_structure: (Array.isArray(template?.meal_structure) ? template.meal_structure as unknown as DayStructure[] : [
       {
         day: 1,
         meals: [
@@ -76,7 +78,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
           { name: "Dîner", time: "19:00", calories_target: null, description: "" }
         ]
       }
-    ])
+    ] as DayStructure[])
   })
 
   // Recipe selection state
@@ -621,7 +623,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
               <div className="space-y-4">
                 {/* Day Navigation Tabs */}
                 <div className="flex flex-wrap gap-1 sm:gap-2 border-b border-gray-200 pb-3 overflow-x-auto">
-                  {formData.meal_structure.map((day: DayStructure) => (
+                  {(formData.meal_structure as DayStructure[]).map((day: DayStructure) => (
                     <button
                       key={day.day}
                       onClick={() => setActiveDay(day.day)}
@@ -645,7 +647,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 text-sm">
                     <span className="font-medium text-gray-700">Aperçu des repas par jour :</span>
                     <div className="flex flex-wrap gap-2 sm:gap-4">
-                      {formData.meal_structure.map((day: DayStructure) => (
+                      {(formData.meal_structure as DayStructure[]).map((day: DayStructure) => (
                         <div key={day.day} className="flex items-center gap-1 text-gray-600">
                           <span>J{day.day}:</span>
                           <Badge variant="outline" className="text-xs">
@@ -668,7 +670,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                             <CardTitle className="text-lg text-emerald-800">Jour {activeDay}</CardTitle>
                           </div>
                           <Badge variant="outline" className="bg-white text-emerald-700 border-emerald-300">
-                            {getActiveDayData()?.meals?.length || 0} repas
+                            {(getActiveDayData() as DayStructure)?.meals?.length || 0} repas
                           </Badge>
                         </div>
                         <Button
@@ -687,7 +689,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                     <CardContent className="space-y-3 sm:space-y-4 bg-white p-3 sm:p-6">
                       {/* Meals Grid - 3 columns for cleaner layout */}
                       <div className="space-y-4">
-                        {getActiveDayData()?.meals?.map((meal: MealSlot, mealIndex: number) => (
+                        {((getActiveDayData() as DayStructure)?.meals || []).map((meal: MealSlot, mealIndex: number) => (
                           <div key={mealIndex} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-4 border border-gray-200 rounded-lg bg-gray-50/50 overflow-hidden">
                             {/* Column 1: Meal Type and Time */}
                             <div className="space-y-2 sm:space-y-3 min-w-0">
@@ -804,7 +806,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                                 variant="outline"
                                 size="sm"
                                 onClick={() => removeMeal(mealIndex)}
-                                disabled={getActiveDayData()?.meals?.length === 1}
+                                disabled={((getActiveDayData() as DayStructure)?.meals?.length || 0) === 1}
                                 className="self-start border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
                               >
                                 <X className="h-4 w-4 mr-1" />
@@ -819,18 +821,18 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                           variant="outline"
                           size="sm"
                           onClick={addMeal}
-                          disabled={(getActiveDayData()?.meals?.length || 0) >= MAX_MEALS_PER_DAY}
+                          disabled={((getActiveDayData() as DayStructure)?.meals?.length || 0) >= MAX_MEALS_PER_DAY}
                           className={`w-full border-2 border-dashed transition-all duration-200 ${
-                            (getActiveDayData()?.meals?.length || 0) >= MAX_MEALS_PER_DAY 
+                            ((getActiveDayData() as DayStructure)?.meals?.length || 0) >= MAX_MEALS_PER_DAY 
                               ? "opacity-50 cursor-not-allowed border-gray-300" 
                               : "border-emerald-300 hover:border-emerald-400 hover:bg-emerald-50 text-emerald-700"
                           }`}
-                          title={(getActiveDayData()?.meals?.length || 0) >= MAX_MEALS_PER_DAY ? `Maximum ${MAX_MEALS_PER_DAY} repas par jour atteint` : "Ajouter un repas"}
+                          title={((getActiveDayData() as DayStructure)?.meals?.length || 0) >= MAX_MEALS_PER_DAY ? `Maximum ${MAX_MEALS_PER_DAY} repas par jour atteint` : "Ajouter un repas"}
                         >
                           <Plus className="h-4 w-4 mr-2" />
-                          {(getActiveDayData()?.meals?.length || 0) >= MAX_MEALS_PER_DAY 
-                            ? `Limite atteinte (${getActiveDayData()?.meals?.length}/${MAX_MEALS_PER_DAY})` 
-                            : `Ajouter un repas (${getActiveDayData()?.meals?.length || 0}/${MAX_MEALS_PER_DAY})`
+                          {((getActiveDayData() as DayStructure)?.meals?.length || 0) >= MAX_MEALS_PER_DAY 
+                            ? `Limite atteinte (${((getActiveDayData() as DayStructure)?.meals?.length || 0)}/${MAX_MEALS_PER_DAY})` 
+                            : `Ajouter un repas (${((getActiveDayData() as DayStructure)?.meals?.length || 0)}/${MAX_MEALS_PER_DAY})`
                           }
                         </Button>
                       </div>
@@ -859,10 +861,10 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                 <Input
                   id="protein"
                   type="number"
-                  value={formData.target_macros.protein || ""}
+                  value={(formData.target_macros as any)?.protein || ""}
                   onChange={(e) => setFormData(prev => ({ 
                     ...prev, 
-                    target_macros: { ...prev.target_macros, protein: e.target.value ? parseInt(e.target.value) : null }
+                    target_macros: { ...(prev.target_macros as any), protein: e.target.value ? parseInt(e.target.value) : null }
                   }))}
                   placeholder="25"
                   className="text-base"
@@ -873,10 +875,10 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                 <Input
                   id="carbs"
                   type="number"
-                  value={formData.target_macros.carbs || ""}
+                  value={(formData.target_macros as any)?.carbs || ""}
                   onChange={(e) => setFormData(prev => ({ 
                     ...prev, 
-                    target_macros: { ...prev.target_macros, carbs: e.target.value ? parseInt(e.target.value) : null }
+                    target_macros: { ...(prev.target_macros as any), carbs: e.target.value ? parseInt(e.target.value) : null }
                   }))}
                   placeholder="45"
                   className="text-base"
@@ -887,10 +889,10 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                 <Input
                   id="fat"
                   type="number"
-                  value={formData.target_macros.fat || ""}
+                  value={(formData.target_macros as any)?.fat || ""}
                   onChange={(e) => setFormData(prev => ({ 
                     ...prev, 
-                    target_macros: { ...prev.target_macros, fat: e.target.value ? parseInt(e.target.value) : null }
+                    target_macros: { ...(prev.target_macros as any), fat: e.target.value ? parseInt(e.target.value) : null }
                   }))}
                   placeholder="30"
                   className="text-base"

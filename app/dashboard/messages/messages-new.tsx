@@ -303,7 +303,7 @@ export default function MessagesPage() {
       conversation.subject?.toLowerCase().includes(searchTerm.toLowerCase());
 
     if (filter === "unread")
-      return matchesSearch && conversation.unread_count > 0;
+      return matchesSearch && (conversation.unread_count || 0) > 0;
     if (filter === "starred") return matchesSearch && conversation.is_starred;
     return matchesSearch && conversation.status === "active";
   });
@@ -449,9 +449,9 @@ export default function MessagesPage() {
                       </div>
                       <div className="text-right">
                         <p className="text-xs text-gray-500">
-                          {formatDate(conversation.last_message_at)}
+                          {conversation.last_message_at ? formatDate(conversation.last_message_at) : "Pas de date"}
                         </p>
-                        {conversation.unread_count > 0 && (
+                        {(conversation.unread_count || 0) > 0 && (
                           <Badge variant="destructive" className="text-xs">
                             {conversation.unread_count}
                           </Badge>
@@ -494,7 +494,7 @@ export default function MessagesPage() {
                       onClick={() =>
                         toggleStarred(
                           selectedConversation.id,
-                          selectedConversation.is_starred
+                          selectedConversation.is_starred || false
                         )
                       }
                     >
@@ -530,8 +530,8 @@ export default function MessagesPage() {
                   {selectedConversation.messages
                     .sort(
                       (a, b) =>
-                        new Date(a.created_at).getTime() -
-                        new Date(b.created_at).getTime()
+                        new Date(a.created_at || '').getTime() -
+                        new Date(b.created_at || '').getTime()
                     )
                     .map((message) => (
                       <div
@@ -559,7 +559,7 @@ export default function MessagesPage() {
                                 : "text-gray-500"
                             }`}
                           >
-                            {formatTime(message.created_at)}
+                            {message.created_at ? formatTime(message.created_at) : "Pas d'heure"}
                           </p>
                         </div>
                       </div>
