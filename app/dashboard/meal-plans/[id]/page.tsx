@@ -216,7 +216,7 @@ export default function MealPlanDetailPage() {
         
         for (const day of planContent.days) {
         // Load legacy selected foods
-        if (day.selectedFoods && Object.keys(day.selectedFoods).length > 0) {
+        if ('selectedFoods' in day && day.selectedFoods && Object.keys(day.selectedFoods).length > 0) {
           // Check if this is dynamic meal foods (organized by meal ID) or legacy foods (organized by slot)
           const firstKey = Object.keys(day.selectedFoods)[0]
           if (firstKey && firstKey.includes('-')) {
@@ -229,8 +229,9 @@ export default function MealPlanDetailPage() {
         }
 
         // Load recipes using recipe_id from meals - simple many-to-one
-        for (const meal of day.meals) {
-          if (meal.recipe_id) {
+        if (Array.isArray(day.meals)) {
+          for (const meal of day.meals) {
+            if (meal.recipe_id) {
             try {
               const { data: fullRecipe, error: recipeError } = await supabase
                 .from('recipes')
@@ -259,9 +260,10 @@ export default function MealPlanDetailPage() {
             }
           }
         }
+        }
 
         // Load selectedRecipes from day data (used by AI generation)
-        if (day.selectedRecipes && Object.keys(day.selectedRecipes).length > 0) {
+        if ('selectedRecipes' in day && day.selectedRecipes && Object.keys(day.selectedRecipes).length > 0) {
           Object.assign(loadedDynamicMealRecipes, day.selectedRecipes)
         }
         }
