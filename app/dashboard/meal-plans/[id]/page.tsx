@@ -224,7 +224,7 @@ export default function MealPlanDetailPage() {
             Object.assign(loadedDynamicMealFoods, day.selectedFoods)
           } else {
             // Legacy selected foods (slots like "breakfast", "lunch", etc.)
-            loadedSelectedFoods[day.day] = day.selectedFoods
+            loadedSelectedFoods[day.day] = day.selectedFoods as { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }
           }
         }
 
