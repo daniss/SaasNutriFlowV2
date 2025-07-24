@@ -246,7 +246,7 @@ export function SubscriptionStatusCard({
                 </div>
                 {subscription.planDetails.max_clients !== -1 && (
                   <Progress 
-                    value={(clients.current / subscription.planDetails.max_clients) * 100} 
+                    value={(clients.current / (subscription.planDetails?.max_clients || 1)) * 100} 
                     className="h-2" 
                   />
                 )}
@@ -267,7 +267,7 @@ export function SubscriptionStatusCard({
                 </div>
                 {subscription.planDetails.max_meal_plans !== -1 && (
                   <Progress 
-                    value={(mealPlans.current / subscription.planDetails.max_meal_plans) * 100} 
+                    value={(mealPlans.current / (subscription.planDetails?.max_meal_plans || 1)) * 100} 
                     className="h-2" 
                   />
                 )}
@@ -282,13 +282,13 @@ export function SubscriptionStatusCard({
                     <Zap className="h-4 w-4 text-muted-foreground" />
                     <span>IA générations (ce mois)</span>
                   </div>
-                  <span className={`font-medium ${aiGenerations.current >= subscription.planDetails.ai_generations_per_month ? 'text-red-600' : ''}`}>
+                  <span className={`font-medium ${aiGenerations.current >= (subscription.planDetails?.ai_generations_per_month || 0) ? 'text-red-600' : ''}`}>
                     {subscription.planDetails.ai_generations_per_month === -1 ? 'Illimité' : `${aiGenerations.current}/${subscription.planDetails.ai_generations_per_month}`}
                   </span>
                 </div>
                 {subscription.planDetails.ai_generations_per_month !== -1 && (
                   <Progress 
-                    value={(aiGenerations.current / subscription.planDetails.ai_generations_per_month) * 100} 
+                    value={(aiGenerations.current / (subscription.planDetails?.ai_generations_per_month || 1)) * 100} 
                     className="h-2" 
                   />
                 )}

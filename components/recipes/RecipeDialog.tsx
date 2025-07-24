@@ -183,17 +183,17 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
           prep_time: recipe.prep_time,
           cook_time: recipe.cook_time,
           servings: recipe.servings,
-          difficulty: recipe.difficulty,
+          difficulty: recipe.difficulty || 'medium',
           calories_per_serving: recipe.calories_per_serving,
           protein_per_serving: recipe.protein_per_serving,
           carbs_per_serving: recipe.carbs_per_serving,
           fat_per_serving: recipe.fat_per_serving,
           fiber_per_serving: recipe.fiber_per_serving,
           image_url: recipe.image_url || "",
-          instructions: recipe.instructions,
-          tags: recipe.tags,
-          is_favorite: recipe.is_favorite,
-          usage_count: recipe.usage_count
+          instructions: recipe.instructions || [],
+          tags: recipe.tags || [],
+          is_favorite: recipe.is_favorite || false,
+          usage_count: recipe.usage_count || 0
         })
         // Load ingredients if editing
         loadIngredients(recipe.id)

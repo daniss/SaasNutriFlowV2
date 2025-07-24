@@ -11,8 +11,11 @@ import { toast } from 'sonner'
 
 // Local interface since SubscriptionPlan is not exported from supabase
 interface SubscriptionPlan {
+  id: string
   name: string
+  display_name: string
   price: number
+  price_monthly: number
   features: string[]
   limits: {
     clients: number
@@ -23,6 +26,7 @@ interface SubscriptionPlan {
   max_clients: number | null
   max_meal_plans: number | null
   ai_generations_per_month: number | null
+  support: string
 }
 
 export default function PricingPage() {
@@ -252,8 +256,8 @@ export default function PricingPage() {
                   <div className="flex items-center gap-2 text-sm text-gray-600">
                     <Headphones className="h-4 w-4" />
                     Support {
-                      plan.features.support === 'priority' ? 'prioritaire' :
-                      plan.features.support === 'email' ? 'email' :
+                      plan.support === 'priority' ? 'prioritaire' :
+                      plan.support === 'email' ? 'email' :
                       'communautaire'
                     }
                   </div>

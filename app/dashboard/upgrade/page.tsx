@@ -11,8 +11,11 @@ import { toast } from 'sonner'
 
 // Local interface since SubscriptionPlan is not exported from supabase
 interface SubscriptionPlan {
+  id: string
   name: string
+  display_name: string
   price: number
+  price_monthly: number
   features: string[]
   limits: {
     clients: number
@@ -23,6 +26,7 @@ interface SubscriptionPlan {
   max_clients: number | null
   max_meal_plans: number | null
   ai_generations_per_month: number | null
+  support: string
 }
 
 const FEATURE_DESCRIPTIONS = {

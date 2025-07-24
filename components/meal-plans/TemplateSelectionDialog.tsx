@@ -311,8 +311,8 @@ export default function TemplateSelectionDialog({
                           {template.description}
                         </CardDescription>
                       </div>
-                      <Badge className={`${getDifficultyColor(template.difficulty)} flex-shrink-0`}>
-                        {getDifficultyLabel(template.difficulty)}
+                      <Badge className={`${getDifficultyColor(template.difficulty || 'medium')} flex-shrink-0`}>
+                        {getDifficultyLabel(template.difficulty || 'medium')}
                       </Badge>
                     </div>
                   </CardHeader>

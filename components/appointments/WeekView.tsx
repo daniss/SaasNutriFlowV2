@@ -189,11 +189,11 @@ export function WeekView({
                         <div className="flex items-center gap-1">
                           <div
                             className={`w-1.5 h-1.5 rounded-full ${getTypeColor(
-                              appointment.type
+                              appointment.type || 'consultation'
                             )}`}
                           />
                           <span className="font-medium text-xs truncate">
-                            {formatTime(appointment.appointment_time)}
+                            {appointment.appointment_time ? formatTime(appointment.appointment_time) : 'Heure non définie'}
                           </span>
                         </div>
                         <div className="truncate text-xs font-medium text-gray-900 mt-0.5">
@@ -208,12 +208,12 @@ export function WeekView({
                         <div className="flex items-center gap-1 mb-1">
                           <div
                             className={`w-2 h-2 rounded-full ${getTypeColor(
-                              appointment.type
+                              appointment.type || 'consultation'
                             )}`}
                           />
                           <Clock className="w-3 h-3 text-gray-500" />
                           <span className="font-medium">
-                            {formatTime(appointment.appointment_time)}
+                            {appointment.appointment_time ? formatTime(appointment.appointment_time) : 'Heure non définie'}
                           </span>
                         </div>
                         <div className="truncate font-medium text-gray-900">
@@ -227,7 +227,7 @@ export function WeekView({
                         )}
                         <div className="flex items-center gap-1 mt-1">
                           <Badge
-                            variant={getStatusVariant(appointment.status)}
+                            variant={getStatusVariant(appointment.status || 'scheduled')}
                             className="text-xs px-1 py-0"
                           >
                             {appointment.status}

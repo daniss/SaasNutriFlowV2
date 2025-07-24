@@ -57,8 +57,8 @@ export function UsageCounter({ type, className = "" }: UsageCounterProps) {
   }
 
   const { current, limit, icon: Icon, label, loading } = usageData;
-  const isAtLimit = current >= limit && limit !== -1;
-  const isNearLimit = current / limit >= 0.8 && limit !== -1;
+  const isAtLimit = current >= (limit || 0) && limit !== -1 && limit !== undefined;
+  const isNearLimit = current / (limit || 1) >= 0.8 && limit !== -1 && limit !== undefined;
 
   const getBadgeVariant = () => {
     if (isAtLimit) return "destructive";

@@ -23,7 +23,25 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuthNew";
 import { formatDate } from "@/lib/formatters";
-import { supabase, type Document } from "@/lib/supabase";
+import { supabase } from "@/lib/supabase";
+
+// Local Document interface since it's not exported from supabase
+interface Document {
+  id: string;
+  name: string;
+  file_path: string;
+  file_size: number;
+  file_type: string;
+  mime_type: string;
+  client_id: string;
+  dietitian_id: string;
+  visibility: string;
+  category: string;
+  description: string;
+  upload_date: string;
+  metadata: any;
+  created_at: string;
+}
 import {
   Calendar,
   Camera,

@@ -156,8 +156,8 @@ export default function TemplatePreviewModal({
                 {template.description}
               </DialogDescription>
             </div>
-            <Badge className={getDifficultyColor(template.difficulty)}>
-              {getDifficultyLabel(template.difficulty)}
+            <Badge className={getDifficultyColor(template.difficulty || 'medium')}>
+              {getDifficultyLabel(template.difficulty || 'medium')}
             </Badge>
           </div>
         </DialogHeader>

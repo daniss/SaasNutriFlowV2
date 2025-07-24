@@ -337,7 +337,7 @@ export default function MonthlyAgenda({ dietitianId }: MonthlyAgendaProps) {
                                   {appointment.title}
                                 </span>
                                 <Badge
-                                  variant={getStatusVariant(appointment.status)}
+                                  variant={getStatusVariant(appointment.status || 'scheduled')}
                                   className="text-xs ml-2 flex-shrink-0"
                                 >
                                   {appointment.status}
