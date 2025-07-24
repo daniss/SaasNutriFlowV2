@@ -1997,6 +1997,8 @@ export default function MealPlanDetailPage() {
                     mealPlan={mealPlan.plan_content as unknown as GeneratedMealPlan} 
                     selectedFoods={selectedFoods}
                     dynamicMealFoods={dynamicMealFoods}
+                    dynamicMealRecipes={dynamicMealRecipes}
+                    key={`nutrition-${mealPlan.updated_at || mealPlan.created_at}`}
                   />
                 </CardContent>
               </Card>

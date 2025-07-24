@@ -37,6 +37,7 @@ interface MacronutrientBreakdownProps {
   mealPlan: GeneratedMealPlan | DynamicMealPlan
   selectedFoods?: Record<number, { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }>
   dynamicMealFoods?: Record<string, SelectedFood[]>
+  dynamicMealRecipes?: Record<string, any[]>
   className?: string
 }
 
@@ -100,7 +101,7 @@ const safeNumber = (value: any): number => {
   return isNaN(num) || !isFinite(num) ? 0 : num
 }
 
-export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynamicMealFoods, className = "" }: MacronutrientBreakdownProps) {
+export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynamicMealFoods, dynamicMealRecipes, className = "" }: MacronutrientBreakdownProps) {
   // State for recipe nutrition data
   const [recipeNutrition, setRecipeNutrition] = useState<MacroData>({ calories: 0, protein: 0, carbs: 0, fat: 0, fiber: 0 })
   const [recipeNutritionMap, setRecipeNutritionMap] = useState<Record<string, MacroData>>({})
@@ -190,7 +191,7 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
     }
 
     fetchRecipeNutrition()
-  }, [mealPlan])
+  }, [mealPlan, dynamicMealRecipes])
   // Function to calculate nutrition from selected foods
   const calculateSelectedFoodsNutrition = () => {
     let totalCalories = 0
