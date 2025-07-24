@@ -890,10 +890,11 @@ export default function MealPlanDetailPage() {
       
       if (existingDay) {
         // Use existing real data with normalization
-        const normalizedBreakfast = normalizeMealData(existingDay.meals?.breakfast)
-        const normalizedLunch = normalizeMealData(existingDay.meals?.lunch)
-        const normalizedDinner = normalizeMealData(existingDay.meals?.dinner)
-        const normalizedSnacks = normalizeMealData(existingDay.meals?.snacks)
+        const isLegacyFormat = existingDay.meals && !Array.isArray(existingDay.meals)
+        const normalizedBreakfast = isLegacyFormat ? normalizeMealData(existingDay.meals?.breakfast) : []
+        const normalizedLunch = isLegacyFormat ? normalizeMealData(existingDay.meals?.lunch) : []
+        const normalizedDinner = isLegacyFormat ? normalizeMealData(existingDay.meals?.dinner) : []
+        const normalizedSnacks = isLegacyFormat ? normalizeMealData(existingDay.meals?.snacks) : []
         
         setEditDayForm({
           day: dayNumber,
@@ -902,14 +903,14 @@ export default function MealPlanDetailPage() {
           dinner: normalizedDinner.join(', '),
           snacks: normalizedSnacks.join(', '),
           notes: existingDay.notes || "",
-          breakfastHour: existingDay.breakfastHour || "08:00",
-          lunchHour: existingDay.lunchHour || "12:00",
-          dinnerHour: existingDay.dinnerHour || "19:00",
-          snacksHour: existingDay.snacksHour || "16:00",
-          breakfastEnabled: existingDay.breakfastEnabled !== undefined ? existingDay.breakfastEnabled : true,
-          lunchEnabled: existingDay.lunchEnabled !== undefined ? existingDay.lunchEnabled : true,
-          dinnerEnabled: existingDay.dinnerEnabled !== undefined ? existingDay.dinnerEnabled : true,
-          snacksEnabled: existingDay.snacksEnabled !== undefined ? existingDay.snacksEnabled : false
+          breakfastHour: (existingDay as any).breakfastHour || "08:00",
+          lunchHour: (existingDay as any).lunchHour || "12:00",
+          dinnerHour: (existingDay as any).dinnerHour || "19:00",
+          snacksHour: (existingDay as any).snacksHour || "16:00",
+          breakfastEnabled: (existingDay as any).breakfastEnabled !== undefined ? (existingDay as any).breakfastEnabled : true,
+          lunchEnabled: (existingDay as any).lunchEnabled !== undefined ? (existingDay as any).lunchEnabled : true,
+          dinnerEnabled: (existingDay as any).dinnerEnabled !== undefined ? (existingDay as any).dinnerEnabled : true,
+          snacksEnabled: (existingDay as any).snacksEnabled !== undefined ? (existingDay as any).snacksEnabled : false
         })
       } else {
         // Create new day with empty fields for editing
