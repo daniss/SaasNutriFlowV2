@@ -1719,8 +1719,8 @@ export default function MealPlanDetailPage() {
 
           <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0">
             <div className="flex items-center gap-2">
-              <Badge className={`${getStatusColor(mealPlan.status)} border font-medium px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm`}>
-                {getStatusText(mealPlan.status)}
+              <Badge className={`${getStatusColor(mealPlan.status || 'draft')} border font-medium px-2 sm:px-3 py-1 sm:py-1.5 text-xs sm:text-sm`}>
+                {getStatusText(mealPlan.status || 'draft')}
               </Badge>
               {mealPlan.status === 'active' && (
                 <div className="flex items-center gap-1 bg-emerald-50 text-emerald-700 px-2 py-1 rounded-md text-xs font-medium border border-emerald-200">
