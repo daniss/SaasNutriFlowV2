@@ -522,6 +522,14 @@ export default function MealPlanDetailPage() {
         // Use rich AI data similar to generation page
         const aiPlan = freshMealPlan.plan_content as any
         
+        console.log('🔍 PDF Export Debug - AI plan structure:', {
+          totalDays: aiPlan.days.length,
+          firstDayStructure: aiPlan.days[0],
+          firstDayMealsType: typeof aiPlan.days[0]?.meals,
+          firstDayMealsIsArray: Array.isArray(aiPlan.days[0]?.meals),
+          firstDayMealsKeys: aiPlan.days[0]?.meals ? Object.keys(aiPlan.days[0].meals) : null
+        })
+        
         // Calculate nutrition analysis from AI data
         const nutritionAnalysis = {
           avgCalories: Math.round(aiPlan.days.reduce((sum: number, day: any) => sum + (day.totalCalories || 0), 0) / aiPlan.days.length),
@@ -555,11 +563,9 @@ export default function MealPlanDetailPage() {
           created_at: freshMealPlan.created_at,
           dietitianName,
           metadata, // Include AI metadata
-          dayPlans: aiPlan.days.map((day: any) => ({
-            day: day.day,
-            meals: {
-              breakfast: Array.isArray(day.meals) 
-                ? day.meals.filter((m: any) => m.type === 'breakfast').map((m: any) => ({
+          dayPlans: aiPlan.days.map((day: any, dayIndex: number) => {
+            const breakfastMeals = Array.isArray(day.meals) 
+              ? day.meals.filter((m: any) => m.type === 'breakfast').map((m: any) => ({
                     name: m.name || 'Petit-déjeuner',
                     calories: m.calories || 0,
                     protein: m.protein || 0,
@@ -569,9 +575,10 @@ export default function MealPlanDetailPage() {
                     ingredients: m.ingredients || [],
                     instructions: m.instructions || []
                   }))
-                : (day.meals?.breakfast || []),
-              lunch: Array.isArray(day.meals)
-                ? day.meals.filter((m: any) => m.type === 'lunch').map((m: any) => ({
+                : (day.meals?.breakfast || [])
+            
+            const lunchMeals = Array.isArray(day.meals)
+              ? day.meals.filter((m: any) => m.type === 'lunch').map((m: any) => ({
                     name: m.name || 'Déjeuner',
                     calories: m.calories || 0,
                     protein: m.protein || 0,
@@ -581,38 +588,62 @@ export default function MealPlanDetailPage() {
                     ingredients: m.ingredients || [],
                     instructions: m.instructions || []
                   }))
-                : (day.meals?.lunch || []),
-              dinner: Array.isArray(day.meals)
-                ? day.meals.filter((m: any) => m.type === 'dinner').map((m: any) => ({
-                    name: m.name || 'Dîner',
-                    calories: m.calories || 0,
-                    protein: m.protein || 0,
-                    carbs: m.carbs || 0,
-                    fat: m.fat || 0,
-                    description: m.description,
-                    ingredients: m.ingredients || [],
-                    instructions: m.instructions || []
-                  }))
-                : (day.meals?.dinner || []),
-              snacks: Array.isArray(day.meals)
-                ? day.meals.filter((m: any) => m.type === 'snack').map((m: any) => ({
-                    name: m.name || 'Collation',
-                    calories: m.calories || 0,
-                    protein: m.protein || 0,
-                    carbs: m.carbs || 0,
-                    fat: m.fat || 0,
-                    description: m.description,
-                    ingredients: m.ingredients || [],
-                    instructions: m.instructions || []
-                  }))
+                : (day.meals?.lunch || [])
+            
+            const dinnerMeals = Array.isArray(day.meals)
+              ? day.meals.filter((m: any) => m.type === 'dinner').map((m: any) => ({
+                  name: m.name || 'Dîner',
+                  calories: m.calories || 0,
+                  protein: m.protein || 0,
+                  carbs: m.carbs || 0,
+                  fat: m.fat || 0,
+                  description: m.description,
+                  ingredients: m.ingredients || [],
+                  instructions: m.instructions || []
+                }))
+                : (day.meals?.dinner || [])
+            
+            const snackMeals = Array.isArray(day.meals)
+              ? day.meals.filter((m: any) => m.type === 'snack').map((m: any) => ({
+                  name: m.name || 'Collation',
+                  calories: m.calories || 0,
+                  protein: m.protein || 0,
+                  carbs: m.carbs || 0,
+                  fat: m.fat || 0,
+                  description: m.description,
+                  ingredients: m.ingredients || [],
+                  instructions: m.instructions || []
+                }))
                 : (day.meals?.snacks || [])
-            },
-            notes: day.notes,
-            totalCalories: day.totalCalories,
-            totalProtein: day.totalProtein,
-            totalCarbs: day.totalCarbs,
-            totalFat: day.totalFat
-          }))
+            
+            if (dayIndex === 0) {
+              console.log('🔍 PDF Export Debug - Day 1 meal processing:', {
+                dayStructure: day,
+                mealsIsArray: Array.isArray(day.meals),
+                mealsLength: Array.isArray(day.meals) ? day.meals.length : 'not array',
+                breakfastFound: breakfastMeals.length,
+                lunchFound: lunchMeals.length,
+                dinnerFound: dinnerMeals.length,
+                snacksFound: snackMeals.length,
+                originalMeals: day.meals
+              })
+            }
+            
+            return {
+              day: day.day,
+              meals: {
+                breakfast: breakfastMeals,
+                lunch: lunchMeals,
+                dinner: dinnerMeals,
+                snacks: snackMeals
+              },
+              notes: day.notes,
+              totalCalories: day.totalCalories,
+              totalProtein: day.totalProtein,
+              totalCarbs: day.totalCarbs,
+              totalFat: day.totalFat
+            }
+          })
         }
       } else {
         console.log('🔍 PDF Export Debug - Using manual meal plan path')
