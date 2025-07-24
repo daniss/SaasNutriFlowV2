@@ -338,7 +338,7 @@ export default function MealPlansPage() {
                          plan.clients?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          plan.description?.toLowerCase().includes(searchTerm.toLowerCase())
     
-    const matchesStatus = filterStatus === "all" || plan.status.toLowerCase() === filterStatus.toLowerCase()
+    const matchesStatus = filterStatus === "all" || (plan.status || 'draft').toLowerCase() === filterStatus.toLowerCase()
 
     return matchesSearch && matchesStatus
   })
