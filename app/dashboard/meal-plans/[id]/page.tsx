@@ -457,6 +457,119 @@ export default function MealPlanDetailPage() {
     }
   }
 
+  // Function to enrich meals with recipe data from database
+  const enrichMealsWithRecipeData = async (dayPlans: any[]) => {
+    // Collect all unique recipe IDs
+    const recipeIds = new Set<string>()
+    dayPlans.forEach(day => {
+      ['breakfast', 'lunch', 'dinner', 'snacks'].forEach(mealType => {
+        day.meals[mealType]?.forEach((meal: any) => {
+          if (meal.recipeId) {
+            recipeIds.add(meal.recipeId)
+          }
+        })
+      })
+    })
+    
+    if (recipeIds.size === 0) {
+      console.log('🔍 PDF Export Debug - No recipe IDs found, skipping recipe enrichment')
+      return dayPlans
+    }
+    
+    console.log('🔍 PDF Export Debug - Fetching recipe data for IDs:', Array.from(recipeIds))
+    
+    try {
+      // Fetch all recipes with their ingredients and instructions
+      const { data: recipes, error } = await supabase
+        .from('recipes')
+        .select(`
+          id,
+          name,
+          instructions,
+          recipe_ingredients (
+            id,
+            quantity,
+            unit,
+            ingredient:ingredients (
+              id,
+              name,
+              name_fr
+            )
+          )
+        `)
+        .in('id', Array.from(recipeIds))
+        .eq('dietitian_id', user?.id)
+      
+      if (error) {
+        console.error('Error fetching recipes:', error)
+        return dayPlans // Return original data if fetch fails
+      }
+      
+      console.log('🔍 PDF Export Debug - Fetched recipes:', recipes?.length || 0)
+      
+      // Create a map of recipe ID to recipe data
+      const recipeMap = new Map()
+      recipes?.forEach(recipe => {
+        recipeMap.set(recipe.id, {
+          name: recipe.name,
+          instructions: recipe.instructions || '',
+          ingredients: recipe.recipe_ingredients?.map((ri: any) => ({
+            name: ri.ingredient?.name_fr || ri.ingredient?.name || 'Ingrédient',
+            quantity: ri.quantity,
+            unit: ri.unit
+          })) || []
+        })
+      })
+      
+      // Enrich meals with recipe data
+      return dayPlans.map(day => ({
+        ...day,
+        meals: {
+          breakfast: day.meals.breakfast?.map((meal: any) => ({
+            ...meal,
+            ingredients: meal.recipeId && recipeMap.has(meal.recipeId) 
+              ? recipeMap.get(meal.recipeId).ingredients 
+              : meal.ingredients,
+            instructions: meal.recipeId && recipeMap.has(meal.recipeId)
+              ? recipeMap.get(meal.recipeId).instructions
+              : meal.instructions
+          })) || [],
+          lunch: day.meals.lunch?.map((meal: any) => ({
+            ...meal,
+            ingredients: meal.recipeId && recipeMap.has(meal.recipeId) 
+              ? recipeMap.get(meal.recipeId).ingredients 
+              : meal.ingredients,
+            instructions: meal.recipeId && recipeMap.has(meal.recipeId)
+              ? recipeMap.get(meal.recipeId).instructions
+              : meal.instructions
+          })) || [],
+          dinner: day.meals.dinner?.map((meal: any) => ({
+            ...meal,
+            ingredients: meal.recipeId && recipeMap.has(meal.recipeId) 
+              ? recipeMap.get(meal.recipeId).ingredients 
+              : meal.ingredients,
+            instructions: meal.recipeId && recipeMap.has(meal.recipeId)
+              ? recipeMap.get(meal.recipeId).instructions
+              : meal.instructions
+          })) || [],
+          snacks: day.meals.snacks?.map((meal: any) => ({
+            ...meal,
+            ingredients: meal.recipeId && recipeMap.has(meal.recipeId) 
+              ? recipeMap.get(meal.recipeId).ingredients 
+              : meal.ingredients,
+            instructions: meal.recipeId && recipeMap.has(meal.recipeId)
+              ? recipeMap.get(meal.recipeId).instructions
+              : meal.instructions
+          })) || []
+        }
+      }))
+      
+    } catch (error) {
+      console.error('Error enriching meals with recipe data:', error)
+      return dayPlans // Return original data if enrichment fails
+    }
+  }
+
   const handleExportPDF = async () => {
     if (!mealPlan) return
 
@@ -570,14 +683,15 @@ export default function MealPlanDetailPage() {
                   m.type === 'breakfast' || 
                   (typeof m.name === 'string' && m.name.toLowerCase().includes('petit-déjeuner'))
                 ).map((m: any) => ({
-                    name: m.name || 'Petit-déjeuner',
+                    name: m.original_meal_name || m.name || 'Petit-déjeuner',
                     calories: m.calories || 0,
                     protein: m.protein || 0,
                     carbs: m.carbs || 0,
                     fat: m.fat || 0,
                     description: m.description,
                     ingredients: m.ingredients || [],
-                    instructions: m.instructions || []
+                    instructions: m.instructions || [],
+                    recipeId: m.recipe_id // Store recipe ID for fetching detailed data
                   }))
                 : (day.meals?.breakfast || [])
             
@@ -587,14 +701,15 @@ export default function MealPlanDetailPage() {
                   m.type === 'lunch' || 
                   (typeof m.name === 'string' && m.name.toLowerCase().includes('déjeuner') && !m.name.toLowerCase().includes('petit'))
                 ).map((m: any) => ({
-                    name: m.name || 'Déjeuner',
+                    name: m.original_meal_name || m.name || 'Déjeuner',
                     calories: m.calories || 0,
                     protein: m.protein || 0,
                     carbs: m.carbs || 0,
                     fat: m.fat || 0,
                     description: m.description,
                     ingredients: m.ingredients || [],
-                    instructions: m.instructions || []
+                    instructions: m.instructions || [],
+                    recipeId: m.recipe_id
                   }))
                 : (day.meals?.lunch || [])
             
@@ -604,14 +719,15 @@ export default function MealPlanDetailPage() {
                   m.type === 'dinner' || 
                   (typeof m.name === 'string' && (m.name.toLowerCase().includes('dîner') || m.name.toLowerCase().includes('diner')))
                 ).map((m: any) => ({
-                  name: m.name || 'Dîner',
+                  name: m.original_meal_name || m.name || 'Dîner',
                   calories: m.calories || 0,
                   protein: m.protein || 0,
                   carbs: m.carbs || 0,
                   fat: m.fat || 0,
                   description: m.description,
                   ingredients: m.ingredients || [],
-                  instructions: m.instructions || []
+                  instructions: m.instructions || [],
+                  recipeId: m.recipe_id
                 }))
                 : (day.meals?.dinner || [])
             
@@ -623,14 +739,15 @@ export default function MealPlanDetailPage() {
                   m.type === 'snack' || 
                   (typeof m.name === 'string' && m.name.toLowerCase().includes('collation'))
                 ).map((m: any) => ({
-                  name: m.name || 'Collation',
+                  name: m.original_meal_name || m.name || 'Collation',
                   calories: m.calories || 0,
                   protein: m.protein || 0,
                   carbs: m.carbs || 0,
                   fat: m.fat || 0,
                   description: m.description,
                   ingredients: m.ingredients || [],
-                  instructions: m.instructions || []
+                  instructions: m.instructions || [],
+                  recipeId: m.recipe_id
                 }))
                 : (day.meals?.snacks || [])
             
@@ -723,6 +840,11 @@ export default function MealPlanDetailPage() {
           dayPlans: cleanedDayPlans
         }
       }
+
+      // Fetch recipe details for all meals with recipe IDs (works for both AI and manual plans)
+      console.log('🔍 PDF Export Debug - Enriching meals with recipe data...')
+      const enrichedDayPlans = await enrichMealsWithRecipeData(pdfData.dayPlans)
+      pdfData.dayPlans = enrichedDayPlans
 
       console.log('🔍 PDF Export Debug - Final PDF data structure:', {
         id: pdfData.id,
