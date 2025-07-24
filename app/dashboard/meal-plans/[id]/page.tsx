@@ -160,6 +160,7 @@ export default function MealPlanDetailPage() {
   const [mealPlan, setMealPlan] = useState<MealPlanWithClient | null>(null)
   const [clients, setClients] = useState<ClientOption[]>([])
   const [loading, setLoading] = useState(true)
+  const [pdfExporting, setPdfExporting] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [isDuplicateOpen, setIsDuplicateOpen] = useState(false)
@@ -459,7 +460,23 @@ export default function MealPlanDetailPage() {
   const handleExportPDF = async () => {
     if (!mealPlan) return
 
+    setPdfExporting(true)
     try {
+      // First, refresh the meal plan data from database to ensure we have the latest changes
+      const { data: freshMealPlan, error: fetchError } = await supabase
+        .from("meal_plans")
+        .select(`
+          *,
+          clients (id, name, email)
+        `)
+        .eq("id", mealPlan.id)
+        .eq("dietitian_id", user?.id)
+        .single()
+
+      if (fetchError || !freshMealPlan) {
+        throw new Error("Impossible de récupérer les données à jour du plan alimentaire")
+      }
+
       // Get dietitian's name from profile (same as AI generation page)
       const { data: profile } = await supabase
         .from('dietitians')
@@ -471,17 +488,17 @@ export default function MealPlanDetailPage() {
         ? `${profile.first_name} ${profile.last_name}`.trim()
         : user?.email?.split('@')[0] || 'Votre nutritionniste'
 
-      // Check if this is an AI-generated meal plan with rich data
-      const isAIGenerated = mealPlan.plan_content && 
-        typeof mealPlan.plan_content === 'object' && 
-        'days' in mealPlan.plan_content &&
-        Array.isArray((mealPlan.plan_content as any).days)
+      // Check if this is an AI-generated meal plan with rich data - use fresh data
+      const isAIGenerated = freshMealPlan.plan_content && 
+        typeof freshMealPlan.plan_content === 'object' && 
+        'days' in freshMealPlan.plan_content &&
+        Array.isArray((freshMealPlan.plan_content as any).days)
 
       let pdfData: any
       
       if (isAIGenerated) {
         // Use rich AI data similar to generation page
-        const aiPlan = mealPlan.plan_content as any
+        const aiPlan = freshMealPlan.plan_content as any
         
         // Calculate nutrition analysis from AI data
         const nutritionAnalysis = {
@@ -495,25 +512,25 @@ export default function MealPlanDetailPage() {
         // Prepare AI metadata
         const metadata = {
           prompt: aiPlan.description || 'Plan de repas personnalisé',
-          generatedAt: mealPlan.created_at,
+          generatedAt: freshMealPlan.created_at,
           aiModel: 'Gemini Pro',
           dietitianName,
-          clientName: mealPlan.clients?.name || 'Client',
+          clientName: freshMealPlan.clients?.name || 'Client',
           processingTime: 2.3,
           nutritionAnalysis
         }
         
         // Convert AI meal plan data to PDF format with rich content
         pdfData = {
-          id: mealPlan.id,
-          name: mealPlan.name,
-          description: mealPlan.description,
-          clientName: mealPlan.clients?.name || 'Client inconnu',
-          clientEmail: mealPlan.clients?.email || '',
-          duration_days: mealPlan.duration_days || aiPlan.days.length,
-          calories_range: mealPlan.calories_range,
-          status: mealPlan.status,
-          created_at: mealPlan.created_at,
+          id: freshMealPlan.id,
+          name: freshMealPlan.name,
+          description: freshMealPlan.description,
+          clientName: freshMealPlan.clients?.name || 'Client inconnu',
+          clientEmail: freshMealPlan.clients?.email || '',
+          duration_days: freshMealPlan.duration_days || aiPlan.days.length,
+          calories_range: freshMealPlan.calories_range,
+          status: freshMealPlan.status,
+          created_at: freshMealPlan.created_at,
           dietitianName,
           metadata, // Include AI metadata
           dayPlans: aiPlan.days.map((day: any) => ({
@@ -576,8 +593,9 @@ export default function MealPlanDetailPage() {
           }))
         }
       } else {
-        // Use standard format for manually created plans
-        const dayPlans = getRealMealPlanDays(mealPlan.duration_days || 7, true) // forPDF = true
+        // Use standard format for manually created plans - create a temporary updated meal plan object
+        const tempMealPlan = { ...mealPlan, ...freshMealPlan }
+        const dayPlans = getRealMealPlanDays(freshMealPlan.duration_days || 7, true, freshMealPlan) // forPDF = true
         
         // Ensure correct data structure for PDF generator - only include required properties
         const cleanedDayPlans = dayPlans.map(day => ({
@@ -601,15 +619,15 @@ export default function MealPlanDetailPage() {
         }))
         
         pdfData = {
-          id: mealPlan.id,
-          name: mealPlan.name,
-          description: mealPlan.description || undefined,
-          clientName: mealPlan.clients?.name || "Client inconnu",
-          clientEmail: mealPlan.clients?.email || "",
-          duration_days: mealPlan.duration_days || 7,
-          calories_range: mealPlan.calories_range || undefined,
-          status: mealPlan.status,
-          created_at: mealPlan.created_at,
+          id: freshMealPlan.id,
+          name: freshMealPlan.name,
+          description: freshMealPlan.description || undefined,
+          clientName: freshMealPlan.clients?.name || "Client inconnu",
+          clientEmail: freshMealPlan.clients?.email || "",
+          duration_days: freshMealPlan.duration_days || 7,
+          calories_range: freshMealPlan.calories_range || undefined,
+          status: freshMealPlan.status,
+          created_at: freshMealPlan.created_at,
           dietitianName,
           dayPlans: cleanedDayPlans
         }
@@ -628,9 +646,13 @@ export default function MealPlanDetailPage() {
       console.error('Error exporting PDF:', error)
       toast({
         title: "Erreur",
-        description: "Impossible de générer le PDF. Veuillez réessayer.",
+        description: error instanceof Error && error.message.includes("récupérer les données") 
+          ? "Impossible de récupérer les données à jour. Veuillez réessayer."
+          : "Impossible de générer le PDF. Veuillez réessayer.",
         variant: "destructive"
       })
+    } finally {
+      setPdfExporting(false)
     }
   }
 
@@ -1396,16 +1418,19 @@ export default function MealPlanDetailPage() {
     }
   }
 
-  const getRealMealPlanDays = (duration: number, forPDF: boolean = false): DayPlan[] => {
+  const getRealMealPlanDays = (duration: number, forPDF: boolean = false, freshData?: any): DayPlan[] => {
+    
+    // Use fresh data if provided (for PDF export), otherwise use current state
+    const currentMealPlan = freshData || mealPlan
     
     // Debug logging for PDF export issues
     if (forPDF) {
-      console.log('getRealMealPlanDays called for PDF:', { duration, mealPlan: mealPlan?.plan_content })
+      console.log('getRealMealPlanDays called for PDF:', { duration, plan_content: currentMealPlan?.plan_content, usingFreshData: !!freshData })
     }
     
     // First try to get data from plan_content - but check if meals are already structured properly
-    if (mealPlan?.plan_content) {
-      const planContent = mealPlan.plan_content as unknown as MealPlanContent
+    if (currentMealPlan?.plan_content) {
+      const planContent = currentMealPlan.plan_content as unknown as MealPlanContent
       if (planContent?.days && Array.isArray(planContent.days)) {
         const firstDay = planContent.days[0]
         
@@ -1470,8 +1495,8 @@ export default function MealPlanDetailPage() {
     }
 
     // Check if plan_content has a different structure (AI generated format)
-    if (mealPlan?.plan_content) {
-      const planContent = mealPlan.plan_content as unknown as MealPlanContent
+    if (currentMealPlan?.plan_content) {
+      const planContent = currentMealPlan.plan_content as unknown as MealPlanContent
       if (planContent?.days) {
         if (forPDF) {
           console.log('Using AI format path for PDF')
@@ -1849,6 +1874,7 @@ export default function MealPlanDetailPage() {
                 size="sm" 
                 className="h-9 px-2"
                 onClick={handleExportPDF}
+                disabled={pdfExporting}
               >
                 <Download className="h-3 w-3" />
               </Button>
@@ -1904,9 +1930,10 @@ export default function MealPlanDetailPage() {
                 size="sm" 
                 onClick={handleExportPDF}
                 className="h-10"
+                disabled={pdfExporting}
               >
                 <Download className="mr-2 h-4 w-4" />
-                PDF
+                {pdfExporting ? "..." : "PDF"}
               </Button>
               <Button 
                 variant="outline" 
@@ -2138,9 +2165,15 @@ export default function MealPlanDetailPage() {
                     Partager avec le client
                   </Button>
                 )}
-                <Button variant="outline" size="sm" className="w-full justify-start text-xs" onClick={handleExportPDF}>
+                <Button 
+                  variant="outline" 
+                  size="sm" 
+                  className="w-full justify-start text-xs" 
+                  onClick={handleExportPDF}
+                  disabled={pdfExporting}
+                >
                   <Download className="mr-2 h-3 w-3" />
-                  Exporter en PDF
+                  {pdfExporting ? "Génération..." : "Exporter en PDF"}
                 </Button>
                 <Button 
                   variant="outline" 
