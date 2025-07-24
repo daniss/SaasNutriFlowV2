@@ -59,7 +59,6 @@ import { useSubscription } from "@/hooks/useSubscription"
 import { generateMealPlan, type GeneratedMealPlan, type Meal } from "@/lib/gemini"
 import { supabase, type Client } from "@/lib/supabase"
 import { convertAIToDynamicMealPlan } from "@/lib/meal-plan-types"
-import { downloadModernMealPlanPDF, type MealPlanPDFData } from "@/lib/pdf-generator-modern"
 import { useToast } from "@/hooks/use-toast"
 import MacronutrientBreakdown from "@/components/nutrition/MacronutrientBreakdown"
 
@@ -1177,119 +1176,6 @@ export default function GenerateMealPlanPage() {
     return createdRecipes
   }
 
-  const handleExportPdf = async () => {
-    if (!generatedPlan || !user) return
-
-    try {
-      // Get dietitian's name from profile
-      const { data: profile } = await supabase
-        .from('dietitians')
-        .select('first_name, last_name')
-        .eq('auth_user_id', user.id)
-        .single()
-      
-      const dietitianName = profile 
-        ? `${profile.first_name} ${profile.last_name}`.trim()
-        : user.email?.split('@')[0] || 'Votre nutritionniste'
-      
-      // Get client name if selected
-      const selectedClient = clients.find(c => c.id === formData.clientId)
-      const clientName = selectedClient?.name || 'Client'
-      
-      // Calculate nutrition analysis
-      const nutritionAnalysis = {
-        avgCalories: Math.round(generatedPlan.days.reduce((sum, day) => sum + (day.totalCalories || 0), 0) / generatedPlan.days.length),
-        avgProtein: Math.round(generatedPlan.days.reduce((sum, day) => sum + (day.totalProtein || 0), 0) / generatedPlan.days.length * 10) / 10,
-        avgCarbs: Math.round(generatedPlan.days.reduce((sum, day) => sum + (day.totalCarbs || 0), 0) / generatedPlan.days.length * 10) / 10,
-        avgFat: Math.round(generatedPlan.days.reduce((sum, day) => sum + (day.totalFat || 0), 0) / generatedPlan.days.length * 10) / 10,
-        balanceScore: 92 // Calculate based on variety and balance
-      }
-      
-      // Prepare AI generation metadata
-      const metadata = {
-        prompt: formData.prompt || 'Plan de repas personnalisé',
-        generatedAt: new Date().toISOString(),
-        aiModel: 'Gemini Pro',
-        dietitianName,
-        clientName,
-        processingTime: 2.3, // Estimated processing time
-        nutritionAnalysis
-      }
-      
-      // Convert AI meal plan data to regular PDF format
-      const pdfData: any = {
-        id: 'ai-generated',
-        name: generatedPlan.title || 'Plan Alimentaire IA',
-        description: generatedPlan.description,
-        clientName: selectedClient?.name || 'Client inconnu',
-        clientEmail: selectedClient?.email || '',
-        duration_days: generatedPlan.duration || generatedPlan.days.length,
-        calories_range: '',
-        status: 'generated',
-        created_at: new Date().toISOString(),
-        dietitianName,
-        dayPlans: generatedPlan.days.map((day: any) => ({
-          day: day.day,
-          meals: {
-            breakfast: Array.isArray(day.meals) 
-              ? day.meals.filter((m: any) => m.type === 'breakfast').map((m: any) => ({
-                  name: m.name || 'Petit-déjeuner',
-                  calories: m.calories || 0,
-                  description: m.description,
-                  ingredients: m.ingredients || [],
-                  instructions: m.instructions || []
-                }))
-              : (day.meals?.breakfast || []),
-            lunch: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.type === 'lunch').map((m: any) => ({
-                  name: m.name || 'Déjeuner',
-                  calories: m.calories || 0,
-                  description: m.description,
-                  ingredients: m.ingredients || [],
-                  instructions: m.instructions || []
-                }))
-              : (day.meals?.lunch || []),
-            dinner: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.type === 'dinner').map((m: any) => ({
-                  name: m.name || 'Dîner',
-                  calories: m.calories || 0,
-                  description: m.description,
-                  ingredients: m.ingredients || [],
-                  instructions: m.instructions || []
-                }))
-              : (day.meals?.dinner || []),
-            snacks: Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.type === 'snack').map((m: any) => ({
-                  name: m.name || 'Collation',
-                  calories: m.calories || 0,
-                  description: m.description,
-                  ingredients: m.ingredients || [],
-                  instructions: m.instructions || []
-                }))
-              : (day.meals?.snacks || [])
-          },
-          notes: day.notes
-        }))
-      }
-      
-      // Use the better regular PDF generator
-      downloadModernMealPlanPDF(pdfData)
-      
-      // Show success message
-      toast({
-        title: "Succès",
-        description: "Plan de repas exporté en PDF avec succès !",
-      })
-      
-    } catch (error) {
-      console.error('Error exporting PDF:', error)
-      toast({
-        title: "Erreur",
-        description: "Impossible d'exporter le PDF. Veuillez réessayer.",
-        variant: "destructive",
-      })
-    }
-  }
 
 
 
@@ -1811,16 +1697,6 @@ export default function GenerateMealPlanPage() {
                               Sauvegarder le modèle
                             </>
                           )}
-                        </Button>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={handleExportPdf}
-                          className="bg-gradient-to-r from-emerald-50 to-cyan-50 hover:from-emerald-100 hover:to-cyan-100 border-emerald-200 hover:border-emerald-300 hover:scale-105 transition-all duration-200 text-emerald-700 hover:text-emerald-800"
-                        >
-                          <Download className="h-4 w-4 mr-2" />
-                          <span className="hidden sm:inline">✨ Export PDF IA</span>
-                          <span className="sm:hidden">✨ PDF IA</span>
                         </Button>
                         <Button
                           variant="outline"
