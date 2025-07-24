@@ -1,7 +1,19 @@
 import { useState, useEffect } from 'react'
 import useSWR from 'swr'
 import { toast } from 'sonner'
-import { SubscriptionPlanName, SubscriptionStatus, SubscriptionPlan } from '@/lib/supabase'
+// Define subscription types locally since they're not exported from supabase
+type SubscriptionPlanName = 'free' | 'basic' | 'premium' | 'enterprise'
+type SubscriptionStatus = 'active' | 'inactive' | 'trialing' | 'past_due' | 'canceled'
+interface SubscriptionPlan {
+  name: SubscriptionPlanName
+  price: number
+  features: string[]
+  limits: {
+    clients: number
+    mealPlans: number
+    aiGenerations: number
+  }
+}
 
 export interface SubscriptionData {
   status: SubscriptionStatus

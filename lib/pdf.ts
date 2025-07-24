@@ -60,9 +60,9 @@ export class PDFGenerator {
       doc.setFont('helvetica', 'normal')
       doc.text(`Facture N°: ${invoiceData.invoice_number}`, pageWidth - 20, yPosition, { align: 'right' })
       yPosition += 8
-      doc.text(`Date: ${this.formatDate(invoiceData.created_at)}`, pageWidth - 20, yPosition, { align: 'right' })
+      doc.text(`Date: ${invoiceData.created_at ? this.formatDate(invoiceData.created_at) : 'Non définie'}`, pageWidth - 20, yPosition, { align: 'right' })
       yPosition += 8
-      doc.text(`Échéance: ${this.formatDate(invoiceData.due_date)}`, pageWidth - 20, yPosition, { align: 'right' })
+      doc.text(`Échéance: ${invoiceData.due_date ? this.formatDate(invoiceData.due_date) : 'Non définie'}`, pageWidth - 20, yPosition, { align: 'right' })
       yPosition += 20
 
       // Dietitian info

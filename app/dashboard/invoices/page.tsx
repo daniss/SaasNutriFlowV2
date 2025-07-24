@@ -635,7 +635,7 @@ export default function InvoicesPage() {
       amount: invoice.amount.toString(),
       due_date: invoice.due_date,
       notes: invoice.notes || "",
-      status: invoice.status,
+      status: invoice.status || "pending",
       hourly_rate: "", // These can be added to database schema later
       hours_worked: "",
       consultation_type: "consultation",
@@ -982,14 +982,14 @@ export default function InvoicesPage() {
                         Date de facture
                       </label>
                       <p className="text-gray-900">
-                        {new Date(
+                        {selectedInvoice.issue_date ? new Date(
                           selectedInvoice.issue_date
                         ).toLocaleDateString("fr-FR", {
                           weekday: "long",
                           year: "numeric",
                           month: "long",
                           day: "numeric",
-                        })}
+                        }) : "Date non définie"}
                       </p>
                     </div>
                     {selectedInvoice.due_date && (
@@ -1108,7 +1108,7 @@ export default function InvoicesPage() {
                           Facture créée
                         </p>
                         <p className="text-sm text-gray-500">
-                          {new Date(
+                          {selectedInvoice.created_at ? new Date(
                             selectedInvoice.created_at
                           ).toLocaleDateString("fr-FR", {
                             year: "numeric",
@@ -1116,7 +1116,7 @@ export default function InvoicesPage() {
                             day: "numeric",
                             hour: "2-digit",
                             minute: "2-digit",
-                          })}
+                          }) : "Date non définie"}
                         </p>
                       </div>
                     </div>
@@ -1128,13 +1128,13 @@ export default function InvoicesPage() {
                           Facture émise
                         </p>
                         <p className="text-sm text-gray-500">
-                          {new Date(
+                          {selectedInvoice.issue_date ? new Date(
                             selectedInvoice.issue_date
                           ).toLocaleDateString("fr-FR", {
                             year: "numeric",
                             month: "long",
                             day: "numeric",
-                          })}
+                          }) : "Date non définie"}
                         </p>
                       </div>
                     </div>
@@ -1671,8 +1671,8 @@ export default function InvoicesPage() {
                         <CardTitle className="text-xl font-bold text-gray-900">
                           {invoice.invoice_number}
                         </CardTitle>
-                        <Badge variant={getStatusVariant(invoice.status)}>
-                          {getStatusDisplay(invoice.status)}
+                        <Badge variant={getStatusVariant(invoice.status || "pending")}>
+                          {getStatusDisplay(invoice.status || "pending")}
                         </Badge>
                       </div>
                       <CardDescription className="flex items-center text-gray-600">
@@ -1712,9 +1712,9 @@ export default function InvoicesPage() {
                       <div>
                         <span className="text-gray-500">Date d'émission</span>
                         <p className="font-medium text-gray-900">
-                          {new Date(invoice.issue_date).toLocaleDateString(
+                          {invoice.issue_date ? new Date(invoice.issue_date).toLocaleDateString(
                             "fr-FR"
-                          )}
+                          ) : "Date non définie"}
                         </p>
                       </div>
                     </div>
@@ -1752,7 +1752,7 @@ export default function InvoicesPage() {
                     <div className="flex items-center text-sm text-gray-500">
                       <FileText className="mr-2 h-4 w-4" />
                       Créée le{" "}
-                      {new Date(invoice.created_at).toLocaleDateString("fr-FR")}
+                      {invoice.created_at ? new Date(invoice.created_at).toLocaleDateString("fr-FR") : "Date non définie"}
                     </div>
                     <div className="flex gap-2">
                       {invoice.status === "pending" && (

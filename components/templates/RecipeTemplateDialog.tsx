@@ -41,20 +41,29 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
   const [loading, setLoading] = useState(false)
   const [currentTag, setCurrentTag] = useState("")
   
+  // Helper functions to safely cast JSON types
+  const safeArrayCast = (value: any, defaultValue: any[] = []): any[] => {
+    return Array.isArray(value) ? value : defaultValue
+  }
+  
+  const safeObjectCast = (value: any, defaultValue: any = {}): any => {
+    return value && typeof value === 'object' && !Array.isArray(value) ? value : defaultValue
+  }
+  
   const [formData, setFormData] = useState({
     name: template?.name || "",
     description: template?.description || "",
     category: template?.category || "",
-    dietary_type: template?.dietary_type || [],
+    dietary_type: safeArrayCast(template?.dietary_type, []),
     preparation_time: template?.preparation_time || null,
     cooking_time: template?.cooking_time || null,
     servings: template?.servings || 1,
     calories_per_serving: template?.calories_per_serving || null,
     difficulty: template?.difficulty || "medium",
-    tags: template?.tags || [],
-    ingredients: template?.ingredients || [{ name: "", amount: "", unit: "" }],
-    instructions: template?.instructions || [{ step: 1, text: "" }],
-    macros: template?.macros || { protein: null, carbs: null, fat: null, fiber: null },
+    tags: safeArrayCast(template?.tags, []),
+    ingredients: safeArrayCast(template?.ingredients, [{ name: "", amount: "", unit: "" }]),
+    instructions: safeArrayCast(template?.instructions, [{ step: 1, text: "" }]),
+    macros: safeObjectCast(template?.macros, { protein: null, carbs: null, fat: null, fiber: null }),
     source: template?.source || ""
   })
 
@@ -417,7 +426,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                 value={formData.macros.protein || ""}
                 onChange={(e) => setFormData(prev => ({ 
                   ...prev, 
-                  macros: { ...prev.macros, protein: e.target.value ? parseInt(e.target.value) : null }
+                  macros: { ...safeObjectCast(prev.macros), protein: e.target.value ? parseInt(e.target.value) : null }
                 }))}
                 placeholder="15"
                 className="text-base"
@@ -431,7 +440,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                 value={formData.macros.carbs || ""}
                 onChange={(e) => setFormData(prev => ({ 
                   ...prev, 
-                  macros: { ...prev.macros, carbs: e.target.value ? parseInt(e.target.value) : null }
+                  macros: { ...safeObjectCast(prev.macros), carbs: e.target.value ? parseInt(e.target.value) : null }
                 }))}
                 placeholder="30"
                 className="text-base"
@@ -445,7 +454,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                 value={formData.macros.fat || ""}
                 onChange={(e) => setFormData(prev => ({ 
                   ...prev, 
-                  macros: { ...prev.macros, fat: e.target.value ? parseInt(e.target.value) : null }
+                  macros: { ...safeObjectCast(prev.macros), fat: e.target.value ? parseInt(e.target.value) : null }
                 }))}
                 placeholder="10"
                 className="text-base"
@@ -459,7 +468,7 @@ export default function RecipeTemplateDialog({ isOpen, onClose, onSave, template
                 value={formData.macros.fiber || ""}
                 onChange={(e) => setFormData(prev => ({ 
                   ...prev, 
-                  macros: { ...prev.macros, fiber: e.target.value ? parseInt(e.target.value) : null }
+                  macros: { ...safeObjectCast(prev.macros), fiber: e.target.value ? parseInt(e.target.value) : null }
                 }))}
                 placeholder="5"
                 className="text-base"

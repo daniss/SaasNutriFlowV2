@@ -207,12 +207,14 @@ export default function MealPlanDetailPage() {
   // Load selected foods and recipes from plan_content when meal plan loads
   useEffect(() => {
     const loadMealPlanData = async () => {
-      if (mealPlan?.plan_content?.days) {
+      if (mealPlan?.plan_content) {
+        const planContent = mealPlan.plan_content as MealPlanContent
+        if (planContent?.days) {
         const loadedSelectedFoods: Record<number, { breakfast: SelectedFood[]; lunch: SelectedFood[]; dinner: SelectedFood[]; snacks: SelectedFood[] }> = {}
         const loadedDynamicMealFoods: Record<string, SelectedFood[]> = {}
         const loadedDynamicMealRecipes: Record<string, any[]> = {}
         
-        for (const day of mealPlan.plan_content.days) {
+        for (const day of planContent.days) {
         // Load legacy selected foods
         if (day.selectedFoods && Object.keys(day.selectedFoods).length > 0) {
           // Check if this is dynamic meal foods (organized by meal ID) or legacy foods (organized by slot)
@@ -278,6 +280,7 @@ export default function MealPlanDetailPage() {
       }
     }
 
+    }
     loadMealPlanData()
   }, [mealPlan])
 
@@ -876,8 +879,11 @@ export default function MealPlanDetailPage() {
     } else {
       // Use legacy edit dialog for legacy meal plans
       let existingDay = null
-      if (mealPlan?.plan_content?.days && Array.isArray(mealPlan.plan_content.days)) {
-        existingDay = mealPlan.plan_content.days.find((d: any) => d.day === dayNumber)
+      if (mealPlan?.plan_content) {
+        const planContent = mealPlan.plan_content as MealPlanContent
+        if (planContent?.days && Array.isArray(planContent.days)) {
+          existingDay = planContent.days.find((d: any) => d.day === dayNumber)
+        }
       }
       
       if (existingDay) {
@@ -1389,14 +1395,16 @@ export default function MealPlanDetailPage() {
   const getRealMealPlanDays = (duration: number, forPDF: boolean = false): DayPlan[] => {
     
     // First try to get data from plan_content - but check if meals are already structured properly
-    if (mealPlan?.plan_content?.days && Array.isArray(mealPlan.plan_content.days)) {
-      const firstDay = mealPlan.plan_content.days[0]
+    if (mealPlan?.plan_content) {
+      const planContent = mealPlan.plan_content as MealPlanContent
+      if (planContent?.days && Array.isArray(planContent.days)) {
+        const firstDay = planContent.days[0]
       const hasStructuredMeals = firstDay?.meals && !Array.isArray(firstDay.meals) && 
                                 (firstDay.meals.breakfast !== undefined || firstDay.meals.lunch !== undefined)
       
       
       if (hasStructuredMeals) {
-        return mealPlan.plan_content.days.slice(0, duration).map((day: any, index: number) => {
+        return planContent.days.slice(0, duration).map((day: any, index: number) => {
         const selectedFoodsNutrition = calculateDayNutrition(day.day || index + 1)
         
           return {
@@ -1423,11 +1431,14 @@ export default function MealPlanDetailPage() {
           }
         })
       }
+      }
     }
 
     // Check if plan_content has a different structure (AI generated format)
-    if (mealPlan?.plan_content && mealPlan.plan_content.days) {
-      const aiDays = mealPlan.plan_content.days.slice(0, duration)
+    if (mealPlan?.plan_content) {
+      const planContent = mealPlan.plan_content as MealPlanContent
+      if (planContent?.days) {
+        const aiDays = planContent.days.slice(0, duration)
       return aiDays.map((day: any, index: number) => {
         const selectedFoodsNutrition = calculateDayNutrition(day.day || index + 1)
         
@@ -1584,6 +1595,7 @@ export default function MealPlanDetailPage() {
           totalFat: (day.totalFat || 0) + selectedFoodsNutrition.fat
         }
       })
+      }
     }
 
     // Fallback: create placeholder days that will be replaced when user edits them
