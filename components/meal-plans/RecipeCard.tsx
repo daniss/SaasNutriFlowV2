@@ -59,7 +59,12 @@ export function RecipeCard({ recipe, onRemove, className = '' }: RecipeCardProps
 
   // Group ingredients by category
   const groupedIngredients = (recipe.ingredients || []).reduce((acc, ingredient) => {
-    const category = ingredient.ingredient.category || 'Autres'
+    // Debug logging to understand the ingredient structure  
+    if (!ingredient.ingredient && typeof window !== 'undefined') {
+      console.warn('RecipeCard: ingredient.ingredient is undefined:', ingredient)
+    }
+    
+    const category = ingredient.ingredient?.category || 'Autres'
     if (!acc[category]) acc[category] = []
     acc[category].push(ingredient)
     return acc
@@ -142,7 +147,7 @@ export function RecipeCard({ recipe, onRemove, className = '' }: RecipeCardProps
                       className="flex justify-between items-center text-sm"
                     >
                       <span className="text-gray-700">
-                        {ingredient.ingredient.name}
+                        {ingredient.ingredient?.name || 'Ingrédient inconnu'}
                       </span>
                       <span className="text-gray-500 font-medium">
                         {ingredient.quantity} {ingredient.unit}
