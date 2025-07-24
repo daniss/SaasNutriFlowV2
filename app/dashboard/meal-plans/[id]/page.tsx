@@ -477,16 +477,14 @@ export default function MealPlanDetailPage() {
         throw new Error("Impossible de récupérer les données à jour du plan alimentaire")
       }
 
-      // Get dietitian's name from profile (same as AI generation page)
+      // Get dietitian's name from profile
       const { data: profile } = await supabase
         .from('dietitians')
-        .select('first_name, last_name')
+        .select('name')
         .eq('auth_user_id', user?.id)
         .single()
       
-      const dietitianName = profile 
-        ? `${profile.first_name} ${profile.last_name}`.trim()
-        : user?.email?.split('@')[0] || 'Votre nutritionniste'
+      const dietitianName = profile?.name || user?.email?.split('@')[0] || 'Votre nutritionniste'
 
       // Check if this is an AI-generated meal plan with rich data - use fresh data
       const isAIGenerated = freshMealPlan.plan_content && 
