@@ -13,6 +13,7 @@ import { MealSlot, DynamicMealPlanDay, generateMealId } from "@/lib/meal-plan-ty
 import { RecipeSearchModal } from "@/components/meal-plans/RecipeSearchModal"
 import { RecipeCard } from "@/components/meal-plans/RecipeCard"
 import RecipeDialog from "@/components/recipes/RecipeDialog"
+import { supabase } from "@/lib/supabase"
 
 // Professional limits consistent with templates
 const MAX_MEALS_PER_DAY = 8
@@ -207,28 +208,65 @@ export function DynamicMealEditDialog({
     }
   }
 
-  const handleRecipeCreate = (recipe: any) => {
+  const handleRecipeCreate = async (recipe: any) => {
     if (recipeCreateMealId) {
-      // Transform recipe to match our Recipe interface
-      const recipeToAdd: Recipe = {
-        id: recipe.id,
-        name: recipe.name,
-        description: recipe.description,
-        servings: recipe.servings,
-        prep_time: recipe.prep_time,
-        cook_time: recipe.cook_time,
-        calories_per_serving: recipe.calories_per_serving,
-        protein_per_serving: recipe.protein_per_serving,
-        carbs_per_serving: recipe.carbs_per_serving,
-        fat_per_serving: recipe.fat_per_serving,
-        fiber_per_serving: recipe.fiber_per_serving,
-        ingredients: [] // We'll populate this if needed
-      }
+      try {
+        // Fetch the recipe with its ingredients from the database
+        const { data: recipeWithIngredients, error } = await supabase
+          .from('recipes')
+          .select(`
+            *,
+            recipe_ingredients (
+              id,
+              name,
+              quantity,
+              unit,
+              ingredient_id,
+              notes
+            )
+          `)
+          .eq('id', recipe.id)
+          .single()
 
-      setLocalMealRecipes(prev => ({
-        ...prev,
-        [recipeCreateMealId]: [...(prev[recipeCreateMealId] || []), recipeToAdd]
-      }))
+        if (error) throw error
+
+        // Transform recipe to match our Recipe interface
+        const recipeToAdd: Recipe = {
+          id: recipe.id,
+          name: recipe.name,
+          description: recipe.description,
+          servings: recipe.servings,
+          prep_time: recipe.prep_time,
+          cook_time: recipe.cook_time,
+          calories_per_serving: recipe.calories_per_serving,
+          protein_per_serving: recipe.protein_per_serving,
+          carbs_per_serving: recipe.carbs_per_serving,
+          fat_per_serving: recipe.fat_per_serving,
+          fiber_per_serving: recipe.fiber_per_serving,
+          ingredients: (recipeWithIngredients?.recipe_ingredients || []).map((ing: any) => ({
+            id: ing.id,
+            ingredient: {
+              id: ing.ingredient_id || ing.id,
+              name: ing.name
+            },
+            quantity: ing.quantity,
+            unit: ing.unit,
+            notes: ing.notes
+          }))
+        }
+
+        setLocalMealRecipes(prev => ({
+          ...prev,
+          [recipeCreateMealId]: [...(prev[recipeCreateMealId] || []), recipeToAdd]
+        }))
+      } catch (error) {
+        console.error('Error fetching recipe ingredients:', error)
+        toast({
+          title: "Erreur",
+          description: "Impossible de charger les ingrédients de la recette",
+          variant: "destructive"
+        })
+      }
       
       // Update the meal slot's recipe_id to enable nutritional calculations
       setEditData(prev => ({
