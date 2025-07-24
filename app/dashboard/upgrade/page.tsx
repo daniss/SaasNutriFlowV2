@@ -7,8 +7,19 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Check, Star, Zap, CreditCard, Bot, Users, BarChart3, Lock } from 'lucide-react'
 import { useSubscription } from '@/hooks/useSubscription'
-import { SubscriptionPlan } from '@/lib/supabase'
 import { toast } from 'sonner'
+
+// Local interface since SubscriptionPlan is not exported from supabase
+interface SubscriptionPlan {
+  name: string
+  price: number
+  features: string[]
+  limits: {
+    clients: number
+    mealPlans: number
+    aiGenerations: number
+  }
+}
 
 const FEATURE_DESCRIPTIONS = {
   'generate': {
