@@ -565,7 +565,11 @@ export default function MealPlanDetailPage() {
           metadata, // Include AI metadata
           dayPlans: aiPlan.days.map((day: any, dayIndex: number) => {
             const breakfastMeals = Array.isArray(day.meals) 
-              ? day.meals.filter((m: any) => m.type === 'breakfast').map((m: any) => ({
+              ? day.meals.filter((m: any) => 
+                  m.name === 'Petit-déjeuner' || 
+                  m.type === 'breakfast' || 
+                  (typeof m.name === 'string' && m.name.toLowerCase().includes('petit-déjeuner'))
+                ).map((m: any) => ({
                     name: m.name || 'Petit-déjeuner',
                     calories: m.calories || 0,
                     protein: m.protein || 0,
@@ -578,7 +582,11 @@ export default function MealPlanDetailPage() {
                 : (day.meals?.breakfast || [])
             
             const lunchMeals = Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.type === 'lunch').map((m: any) => ({
+              ? day.meals.filter((m: any) => 
+                  m.name === 'Déjeuner' || 
+                  m.type === 'lunch' || 
+                  (typeof m.name === 'string' && m.name.toLowerCase().includes('déjeuner') && !m.name.toLowerCase().includes('petit'))
+                ).map((m: any) => ({
                     name: m.name || 'Déjeuner',
                     calories: m.calories || 0,
                     protein: m.protein || 0,
@@ -591,7 +599,11 @@ export default function MealPlanDetailPage() {
                 : (day.meals?.lunch || [])
             
             const dinnerMeals = Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.type === 'dinner').map((m: any) => ({
+              ? day.meals.filter((m: any) => 
+                  m.name === 'Dîner' || 
+                  m.type === 'dinner' || 
+                  (typeof m.name === 'string' && (m.name.toLowerCase().includes('dîner') || m.name.toLowerCase().includes('diner')))
+                ).map((m: any) => ({
                   name: m.name || 'Dîner',
                   calories: m.calories || 0,
                   protein: m.protein || 0,
@@ -604,7 +616,13 @@ export default function MealPlanDetailPage() {
                 : (day.meals?.dinner || [])
             
             const snackMeals = Array.isArray(day.meals)
-              ? day.meals.filter((m: any) => m.type === 'snack').map((m: any) => ({
+              ? day.meals.filter((m: any) => 
+                  m.name === 'Collation' || 
+                  m.name === 'Collation après-midi' || 
+                  m.name === 'Collation matin' || 
+                  m.type === 'snack' || 
+                  (typeof m.name === 'string' && m.name.toLowerCase().includes('collation'))
+                ).map((m: any) => ({
                   name: m.name || 'Collation',
                   calories: m.calories || 0,
                   protein: m.protein || 0,
@@ -625,7 +643,14 @@ export default function MealPlanDetailPage() {
                 lunchFound: lunchMeals.length,
                 dinnerFound: dinnerMeals.length,
                 snacksFound: snackMeals.length,
-                originalMeals: day.meals
+                originalMeals: day.meals,
+                mealNames: Array.isArray(day.meals) ? day.meals.map((m: any) => m.name) : [],
+                processedMeals: {
+                  breakfast: breakfastMeals,
+                  lunch: lunchMeals,
+                  dinner: dinnerMeals,
+                  snacks: snackMeals
+                }
               })
             }
             
