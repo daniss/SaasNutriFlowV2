@@ -21,7 +21,13 @@ interface Recipe {
   fiber_per_serving?: number
   ingredients: Array<{
     id: string
-    ingredient: {
+    name?: string // Sometimes the name is directly on the ingredient object
+    ingredient?: { // The nested ingredient object (expected structure)
+      id: string
+      name: string
+      category?: string
+    }
+    ingredients?: { // Alternative nested structure (actual from some queries)
       id: string
       name: string
       category?: string
@@ -59,12 +65,9 @@ export function RecipeCard({ recipe, onRemove, className = '' }: RecipeCardProps
 
   // Group ingredients by category
   const groupedIngredients = (recipe.ingredients || []).reduce((acc, ingredient) => {
-    // Debug logging to understand the ingredient structure  
-    if (!ingredient.ingredient && typeof window !== 'undefined') {
-      console.warn('RecipeCard: ingredient.ingredient is undefined:', ingredient)
-    }
-    
-    const category = ingredient.ingredient?.category || 'Autres'
+    // Handle both data structures: ingredient.ingredient (expected) and ingredient.ingredients (actual from some queries)
+    const ingredientData = ingredient.ingredient || ingredient.ingredients
+    const category = ingredientData?.category || 'Autres'
     if (!acc[category]) acc[category] = []
     acc[category].push(ingredient)
     return acc
@@ -147,7 +150,7 @@ export function RecipeCard({ recipe, onRemove, className = '' }: RecipeCardProps
                       className="flex justify-between items-center text-sm"
                     >
                       <span className="text-gray-700">
-                        {ingredient.ingredient?.name || 'Ingrédient inconnu'}
+                        {ingredient.ingredient?.name || ingredient.ingredients?.name || ingredient.name || 'Ingrédient inconnu'}
                       </span>
                       <span className="text-gray-500 font-medium">
                         {ingredient.quantity} {ingredient.unit}
