@@ -290,18 +290,18 @@ export default function MacronutrientBreakdown({ mealPlan, selectedFoods, dynami
     
     // Handle AI-generated meal plans with dynamic meal structure
     if (Array.isArray(day.meals)) {
-      // Use calories_target from AI generation for calories
-      day.meals.forEach((meal: any) => {
-        dayCalories += meal.calories_target || meal.calories || 0
-      })
-      
-      // For protein, carbs, fat - use actual recipe nutrition data
+      // Calculate calories from both recipe nutrition and meal targets
       day.meals.forEach((meal: any) => {
         if (meal.recipe_id && recipeNutritionMap[meal.recipe_id]) {
+          // Use recipe nutrition data when available
           const nutrition = recipeNutritionMap[meal.recipe_id]
+          dayCalories += nutrition.calories
           dayProtein += nutrition.protein
           dayCarbs += nutrition.carbs
           dayFat += nutrition.fat
+        } else {
+          // Fallback to meal's own calories for AI-generated meals without recipes
+          dayCalories += meal.calories_target || meal.calories || 0
         }
       })
     } else if (day.meals && typeof day.meals === 'object') {
