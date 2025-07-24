@@ -497,16 +497,6 @@ export function DynamicMealEditDialog({
                         />
                       </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label htmlFor={`meal-calories-${mealIndex}`}>Calories (opt.)</Label>
-                      <Input
-                        id={`meal-calories-${mealIndex}`}
-                        type="number"
-                        value={meal.calories_target || ''}
-                        onChange={(e) => updateMeal(mealIndex, 'calories_target', e.target.value ? parseInt(e.target.value) : null)}
-                        placeholder="Ex: 500"
-                      />
-                    </div>
                   </div>
                 </div>
 
