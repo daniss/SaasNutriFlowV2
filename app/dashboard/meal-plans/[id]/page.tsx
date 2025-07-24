@@ -490,7 +490,7 @@ export default function MealPlanDetailPage() {
             id,
             quantity,
             unit,
-            ingredient:ingredients (
+            ingredients (
               id,
               name,
               name_fr
@@ -506,6 +506,7 @@ export default function MealPlanDetailPage() {
       }
       
       console.log('🔍 PDF Export Debug - Fetched recipes:', recipes?.length || 0)
+      console.log('🔍 PDF Export Debug - Sample recipe structure:', recipes?.[0])
       
       // Create a map of recipe ID to recipe data
       const recipeMap = new Map()
@@ -514,7 +515,7 @@ export default function MealPlanDetailPage() {
           name: recipe.name,
           instructions: recipe.instructions || '',
           ingredients: recipe.recipe_ingredients?.map((ri: any) => ({
-            name: ri.ingredient?.name_fr || ri.ingredient?.name || 'Ingrédient',
+            name: ri.ingredients?.name_fr || ri.ingredients?.name || 'Ingrédient',
             quantity: ri.quantity,
             unit: ri.unit
           })) || []
