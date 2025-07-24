@@ -1317,7 +1317,8 @@ export default function MealPlanDetailPage() {
     let totalCalories = 0, totalProtein = 0, totalCarbs = 0, totalFat = 0
     
     // Get the day data from meal plan
-    const dayPlan = mealPlan?.plan_content?.days?.find((d: any) => d.day === dayNumber)
+    const planContent = mealPlan?.plan_content as any
+    const dayPlan = planContent?.days?.find((d: any) => d.day === dayNumber)
     if (!dayPlan) return { calories: 0, protein: 0, carbs: 0, fat: 0 }
     
     // Handle AI-generated meal plans with dynamic meal structure
