@@ -20,6 +20,9 @@ interface SubscriptionPlan {
     aiGenerations: number
   }
   stripe_price_id: string
+  max_clients: number | null
+  max_meal_plans: number | null
+  ai_generations_per_month: number | null
 }
 
 export default function PricingPage() {
