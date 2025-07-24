@@ -19,6 +19,7 @@ interface SubscriptionPlan {
     mealPlans: number
     aiGenerations: number
   }
+  stripe_price_id: string
 }
 
 const FEATURE_DESCRIPTIONS = {
