@@ -462,6 +462,8 @@ export default function MealPlanDetailPage() {
 
     setPdfExporting(true)
     try {
+      console.log('🔍 PDF Export Debug - Starting export for meal plan:', mealPlan.id)
+      
       // First, refresh the meal plan data from database to ensure we have the latest changes
       const { data: freshMealPlan, error: fetchError } = await supabase
         .from("meal_plans")
@@ -472,6 +474,17 @@ export default function MealPlanDetailPage() {
         .eq("id", mealPlan.id)
         .eq("dietitian_id", user?.id)
         .single()
+
+      console.log('🔍 PDF Export Debug - Fresh meal plan fetched:', {
+        success: !fetchError,
+        error: fetchError,
+        planId: freshMealPlan?.id,
+        planName: freshMealPlan?.name,
+        durationDays: freshMealPlan?.duration_days,
+        hasPlanContent: !!freshMealPlan?.plan_content,
+        planContentType: typeof freshMealPlan?.plan_content,
+        planContentKeys: freshMealPlan?.plan_content ? Object.keys(freshMealPlan.plan_content as any) : null
+      })
 
       if (fetchError || !freshMealPlan) {
         throw new Error("Impossible de récupérer les données à jour du plan alimentaire")
@@ -492,9 +505,20 @@ export default function MealPlanDetailPage() {
         'days' in freshMealPlan.plan_content &&
         Array.isArray((freshMealPlan.plan_content as any).days)
 
+      console.log('🔍 PDF Export Debug - Plan type detection:', {
+        isAIGenerated,
+        planContentExists: !!freshMealPlan.plan_content,
+        planContentType: typeof freshMealPlan.plan_content,
+        hasDaysProperty: freshMealPlan.plan_content && 'days' in freshMealPlan.plan_content,
+        daysIsArray: freshMealPlan.plan_content && Array.isArray((freshMealPlan.plan_content as any).days),
+        daysLength: freshMealPlan.plan_content && Array.isArray((freshMealPlan.plan_content as any).days) 
+          ? (freshMealPlan.plan_content as any).days.length : 'N/A'
+      })
+
       let pdfData: any
       
       if (isAIGenerated) {
+        console.log('🔍 PDF Export Debug - Using AI-generated path')
         // Use rich AI data similar to generation page
         const aiPlan = freshMealPlan.plan_content as any
         
@@ -591,9 +615,22 @@ export default function MealPlanDetailPage() {
           }))
         }
       } else {
+        console.log('🔍 PDF Export Debug - Using manual meal plan path')
         // Use standard format for manually created plans - create a temporary updated meal plan object
         const tempMealPlan = { ...mealPlan, ...freshMealPlan }
         const dayPlans = getRealMealPlanDays(freshMealPlan.duration_days || 7, true, freshMealPlan) // forPDF = true
+        
+        console.log('🔍 PDF Export Debug - Day plans generated:', {
+          requestedDuration: freshMealPlan.duration_days || 7,
+          actualDayPlansCount: dayPlans.length,
+          dayNumbers: dayPlans.map(d => d.day),
+          sampleDayMeals: dayPlans[0] ? {
+            breakfast: dayPlans[0].meals?.breakfast?.length || 0,
+            lunch: dayPlans[0].meals?.lunch?.length || 0,
+            dinner: dayPlans[0].meals?.dinner?.length || 0,
+            snacks: dayPlans[0].meals?.snacks?.length || 0
+          } : 'No days found'
+        })
         
         // Ensure correct data structure for PDF generator - only include required properties
         const cleanedDayPlans = dayPlans.map(day => ({
@@ -630,6 +667,28 @@ export default function MealPlanDetailPage() {
           dayPlans: cleanedDayPlans
         }
       }
+
+      console.log('🔍 PDF Export Debug - Final PDF data structure:', {
+        id: pdfData.id,
+        name: pdfData.name,
+        clientName: pdfData.clientName,
+        dayPlansCount: pdfData.dayPlans?.length || 0,
+        dayPlansSample: pdfData.dayPlans?.[0] ? {
+          day: pdfData.dayPlans[0].day,
+          mealsStructure: {
+            breakfast: Array.isArray(pdfData.dayPlans[0].meals?.breakfast) ? pdfData.dayPlans[0].meals.breakfast.length : 'not array',
+            lunch: Array.isArray(pdfData.dayPlans[0].meals?.lunch) ? pdfData.dayPlans[0].meals.lunch.length : 'not array',
+            dinner: Array.isArray(pdfData.dayPlans[0].meals?.dinner) ? pdfData.dayPlans[0].meals.dinner.length : 'not array',
+            snacks: Array.isArray(pdfData.dayPlans[0].meals?.snacks) ? pdfData.dayPlans[0].meals.snacks.length : 'not array'
+          },
+          sampleMeals: {
+            breakfast: pdfData.dayPlans[0].meals?.breakfast?.[0] || 'none',
+            lunch: pdfData.dayPlans[0].meals?.lunch?.[0] || 'none',
+            dinner: pdfData.dayPlans[0].meals?.dinner?.[0] || 'none',
+            snacks: pdfData.dayPlans[0].meals?.snacks?.[0] || 'none'
+          }
+        } : 'No day plans'
+      })
 
       // Use the modern PDF generator for a beautiful, magazine-style layout
       downloadModernMealPlanPDF(pdfData)
@@ -1423,7 +1482,16 @@ export default function MealPlanDetailPage() {
     
     // Debug logging for PDF export issues
     if (forPDF) {
-      console.log('getRealMealPlanDays called for PDF:', { duration, plan_content: currentMealPlan?.plan_content, usingFreshData: !!freshData })
+      console.log('🔍 getRealMealPlanDays Debug - Function called:', { 
+        duration, 
+        usingFreshData: !!freshData,
+        planExists: !!currentMealPlan,
+        planId: currentMealPlan?.id,
+        planName: currentMealPlan?.name,
+        hasPlanContent: !!currentMealPlan?.plan_content,
+        planContentType: typeof currentMealPlan?.plan_content,
+        planContentKeys: currentMealPlan?.plan_content ? Object.keys(currentMealPlan.plan_content as any) : null
+      })
     }
     
     // First try to get data from plan_content - but check if meals are already structured properly
@@ -1447,7 +1515,8 @@ export default function MealPlanDetailPage() {
       
       if (hasStructuredMeals) {
         if (forPDF) {
-          console.log('Using structured meals path for PDF')
+          console.log('🔍 getRealMealPlanDays Debug - Using structured meals path')
+          console.log('🔍 First day meals structure:', firstDay?.meals)
         }
         
         const structuredDays = planContent.days.slice(0, duration).map((day: any, index: number) => {
@@ -1484,7 +1553,18 @@ export default function MealPlanDetailPage() {
         })
         
         if (forPDF) {
-          console.log('Returning structured days:', structuredDays)
+          console.log('🔍 getRealMealPlanDays Debug - Returning structured days:', {
+            count: structuredDays.length,
+            sampleDay: structuredDays[0] ? {
+              day: structuredDays[0].day,
+              mealsCount: {
+                breakfast: structuredDays[0].meals?.breakfast?.length || 0,
+                lunch: structuredDays[0].meals?.lunch?.length || 0,
+                dinner: structuredDays[0].meals?.dinner?.length || 0,
+                snacks: structuredDays[0].meals?.snacks?.length || 0
+              }
+            } : 'No structured days'
+          })
         }
         
         return structuredDays
@@ -1497,7 +1577,9 @@ export default function MealPlanDetailPage() {
       const planContent = currentMealPlan.plan_content as unknown as MealPlanContent
       if (planContent?.days) {
         if (forPDF) {
-          console.log('Using AI format path for PDF')
+          console.log('🔍 getRealMealPlanDays Debug - Using AI format path')
+          console.log('🔍 Plan content days:', planContent.days.length, 'days found')
+          console.log('🔍 First day sample:', planContent.days[0])
         }
         
         const aiDays = planContent.days.slice(0, duration)
@@ -1705,6 +1787,10 @@ export default function MealPlanDetailPage() {
     }
 
     // Fallback: create placeholder days that will be replaced when user edits them
+    if (forPDF) {
+      console.log('🔍 getRealMealPlanDays Debug - FALLBACK: Using sample meals - no valid plan_content found')
+    }
+    
     const sampleMeals = {
       breakfast: [
         "Yaourt grec aux baies et granola",
