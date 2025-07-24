@@ -950,7 +950,7 @@ export default function MealPlanDetailPage() {
 
     try {
       // Get current plan_content
-      let planContent = mealPlan.plan_content || { days: [] }
+      let planContent: any = mealPlan.plan_content || { days: [] }
       
       if (!planContent.days) {
         planContent.days = []
@@ -1021,7 +1021,7 @@ export default function MealPlanDetailPage() {
 
     try {
       // Get current plan_content or create new structure
-      let planContent = mealPlan.plan_content || { days: [] }
+      let planContent: any = mealPlan.plan_content || { days: [] }
       
       // Ensure days array exists
       if (!planContent.days) {
@@ -1106,7 +1106,7 @@ export default function MealPlanDetailPage() {
 
     try {
       // Get current plan_content or create new structure
-      let planContent = mealPlan.plan_content || { days: [] }
+      let planContent: any = mealPlan.plan_content || { days: [] }
       
       // Ensure days array exists
       if (!planContent.days) {
