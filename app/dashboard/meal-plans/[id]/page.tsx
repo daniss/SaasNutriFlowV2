@@ -1748,7 +1748,7 @@ export default function MealPlanDetailPage() {
                 onClick={() => {
                   setDuplicateForm({
                     name: `${mealPlan.name} (Copie)`,
-                    client_id: mealPlan.client_id
+                    client_id: mealPlan.client_id || ''
                   })
                   setIsDuplicateOpen(true)
                 }}
@@ -1800,7 +1800,7 @@ export default function MealPlanDetailPage() {
                 onClick={() => {
                   setDuplicateForm({
                     name: `${mealPlan.name} (Copie)`,
-                    client_id: mealPlan.client_id
+                    client_id: mealPlan.client_id || ''
                   })
                   setIsDuplicateOpen(true)
                 }}
@@ -1886,7 +1886,7 @@ export default function MealPlanDetailPage() {
                       <span className="text-sm font-medium text-slate-500">Créé le</span>
                     </div>
                     <span className="text-2xl font-bold text-slate-900">
-                      {new Date(mealPlan.created_at).toLocaleDateString('fr-FR')}
+                      {mealPlan.created_at ? new Date(mealPlan.created_at).toLocaleDateString('fr-FR') : 'Date inconnue'}
                     </span>
                   </div>
 
@@ -1895,14 +1895,14 @@ export default function MealPlanDetailPage() {
                       <Users className="h-4 w-4 text-slate-500" />
                       <span className="text-sm font-medium text-slate-500">Statut</span>
                     </div>
-                    <span className="text-2xl font-bold text-slate-900">{getStatusText(mealPlan.status)}</span>
+                    <span className="text-2xl font-bold text-slate-900">{getStatusText(mealPlan.status || 'draft')}</span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
             {/* AI-Generated Plan Nutritional Analysis */}
-            {mealPlan.plan_content && typeof mealPlan.plan_content === 'object' && 'days' in mealPlan.plan_content && (mealPlan.plan_content as GeneratedMealPlan).days && (
+            {mealPlan.plan_content && typeof mealPlan.plan_content === 'object' && 'days' in mealPlan.plan_content && (mealPlan.plan_content as unknown as GeneratedMealPlan).days && (
               <Card className="bg-white/80 backdrop-blur-sm border-slate-100 shadow-sm rounded-xl overflow-hidden">
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -1915,7 +1915,7 @@ export default function MealPlanDetailPage() {
                 </CardHeader>
                 <CardContent className="overflow-x-auto">
                   <MacronutrientBreakdown 
-                    mealPlan={mealPlan.plan_content as GeneratedMealPlan} 
+                    mealPlan={mealPlan.plan_content as unknown as GeneratedMealPlan} 
                     selectedFoods={selectedFoods}
                     dynamicMealFoods={dynamicMealFoods}
                   />

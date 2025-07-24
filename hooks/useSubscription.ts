@@ -13,6 +13,9 @@ interface SubscriptionPlan {
     mealPlans: number
     aiGenerations: number
   }
+  ai_generations_per_month?: number
+  max_clients?: number
+  max_meal_plans?: number
 }
 
 export interface SubscriptionData {

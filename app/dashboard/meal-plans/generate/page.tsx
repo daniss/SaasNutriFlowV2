@@ -274,7 +274,7 @@ export default function GenerateMealPlanPage() {
       
       setAiUsage({
         current: data.current || 0,
-        limit: subscription.planDetails.ai_generations_per_month || 0,
+        limit: subscription.planDetails?.ai_generations_per_month || subscription.planDetails?.limits?.aiGenerations || 0,
         loading: false
       })
     } catch (error) {
