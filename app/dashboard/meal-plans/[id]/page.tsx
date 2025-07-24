@@ -239,8 +239,11 @@ export default function MealPlanDetailPage() {
                 .select(`
                   *,
                   recipe_ingredients (
-                    *,
-                    ingredient:ingredients (*)
+                    id,
+                    name,
+                    quantity,
+                    unit,
+                    ingredient_id
                   )
                 `)
                 .eq('id', meal.recipe_id)
@@ -480,6 +483,7 @@ export default function MealPlanDetailPage() {
     
     try {
       // Fetch all recipes with their ingredients and instructions
+      // Based on actual database schema from MCP
       const { data: recipes, error } = await supabase
         .from('recipes')
         .select(`
@@ -488,13 +492,9 @@ export default function MealPlanDetailPage() {
           instructions,
           recipe_ingredients (
             id,
+            name,
             quantity,
-            unit,
-            ingredients (
-              id,
-              name,
-              name_fr
-            )
+            unit
           )
         `)
         .in('id', Array.from(recipeIds))
@@ -502,6 +502,7 @@ export default function MealPlanDetailPage() {
       
       if (error) {
         console.error('Error fetching recipes:', error)
+        console.log('🔍 PDF Export Debug - Falling back to original meal data without recipe enrichment')
         return dayPlans // Return original data if fetch fails
       }
       
@@ -513,21 +514,28 @@ export default function MealPlanDetailPage() {
       recipes?.forEach(recipe => {
         recipeMap.set(recipe.id, {
           name: recipe.name,
-          instructions: recipe.instructions || '',
+          instructions: Array.isArray(recipe.instructions) 
+            ? recipe.instructions.join('\n') 
+            : recipe.instructions || '',
           ingredients: recipe.recipe_ingredients?.map((ri: any) => ({
-            name: ri.ingredients?.name_fr || ri.ingredients?.name || 'Ingrédient',
-            quantity: ri.quantity,
-            unit: ri.unit
+            name: ri.name || 'Ingrédient', // Use name field from recipe_ingredients table
+            quantity: ri.quantity || '',
+            unit: ri.unit || ''
           })) || []
         })
       })
       
       // Enrich meals with recipe data
-      return dayPlans.map(day => ({
+      console.log('🔍 PDF Export Debug - Recipe map created with', recipeMap.size, 'recipes')
+      
+      const enrichedDays = dayPlans.map(day => ({
         ...day,
         meals: {
           breakfast: day.meals.breakfast?.map((meal: any) => ({
             ...meal,
+            original_meal_name: meal.recipeId && recipeMap.has(meal.recipeId) 
+              ? recipeMap.get(meal.recipeId).name 
+              : meal.original_meal_name || meal.name,
             ingredients: meal.recipeId && recipeMap.has(meal.recipeId) 
               ? recipeMap.get(meal.recipeId).ingredients 
               : meal.ingredients,
@@ -537,6 +545,9 @@ export default function MealPlanDetailPage() {
           })) || [],
           lunch: day.meals.lunch?.map((meal: any) => ({
             ...meal,
+            original_meal_name: meal.recipeId && recipeMap.has(meal.recipeId) 
+              ? recipeMap.get(meal.recipeId).name 
+              : meal.original_meal_name || meal.name,
             ingredients: meal.recipeId && recipeMap.has(meal.recipeId) 
               ? recipeMap.get(meal.recipeId).ingredients 
               : meal.ingredients,
@@ -546,6 +557,9 @@ export default function MealPlanDetailPage() {
           })) || [],
           dinner: day.meals.dinner?.map((meal: any) => ({
             ...meal,
+            original_meal_name: meal.recipeId && recipeMap.has(meal.recipeId) 
+              ? recipeMap.get(meal.recipeId).name 
+              : meal.original_meal_name || meal.name,
             ingredients: meal.recipeId && recipeMap.has(meal.recipeId) 
               ? recipeMap.get(meal.recipeId).ingredients 
               : meal.ingredients,
@@ -555,6 +569,9 @@ export default function MealPlanDetailPage() {
           })) || [],
           snacks: day.meals.snacks?.map((meal: any) => ({
             ...meal,
+            original_meal_name: meal.recipeId && recipeMap.has(meal.recipeId) 
+              ? recipeMap.get(meal.recipeId).name 
+              : meal.original_meal_name || meal.name,
             ingredients: meal.recipeId && recipeMap.has(meal.recipeId) 
               ? recipeMap.get(meal.recipeId).ingredients 
               : meal.ingredients,
@@ -564,6 +581,10 @@ export default function MealPlanDetailPage() {
           })) || []
         }
       }))
+      
+      console.log('🔍 PDF Export Debug - Enrichment completed for', enrichedDays.length, 'days')
+      console.log('🔍 PDF Export Debug - Sample enriched meal:', enrichedDays[0]?.meals?.breakfast?.[0])
+      return enrichedDays
       
     } catch (error) {
       console.error('Error enriching meals with recipe data:', error)
@@ -1797,6 +1818,8 @@ export default function MealPlanDetailPage() {
                 name: m.original_meal_name || m.name || m.description || 'Petit-déjeuner',
                 calories: m.calories || m.calories_target || 0,
                 description: m.description,
+                ingredients: m.ingredients || [], // Include enriched ingredients
+                instructions: m.instructions || '', // Include enriched instructions
                 recipe: dynamicMealRecipes[m.id]?.[0] || null // Include recipe data if available
               })) || []
               
@@ -1819,6 +1842,8 @@ export default function MealPlanDetailPage() {
                 name: m.original_meal_name || m.name || m.description || 'Déjeuner',
                 calories: m.calories || m.calories_target || 0,
                 description: m.description,
+                ingredients: m.ingredients || [], // Include enriched ingredients
+                instructions: m.instructions || '', // Include enriched instructions
                 recipe: dynamicMealRecipes[m.id]?.[0] || null // Include recipe data if available
               })) || []
               
@@ -1839,6 +1864,8 @@ export default function MealPlanDetailPage() {
                 name: m.original_meal_name || m.name || m.description || 'Dîner',
                 calories: m.calories || m.calories_target || 0,
                 description: m.description,
+                ingredients: m.ingredients || [], // Include enriched ingredients
+                instructions: m.instructions || '', // Include enriched instructions
                 recipe: dynamicMealRecipes[m.id]?.[0] || null // Include recipe data if available
               })) || []
               
@@ -1863,6 +1890,8 @@ export default function MealPlanDetailPage() {
                 name: m.original_meal_name || m.name || m.description || 'Collation',
                 calories: m.calories || m.calories_target || 0,
                 description: m.description,
+                ingredients: m.ingredients || [], // Include enriched ingredients
+                instructions: m.instructions || '', // Include enriched instructions
                 recipe: dynamicMealRecipes[m.id]?.[0] || null // Include recipe data if available
               })) || []
 
