@@ -115,7 +115,7 @@ export default function RecipesPage() {
   const filteredRecipes = recipes.filter(recipe => {
     const matchesSearch = recipe.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
       recipe.description?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      recipe.tags.some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
+      (recipe.tags || []).some(tag => tag.toLowerCase().includes(searchTerm.toLowerCase()))
     
     const matchesCategory = categoryFilter === "all" || recipe.category === categoryFilter
     const matchesDifficulty = difficultyFilter === "all" || recipe.difficulty === difficultyFilter
@@ -281,7 +281,7 @@ export default function RecipesPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold">
-              {Math.max(...recipes.map(r => r.usage_count), 0)}
+              {Math.max(...recipes.map(r => r.usage_count || 0), 0)}
             </div>
             <p className="text-xs text-muted-foreground">
               Nombre d'utilisations
@@ -365,7 +365,7 @@ export default function RecipesPage() {
                   <Button
                     variant="ghost"
                     size="sm"
-                    onClick={() => toggleFavorite(recipe.id, recipe.is_favorite)}
+                    onClick={() => toggleFavorite(recipe.id, recipe.is_favorite || false)}
                   >
                     <Heart 
                       className={`h-4 w-4 ${recipe.is_favorite ? 'fill-red-500 text-red-500' : 'text-muted-foreground'}`} 
@@ -421,16 +421,16 @@ export default function RecipesPage() {
                 )}
 
                 {/* Tags */}
-                {recipe.tags.length > 0 && (
+                {(recipe.tags || []).length > 0 && (
                   <div className="flex flex-wrap gap-1">
-                    {recipe.tags.slice(0, 3).map(tag => (
+                    {(recipe.tags || []).slice(0, 3).map(tag => (
                       <Badge key={tag} variant="outline" className="text-xs">
                         {tag}
                       </Badge>
                     ))}
-                    {recipe.tags.length > 3 && (
+                    {(recipe.tags || []).length > 3 && (
                       <Badge variant="outline" className="text-xs">
-                        +{recipe.tags.length - 3}
+                        +{(recipe.tags || []).length - 3}
                       </Badge>
                     )}
                   </div>
