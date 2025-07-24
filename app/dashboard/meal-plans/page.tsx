@@ -356,16 +356,21 @@ export default function MealPlansPage() {
         searchValue={searchTerm}
         onSearchChange={setSearchTerm}
         action={
-          <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-            <UsageCounter type="meal_plans" />
+          <div className="flex flex-col sm:flex-row sm:flex-wrap items-end sm:items-center gap-2 sm:gap-3">
+            {/* Usage counter - positioned above buttons on mobile, inline on desktop */}
+            <div className="w-full sm:w-auto flex justify-end sm:justify-start">
+              <UsageCounter type="meal_plans" className="text-xs sm:text-sm" />
+            </div>
+            
+            {/* Buttons row - compact on mobile */}
             <div className="flex flex-wrap items-center gap-1 sm:gap-2">
               <Button 
                 onClick={() => setIsTemplateDialogOpen(true)}
                 variant="outline"
                 size="sm"
-                className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
+                className="text-blue-600 border-blue-600 hover:bg-blue-50 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2.5"
               >
-                <BookOpen className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                <BookOpen className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                 <span className="hidden sm:inline">Utiliser un modèle</span>
                 <span className="sm:hidden">Modèle</span>
               </Button>
@@ -373,19 +378,20 @@ export default function MealPlansPage() {
                 asChild
                 variant="outline"
                 size="sm"
-                className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
+                className="text-emerald-600 border-emerald-600 hover:bg-emerald-50 text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2.5"
               >
                 <Link href="/dashboard/meal-plans/generate">
-                  <Sparkles className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                  <Sparkles className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                   <span className="hidden sm:inline">Générer avec IA</span>
                   <span className="sm:hidden">IA</span>
                 </Link>
               </Button>
               <Button 
                 onClick={() => setIsAddDialogOpen(true)}
-                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium text-xs sm:text-sm px-3 sm:px-4 py-2 sm:py-2.5"
+                size="sm"
+                className="bg-emerald-600 hover:bg-emerald-700 text-white shadow-soft hover:shadow-soft-lg transition-all duration-200 font-medium text-xs sm:text-sm px-2 sm:px-4 py-1.5 sm:py-2.5"
               >
-                <Plus className="mr-1 sm:mr-2 h-4 w-4 flex-shrink-0" />
+                <Plus className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
                 <span className="hidden sm:inline">Nouveau plan</span>
                 <span className="sm:hidden">Nouveau</span>
               </Button>

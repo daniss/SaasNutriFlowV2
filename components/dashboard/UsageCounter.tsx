@@ -75,11 +75,12 @@ export function UsageCounter({ type, className = "" }: UsageCounterProps) {
   return (
     <Badge 
       variant={getBadgeVariant()}
-      className={`flex items-center gap-2 px-3 py-1.5 font-medium ${getBadgeClassName()} ${className}`}
+      className={`flex items-center gap-1 sm:gap-2 px-2 sm:px-3 py-1 sm:py-1.5 font-medium ${getBadgeClassName()} ${className}`}
     >
-      <Icon className="h-4 w-4" />
-      <span>
-        {loading ? '...' : current}/{limit === -1 ? '∞' : limit} {label}
+      <Icon className="h-3 w-3 sm:h-4 sm:w-4 flex-shrink-0" />
+      <span className="text-xs sm:text-sm whitespace-nowrap">
+        {loading ? '...' : current}/{limit === -1 ? '∞' : limit}
+        <span className="hidden sm:inline"> {label}</span>
       </span>
     </Badge>
   );
