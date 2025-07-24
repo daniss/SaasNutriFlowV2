@@ -222,7 +222,12 @@ export function DynamicMealEditDialog({
               quantity,
               unit,
               ingredient_id,
-              notes
+              notes,
+              ingredients (
+                id,
+                name,
+                category
+              )
             )
           `)
           .eq('id', recipe.id)
@@ -246,8 +251,9 @@ export function DynamicMealEditDialog({
           ingredients: (recipeWithIngredients?.recipe_ingredients || []).map((ing: any) => ({
             id: ing.id,
             ingredient: {
-              id: ing.ingredient_id || ing.id,
-              name: ing.name
+              id: ing.ingredients?.id || ing.ingredient_id || ing.id,
+              name: ing.ingredients?.name || ing.name,
+              category: ing.ingredients?.category
             },
             quantity: ing.quantity,
             unit: ing.unit,
