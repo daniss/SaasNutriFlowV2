@@ -757,12 +757,15 @@ export class ModernPDFGenerator {
         })
         
         // Add recipe details if available
+        // Support both enriched format (ingredients/instructions directly on food) and legacy format (food.recipe)
+        const ingredients = food.ingredients || food.recipe?.ingredients
+        const instructions = food.instructions || food.recipe?.instructions
         
-        if (food.recipe) {
+        if (ingredients || instructions) {
           this.currentY += 3
           
           // Add ingredients if available
-          if (food.recipe.ingredients && Array.isArray(food.recipe.ingredients) && food.recipe.ingredients.length > 0) {
+          if (ingredients && Array.isArray(ingredients) && ingredients.length > 0) {
             try {
             // Recipe ingredients header
             this.pdf.setFontSize(10)
@@ -776,7 +779,7 @@ export class ModernPDFGenerator {
             this.pdf.setFontSize(9)
             this.pdf.setTextColor(...this.hexToRgb(colors.textMuted))
             
-            food.recipe.ingredients.forEach((ingredient: any) => {
+            ingredients.forEach((ingredient: any) => {
               const ingredientText = this.formatIngredientText(ingredient)
               if (ingredientText.trim()) {
                 this.addNewPageIfNeeded(8)
@@ -797,7 +800,7 @@ export class ModernPDFGenerator {
           }
           
           // Add instructions if available
-          if (food.recipe.instructions && Array.isArray(food.recipe.instructions) && food.recipe.instructions.length > 0) {
+          if (instructions && (typeof instructions === 'string' || (Array.isArray(instructions) && instructions.length > 0))) {
             try {
             // Recipe instructions header
             this.pdf.setFontSize(10)
@@ -811,7 +814,12 @@ export class ModernPDFGenerator {
           this.pdf.setFontSize(9)
           this.pdf.setTextColor(...this.hexToRgb(colors.textMuted))
           
-          food.recipe.instructions.forEach((instruction: any, stepIndex: number) => {
+          // Handle both string (enriched) and array (legacy) formats
+          const instructionSteps = typeof instructions === 'string' 
+            ? instructions.split('\n').filter(step => step.trim())
+            : instructions
+          
+          instructionSteps.forEach((instruction: any, stepIndex: number) => {
             const instructionText = typeof instruction === 'string' ? instruction : String(instruction || '')
             if (instructionText.trim()) {
               this.addNewPageIfNeeded(12)
