@@ -622,24 +622,26 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
             {Array.isArray(formData.meal_structure) && formData.meal_structure.length > 0 ? (
               <div className="space-y-4">
                 {/* Day Navigation Tabs */}
-                <div className="flex flex-wrap gap-1 sm:gap-2 border-b border-gray-200 pb-3 overflow-x-auto">
-                  {(formData.meal_structure as DayStructure[]).map((day: DayStructure) => (
-                    <button
-                      key={day.day}
-                      onClick={() => setActiveDay(day.day)}
-                      className={`px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap ${
-                        activeDay === day.day
-                          ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm'
-                          : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
-                      }`}
-                    >
-                      <Calendar className="h-4 w-4" />
-                      <span>Jour {day.day}</span>
-                      <Badge variant="outline" className="text-xs h-5 px-1.5">
-                        {day.meals?.length || 0}
-                      </Badge>
-                    </button>
-                  ))}
+                <div className="overflow-x-auto border-b border-gray-200 pb-3">
+                  <div className="flex gap-2 min-w-max">
+                    {(formData.meal_structure as DayStructure[]).map((day: DayStructure) => (
+                      <button
+                        key={day.day}
+                        onClick={() => setActiveDay(day.day)}
+                        className={`px-2 sm:px-3 py-2 text-xs sm:text-sm font-medium rounded-lg transition-all duration-200 flex items-center gap-1 sm:gap-2 whitespace-nowrap flex-shrink-0 ${
+                          activeDay === day.day
+                            ? 'bg-emerald-100 text-emerald-800 border border-emerald-300 shadow-sm'
+                            : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
+                        }`}
+                      >
+                        <Calendar className="h-4 w-4" />
+                        <span>Jour {day.day}</span>
+                        <Badge variant="outline" className="text-xs h-5 px-1.5">
+                          {day.meals?.length || 0}
+                        </Badge>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Overview Bar showing meal counts per day */}

@@ -558,18 +558,6 @@ export function DynamicMealEditDialog({
             </div>
           </div>
 
-          {/* Notes Section */}
-          <div className="space-y-2">
-            <Label htmlFor="day-notes">Notes du jour (optionnel)</Label>
-            <Textarea
-              id="day-notes"
-              value={editData.notes}
-              onChange={(e) => setEditData(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder="Notes spéciales pour ce jour..."
-              rows={2}
-              className="resize-none"
-            />
-          </div>
 
           {/* Action Buttons */}
           <div className="flex justify-end space-x-2 pt-4">
