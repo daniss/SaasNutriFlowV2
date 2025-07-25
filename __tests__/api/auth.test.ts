@@ -1,15 +1,17 @@
 import { GET, POST } from '@/app/api/auth/route'
 import { NextRequest } from 'next/server'
 
-// Mock Supabase
-jest.mock('@/lib/supabase', () => ({
-  supabase: {
-    auth: {
-      getUser: jest.fn(),
-      signInWithPassword: jest.fn(),
-      signUp: jest.fn(),
-    },
+// Mock createClient from server
+const mockSupabaseClient = {
+  auth: {
+    getUser: jest.fn(),
+    signInWithPassword: jest.fn(),
+    signUp: jest.fn(),
   },
+}
+
+jest.mock('@/lib/supabase/server', () => ({
+  createClient: jest.fn(() => mockSupabaseClient)
 }))
 
 describe('/api/auth', () => {

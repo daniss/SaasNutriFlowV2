@@ -25,6 +25,7 @@ import { useAuth } from "@/hooks/useAuthNew";
 import {
   Bell,
   CreditCard,
+  FileText,
   Loader2,
   Mail,
   MapPin,
@@ -151,18 +152,26 @@ export default function SettingsPage() {
         defaultValue="profile"
         className="space-y-6 animate-slide-up animate-delay-100"
       >
-        <TabsList className="grid grid-cols-3 w-full max-w-lg">
-          <TabsTrigger value="profile" className="flex items-center gap-1 sm:gap-2">
+        <TabsList className="grid grid-cols-4 w-full max-w-2xl">
+          <TabsTrigger value="profile" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
             <User className="h-4 w-4" />
-            Profil
+            <span className="hidden sm:inline">Profil</span>
+            <span className="sm:hidden">Profil</span>
           </TabsTrigger>
-          <TabsTrigger value="security" className="flex items-center gap-1 sm:gap-2">
+          <TabsTrigger value="security" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
             <Shield className="h-4 w-4" />
-            Sécurité
+            <span className="hidden sm:inline">Sécurité</span>
+            <span className="sm:hidden">Sécurité</span>
           </TabsTrigger>
-          <TabsTrigger value="billing" className="flex items-center gap-1 sm:gap-2">
+          <TabsTrigger value="gdpr" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">RGPD</span>
+            <span className="sm:hidden">RGPD</span>
+          </TabsTrigger>
+          <TabsTrigger value="billing" className="flex items-center gap-1 sm:gap-2 text-xs sm:text-sm">
             <CreditCard className="h-4 w-4" />
-            Abonnement
+            <span className="hidden sm:inline">Abonnement</span>
+            <span className="sm:hidden">Abo</span>
           </TabsTrigger>
         </TabsList>
 
@@ -471,6 +480,64 @@ export default function SettingsPage() {
         <TabsContent value="security" className="space-y-8">
           <PasswordSettings />
           <TwoFactorSettings />
+        </TabsContent>
+
+        <TabsContent value="gdpr" className="space-y-8">
+          {/* GDPR Compliance Information */}
+          <Card className="border-0 shadow-soft bg-white/90 backdrop-blur-sm">
+            <CardHeader className="pb-6">
+              <CardTitle className="flex items-center gap-3 text-lg font-semibold text-gray-900">
+                <div className="h-10 w-10 bg-blue-100 rounded-xl flex items-center justify-center">
+                  <FileText className="h-5 w-5 text-blue-600" />
+                </div>
+                Conformité RGPD
+              </CardTitle>
+              <CardDescription className="text-gray-600 leading-relaxed">
+                Gestion des données personnelles et conformité réglementaire
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
+                <h4 className="font-medium text-blue-900 mb-2">
+                  Demandes de données de vos clients
+                </h4>
+                <p className="text-sm text-blue-800 mb-3">
+                  Vos clients peuvent demander l'export ou la suppression de leurs données via leur portail client. 
+                  Ces demandes vous seront automatiquement transmises par email.
+                </p>
+                <p className="text-xs text-blue-700">
+                  ✓ Export de données : Traitement automatique sous 48h<br/>
+                  ✓ Suppression de données : Contactez le support pour assistance<br/>
+                  ✓ Gestion des consentements : Disponible dans le portail client
+                </p>
+              </div>
+
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <h4 className="font-medium text-emerald-900 mb-2">
+                  Conservation des données
+                </h4>
+                <div className="text-sm text-emerald-800 space-y-1">
+                  <p>• <strong>Données client :</strong> 7 ans après fin de suivi</p>
+                  <p>• <strong>Données de santé :</strong> 10 ans (obligation légale)</p>
+                  <p>• <strong>Messages :</strong> 3 ans après dernier échange</p>
+                  <p>• <strong>Photos :</strong> Jusqu'à révocation du consentement</p>
+                </div>
+              </div>
+
+              <div className="p-4 bg-gray-50 border border-gray-200 rounded-lg">
+                <h4 className="font-medium text-gray-900 mb-2">
+                  Support RGPD
+                </h4>
+                <p className="text-sm text-gray-700 mb-3">
+                  Pour toute demande RGPD complexe ou assistance avec la conformité, contactez notre équipe support.
+                </p>
+                <Button variant="outline" className="w-full sm:w-auto">
+                  <Mail className="mr-2 h-4 w-4" />
+                  Contacter le support RGPD
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
         </TabsContent>
 
         <TabsContent value="billing" className="space-y-8">

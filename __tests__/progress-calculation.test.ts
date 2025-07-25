@@ -27,39 +27,57 @@ function calculateProgress(
   }
 }
 
-// Test cases
-console.log("=== Weight Loss Progress Tests ===");
-console.log("Initial: 80kg, Current: 75kg, Goal: 70kg");
-console.log("Progress:", calculateProgress(80, 75, 70) + "%"); // Should be 50%
+describe('calculateProgress', () => {
+  describe('weight loss progress', () => {
+    it('calculates 50% progress for halfway to goal', () => {
+      const result = calculateProgress(80, 75, 70)
+      expect(result).toBe(50)
+    })
 
-console.log(
-  "Initial: 80kg, Current: 85kg, Goal: 70kg (weight gained instead of lost)"
-);
-console.log("Progress:", calculateProgress(80, 85, 70) + "%"); // Should be 0%
+    it('calculates 0% progress when weight gained instead of lost', () => {
+      const result = calculateProgress(80, 85, 70)
+      expect(result).toBe(0)
+    })
 
-console.log("Initial: 80kg, Current: 70kg, Goal: 70kg (goal reached)");
-console.log("Progress:", calculateProgress(80, 70, 70) + "%"); // Should be 100%
+    it('calculates 100% progress when goal reached', () => {
+      const result = calculateProgress(80, 70, 70)
+      expect(result).toBe(100)
+    })
 
-console.log("Initial: 80kg, Current: 65kg, Goal: 70kg (exceeded goal)");
-console.log("Progress:", calculateProgress(80, 65, 70) + "%"); // Should be 100%
+    it('calculates 100% progress when goal exceeded', () => {
+      const result = calculateProgress(80, 65, 70)
+      expect(result).toBe(100)
+    })
+  })
 
-console.log("\n=== Weight Gain Progress Tests ===");
-console.log("Initial: 60kg, Current: 65kg, Goal: 70kg");
-console.log("Progress:", calculateProgress(60, 65, 70) + "%"); // Should be 50%
+  describe('weight gain progress', () => {
+    it('calculates 50% progress for halfway to goal', () => {
+      const result = calculateProgress(60, 65, 70)
+      expect(result).toBe(50)
+    })
 
-console.log(
-  "Initial: 60kg, Current: 55kg, Goal: 70kg (weight lost instead of gained)"
-);
-console.log("Progress:", calculateProgress(60, 55, 70) + "%"); // Should be 0%
+    it('calculates 0% progress when weight lost instead of gained', () => {
+      const result = calculateProgress(60, 55, 70)
+      expect(result).toBe(0)
+    })
 
-console.log("Initial: 60kg, Current: 70kg, Goal: 70kg (goal reached)");
-console.log("Progress:", calculateProgress(60, 70, 70) + "%"); // Should be 100%
+    it('calculates 100% progress when goal reached', () => {
+      const result = calculateProgress(60, 70, 70)
+      expect(result).toBe(100)
+    })
 
-console.log("Initial: 60kg, Current: 75kg, Goal: 70kg (exceeded goal)");
-console.log("Progress:", calculateProgress(60, 75, 70) + "%"); // Should be 100%
+    it('calculates 100% progress when goal exceeded', () => {
+      const result = calculateProgress(60, 75, 70)
+      expect(result).toBe(100)
+    })
+  })
 
-console.log("\n=== Maintenance Tests ===");
-console.log("Initial: 70kg, Current: 70kg, Goal: 70kg (maintenance)");
-console.log("Progress:", calculateProgress(70, 70, 70) + "%"); // Should be 100%
+  describe('maintenance', () => {
+    it('calculates 100% progress for maintenance goal', () => {
+      const result = calculateProgress(70, 70, 70)
+      expect(result).toBe(100)
+    })
+  })
+})
 
 export { calculateProgress };
