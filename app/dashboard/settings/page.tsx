@@ -531,7 +531,11 @@ export default function SettingsPage() {
                 <p className="text-sm text-gray-700 mb-3">
                   Pour toute demande RGPD complexe ou assistance avec la conformité, contactez notre équipe support.
                 </p>
-                <Button variant="outline" className="w-full sm:w-auto">
+                <Button 
+                  variant="outline" 
+                  className="w-full sm:w-auto"
+                  onClick={() => window.location.href = 'mailto:contact@nutri-flow.me?subject=Demande%20RGPD%20-%20Support'}
+                >
                   <Mail className="mr-2 h-4 w-4" />
                   Contacter le support RGPD
                 </Button>
