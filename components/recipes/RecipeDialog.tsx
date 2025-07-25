@@ -12,7 +12,8 @@ import { Textarea } from "@/components/ui/textarea"
 import { useToast } from "@/hooks/use-toast"
 import { useAuth } from "@/hooks/useAuthNew"
 import { supabase, type Recipe } from "@/lib/supabase"
-import { ChefHat, Plus, X } from "lucide-react"
+import { ChefHat, Plus, X, HelpCircle } from "lucide-react"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { useState, useEffect } from "react"
 
 interface RecipeDialogProps {
@@ -507,17 +508,26 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
-        <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <ChefHat className="h-5 w-5" />
-            {recipe ? "Modifier la recette" : "Nouvelle recette"}
-          </DialogTitle>
-          <DialogDescription>
-            {recipe ? "Modifiez les détails de votre recette." : "Créez une nouvelle recette pour votre bibliothèque."}
-          </DialogDescription>
-        </DialogHeader>
+    <TooltipProvider>
+      <Dialog open={isOpen} onOpenChange={onClose}>
+        <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto w-[95vw] sm:w-full p-4 sm:p-6">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <ChefHat className="h-5 w-5" />
+              {recipe ? "Modifier la recette" : "Nouvelle recette"}
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                </TooltipTrigger>
+                <TooltipContent side="right" className="max-w-sm">
+                  <p>Créez des recettes avec calculs nutritionnels automatiques. Utilisez la base ANSES-CIQUAL pour des données précises.</p>
+                </TooltipContent>
+              </Tooltip>
+            </DialogTitle>
+            <DialogDescription>
+              {recipe ? "Modifiez les détails de votre recette." : "Créez une nouvelle recette pour votre bibliothèque."}
+            </DialogDescription>
+          </DialogHeader>
 
         <div className="space-y-6">
           {/* Basic Information */}
@@ -609,7 +619,17 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
           {/* Nutrition - Auto-calculated */}
           <div className="space-y-3">
             <div className="flex items-center justify-between">
-              <Label className="text-lg font-medium">Valeurs nutritionnelles par portion</Label>
+              <div className="flex items-center gap-2">
+                <Label className="text-lg font-medium">Valeurs nutritionnelles par portion</Label>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <HelpCircle className="h-4 w-4 text-gray-400 cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-sm">
+                    <p>Les valeurs se calculent automatiquement selon les ingrédients de la base de données. Vous pouvez les modifier manuellement si nécessaire.</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
               <Badge variant="secondary" className="text-xs">
                 Manuel ou automatique
               </Badge>
@@ -759,9 +779,16 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
                   <Plus className="h-4 w-4 mr-2" />
                   Ajouter manuellement
                 </Button>
-                <Button variant="default" size="sm" onClick={() => setFoodSearchOpen(true)} className="flex-1">
-                  Rechercher dans ANSES-CIQUAL
-                </Button>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="default" size="sm" onClick={() => setFoodSearchOpen(true)} className="flex-1">
+                      Rechercher dans ANSES-CIQUAL
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent side="top" className="max-w-sm">
+                    <p>Base de données officielle française avec 3000+ aliments et valeurs nutritionnelles certifiées. Idéal pour la précision.</p>
+                  </TooltipContent>
+                </Tooltip>
               </div>
             </CardContent>
           </Card>
@@ -855,5 +882,6 @@ export default function RecipeDialog({ isOpen, onClose, onSave, recipe }: Recipe
         day={0}
       />
     </Dialog>
+    </TooltipProvider>
   )
 }

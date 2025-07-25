@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Search, Book, MessageSquare, Shield, Users, Utensils, Calendar, CreditCard, BarChart3 } from "lucide-react";
+import { Search, Book, MessageSquare, Shield, Users, Utensils, Calendar, CreditCard, BarChart3, ChefHat, FileText } from "lucide-react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -18,7 +18,9 @@ const iconMap: Record<string, any> = {
   Calendar,
   CreditCard,
   BarChart3,
-  MessageSquare
+  MessageSquare,
+  ChefHat,
+  FileText
 };
 
 export default function HelpPage() {
