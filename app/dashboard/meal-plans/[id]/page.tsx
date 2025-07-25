@@ -166,6 +166,7 @@ export default function MealPlanDetailPage() {
   const [isDuplicateOpen, setIsDuplicateOpen] = useState(false)
   const [isEditDayOpen, setIsEditDayOpen] = useState(false)
   const [isDynamicEditOpen, setIsDynamicEditOpen] = useState(false)
+  const [isShareConfirmOpen, setIsShareConfirmOpen] = useState(false)
   const [currentEditDay, setCurrentEditDay] = useState<DynamicMealPlanDay | null>(null)
   const [editDayNumber, setEditDayNumber] = useState(1)
   const [editDayForm, setEditDayForm] = useState<EditDayForm>({
@@ -934,7 +935,7 @@ export default function MealPlanDetailPage() {
     return createdRecipes
   }
 
-  const handleSharePlan = async () => {
+  const handleSharePlan = () => {
     if (!mealPlan || !mealPlan.clients?.email) {
       toast({
         title: "Erreur",
@@ -943,6 +944,11 @@ export default function MealPlanDetailPage() {
       })
       return
     }
+    setIsShareConfirmOpen(true)
+  }
+
+  const handleConfirmShare = async () => {
+    if (!mealPlan || !mealPlan.clients) return
 
     try {
       // Create recipes from selected recipes before sharing
@@ -1001,6 +1007,7 @@ export default function MealPlanDetailPage() {
         title: "Plan partagé et activé",
         description: `Le plan alimentaire est maintenant le plan actif de ${mealPlan.clients.name} et a été partagé par email.`
       })
+      setIsShareConfirmOpen(false)
     } catch (error) {
       console.error('Error sharing meal plan:', error)
       toast({
@@ -1008,6 +1015,7 @@ export default function MealPlanDetailPage() {
         description: error instanceof Error ? error.message : "Une erreur s'est produite lors du partage.",
         variant: "destructive"
       })
+      setIsShareConfirmOpen(false)
     }
   }
 
@@ -2732,6 +2740,24 @@ export default function MealPlanDetailPage() {
         />
 
         {/* Delete Dialog */}
+        {/* Share Confirmation Dialog */}
+        <AlertDialog open={isShareConfirmOpen} onOpenChange={setIsShareConfirmOpen}>
+          <AlertDialogContent className="rounded-xl">
+            <AlertDialogHeader>
+              <AlertDialogTitle>Partager le plan alimentaire</AlertDialogTitle>
+              <AlertDialogDescription>
+                Ce plan sera partagé avec le client sur son tableau de bord. Voulez-vous continuer ?
+              </AlertDialogDescription>
+            </AlertDialogHeader>
+            <AlertDialogFooter>
+              <AlertDialogCancel>Non</AlertDialogCancel>
+              <AlertDialogAction onClick={handleConfirmShare} className="bg-emerald-600 hover:bg-emerald-700">
+                Oui
+              </AlertDialogAction>
+            </AlertDialogFooter>
+          </AlertDialogContent>
+        </AlertDialog>
+
         <AlertDialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
           <AlertDialogContent className="rounded-xl">
             <AlertDialogHeader>
