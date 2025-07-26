@@ -17,6 +17,7 @@ function CheckEmailContent() {
   const { signUp } = useAuth()
 
   const email = searchParams.get('email')
+  const message = searchParams.get('message')
 
   useEffect(() => {
     if (!email) {
@@ -43,19 +44,19 @@ function CheckEmailContent() {
     setResendSuccess(false)
 
     try {
-      // Extract user data from URL params if available
-      const firstName = searchParams.get('firstName') || ''
-      const lastName = searchParams.get('lastName') || ''
-      const phone = searchParams.get('phone') || ''
-      const address = searchParams.get('address') || ''
+      // Use Supabase's resend confirmation email functionality
+      const response = await fetch('/api/auth/resend-confirmation', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email })
+      })
+
+      const result = await response.json()
       
-      // Generate a temporary password for resend (user will need to reset)
-      const tempPassword = Math.random().toString(36).slice(-8) + 'Aa1!'
-      
-      const { error } = await signUp(email, tempPassword, firstName, lastName, phone, address)
-      
-      if (error) {
-        console.error('Erreur lors du renvoi:', error)
+      if (!response.ok || result.error) {
+        console.error('Erreur lors du renvoi:', result.error)
       } else {
         setResendSuccess(true)
         setResendCooldown(10) // Reset cooldown
@@ -90,6 +91,20 @@ function CheckEmailContent() {
         </CardHeader>
         
         <CardContent className="space-y-6">
+          {message === 'email_confirmation_required' && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-start space-x-3">
+                <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center mt-0.5">
+                  <div className="w-2 h-2 bg-red-600 rounded-full" />
+                </div>
+                <div className="text-sm text-red-800">
+                  <p className="font-medium mb-1">🔒 Accès sécurisé requis</p>
+                  <p>Vous devez confirmer votre adresse e-mail avant d'accéder au tableau de bord pour des raisons de sécurité.</p>
+                </div>
+              </div>
+            </div>
+          )}
+          
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <div className="flex items-start space-x-3">
               <Mail className="w-5 h-5 text-blue-600 mt-0.5" />

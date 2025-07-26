@@ -65,6 +65,19 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
+  // SECURITY: Check email confirmation status for all dashboard routes
+  if (user && isProtectedRoute) {
+    // Check if email is confirmed
+    if (!user.email_confirmed_at) {
+      console.log('🚨 Access denied: Email not confirmed for user:', user.email);
+      const url = request.nextUrl.clone();
+      url.pathname = "/auth/check-email";
+      url.searchParams.set('email', user.email || '');
+      url.searchParams.set('message', 'email_confirmation_required');
+      return NextResponse.redirect(url);
+    }
+  }
+
   // List of dashboard routes that are accessible even without active subscription
   const alwaysAccessibleRoutes = [
     '/dashboard/upgrade',
