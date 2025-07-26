@@ -57,15 +57,26 @@ export async function GET(request: NextRequest) {
       }
     );
 
-    // Get basic client info for session validation
+    // SECURITY FIX: Get client info with dietitian relationship validation
+    // This ensures multi-tenant isolation - clients can only be accessed by their assigned dietitian
     const { data: client, error: clientError } = await supabase
       .from("clients")
-      .select("id, name, email")
+      .select("id, name, email, dietitian_id, dietitians!inner(auth_user_id)")
       .eq("id", clientId)
       .single();
 
     if (clientError || !client) {
+      console.warn(`Client validation failed for ID ${clientId}:`, clientError);
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
+    }
+
+    // CRITICAL: Verify client belongs to a valid dietitian
+    if (!client.dietitian_id || !client.dietitians || !(client.dietitians as any).auth_user_id) {
+      console.error(`Client ${clientId} has invalid dietitian relationship`);
+      return NextResponse.json(
+        { error: "Invalid client configuration" },
+        { status: 403 }
+      );
     }
 
     return NextResponse.json({

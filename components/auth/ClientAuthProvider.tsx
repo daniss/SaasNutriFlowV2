@@ -51,27 +51,25 @@ export function ClientAuthProvider({
     checkClientSession();
   }, []);
 
+  const clearClientSession = () => {
+    setClient(null);
+    setHasCheckedSession(true);
+    localStorage.removeItem("client-session");
+    localStorage.removeItem("client-token");
+    localStorage.removeItem("client-consents-given");
+  };
+
   const checkClientSession = async () => {
     // Prevent concurrent session validation calls
     if (isValidating) return;
     setIsValidating(true);
     try {
-      // Check if there's a valid client session and token
-      const sessionData = localStorage.getItem("client-session");
+      // Check if there's a valid client token
       const clientToken = localStorage.getItem("client-token");
 
-      if (sessionData && clientToken) {
-        // First set client from stored session data to avoid timing issues
-        try {
-          const storedClient = JSON.parse(sessionData);
-          if (storedClient && storedClient.id) {
-            setClient(storedClient);
-          }
-        } catch (parseError) {
-          console.error("Error parsing stored client session:", parseError);
-        }
-
-        // Then verify the token is still valid with lightweight validation endpoint
+      if (clientToken) {
+        // SECURITY FIX: Always verify with server BEFORE setting client state
+        // Never trust localStorage data for authentication
         const response = await fetch("/api/client-auth/validate-session", {
           method: "GET",
           headers: {
@@ -82,34 +80,26 @@ export function ClientAuthProvider({
         if (response.ok) {
           const result = await response.json();
           if (result.success && result.client) {
-            // Update with fresh client data from server
+            // Only set client data from verified server response
             setClient(result.client);
+            // Update localStorage with fresh server data
+            localStorage.setItem("client-session", JSON.stringify(result.client));
             setHasCheckedSession(true);
           } else {
             // Session invalid, clear stored data
-            setClient(null);
-            setHasCheckedSession(true);
-            localStorage.removeItem("client-session");
-            localStorage.removeItem("client-token");
+            clearClientSession();
           }
         } else {
           // Token is invalid, clear stored data
-          setClient(null);
-          setHasCheckedSession(true);
-          localStorage.removeItem("client-session");
-          localStorage.removeItem("client-token");
+          clearClientSession();
         }
       } else {
-        // No session data available
-        setClient(null);
-        setHasCheckedSession(true);
+        // No token available
+        clearClientSession();
       }
     } catch (error) {
       console.error("Error checking client session:", error);
-      setClient(null);
-      setHasCheckedSession(true);
-      localStorage.removeItem("client-session");
-      localStorage.removeItem("client-token");
+      clearClientSession();
     } finally {
       setIsLoading(false);
       setIsValidating(false);

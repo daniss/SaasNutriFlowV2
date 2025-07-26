@@ -13,12 +13,13 @@ import {
 
 export async function POST(request: NextRequest) {
   try {
-    // Initialize API key and Gemini inside the handler to prevent build-time evaluation
+    // SECURITY: Use validated environment configuration
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
+      console.error('❌ GEMINI_API_KEY environment variable is missing');
       return NextResponse.json(
-        { error: "GEMINI_API_KEY environment variable is required" },
-        { status: 500 }
+        { error: "Service de génération IA indisponible" },
+        { status: 503 }
       );
     }
 
@@ -143,7 +144,7 @@ export async function POST(request: NextRequest) {
       const { count: currentUsage, error: usageError } = await supabase
         .from('ai_generations')
         .select('id', { count: 'exact' })
-        .eq('dietitian_id', user.id)
+        .eq('dietitian_id', dietitian.id)
         .eq('generation_successful', true)
         .gte('created_at', startOfMonth.toISOString());
 
