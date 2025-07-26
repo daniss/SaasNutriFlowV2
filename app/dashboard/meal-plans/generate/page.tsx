@@ -460,8 +460,18 @@ export default function GenerateMealPlanPage() {
             // Find corresponding recipe for this meal
             const recipe = createdRecipes.find(r => r.name === meal.name)
             
+            // Map meal types to French like in client save function
+            const mealTypeMap: Record<string, string> = {
+              breakfast: 'Petit-déjeuner',
+              lunch: 'Déjeuner', 
+              dinner: 'Dîner',
+              snack: 'Collation',
+              snacks: 'Collation'
+            }
+            const frenchMealType = mealTypeMap[meal.type] || meal.type
+            
             return {
-              name: meal.type, // Use meal type (breakfast, lunch, etc.)
+              name: frenchMealType, // Use French meal type 
               time: meal.time || "08:00", // Default time if not provided
               calories_target: meal.calories || null,
               description: meal.name, // Use meal name as description
