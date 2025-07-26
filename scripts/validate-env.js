@@ -12,6 +12,10 @@
  */
 
 const { z } = require('zod');
+const path = require('path');
+
+// Load environment variables from .env.local
+require('dotenv').config({ path: path.join(__dirname, '..', '.env.local') });
 
 // Define required environment variables with validation rules
 const envSchema = z.object({

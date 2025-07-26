@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
 import { useSearchParams, useRouter } from "next/navigation"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
@@ -8,7 +8,7 @@ import { Mail, Clock, CheckCircle } from "lucide-react"
 import { useAuth } from "@/components/auth/AuthProviderNew"
 import Link from "next/link"
 
-export default function CheckEmailPage() {
+function CheckEmailContent() {
   const [resendCooldown, setResendCooldown] = useState(10)
   const [isResending, setIsResending] = useState(false)
   const [resendSuccess, setResendSuccess] = useState(false)
@@ -31,6 +31,9 @@ export default function CheckEmailPage() {
       }, 1000)
       return () => clearTimeout(timer)
     }
+    
+    // Return undefined explicitly for other code paths
+    return undefined
   }, [resendCooldown, email, router])
 
   const handleResend = async () => {
@@ -158,5 +161,26 @@ export default function CheckEmailPage() {
         </CardContent>
       </Card>
     </div>
+  )
+}
+
+export default function CheckEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto mb-4 w-16 h-16 bg-emerald-100 rounded-full flex items-center justify-center">
+              <Mail className="w-8 h-8 text-emerald-600 animate-pulse" />
+            </div>
+            <CardTitle className="text-2xl font-bold text-gray-900">
+              Chargement...
+            </CardTitle>
+          </CardHeader>
+        </Card>
+      </div>
+    }>
+      <CheckEmailContent />
+    </Suspense>
   )
 }
