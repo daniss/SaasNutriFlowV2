@@ -29,8 +29,24 @@ export async function POST(request: Request) {
 
     if (error) {
       console.error('Resend confirmation error:', error)
+      
+      // Handle specific Supabase errors
+      if (error.message?.includes('rate limit') || error.message?.includes('31 seconds')) {
+        return NextResponse.json(
+          { error: 'Trop de tentatives. Veuillez attendre 31 secondes avant de réessayer.' },
+          { status: 429 }
+        )
+      }
+      
+      if (error.message?.includes('Email not confirmed')) {
+        return NextResponse.json(
+          { error: 'L\'adresse e-mail n\'a pas encore été confirmée.' },
+          { status: 400 }
+        )
+      }
+      
       return NextResponse.json(
-        { error: 'Failed to resend confirmation email' },
+        { error: 'Échec du renvoi de l\'e-mail de confirmation' },
         { status: 400 }
       )
     }

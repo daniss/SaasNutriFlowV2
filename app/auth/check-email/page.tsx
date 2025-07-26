@@ -9,9 +9,10 @@ import { useAuth } from "@/components/auth/AuthProviderNew"
 import Link from "next/link"
 
 function CheckEmailContent() {
-  const [resendCooldown, setResendCooldown] = useState(10)
+  const [resendCooldown, setResendCooldown] = useState(60)
   const [isResending, setIsResending] = useState(false)
   const [resendSuccess, setResendSuccess] = useState(false)
+  const [resendError, setResendError] = useState('')
   const searchParams = useSearchParams()
   const router = useRouter()
   const { signUp } = useAuth()
@@ -42,6 +43,7 @@ function CheckEmailContent() {
 
     setIsResending(true)
     setResendSuccess(false)
+    setResendError('')
 
     try {
       // Use Supabase's resend confirmation email functionality
@@ -57,12 +59,18 @@ function CheckEmailContent() {
       
       if (!response.ok || result.error) {
         console.error('Erreur lors du renvoi:', result.error)
+        if (response.status === 429) {
+          setResendError('Trop de tentatives. Veuillez attendre avant de réessayer.')
+        } else {
+          setResendError(result.error || 'Erreur lors du renvoi de l\'e-mail')
+        }
       } else {
         setResendSuccess(true)
-        setResendCooldown(10) // Reset cooldown
+        setResendCooldown(60) // Reset cooldown to match Supabase rate limits
       }
     } catch (error) {
       console.error('Erreur lors du renvoi:', error)
+      setResendError('Erreur de connexion. Veuillez réessayer.')
     } finally {
       setIsResending(false)
     }
@@ -125,6 +133,19 @@ function CheckEmailContent() {
                 <CheckCircle className="w-5 h-5 text-green-600" />
                 <p className="text-sm font-medium text-green-800">
                   E-mail de confirmation renvoyé avec succès !
+                </p>
+              </div>
+            </div>
+          )}
+
+          {resendError && (
+            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+              <div className="flex items-center space-x-2">
+                <div className="w-5 h-5 rounded-full bg-red-100 flex items-center justify-center">
+                  <div className="w-2 h-2 bg-red-600 rounded-full" />
+                </div>
+                <p className="text-sm font-medium text-red-800">
+                  {resendError}
                 </p>
               </div>
             </div>
