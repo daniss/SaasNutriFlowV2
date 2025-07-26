@@ -1857,16 +1857,16 @@ export default function GenerateMealPlanPage() {
                                       <div className="text-gray-500">calories</div>
                                     </div>
                                     <div className="text-center">
-                                      <div className="font-semibold text-blue-600">{day.totalProtein}g</div>
-                                      <div className="text-gray-500">protéines</div>
+                                      <div className="font-semibold text-orange-600">{day.totalCarbs}g</div>
+                                      <div className="text-gray-500">glucides</div>
                                     </div>
                                     <div className="text-center">
-                                      <div className="font-semibold text-orange-600">{(day as any).totalFiber || 'N/A'}g</div>
-                                      <div className="text-gray-500">fibres</div>
+                                      <div className="font-semibold text-purple-600">{day.totalFat}g</div>
+                                      <div className="text-gray-500">lipides</div>
                                     </div>
                                   </div>
                                   <div className="lg:hidden text-sm text-gray-600">
-                                    {day.totalCalories} cal • {day.totalProtein}g protéines
+                                    {day.totalCalories} cal • {day.totalCarbs}g glucides • {day.totalFat}g lipides
                                   </div>
                                 </div>
                               </AccordionTrigger>
@@ -1951,7 +1951,8 @@ export default function GenerateMealPlanPage() {
                                     </div>
                                     <div className="flex items-center gap-4 text-sm">
                                       <span className="text-green-600 font-medium">{day.totalCalories} cal</span>
-                                      <span className="text-blue-600 font-medium">{day.totalProtein}g protéines</span>
+                                      <span className="text-orange-600 font-medium">{day.totalCarbs}g glucides</span>
+                                      <span className="text-purple-600 font-medium">{day.totalFat}g lipides</span>
                                     </div>
                                   </div>
                                   
@@ -2033,7 +2034,8 @@ export default function GenerateMealPlanPage() {
                                 </div>
                                 <div className="flex items-center gap-4 text-sm">
                                   <span className="text-green-600 font-medium">{day.totalCalories} cal</span>
-                                  <span className="text-blue-600 font-medium">{day.totalProtein}g protéines</span>
+                                  <span className="text-orange-600 font-medium">{day.totalCarbs}g glucides</span>
+                                  <span className="text-purple-600 font-medium">{day.totalFat}g lipides</span>
                                 </div>
                               </div>
                               
