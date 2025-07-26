@@ -60,7 +60,6 @@ import { generateMealPlan, type GeneratedMealPlan, type Meal } from "@/lib/gemin
 import { supabase, type Client } from "@/lib/supabase"
 import { convertAIToDynamicMealPlan } from "@/lib/meal-plan-types"
 import { useToast } from "@/hooks/use-toast"
-import MacronutrientBreakdown from "@/components/nutrition/MacronutrientBreakdown"
 
 export default function GenerateMealPlanPage() {
   const { user } = useAuth()
@@ -71,7 +70,6 @@ export default function GenerateMealPlanPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [generatedPlan, setGeneratedPlan] = useState<GeneratedMealPlan | null>(null)
   const [clients, setClients] = useState<Client[]>([])
-  const [editingMeal, setEditingMeal] = useState<{ dayIndex: number; mealType: string; meal: Meal } | null>(null)
   const [generationProgress, setGenerationProgress] = useState(0)
   const [lastSubmission, setLastSubmission] = useState<number>(0)
   const [validationError, setValidationError] = useState<string>("")
@@ -92,7 +90,7 @@ export default function GenerateMealPlanPage() {
   }
   const [sendingStep, setSendingStep] = useState("")
   const [planFeedback, setPlanFeedback] = useState<{ planId: string; rating: 'good' | 'bad' | null }>({ planId: '', rating: null })
-  const [viewMode, setViewMode] = useState<'cards' | 'timeline' | 'compact' | 'nutrition'>('cards')
+  const [viewMode, setViewMode] = useState<'cards' | 'timeline' | 'compact'>('cards')
   const [expandedDays, setExpandedDays] = useState<Set<number>>(new Set([1]))
   const textareaRef = useRef<HTMLTextAreaElement>(null)
 
@@ -415,64 +413,41 @@ export default function GenerateMealPlanPage() {
     return organized
   }
 
-  const handleEditMeal = (dayIndex: number, mealType: string, meal: Meal) => {
-    setEditingMeal({ dayIndex, mealType, meal: { ...meal } })
-  }
-
-  const handleSaveEdit = () => {
-    if (!editingMeal || !generatedPlan) return
-
-    const updatedPlan = { ...generatedPlan }
-    const dayPlan = updatedPlan.days[editingMeal.dayIndex]
-
-    // Update the meal in the array structure
-    if (dayPlan && dayPlan.meals) {
-      const mealIndex = dayPlan.meals.findIndex((m) => {
-        if (editingMeal.mealType === 'snacks') {
-          // For snacks, match by type and index
-          const snacks = dayPlan.meals.filter(meal => meal.type === 'snack')
-          const snackIndex = snacks.findIndex(s => s.name === editingMeal.meal.name)
-          return m.type === 'snack' && snacks[snackIndex] === m
-        }
-        return m.type === editingMeal.mealType
-      })
-      
-      if (mealIndex !== -1) {
-        dayPlan.meals[mealIndex] = { ...editingMeal.meal }
-      }
-    }
-
-    // Recalculate daily totals from array structure
-    dayPlan.totalCalories = dayPlan.meals.reduce((sum, meal) => sum + (meal.calories || 0), 0)
-    dayPlan.totalProtein = dayPlan.meals.reduce((sum, meal) => sum + (meal.protein || 0), 0)
-    dayPlan.totalCarbs = dayPlan.meals.reduce((sum, meal) => sum + (meal.carbs || 0), 0)
-    dayPlan.totalFat = dayPlan.meals.reduce((sum, meal) => sum + (meal.fat || 0), 0)
-
-    setGeneratedPlan(updatedPlan)
-    setEditingMeal(null)
-  }
 
   const handleSaveAsTemplate = async () => {
     if (!generatedPlan || !user) return
 
     setIsSavingTemplate(true)
+    setSafeProgress(0)
+    setSendingStep("Préparation...")
     
     try {
-      // Show initial toast
-      toast({
-        title: "Sauvegarde en cours...",
-        description: "Création du modèle en cours",
-      })
-      // Step 1: Save ingredients to database (same as regular save)
+      // Step 1: Save ingredients to database
+      setSendingStep("Création des ingrédients...")
+      setSafeProgress(20)
+      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay for smooth UI
+      
       const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
 
-      // Step 2: Create recipes from AI-generated meals (same as regular save)
+      // Step 2: Create recipes from AI-generated meals
+      setSendingStep("Création des recettes...")
+      setSafeProgress(40)
+      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay for smooth UI
+      
       const createdRecipes = await createRecipesFromMeals(generatedPlan.days, user!.id)
 
       // Step 3: Create recipe-to-meal mapping for template structure
+      setSendingStep("Création de la structure du modèle...")
+      setSafeProgress(60)
+      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay for smooth UI
+      
       const recipeMapping = createRecipeToMealMapping(generatedPlan.days, createdRecipes)
 
       // Step 4: Transform AI plan to template structure with recipe references
+      setSendingStep("Traitement de la structure...")
+      setSafeProgress(80)
+      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay for smooth UI
+      
       const templateStructure = []
       
       for (let dayNum = 1; dayNum <= generatedPlan.duration; dayNum++) {
@@ -499,6 +474,9 @@ export default function GenerateMealPlanPage() {
       }
 
       // Step 5: Save enhanced template with recipe references
+      setSendingStep("Sauvegarde du modèle...")
+      setSafeProgress(90)
+      
       const { error } = await supabase.from("meal_plan_templates").insert({
         dietitian_id: user.id,
         name: formData.planName || generatedPlan.title,
@@ -521,6 +499,10 @@ export default function GenerateMealPlanPage() {
 
       if (error) throw error
       
+      // Step 6: Complete
+      setSendingStep("Finalisation...")
+      setSafeProgress(100)
+      
       toast({
         title: "Modèle sauvegardé",
         description: `Le plan alimentaire a été sauvegardé comme modèle avec ${createdRecipes.length} recettes et ${savedIngredients.length} ingrédients créés!`,
@@ -533,7 +515,10 @@ export default function GenerateMealPlanPage() {
         variant: "destructive",
       })
     } finally {
+      // Reset loading state
       setIsSavingTemplate(false)
+      setSafeProgress(0)
+      setSendingStep("")
     }
   }
 
@@ -812,31 +797,29 @@ export default function GenerateMealPlanPage() {
     }
 
     setIsSavingOnly(true)
+    setSafeProgress(0)
+    setSendingStep("Préparation...")
 
     try {
-      // Show initial toast
-      toast({
-        title: "Sauvegarde en cours...",
-        description: "Création du plan alimentaire",
-      })
-      // Get client information (only if client is selected)
-      let client = null
-      if (formData.clientId) {
-        const { data: clientData, error: clientError } = await supabase
-          .from("clients")
-          .select("name, email")
-          .eq("id", formData.clientId)
-          .single()
-        
-        if (clientError) throw clientError
-        client = clientData
-      }
+      // Step 1: Create ingredients
+      setSendingStep("Création des ingrédients...")
+      setSafeProgress(15)
+      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay for smooth UI
       
-      // Save ingredients and create recipes (same as the original function)
       const savedIngredients = await saveIngredientsToDatabase(generatedPlan.days)
+      
+      // Step 2: Create recipes for each meal with full ingredient data
+      setSendingStep("Création des recettes...")
+      setSafeProgress(35)
+      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay for smooth UI
+      
       const createdRecipes = await createRecipesFromMeals(generatedPlan.days, user!.id)
       
-      // Convert AI plan to dynamic format
+      // Step 3: Convert AI plan to dynamic format
+      setSendingStep("Traitement du plan alimentaire...")
+      setSafeProgress(55)
+      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay for smooth UI
+      
       const dynamicPlan = convertAIToDynamicMealPlan({
         ...generatedPlan,
         totalDays: generatedPlan.duration,
@@ -848,7 +831,13 @@ export default function GenerateMealPlanPage() {
         }
       })
 
-      // Link recipes to meals
+      // Step 4: Link recipes to meals
+      setSendingStep("Liaison des recettes aux repas...")
+      setSafeProgress(75)
+      await new Promise(resolve => setTimeout(resolve, 100)) // Small delay for smooth UI
+      
+      // IMPORTANT: Add created recipes to the dynamic plan structure
+      // Map recipes to their corresponding meals using the ORIGINAL plan structure
       const recipesByMeal = createRecipeToMealMapping(generatedPlan.days, createdRecipes)
       
       for (const day of dynamicPlan.days) {
@@ -883,7 +872,10 @@ export default function GenerateMealPlanPage() {
         }
       }
       
-      // Save the meal plan with "paused" status (not active)
+      // Step 5: Save the meal plan to database
+      setSendingStep("Sauvegarde du plan alimentaire...")
+      setSafeProgress(90)
+      
       const { data: savedPlan, error: saveError } = await supabase
         .from("meal_plans")
         .insert({
@@ -900,12 +892,16 @@ export default function GenerateMealPlanPage() {
       
       if (saveError) throw saveError
       
+      // Step 6: Complete
+      setSendingStep("Finalisation...")
+      setSafeProgress(100)
+      
       toast({
         title: "Plan sauvegardé",
         description: `Plan alimentaire sauvegardé avec succès! ${savedIngredients.length} ingrédient(s) et ${createdRecipes.length} recette(s) créés.`,
       })
       
-      // Redirect to the created meal plan page
+      // Small delay to show completion, then redirect
       setTimeout(() => {
         router.push(`/dashboard/meal-plans/${savedPlan.id}`)
       }, 1000)
@@ -917,7 +913,10 @@ export default function GenerateMealPlanPage() {
         variant: "destructive",
       })
     } finally {
+      // Reset loading state
       setIsSavingOnly(false)
+      setSafeProgress(0)
+      setSendingStep("")
     }
   }
 
@@ -1771,7 +1770,6 @@ export default function GenerateMealPlanPage() {
                             { mode: 'cards', icon: Grid, label: 'Cartes' },
                             { mode: 'timeline', icon: List, label: 'Chronologie' },
                             { mode: 'compact', icon: BarChart3, label: 'Compact' },
-                            { mode: 'nutrition', icon: PieChart, label: 'Nutrition' },
                           ].map((option) => (
                             <button
                               key={option.mode}
@@ -1879,7 +1877,6 @@ export default function GenerateMealPlanPage() {
                                             meal={organized.breakfast}
                                             mealType="Petit-déjeuner"
                                             icon={<Utensils className="h-4 w-4" />}
-                                            onEdit={() => handleEditMeal(dayIndex, "breakfast", organized.breakfast!)}
                                             gradientFrom="from-yellow-400"
                                             gradientTo="to-orange-500"
                                           />
@@ -1891,7 +1888,6 @@ export default function GenerateMealPlanPage() {
                                             meal={organized.lunch}
                                             mealType="Déjeuner"
                                             icon={<Utensils className="h-4 w-4" />}
-                                            onEdit={() => handleEditMeal(dayIndex, "lunch", organized.lunch!)}
                                             gradientFrom="from-green-400"
                                             gradientTo="to-emerald-500"
                                           />
@@ -1903,7 +1899,6 @@ export default function GenerateMealPlanPage() {
                                             meal={organized.dinner}
                                             mealType="Dîner"
                                             icon={<Utensils className="h-4 w-4" />}
-                                            onEdit={() => handleEditMeal(dayIndex, "dinner", organized.dinner!)}
                                             gradientFrom="from-purple-400"
                                             gradientTo="to-pink-500"
                                           />
@@ -1916,7 +1911,6 @@ export default function GenerateMealPlanPage() {
                                             meal={snack}
                                             mealType={`Collation ${snackIndex + 1}`}
                                             icon={<Utensils className="h-4 w-4" />}
-                                            onEdit={() => handleEditMeal(dayIndex, "snacks", snack)}
                                             gradientFrom="from-cyan-400"
                                             gradientTo="to-blue-500"
                                           />
@@ -1973,20 +1967,12 @@ export default function GenerateMealPlanPage() {
                                       }
                                       
                                       return mealItems.map((mealData, mealIndex) => (
-                                      <div key={mealIndex} className={`p-4 rounded-lg border-2 ${mealData.color} group hover:shadow-md transition-all`}>
+                                      <div key={mealIndex} className={`p-4 rounded-lg border-2 ${mealData.color} hover:shadow-md transition-all`}>
                                         <div className="flex items-center justify-between mb-2">
                                           <div className="flex items-center gap-3">
                                             <div className="text-sm font-medium text-gray-700">{mealData.time}</div>
                                             <div className="text-sm font-semibold text-gray-900">{mealData.type}</div>
                                           </div>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleEditMeal(dayIndex, mealData.type.toLowerCase(), mealData.meal)}
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
-                                          >
-                                            <Edit className="h-4 w-4" />
-                                          </Button>
                                         </div>
                                         <div className="text-sm font-medium text-gray-900 mb-1">{mealData.meal.name}</div>
                                         <div className="text-xs text-gray-600 mb-2">{mealData.meal.description}</div>
@@ -2001,20 +1987,12 @@ export default function GenerateMealPlanPage() {
                                     
                                     {/* Snacks */}
                                     {getMealsByType(day.meals).snacks.map((snack, snackIndex) => (
-                                      <div key={snackIndex} className="p-3 rounded-lg border-2 bg-cyan-50 border-cyan-200 group hover:shadow-md transition-all">
+                                      <div key={snackIndex} className="p-3 rounded-lg border-2 bg-cyan-50 border-cyan-200 hover:shadow-md transition-all">
                                         <div className="flex items-center justify-between mb-2">
                                           <div className="flex items-center gap-3">
                                             <div className="text-sm font-medium text-gray-700">{snackIndex === 0 ? '15:00' : '21:00'}</div>
                                             <div className="text-sm font-semibold text-gray-900">Collation {snackIndex + 1}</div>
                                           </div>
-                                          <Button
-                                            variant="ghost"
-                                            size="sm"
-                                            onClick={() => handleEditMeal(dayIndex, "snacks", snack)}
-                                            className="opacity-0 group-hover:opacity-100 transition-opacity h-8 w-8 p-0"
-                                          >
-                                            <Edit className="h-4 w-4" />
-                                          </Button>
                                         </div>
                                         <div className="text-sm font-medium text-gray-900 mb-1">{snack.name}</div>
                                         <div className="text-xs text-gray-600 mb-2">{snack.description}</div>
@@ -2073,17 +2051,9 @@ export default function GenerateMealPlanPage() {
                                   })
                                   
                                   return allMeals.map((mealData, mealIndex) => (
-                                  <div key={mealIndex} className={`bg-white rounded-md p-3 border-l-4 ${mealData.color} group hover:shadow-sm transition-all`}>
+                                  <div key={mealIndex} className={`bg-white rounded-md p-3 border-l-4 ${mealData.color} hover:shadow-sm transition-all`}>
                                     <div className="flex items-center justify-between mb-1">
                                       <div className="text-sm font-medium text-gray-900">{mealData.type}</div>
-                                      <Button
-                                        variant="ghost"
-                                        size="sm"
-                                        onClick={() => handleEditMeal(dayIndex, mealData.type.toLowerCase().replace(/\s+\d+$/, 's'), mealData.meal)}
-                                        className="opacity-0 group-hover:opacity-100 transition-opacity h-6 w-6 p-0"
-                                      >
-                                        <Edit className="h-3 w-3" />
-                                      </Button>
                                     </div>
                                     <div className="text-xs font-medium text-gray-800 mb-1 line-clamp-1">{mealData.meal.name}</div>
                                     <div className="text-xs text-gray-600 mb-2 line-clamp-2">{mealData.meal.description}</div>
@@ -2101,11 +2071,6 @@ export default function GenerateMealPlanPage() {
                       </div>
                     )}
 
-                    {viewMode === 'nutrition' && (
-                      <div className="p-6">
-                        <MacronutrientBreakdown mealPlan={generatedPlan} />
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
 
@@ -2225,158 +2190,9 @@ export default function GenerateMealPlanPage() {
         </div>
       </div>
 
-      {/* Edit Meal Modal */}
-      {editingMeal && (
-        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center p-4 z-50">
-          <Card className="w-full max-w-2xl max-h-[90vh] overflow-y-auto shadow-2xl border-0">
-            <CardHeader className="pb-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <CardTitle className="text-xl">Modifier le repas</CardTitle>
-                  <CardDescription>Personnalisez ce repas pour mieux répondre à vos besoins</CardDescription>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setEditingMeal(null)}
-                  className="h-8 w-8 p-0"
-                >
-                  <X className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-6">
-              <div className="grid grid-cols-1 gap-4">
-                <div>
-                  <Label htmlFor="mealName" className="text-sm font-medium">Nom du repas</Label>
-                  <Input
-                    id="mealName"
-                    value={editingMeal.meal.name}
-                    onChange={(e) =>
-                      setEditingMeal((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              meal: { ...prev.meal, name: e.target.value },
-                            }
-                          : null,
-                      )
-                    }
-                    className="mt-1"
-                  />
-                </div>
-
-                <div>
-                  <Label htmlFor="mealDescription" className="text-sm font-medium">Description</Label>
-                  <Textarea
-                    id="mealDescription"
-                    value={editingMeal.meal.description}
-                    onChange={(e) =>
-                      setEditingMeal((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              meal: { ...prev.meal, description: e.target.value },
-                            }
-                          : null,
-                      )
-                    }
-                    rows={2}
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              {/* Nutrition Grid */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                {[
-                  { key: 'calories', label: 'Calories', suffix: '' },
-                  { key: 'protein', label: 'Protéines', suffix: 'g' },
-                  { key: 'carbs', label: 'Glucides', suffix: 'g' },
-                  { key: 'fat', label: 'Lipides', suffix: 'g' },
-                ].map((field) => (
-                  <div key={field.key}>
-                    <Label className="text-sm font-medium">{field.label}</Label>
-                    <div className="relative mt-1">
-                      <Input
-                        type="number"
-                        value={editingMeal.meal[field.key as keyof Meal]}
-                        onChange={(e) =>
-                          setEditingMeal((prev) =>
-                            prev
-                              ? {
-                                  ...prev,
-                                  meal: { ...prev.meal, [field.key]: Number.parseInt(e.target.value) || 0 },
-                                }
-                              : null,
-                          )
-                        }
-                      />
-                      {field.suffix && (
-                        <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500">
-                          {field.suffix}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                <div>
-                  <Label className="text-sm font-medium">Temps de préparation (min)</Label>
-                  <Input
-                    type="number"
-                    value={(editingMeal.meal as any).prepTime || 0}
-                    onChange={(e) =>
-                      setEditingMeal((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              meal: { ...prev.meal, prepTime: Number.parseInt(e.target.value) || 0 } as any,
-                            }
-                          : null,
-                      )
-                    }
-                    className="mt-1"
-                  />
-                </div>
-                <div>
-                  <Label className="text-sm font-medium">Temps de cuisson (min)</Label>
-                  <Input
-                    type="number"
-                    value={(editingMeal.meal as any).cookTime || 0}
-                    onChange={(e) =>
-                      setEditingMeal((prev) =>
-                        prev
-                          ? {
-                              ...prev,
-                              meal: { ...prev.meal, cookTime: Number.parseInt(e.target.value) || 0 } as any,
-                            }
-                          : null,
-                      )
-                    }
-                    className="mt-1"
-                  />
-                </div>
-              </div>
-
-              <div className="flex justify-end gap-3 pt-4 border-t border-gray-100">
-                <Button variant="outline" onClick={() => setEditingMeal(null)}>
-                  Annuler
-                </Button>
-                <Button onClick={handleSaveEdit} className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700">
-                  <Check className="h-4 w-4 mr-2" />
-                  Sauvegarder les modifications
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-      )}
 
       {/* Progress Modal */}
-      {isSendingToClient && (
+      {(isSendingToClient || isSavingOnly || isSavingTemplate) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <div className="bg-white rounded-xl p-8 max-w-md w-full mx-4 shadow-2xl">
             <div className="text-center">
@@ -2385,7 +2201,9 @@ export default function GenerateMealPlanPage() {
               </div>
               
               <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Envoi au client en cours...
+                {isSendingToClient ? "Envoi au client en cours..." : 
+                 isSavingTemplate ? "Création du modèle en cours..." : 
+                 "Sauvegarde en cours..."}
               </h3>
               
               <p className="text-sm text-gray-600 mb-6">
@@ -2416,19 +2234,17 @@ function MealCard({
   meal, 
   mealType, 
   icon, 
-  onEdit, 
   gradientFrom, 
   gradientTo 
 }: { 
   meal: Meal
   mealType: string
   icon: React.ReactNode
-  onEdit: () => void
   gradientFrom: string
   gradientTo: string
 }) {
   return (
-    <div className="group relative bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg hover:border-gray-300 transition-all duration-300 hover:-translate-y-0.5">
+    <div className="relative bg-white border border-gray-200 rounded-xl p-4 hover:shadow-lg hover:border-gray-300 transition-all duration-300 hover:-translate-y-0.5">
       <div className="flex items-start justify-between mb-3">
         <div className="flex items-center gap-3">
           <div className={`w-8 h-8 bg-gradient-to-br ${gradientFrom} ${gradientTo} rounded-lg flex items-center justify-center text-white shadow-sm`}>
@@ -2442,15 +2258,6 @@ function MealCard({
             </div>
           </div>
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onEdit}
-          className="opacity-0 group-hover:opacity-100 transition-all duration-200 h-8 w-8 p-0 hover:bg-gray-100"
-          aria-label={`Edit ${mealType}`}
-        >
-          <Edit className="h-4 w-4" />
-        </Button>
       </div>
       
       <div className="space-y-3">
