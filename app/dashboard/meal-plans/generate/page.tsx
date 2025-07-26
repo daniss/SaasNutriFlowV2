@@ -1698,8 +1698,7 @@ export default function GenerateMealPlanPage() {
                           ) : (
                             <>
                               <Save className="h-4 w-4 mr-2" />
-                              <span className="hidden sm:inline">Sauvegarder le modèle</span>
-                              <span className="sm:hidden">Modèle</span>
+                              Sauvegarder le modèle
                             </>
                           )}
                         </Button>

@@ -692,7 +692,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                       {/* Meals Grid - 3 columns for cleaner layout */}
                       <div className="space-y-4">
                         {((getActiveDayData() as DayStructure)?.meals || []).map((meal: MealSlot, mealIndex: number) => (
-                          <div key={mealIndex} className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4 p-3 sm:p-4 border border-gray-200 rounded-lg bg-gray-50/50 overflow-hidden">
+                          <div key={mealIndex} className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 p-3 sm:p-4 border border-gray-200 rounded-lg bg-gray-50/50">
                             {/* Column 1: Meal Type and Time */}
                             <div className="space-y-2 sm:space-y-3 min-w-0">
                               <div className="space-y-1">
@@ -709,9 +709,9 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                                   <SelectTrigger className={(!meal.name || meal.name.trim() === "") ? "border-red-300 focus:border-red-500" : ""}>
                                     <SelectValue placeholder="Sélectionner..." />
                                   </SelectTrigger>
-                                  <SelectContent>
+                                  <SelectContent className="max-w-[300px]">
                                     {mealTypes.map(type => (
-                                      <SelectItem key={type} value={type}>{type}</SelectItem>
+                                      <SelectItem key={type} value={type} className="text-sm">{type}</SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
@@ -785,8 +785,8 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                               </div>
                             </div>
 
-                            {/* Column 3: Meal Badge and Actions */}
-                            <div className="flex flex-col justify-between min-w-0 md:col-span-2 xl:col-span-1">
+                            {/* Column 2: Meal Badge and Actions */}
+                            <div className="flex flex-col justify-between min-w-0">
                               <div className="flex flex-wrap gap-2 mb-3">
                                 {meal.name && (
                                   <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300">
