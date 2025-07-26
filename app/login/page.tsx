@@ -17,7 +17,7 @@ import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/useAuthNew";
 import { Activity, Eye, EyeOff, Lock, Mail, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useState } from "react";
 
 export default function LoginPage() {
@@ -26,8 +26,10 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [successMessage, setSuccessMessage] = useState("");
 
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { user, signIn, loading: authLoading } = useAuth();
   const { isAuthenticated: isClientAuthenticated, isLoading: isClientLoading } =
     useClientAuth();
@@ -45,6 +47,23 @@ export default function LoginPage() {
       router.push("/client-portal");
     }
   }, [isClientAuthenticated, isClientLoading, router]);
+
+  // Check for success message from signup or email confirmation
+  useEffect(() => {
+    const message = searchParams.get("message");
+    if (message === "account_created") {
+      setSuccessMessage("Compte créé avec succès ! Veuillez vérifier votre email pour confirmer votre compte avant de vous connecter.");
+    } else if (message === "email_confirmed") {
+      setSuccessMessage("Email confirmé avec succès ! Vous pouvez maintenant vous connecter.");
+    }
+    
+    if (message) {
+      // Clear the message from URL after showing it
+      const url = new URL(window.location.href);
+      url.searchParams.delete("message");
+      window.history.replaceState({}, "", url.toString());
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -169,6 +188,13 @@ export default function LoginPage() {
                   </button>
                 </div>
               </div>
+
+              {/* Success Message */}
+              {successMessage && (
+                <Alert className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                  <AlertDescription>{successMessage}</AlertDescription>
+                </Alert>
+              )}
 
               {/* Error Message */}
               {error && (

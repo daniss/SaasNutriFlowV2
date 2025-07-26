@@ -1,9 +1,24 @@
+"use client"
+
 import Link from "next/link"
+import { useRouter } from "next/navigation"
+import { useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { CheckCircle, LogIn } from "lucide-react"
 
 export default function ConfirmedPage() {
+  const router = useRouter()
+
+  // Auto-redirect to login after 3 seconds
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      router.push("/login?message=email_confirmed")
+    }, 3000)
+
+    return () => clearTimeout(timer)
+  }, [router])
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-emerald-50 via-white to-teal-50 py-12 px-4 sm:px-6 lg:px-8">
       <Card className="w-full max-w-md shadow-soft-lg border-0">
@@ -19,12 +34,13 @@ export default function ConfirmedPage() {
         <CardContent className="space-y-4">
           <div className="text-sm text-gray-600 text-center">
             <p>Bienvenue dans NutriFlow ! Votre compte est maintenant activé et prêt à être utilisé.</p>
+            <p className="text-emerald-600 font-medium mt-2">Redirection automatique vers la connexion dans 3 secondes...</p>
           </div>
 
           <Button asChild className="w-full bg-emerald-600 hover:bg-emerald-700">
             <Link href="/login">
               <LogIn className="h-4 w-4 mr-2" />
-              Se connecter
+              Se connecter maintenant
             </Link>
           </Button>
         </CardContent>
