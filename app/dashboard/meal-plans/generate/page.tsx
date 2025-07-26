@@ -489,7 +489,7 @@ export default function GenerateMealPlanPage() {
       
       const { error } = await supabase.from("meal_plan_templates").insert({
         dietitian_id: user.id,
-        name: formData.planName || generatedPlan.title,
+        name: formData.planName || generatedPlan.title || `Modèle - ${new Date().toLocaleDateString('fr-FR')}`,
         description: generatedPlan.description || '',
         category: 'general',
         client_type: 'general',
@@ -736,7 +736,7 @@ export default function GenerateMealPlanPage() {
         .insert({
           dietitian_id: user!.id,
           client_id: formData.clientId,
-          name: formData.planName || generatedPlan.title,
+          name: formData.planName || generatedPlan.title || `Plan alimentaire - ${new Date().toLocaleDateString('fr-FR')}`,
           description: generatedPlan.description,
           duration_days: generatedPlan.duration,
           plan_content: dynamicPlan,
@@ -896,7 +896,7 @@ export default function GenerateMealPlanPage() {
         .insert({
           dietitian_id: user!.id,
           client_id: formData.clientId || null, // Allow null client
-          name: formData.planName || generatedPlan.title,
+          name: formData.planName || generatedPlan.title || `Plan alimentaire - ${new Date().toLocaleDateString('fr-FR')}`,
           description: generatedPlan.description,
           duration_days: generatedPlan.duration,
           plan_content: dynamicPlan,
@@ -1329,7 +1329,9 @@ export default function GenerateMealPlanPage() {
               </CardHeader>
               <CardContent className="space-y-4">
                 <div>
-                  <Label htmlFor="planName" className="text-sm font-medium">Nom du plan</Label>
+                  <Label htmlFor="planName" className="text-sm font-medium">
+                    Nom du plan <span className="text-gray-400 font-normal">(optionnel)</span>
+                  </Label>
                   <Input
                     id="planName"
                     placeholder="ex: Plan de Marie - Janvier 2024"
@@ -1339,6 +1341,9 @@ export default function GenerateMealPlanPage() {
                     readOnly={isGenerating}
                     disabled={isGenerating}
                   />
+                  <p className="text-xs text-gray-500 mt-1">
+                    Un nom sera automatiquement généré si ce champ est laissé vide
+                  </p>
                 </div>
                 <div>
                   <Label htmlFor="client" className="text-sm font-medium">Client (optionnel)</Label>
