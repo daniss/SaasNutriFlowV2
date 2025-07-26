@@ -773,7 +773,7 @@ export default function GenerateMealPlanPage() {
       
       // Small delay to show completion, then redirect
       setTimeout(() => {
-        router.push("/dashboard/meal-plans")
+        router.push(`/dashboard/meal-plans/${savedPlan.id}`)
       }, 1000)
     } catch (error) {
       console.error("Error sending to client:", error)
