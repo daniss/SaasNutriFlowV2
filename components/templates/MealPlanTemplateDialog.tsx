@@ -709,7 +709,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                                   <SelectTrigger className={(!meal.name || meal.name.trim() === "") ? "border-red-300 focus:border-red-500" : ""}>
                                     <SelectValue placeholder="Sélectionner..." />
                                   </SelectTrigger>
-                                  <SelectContent className="max-w-[300px]">
+                                  <SelectContent className="max-w-[90vw] sm:max-w-[300px]">
                                     {mealTypes.map(type => (
                                       <SelectItem key={type} value={type} className="text-sm">{type}</SelectItem>
                                     ))}
