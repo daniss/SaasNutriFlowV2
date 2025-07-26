@@ -58,11 +58,15 @@ export default function SignupPage() {
       if (error) {
         setError(error || "Échec de la création du compte")
       } else {
-        setSuccess("Compte créé avec succès ! Redirection vers la page de connexion...")
-        // Redirect to login after a short delay to show success message
-        setTimeout(() => {
-          router.push("/login?message=account_created")
-        }, 2000)
+        // Redirect to email confirmation page with user data for potential resend
+        const params = new URLSearchParams({
+          email,
+          firstName,
+          lastName,
+          phone: phone || '',
+          address: address || ''
+        })
+        router.push(`/auth/check-email?${params.toString()}`)
       }
     } catch (error) {
       console.error("❌ Signup exception:", error)
