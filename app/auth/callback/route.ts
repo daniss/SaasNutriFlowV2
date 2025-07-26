@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
           return NextResponse.redirect(new URL("/auth/reset-password", request.url))
         }
         
-        // Otherwise redirect to dashboard or specified next URL
-        return NextResponse.redirect(new URL(next, request.url))
+        // For email confirmation, redirect to confirmation success page
+        return NextResponse.redirect(new URL("/auth/confirmed", request.url))
       }
     } catch (error) {
       console.error("Auth callback error:", error)
