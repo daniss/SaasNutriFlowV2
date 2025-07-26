@@ -420,7 +420,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="w-[95vw] sm:max-w-[900px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
+      <DialogContent className="w-[95vw] sm:max-w-[1000px] lg:max-w-[1200px] max-h-[90vh] overflow-y-auto p-4 sm:p-6">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-lg sm:text-xl">
             <Calendar className="h-5 w-5 flex-shrink-0" />
@@ -692,9 +692,9 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                       {/* Meals Grid - 3 columns for cleaner layout */}
                       <div className="space-y-4">
                         {((getActiveDayData() as DayStructure)?.meals || []).map((meal: MealSlot, mealIndex: number) => (
-                          <div key={mealIndex} className="grid grid-cols-1 lg:grid-cols-2 gap-3 sm:gap-4 p-3 sm:p-4 border border-gray-200 rounded-lg bg-gray-50/50">
-                            {/* Column 1: Meal Type and Time */}
-                            <div className="space-y-2 sm:space-y-3 min-w-0">
+                          <div key={mealIndex} className="space-y-3 p-3 sm:p-4 border border-gray-200 rounded-lg bg-gray-50/50">
+                            {/* Basic Info Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               <div className="space-y-1">
                                 <Label className="text-sm font-medium">
                                   Type de repas *
@@ -727,8 +727,8 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                               </div>
                             </div>
 
-                            {/* Column 2: Calories and Description */}
-                            <div className="space-y-2 sm:space-y-3 min-w-0">
+                            {/* Details Grid */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                               <div className="space-y-1">
                                 <Label className="text-sm font-medium">Calories cibles</Label>
                                 <Input
@@ -748,46 +748,46 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                                   className="text-base"
                                 />
                               </div>
+                            </div>
                               
-                              {/* Recipe Selection */}
-                              <div className="space-y-1">
-                                <Label className="text-sm font-medium">Recette</Label>
+                            {/* Recipe Selection */}
+                            <div className="space-y-2">
+                              <Label className="text-sm font-medium">Recette</Label>
+                              <Button
+                                type="button"
+                                variant="outline"
+                                size="sm"
+                                onClick={() => openRecipeModal(getActiveDayIndex(), mealIndex)}
+                                className="w-full justify-start"
+                              >
+                                {meal.recipe_id ? (
+                                  <>
+                                    <BookOpen className="h-4 w-4 mr-2" />
+                                    {meal.description || "Recette sélectionnée"}
+                                  </>
+                                ) : (
+                                  <>
+                                    <Search className="h-4 w-4 mr-2" />
+                                    Choisir une recette
+                                  </>
+                                )}
+                              </Button>
+                              {meal.recipe_id && (
                                 <Button
                                   type="button"
-                                  variant="outline"
+                                  variant="ghost"
                                   size="sm"
-                                  onClick={() => openRecipeModal(getActiveDayIndex(), mealIndex)}
-                                  className="w-full justify-start"
+                                  onClick={() => updateMeal(mealIndex, "recipe_id", null)}
+                                  className="text-xs text-red-600 hover:text-red-700"
                                 >
-                                  {meal.recipe_id ? (
-                                    <>
-                                      <BookOpen className="h-4 w-4 mr-2" />
-                                      {meal.description || "Recette sélectionnée"}
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Search className="h-4 w-4 mr-2" />
-                                      Choisir une recette
-                                    </>
-                                  )}
+                                  Retirer la recette
                                 </Button>
-                                {meal.recipe_id && (
-                                  <Button
-                                    type="button"
-                                    variant="ghost"
-                                    size="sm"
-                                    onClick={() => updateMeal(mealIndex, "recipe_id", null)}
-                                    className="text-xs text-red-600 hover:text-red-700"
-                                  >
-                                    Retirer la recette
-                                  </Button>
-                                )}
-                              </div>
+                              )}
                             </div>
 
-                            {/* Column 2: Meal Badge and Actions */}
-                            <div className="flex flex-col justify-between min-w-0">
-                              <div className="flex flex-wrap gap-2 mb-3">
+                            {/* Meal Info and Actions */}
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                              <div className="flex flex-wrap gap-2">
                                 {meal.name && (
                                   <Badge className="bg-emerald-100 text-emerald-800 border-emerald-300">
                                     {meal.name}
@@ -805,11 +805,10 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                                 )}
                               </div>
                               <Button
-                                variant="outline"
+                                variant="ghost"
                                 size="sm"
                                 onClick={() => removeMeal(mealIndex)}
-                                disabled={((getActiveDayData() as DayStructure)?.meals?.length || 0) === 1}
-                                className="self-start border-red-300 text-red-600 hover:bg-red-50 hover:border-red-400"
+                                className="text-red-600 hover:text-red-700 hover:bg-red-50 self-start sm:self-center flex-shrink-0"
                               >
                                 <X className="h-4 w-4 mr-1" />
                                 Supprimer
