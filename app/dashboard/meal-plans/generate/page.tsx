@@ -507,6 +507,11 @@ export default function GenerateMealPlanPage() {
         title: "Modèle sauvegardé",
         description: `Le plan alimentaire a été sauvegardé comme modèle avec ${createdRecipes.length} recettes et ${savedIngredients.length} ingrédients créés!`,
       })
+      
+      // Small delay to show completion, then redirect
+      setTimeout(() => {
+        router.push('/dashboard/templates')
+      }, 1000)
     } catch (error) {
       console.error("Error saving template:", error)
       toast({
