@@ -29,8 +29,8 @@ BEGIN
   VALUES (
     NEW.id,
     NEW.email,
-    NEW.raw_user_meta_data->>'firstName',   -- Note: using consistent naming from signup form
-    NEW.raw_user_meta_data->>'lastName',
+    NEW.raw_user_meta_data->>'first_name',   -- Fixed: using snake_case from signup form
+    NEW.raw_user_meta_data->>'last_name',    -- Fixed: using snake_case from signup form
     NEW.raw_user_meta_data->>'phone',
     NEW.raw_user_meta_data->>'address',
     'free',
