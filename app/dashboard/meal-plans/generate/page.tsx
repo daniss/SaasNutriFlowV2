@@ -1113,28 +1113,27 @@ export default function GenerateMealPlanPage() {
             // Use detailed ingredient nutrition data
             for (let index = 0; index < meal.ingredientsNutrition.length; index++) {
               const nutritionData = meal.ingredientsNutrition[index]
-              const ingredientString = meal.ingredients[index] || `${nutritionData.name}`
               
-              // Parse quantity and unit from ingredient string
-              let quantity = null
-              let unit = nutritionData.unit || 'g'
+              // Use quantity and unit directly from nutritionData instead of parsing strings
+              const quantity = nutritionData.quantity || null
+              const unit = nutritionData.unit || 'g'
+              const cleanName = cleanIngredientName(nutritionData.name)
               
-              // Extract quantity from ingredient string (e.g., "100g quinoa" -> 100)
-              const quantityMatch = ingredientString.match(/^(\d+(?:\.\d+)?)\s*(g|ml|kg|l|piece|pièce|cuillère|tasse)?/)
-              if (quantityMatch) {
-                quantity = parseFloat(quantityMatch[1])
-                if (quantityMatch[2]) {
-                  unit = quantityMatch[2] === 'piece' || quantityMatch[2] === 'pièce' ? 'piece' : quantityMatch[2]
-                }
-              }
+              // Debug logging
+              console.log('Ingredient data:', {
+                name: nutritionData.name,
+                quantity: nutritionData.quantity,
+                unit: nutritionData.unit,
+                cleanName
+              })
               
-              // Find ingredient ID from global database
+              // Find ingredient ID from global database using clean name
               let ingredientId = null
               try {
                 const { data: globalIngredient } = await supabase
                   .from("ingredients")
                   .select("id")
-                  .eq("name", nutritionData.name)
+                  .eq("name", cleanName)
                   .single()
                 
                 if (globalIngredient) {
@@ -1146,7 +1145,7 @@ export default function GenerateMealPlanPage() {
               ingredientData.push({
                 recipe_id: savedRecipe.id,
                 ingredient_id: ingredientId, // Link to global ingredient if found
-                name: nutritionData.name,
+                name: cleanName,
                 quantity: quantity,
                 unit: unit,
                 notes: null,
