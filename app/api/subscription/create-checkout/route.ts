@@ -73,25 +73,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Subscription already exists' }, { status: 400 })
     }
     
-    // For trialing status, check if trial is still valid
-    if (dietitian.subscription_status === 'trialing') {
-      // Get trial end date from the dietitian record
-      const { data: trialInfo } = await supabase
-        .from('dietitians')
-        .select('trial_ends_at')
-        .eq('id', dietitian.id)
-        .single()
-      
-      if (trialInfo?.trial_ends_at) {
-        const trialEndDate = new Date(trialInfo.trial_ends_at)
-        const now = new Date()
-        
-        // If trial is still valid, prevent checkout
-        if (trialEndDate > now) {
-          return NextResponse.json({ error: 'Trial is still active' }, { status: 400 })
-        }
-      }
-    }
+    // Allow users to upgrade during trial period - they can choose to upgrade early
 
     const body = await request.json()
     const { priceId, planName } = createCheckoutSchema.parse(body)
