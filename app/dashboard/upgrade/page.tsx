@@ -263,7 +263,7 @@ export default function UpgradePage() {
                   <span className="text-gray-600">/mois</span>
                 </div>
                 
-                {!isTrialExpired && (
+                {!isTrialExpired && !isTrialing && (
                   <p className="text-sm text-emerald-600 font-medium mt-2">
                     Essai gratuit de 14 jours
                   </p>
@@ -306,7 +306,7 @@ export default function UpgradePage() {
                   ) : (
                     <div className="flex items-center gap-2">
                       <CreditCard className="h-4 w-4" />
-                      {isTrialExpired ? 'Choisir ce plan' : 'Commencer l\'essai gratuit'}
+                      {isTrialExpired || isTrialing ? 'Choisir ce plan' : 'Commencer l\'essai gratuit'}
                     </div>
                   )}
                 </Button>
