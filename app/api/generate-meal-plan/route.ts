@@ -243,13 +243,14 @@ export async function POST(request: NextRequest) {
         console.log(`🔄 Generating days ${startDay}-${endDay} (${chunkDays} days)`);
         
         // Optimized prompt with essential recipe fields
-        const chunkPrompt = `Plan ${chunkDays}j (${startDay}-${endDay}), ${targetCalories}cal/j.
-${[...restrictions, ...clientDietaryTags].slice(0, 1).join("") || "Standard"}
+        const chunkPrompt = `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE, AUCUN AUTRE TEXTE.
 
-JSON avec nutrition:
+Plan ${chunkDays}j (${startDay}-${endDay}), ${targetCalories}cal/j.
+
+Génère exactement ce JSON:
 {"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"[nom]","calories":${Math.round(targetCalories * 0.25)},"ingredients":["avoine","lait"],"ingredientsNutrition":[{"name":"avoine","unit":"g","quantity":50,"caloriesPer100":389,"proteinPer100":17,"carbsPer100":66,"fatPer100":7},{"name":"lait","unit":"ml","quantity":200,"caloriesPer100":42,"proteinPer100":3,"carbsPer100":5,"fatPer100":1}]},"lunch":{"name":"[nom]","calories":${Math.round(targetCalories * 0.35)},"ingredients":["poulet","riz"],"ingredientsNutrition":[{"name":"poulet","unit":"g","quantity":120,"caloriesPer100":239,"proteinPer100":27,"carbsPer100":0,"fatPer100":14},{"name":"riz","unit":"g","quantity":80,"caloriesPer100":365,"proteinPer100":7,"carbsPer100":77,"fatPer100":1}]},"dinner":{"name":"[nom]","calories":${Math.round(targetCalories * 0.30)},"ingredients":["saumon","légumes"],"ingredientsNutrition":[{"name":"saumon","unit":"g","quantity":100,"caloriesPer100":208,"proteinPer100":25,"carbsPer100":0,"fatPer100":12},{"name":"légumes","unit":"g","quantity":150,"caloriesPer100":25,"proteinPer100":2,"carbsPer100":5,"fatPer100":0}]}}}`).join(',')}]}
 
-Noms créatifs français, garde structure exacte.`;
+Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
         
         try {
           const chunkStartTime = Date.now();
@@ -270,21 +271,35 @@ Noms créatifs français, garde structure exacte.`;
           
           // Clean and parse chunk
           let jsonText = text.trim();
-          jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
           
+          // Remove all markdown formatting
+          jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+          jsonText = jsonText.replace(/\*\*/g, ''); // Remove bold markdown
+          jsonText = jsonText.replace(/\*/g, ''); // Remove italic markdown
+          jsonText = jsonText.replace(/^-\s+/gm, ''); // Remove list markers
+          jsonText = jsonText.replace(/^#.*$/gm, ''); // Remove headers
+          
+          // Remove any text before the first { or after the last }
           const jsonStart = jsonText.indexOf("{");
           const jsonEnd = jsonText.lastIndexOf("}");
           
           if (jsonStart === -1 || jsonEnd === -1) {
+            console.error(`Raw response: ${text.substring(0, 500)}...`);
             throw new Error(`No valid JSON in chunk ${chunk + 1}`);
           }
           
           jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
+          
+          // Clean common JSON issues
           jsonText = jsonText
-            .replace(/,\s*}/g, '}')
-            .replace(/,\s*]/g, ']')
-            .replace(/\/\*[^*]*\*\//g, '')
-            .replace(/\/\/.*$/gm, '');
+            .replace(/,\s*}/g, '}') // Remove trailing commas
+            .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
+            .replace(/\/\*[^*]*\*\//g, '') // Remove comments
+            .replace(/\/\/.*$/gm, '') // Remove line comments
+            .replace(/\.\.\./g, '') // Remove ellipsis
+            .replace(/\[…\]/g, '[]') // Replace ellipsis in arrays
+            .replace(/…/g, '') // Remove ellipsis character
+            .replace(/\n\s*\n/g, '\n'); // Remove empty lines
           
           const chunkData = JSON.parse(jsonText);
           
@@ -358,10 +373,11 @@ Noms créatifs français, garde structure exacte.`;
     } else {
       // For shorter plans (≤4 days), use single request
       // Optimized prompt with essential recipe fields
-      const enhancedPrompt = `Plan ${duration}j, ${targetCalories}cal/j.
-${[...restrictions, ...clientDietaryTags].slice(0, 1).join("") || "Standard"}
+      const enhancedPrompt = `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE, AUCUN AUTRE TEXTE.
 
-JSON avec nutrition:
+Plan ${duration}j, ${targetCalories}cal/j.
+
+Génère exactement ce JSON:
 {
   "name": "Plan ${duration} jours",
   "description": "Plan environ ${targetCalories} calories",
@@ -385,7 +401,7 @@ JSON avec nutrition:
   ]
 }
 
-Génère ${duration}j, noms créatifs français, garde structure exacte avec ingredientsNutrition.`;
+Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
 
       // Single request retry logic for short plans
       let attempts = 0;
@@ -413,7 +429,13 @@ Génère ${duration}j, noms créatifs français, garde structure exacte avec ing
 
           // Clean and extract JSON
           let jsonText = text.trim();
+          
+          // Remove all markdown formatting
           jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+          jsonText = jsonText.replace(/\*\*/g, ''); // Remove bold markdown
+          jsonText = jsonText.replace(/\*/g, ''); // Remove italic markdown
+          jsonText = jsonText.replace(/^-\s+/gm, ''); // Remove list markers
+          jsonText = jsonText.replace(/^#.*$/gm, ''); // Remove headers
           
           const jsonStart = jsonText.indexOf("{");
           const jsonEnd = jsonText.lastIndexOf("}");
@@ -425,11 +447,17 @@ Génère ${duration}j, noms créatifs français, garde structure exacte avec ing
           }
           
           jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
+          
+          // Clean common JSON issues
           jsonText = jsonText
-            .replace(/,\s*}/g, '}')
-            .replace(/,\s*]/g, ']')
-            .replace(/\/\*[^*]*\*\//g, '')
-            .replace(/\/\/.*$/gm, '');
+            .replace(/,\s*}/g, '}') // Remove trailing commas
+            .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
+            .replace(/\/\*[^*]*\*\//g, '') // Remove comments
+            .replace(/\/\/.*$/gm, '') // Remove line comments
+            .replace(/\.\.\./g, '') // Remove ellipsis
+            .replace(/\[…\]/g, '[]') // Replace ellipsis in arrays
+            .replace(/…/g, '') // Remove ellipsis character
+            .replace(/\n\s*\n/g, '\n'); // Remove empty lines
 
           generatedPlan = JSON.parse(jsonText);
           
