@@ -364,15 +364,12 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
       
     } else {
       // For shorter plans (≤4 days), use single request
-      const enhancedPrompt = `Plan alimentaire JSON français concis.
+      // Optimized prompt with essential recipe fields
+      const enhancedPrompt = `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE, AUCUN AUTRE TEXTE.
 
-${sanitizedPrompt} - ${duration} jours, environ ${targetCalories} cal/jour
-${[...restrictions, ...clientDietaryTags].length > 0 ? `Restrictions et préférences alimentaires: ${[...restrictions, ...clientDietaryTags].join(", ")}` : ""}
+Plan ${duration}j, ${targetCalories}cal/j.
 
-${ingredientsPromptSection}
-
-PRIORITÉ: Utilisez les ingrédients de la base de données avec leurs valeurs nutritionnelles exactes.
-MAX 2 ingrédients/repas. Calories approximatives (±50-100 acceptable). JSON direct:
+Génère exactement ce JSON:
 {
   "name": "Plan ${duration} jours",
   "description": "Plan environ ${targetCalories} calories",
@@ -383,10 +380,10 @@ MAX 2 ingrédients/repas. Calories approximatives (±50-100 acceptable). JSON di
     {
       "day": 1,
       "meals": {
-        "breakfast": {"name": "PDJ", "description": "Matin", "calories": ${Math.round(targetCalories * 0.25)}, "protein": 17, "carbs": 62, "fat": 15, "fiber": 5, "prepTime": 5, "cookTime": 5, "ingredients": ["50g avoine", "200ml lait"], "ingredientsNutrition": [{"name": "avoine", "unit": "g", "caloriesPer100": 389, "proteinPer100": 16.9, "carbsPer100": 66.3, "fatPer100": 6.9, "fiberPer100": 10.6}, {"name": "lait", "unit": "ml", "caloriesPer100": 42, "proteinPer100": 3.4, "carbsPer100": 4.8, "fatPer100": 1.0, "fiberPer100": 0}], "instructions": ["Mélanger"], "tags": ["matin"]},
-        "lunch": {"name": "DEJ", "description": "Midi", "calories": ${Math.round(targetCalories * 0.35)}, "protein": 32, "carbs": 79, "fat": 21, "fiber": 8, "prepTime": 10, "cookTime": 10, "ingredients": ["100g quinoa", "150g légumes"], "ingredientsNutrition": [{"name": "quinoa", "unit": "g", "caloriesPer100": 368, "proteinPer100": 14.1, "carbsPer100": 64.2, "fatPer100": 6.1, "fiberPer100": 7.0}, {"name": "légumes", "unit": "g", "caloriesPer100": 25, "proteinPer100": 2.0, "carbsPer100": 5.0, "fatPer100": 0.2, "fiberPer100": 3.0}], "instructions": ["Cuire"], "tags": ["midi"]},
-        "dinner": {"name": "DIN", "description": "Soir", "calories": ${Math.round(targetCalories * 0.30)}, "protein": 34, "carbs": 61, "fat": 18, "fiber": 6, "prepTime": 10, "cookTime": 15, "ingredients": ["120g poisson", "200g légumes"], "ingredientsNutrition": [{"name": "poisson", "unit": "g", "caloriesPer100": 150, "proteinPer100": 25, "carbsPer100": 0, "fatPer100": 5, "fiberPer100": 0}, {"name": "légumes", "unit": "g", "caloriesPer100": 25, "proteinPer100": 2.0, "carbsPer100": 5.0, "fatPer100": 0.2, "fiberPer100": 3.0}], "instructions": ["Griller"], "tags": ["soir"]},
-        "snacks": [{"name": "Snack", "description": "Collation", "calories": ${Math.round(targetCalories * 0.10)}, "protein": 9, "carbs": 27, "fat": 4, "fiber": 3, "prepTime": 2, "cookTime": 0, "ingredients": ["150g yaourt"], "ingredientsNutrition": [{"name": "yaourt", "unit": "g", "caloriesPer100": 59, "proteinPer100": 10, "carbsPer100": 3.6, "fatPer100": 0.4, "fiberPer100": 0}], "instructions": ["Servir"], "tags": ["snack"]}]
+        "breakfast": {"name": "[nom créatif]", "description": "[courte description]", "calories": ${Math.round(targetCalories * 0.25)}, "protein": ${Math.round(targetCalories * 0.25 * 0.15 / 4)}, "carbs": ${Math.round(targetCalories * 0.25 * 0.50 / 4)}, "fat": ${Math.round(targetCalories * 0.25 * 0.35 / 9)}, "ingredients": ["avoine", "lait"], "instructions": ["Préparer", "Servir"], "ingredientsNutrition": [{"name": "avoine", "unit": "g", "quantity": 50, "caloriesPer100": 389, "proteinPer100": 17, "carbsPer100": 66, "fatPer100": 7}, {"name": "lait", "unit": "ml", "quantity": 200, "caloriesPer100": 42, "proteinPer100": 3, "carbsPer100": 5, "fatPer100": 1}]},
+        "lunch": {"name": "[nom créatif]", "description": "[courte description]", "calories": ${Math.round(targetCalories * 0.35)}, "protein": ${Math.round(targetCalories * 0.35 * 0.25 / 4)}, "carbs": ${Math.round(targetCalories * 0.35 * 0.45 / 4)}, "fat": ${Math.round(targetCalories * 0.35 * 0.30 / 9)}, "ingredients": ["poulet", "riz"], "instructions": ["Cuire", "Assaisonner"], "ingredientsNutrition": [{"name": "poulet", "unit": "g", "quantity": 120, "caloriesPer100": 239, "proteinPer100": 27, "carbsPer100": 0, "fatPer100": 14}, {"name": "riz", "unit": "g", "quantity": 80, "caloriesPer100": 365, "proteinPer100": 7, "carbsPer100": 77, "fatPer100": 1}]},
+        "dinner": {"name": "[nom créatif]", "description": "[courte description]", "calories": ${Math.round(targetCalories * 0.30)}, "protein": ${Math.round(targetCalories * 0.30 * 0.30 / 4)}, "carbs": ${Math.round(targetCalories * 0.30 * 0.40 / 4)}, "fat": ${Math.round(targetCalories * 0.30 * 0.30 / 9)}, "ingredients": ["saumon", "légumes"], "instructions": ["Griller", "Servir"], "ingredientsNutrition": [{"name": "saumon", "unit": "g", "quantity": 100, "caloriesPer100": 208, "proteinPer100": 25, "carbsPer100": 0, "fatPer100": 12}, {"name": "légumes", "unit": "g", "quantity": 150, "caloriesPer100": 25, "proteinPer100": 2, "carbsPer100": 5, "fatPer100": 0}]},
+        "snacks": [{"name": "[nom créatif]", "description": "[courte description]", "calories": ${Math.round(targetCalories * 0.10)}, "protein": ${Math.round(targetCalories * 0.10 * 0.20 / 4)}, "carbs": ${Math.round(targetCalories * 0.10 * 0.40 / 4)}, "fat": ${Math.round(targetCalories * 0.10 * 0.40 / 9)}, "ingredients": ["amandes"], "instructions": ["Portionner"], "ingredientsNutrition": [{"name": "amandes", "unit": "g", "quantity": 25, "caloriesPer100": 579, "proteinPer100": 21, "carbsPer100": 22, "fatPer100": 50}]}]
       },
       "totalCalories": ${targetCalories},
       "totalProtein": 90,
@@ -396,7 +393,7 @@ MAX 2 ingrédients/repas. Calories approximatives (±50-100 acceptable). JSON di
   ]
 }
 
-Répète pour ${duration} jours avec variations:`;
+Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
 
       // Single request retry logic for short plans
       let attempts = 0;
