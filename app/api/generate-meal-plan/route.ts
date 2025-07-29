@@ -15,12 +15,6 @@ export async function POST(request: NextRequest) {
   const startTime = Date.now();
   const timings: Record<string, number> = {};
   
-  // Set a hard timeout for the entire request (25 seconds for Vercel)
-  const controller = new AbortController();
-  const timeout = setTimeout(() => {
-    controller.abort();
-  }, 25000); // 25 second total timeout
-  
   try {
     console.log('🚀 Starting meal plan generation...');
     // SECURITY: Use validated environment configuration
@@ -35,7 +29,7 @@ export async function POST(request: NextRequest) {
 
     const groq = new Groq({ 
       apiKey,
-      timeout: 30000, // 30 second timeout per request
+      timeout: 60000, // 60 second timeout to prevent timeouts
     });
 
     // Get auth token from header
@@ -278,7 +272,7 @@ export async function POST(request: NextRequest) {
 
     // For longer plans (5+ days), generate in chunks to avoid truncation
     if (duration >= 5) {
-      const maxDays = 2; // Reduced to 2 days per request to avoid timeouts
+      const maxDays = 3; // Generate max 3 days per request to avoid truncation
       
       console.log(`📦 Splitting ${duration}-day plan into chunks of ${maxDays} days`);
       
@@ -291,13 +285,164 @@ export async function POST(request: NextRequest) {
         
         console.log(`🔄 Generating days ${startDay}-${endDay} (${chunkDays} days)`);
         
-        // Ultra-minimal prompt to prevent timeouts
-        const chunkPrompt = `Génère ${chunkDays} jours de repas (jours ${startDay}-${endDay}), ${targetCalories}cal/jour.
+        const chunkPrompt = `Crée ${chunkDays} jours de plan alimentaire méditerranéen JSON français.
 
-JSON minimal:
-{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"...","calories":${Math.round(targetCalories * 0.25)},"protein":15,"carbs":50,"fat":10},"lunch":{"name":"...","calories":${Math.round(targetCalories * 0.35)},"protein":30,"carbs":60,"fat":20},"dinner":{"name":"...","calories":${Math.round(targetCalories * 0.30)},"protein":35,"carbs":45,"fat":15}},"totalCalories":${targetCalories}}`).join(',')}]}
+${sanitizedPrompt} - Jours ${startDay} à ${endDay}, environ ${targetCalories} cal/jour
+${[...restrictions, ...clientDietaryTags].length > 0 ? `Restrictions et préférences alimentaires: ${[...restrictions, ...clientDietaryTags].join(", ")}` : ""}
 
-Remplace les ... par des noms de plats français créatifs.`;
+${ingredientsPromptSection}
+
+TYPES DE REPAS DISPONIBLES (choisir le plus approprié pour chaque repas):
+- "Petit-déjeuner" : repas du matin
+- "Collation matin" : en-cas matinal  
+- "Déjeuner" : repas de midi
+- "Collation après-midi" : en-cas d'après-midi
+- "Dîner" : repas du soir
+- "Collation soir" : en-cas du soir
+- "Pré-entraînement" : avant l'exercice
+- "Post-entraînement" : après l'exercice
+
+IMPORTANT:
+- Noms de repas créatifs et appétissants  
+- 3-4 ingrédients par repas maximum
+- Instructions détaillées de préparation
+- Les calories peuvent varier de ±50-100 calories par repas (approximation acceptable)
+- ingredientsNutrition obligatoire avec données exactes de la base
+- OBLIGATOIRE: Numérotation correcte des jours ${startDay} à ${endDay}
+- OBLIGATOIRE: Utilisez les types de repas ci-dessus pour le champ "type"
+- PRIORITÉ: Utilisez les ingrédients de la base de données ci-dessus avec leurs valeurs nutritionnelles exactes
+
+FORMAT JSON:
+{
+  "days": [
+    {
+      "day": ${startDay},
+      "meals": {
+        "breakfast": {
+          "name": "Porridge méditerranéen aux figues",
+          "type": "Petit-déjeuner",
+          "description": "Petit-déjeuner énergisant aux saveurs méditerranéennes",
+          "calories": ${Math.round(targetCalories * 0.25)},
+          "protein": 17,
+          "carbs": 62,
+          "fat": 15,
+          "fiber": 5,
+          "prepTime": 10,
+          "cookTime": 5,
+          "ingredients": ["60g flocons d'avoine", "250ml lait d'amande", "2 figues fraîches", "15g amandes effilées"],
+          "ingredientsNutrition": [
+            {"name": "flocons d'avoine", "unit": "g", "caloriesPer100": 389, "proteinPer100": 16.9, "carbsPer100": 66.3, "fatPer100": 6.9, "fiberPer100": 10.6},
+            {"name": "lait d'amande", "unit": "ml", "caloriesPer100": 24, "proteinPer100": 1.0, "carbsPer100": 3.0, "fatPer100": 1.1, "fiberPer100": 0.4},
+            {"name": "figues fraîches", "unit": "piece", "caloriesPer100": 74, "proteinPer100": 0.7, "carbsPer100": 19.2, "fatPer100": 0.3, "fiberPer100": 2.9},
+            {"name": "amandes effilées", "unit": "g", "caloriesPer100": 579, "proteinPer100": 21.2, "carbsPer100": 21.6, "fatPer100": 49.9, "fiberPer100": 12.5}
+          ],
+          "instructions": [
+            "Faire chauffer le lait d'amande dans une casserole à feu moyen",
+            "Ajouter les flocons d'avoine et cuire 5 minutes en remuant",
+            "Couper les figues en quartiers et les ajouter",
+            "Servir chaud avec les amandes effilées sur le dessus"
+          ],
+          "tags": ["petit-déjeuner", "méditerranéen", "fibres"]
+        },
+        "lunch": {
+          "name": "Salade de quinoa aux légumes grillés",
+          "type": "Déjeuner",
+          "description": "Salade complète et colorée aux légumes de saison",
+          "calories": ${Math.round(targetCalories * 0.35)},
+          "protein": 32,
+          "carbs": 79,
+          "fat": 21,
+          "fiber": 8,
+          "prepTime": 15,
+          "cookTime": 20,
+          "ingredients": ["100g quinoa", "150g courgettes", "100g tomates cerises", "30ml huile d'olive"],
+          "ingredientsNutrition": [
+            {"name": "quinoa", "unit": "g", "caloriesPer100": 368, "proteinPer100": 14.1, "carbsPer100": 64.2, "fatPer100": 6.1, "fiberPer100": 7.0},
+            {"name": "courgettes", "unit": "g", "caloriesPer100": 17, "proteinPer100": 1.2, "carbsPer100": 3.1, "fatPer100": 0.3, "fiberPer100": 1.0},
+            {"name": "tomates cerises", "unit": "g", "caloriesPer100": 18, "proteinPer100": 0.9, "carbsPer100": 3.9, "fatPer100": 0.2, "fiberPer100": 1.2},
+            {"name": "huile d'olive", "unit": "ml", "caloriesPer100": 884, "proteinPer100": 0, "carbsPer100": 0, "fatPer100": 100, "fiberPer100": 0}
+          ],
+          "instructions": [
+            "Cuire le quinoa dans l'eau bouillante selon les instructions du paquet",
+            "Couper les courgettes en dés et les faire griller 10 minutes",
+            "Couper les tomates cerises en deux",
+            "Mélanger tous les ingrédients avec l'huile d'olive et assaisonner"
+          ],
+          "tags": ["déjeuner", "végétarien", "protéines"]
+        },
+        "dinner": {
+          "name": "Poisson grillé aux herbes de Provence",
+          "type": "Dîner",
+          "description": "Filet de poisson savoureux aux aromates méditerranéens",
+          "calories": ${Math.round(targetCalories * 0.30)},
+          "protein": 34,
+          "carbs": 15,
+          "fat": 18,
+          "fiber": 6,
+          "prepTime": 10,
+          "cookTime": 15,
+          "ingredients": ["120g filet de dorade", "200g ratatouille", "15ml huile d'olive", "1 citron"],
+          "ingredientsNutrition": [
+            {"name": "filet de dorade", "unit": "g", "caloriesPer100": 80, "proteinPer100": 19.8, "carbsPer100": 0, "fatPer100": 1.2, "fiberPer100": 0},
+            {"name": "ratatouille", "unit": "g", "caloriesPer100": 25, "proteinPer100": 1.0, "carbsPer100": 5.0, "fatPer100": 0.2, "fiberPer100": 2.5},
+            {"name": "huile d'olive", "unit": "ml", "caloriesPer100": 884, "proteinPer100": 0, "carbsPer100": 0, "fatPer100": 100, "fiberPer100": 0},
+            {"name": "citron", "unit": "piece", "caloriesPer100": 29, "proteinPer100": 1.1, "carbsPer100": 9.3, "fatPer100": 0.3, "fiberPer100": 2.8}
+          ],
+          "instructions": [
+            "Préchauffer le grill du four à 200°C",
+            "Badigeonner le poisson d'huile d'olive et d'herbes de Provence",
+            "Griller le poisson 12-15 minutes selon l'épaisseur",
+            "Réchauffer la ratatouille et servir avec le poisson et un quartier de citron"
+          ],
+          "tags": ["dîner", "poisson", "méditerranéen"]
+        },
+        "snacks": [
+          {
+            "name": "Yaourt grec aux noix et miel",
+            "type": "Collation après-midi",
+            "description": "Collation protéinée aux saveurs méditerranéennes",
+            "calories": ${Math.round(targetCalories * 0.10)},
+            "protein": 9,
+            "carbs": 27,
+            "fat": 4,
+            "fiber": 3,
+            "prepTime": 3,
+            "cookTime": 0,
+            "ingredients": ["150g yaourt grec", "20g noix", "15g miel", "1 pincée cannelle"],
+            "ingredientsNutrition": [
+              {"name": "yaourt grec", "unit": "g", "caloriesPer100": 59, "proteinPer100": 10, "carbsPer100": 3.6, "fatPer100": 0.4, "fiberPer100": 0},
+              {"name": "noix", "unit": "g", "caloriesPer100": 654, "proteinPer100": 15.2, "carbsPer100": 13.7, "fatPer100": 65.2, "fiberPer100": 6.7},
+              {"name": "miel", "unit": "g", "caloriesPer100": 304, "proteinPer100": 0.3, "carbsPer100": 82.4, "fatPer100": 0, "fiberPer100": 0.2},
+              {"name": "cannelle", "unit": "g", "caloriesPer100": 247, "proteinPer100": 4.0, "carbsPer100": 80.6, "fatPer100": 1.2, "fiberPer100": 53.1}
+            ],
+            "instructions": [
+              "Concasser grossièrement les noix",
+              "Mélanger le yaourt avec le miel",
+              "Ajouter les noix et saupoudrer de cannelle"
+            ],
+            "tags": ["collation", "protéines", "antioxydants"]
+          }
+        ]
+      },
+      "totalCalories": ${targetCalories},
+      "totalProtein": 90,
+      "totalCarbs": 225,
+      "totalFat": 60
+    }${chunkDays > 1 ? `,
+    {
+      "day": ${startDay + 1},
+      "meals": { /* structure identique */ },
+      "totalCalories": ${targetCalories}
+    }` : ''}${chunkDays > 2 ? `,
+    {
+      "day": ${startDay + 2},
+      "meals": { /* structure identique */ },
+      "totalCalories": ${targetCalories}
+    }` : ''}
+  ]
+}
+
+Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numérotation correcte:`;
         
         try {
           const chunkStartTime = Date.now();
@@ -307,8 +452,8 @@ Remplace les ... par des noms de plats français créatifs.`;
               role: "user",
               content: chunkPrompt
             }],
-            temperature: 0.7, // Reduced for more consistent output
-            max_tokens: 2000, // Further reduced for faster response
+            temperature: 0.8,
+            max_tokens: 4000, // Reduced for faster response
           });
           
           const text = completion.choices[0]?.message?.content || "";
@@ -345,50 +490,6 @@ Remplace les ... par des noms de plats français créatifs.`;
         } catch (chunkError) {
           const errorMessage = chunkError instanceof Error ? chunkError.message : String(chunkError);
           console.error(`❌ Chunk ${chunk + 1} failed:`, errorMessage);
-          
-          // Check if it's a timeout
-          if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
-            console.log('🔄 Retrying with shorter prompt...');
-            
-            // Retry with ultra-simple prompt
-            try {
-              const simplePrompt = `{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"Petit-déjeuner","calories":${Math.round(targetCalories*0.25)}},"lunch":{"name":"Déjeuner","calories":${Math.round(targetCalories*0.35)}},"dinner":{"name":"Dîner","calories":${Math.round(targetCalories*0.3)}}},"totalCalories":${targetCalories}}`).join(',')}]}`;
-              
-              const retryCompletion = await groq.chat.completions.create({
-                model: "llama-3.1-8b-instant",
-                messages: [{
-                  role: "system",
-                  content: "Modifie ce JSON en changeant UNIQUEMENT les noms des repas par des noms créatifs français. Ne change RIEN d'autre."
-                },
-                {
-                  role: "user",
-                  content: simplePrompt
-                }],
-                temperature: 0.3,
-                max_tokens: 800,
-              });
-              
-              const retryText = retryCompletion.choices[0]?.message?.content || "";
-              console.log('✅ Retry successful');
-              
-              // Parse retry response
-              let jsonText = retryText.trim();
-              jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-              const jsonStart = jsonText.indexOf("{");
-              const jsonEnd = jsonText.lastIndexOf("}");
-              if (jsonStart !== -1 && jsonEnd !== -1) {
-                jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
-                const chunkData = JSON.parse(jsonText);
-                if (chunkData.days && Array.isArray(chunkData.days)) {
-                  allDays.push(...chunkData.days);
-                  continue;
-                }
-              }
-            } catch (retryError) {
-              console.error('❌ Retry also failed:', retryError);
-            }
-          }
-          
           throw new Error(`Failed to generate chunk ${chunk + 1}: ${errorMessage}`);
         }
       }
@@ -409,13 +510,15 @@ Remplace les ... par des noms de plats français créatifs.`;
       
     } else {
       // For shorter plans (≤4 days), use single request
-      // Simplified prompt without ingredient list for faster generation
-      const enhancedPrompt = `Génère un plan alimentaire en JSON pour ${duration} jours.
+      const enhancedPrompt = `Plan alimentaire JSON français concis.
 
-${sanitizedPrompt} - ${targetCalories} calories/jour
-${[...restrictions, ...clientDietaryTags].length > 0 ? `Restrictions: ${[...restrictions, ...clientDietaryTags].join(", ")}` : ""}
+${sanitizedPrompt} - ${duration} jours, environ ${targetCalories} cal/jour
+${[...restrictions, ...clientDietaryTags].length > 0 ? `Restrictions et préférences alimentaires: ${[...restrictions, ...clientDietaryTags].join(", ")}` : ""}
 
-Format JSON EXACT (remplace les ... par des valeurs réelles):
+${ingredientsPromptSection}
+
+PRIORITÉ: Utilisez les ingrédients de la base de données avec leurs valeurs nutritionnelles exactes.
+MAX 2 ingrédients/repas. Calories approximatives (±50-100 acceptable). JSON direct:
 {
   "name": "Plan ${duration} jours",
   "description": "Plan environ ${targetCalories} calories",
@@ -456,8 +559,8 @@ Répète pour ${duration} jours avec variations:`;
               role: "user",
               content: enhancedPrompt
             }],
-            temperature: 0.7, // Reduced for more consistent output
-            max_tokens: 2000, // Further reduced for faster response
+            temperature: 0.8,
+            max_tokens: 4000, // Reduced for faster response
           });
           
           const text = completion.choices[0]?.message?.content || "";
@@ -563,8 +666,6 @@ Répète pour ${duration} jours avec variations:`;
       total: `${timings.total}ms (${(timings.total / 1000).toFixed(2)}s)`
     });
     
-    clearTimeout(timeout); // Clear the timeout on success
-    
     return NextResponse.json({
       success: true,
       data: generatedPlan,
@@ -576,7 +677,6 @@ Répète pour ${duration} jours avec variations:`;
       }
     });
   } catch (error) {
-    clearTimeout(timeout); // Clear the timeout on error
     console.error("Meal plan generation error:", error);
     
     // Log detailed error information
