@@ -935,6 +935,18 @@ export default function GenerateMealPlanPage() {
     }
   }
 
+  // Helper function to clean ingredient names (remove quantities and units)
+  const cleanIngredientName = (name: string): string => {
+    if (!name) return ''
+    
+    // Remove quantity and unit prefixes like "50g ", "200ml ", "2 ", etc.
+    return name
+      .replace(/^\d+\s*(g|ml|kg|l|cl|tsp|tbsp|cup|cups|piece|pieces)?\s*/i, '') // Remove quantity + unit
+      .replace(/^\d+\s*/, '') // Remove standalone numbers
+      .trim()
+      .toLowerCase()
+  }
+
   // Function to save ingredients to database
   const saveIngredientsToDatabase = async (days: any[]) => {
     const savedIngredients = []
@@ -945,11 +957,15 @@ export default function GenerateMealPlanPage() {
         
         for (const ingredient of meal.ingredientsNutrition) {
           try {
+            // Clean the ingredient name to remove quantities and units
+            const cleanName = cleanIngredientName(ingredient.name)
+            if (!cleanName) continue // Skip if name becomes empty after cleaning
+            
             // Check if ingredient already exists globally
             const { data: existingIngredient } = await supabase
               .from("ingredients")
               .select("id")
-              .eq("name", ingredient.name)
+              .eq("name", cleanName)
               .single()
             
             if (existingIngredient) {
@@ -958,7 +974,7 @@ export default function GenerateMealPlanPage() {
             
             // Prepare ingredient data based on unit type
             const ingredientData = {
-              name: ingredient.name,
+              name: cleanName,
               category: ingredient.unit === 'ml' ? 'liquid' : ingredient.unit === 'piece' ? 'countable' : 'solid',
               unit_type: ingredient.unit,
               
