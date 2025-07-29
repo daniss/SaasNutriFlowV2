@@ -113,7 +113,7 @@ export default function SubscriptionSuccessPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-emerald-50 to-teal-100">
-      <div className="container mx-auto px-4 py-12">
+      <div className="container mx-auto px-4 sm:px-6 py-8 sm:py-12">
         <div className="max-w-2xl mx-auto">
           {/* Success Header */}
           <div className="text-center mb-12">
@@ -130,11 +130,11 @@ export default function SubscriptionSuccessPage() {
               </div>
             </div>
             
-            <h1 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+            <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold text-gray-900 mb-4 px-2">
               Bienvenue dans NutriFlow {getPlanName()} ! 🎉
             </h1>
             
-            <p className="text-lg text-gray-600 mb-6">
+            <p className="text-base sm:text-lg text-gray-600 mb-6 px-2">
               Votre abonnement a été activé avec succès. Vous avez maintenant accès à toutes les fonctionnalités Pro.
             </p>
 
@@ -294,17 +294,17 @@ export default function SubscriptionSuccessPage() {
           </Card>
 
           {/* Actions */}
-          <div className="flex gap-4 justify-center">
-            <Button asChild size="lg" className="bg-emerald-600 hover:bg-emerald-700">
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center">
+            <Button asChild size="lg" className="bg-emerald-600 hover:bg-emerald-700 w-full sm:w-auto">
               <Link href="/dashboard">
-                Accéder au tableau de bord
+                <span className="truncate">Accéder au tableau de bord</span>
               </Link>
             </Button>
             
-            <Button asChild variant="outline" size="lg">
+            <Button asChild variant="outline" size="lg" className="w-full sm:w-auto">
               <Link href="/dashboard/meal-plans/generate">
-                <Bot className="h-4 w-4 mr-2" />
-                Tester l'IA
+                <Bot className="h-4 w-4 mr-2 flex-shrink-0" />
+                <span className="truncate">Tester l'IA</span>
               </Link>
             </Button>
           </div>
