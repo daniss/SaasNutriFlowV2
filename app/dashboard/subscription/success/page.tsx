@@ -138,10 +138,16 @@ export default function SubscriptionSuccessPage() {
               Votre abonnement a été activé avec succès. Vous avez maintenant accès à toutes les fonctionnalités Pro.
             </p>
 
-            {subscription?.isTrialing && (
+            {subscription?.isTrialing && subscription?.status === 'trialing' && (
               <Badge className="bg-emerald-100 text-emerald-800 text-sm px-4 py-2">
                 <Star className="h-4 w-4 mr-2" />
                 Période d'essai de 14 jours activée
+              </Badge>
+            )}
+            {subscription?.status === 'active' && (
+              <Badge className="bg-green-100 text-green-800 text-sm px-4 py-2">
+                <CheckCircle className="h-4 w-4 mr-2" />
+                Abonnement activé
               </Badge>
             )}
           </div>
@@ -154,15 +160,20 @@ export default function SubscriptionSuccessPage() {
                   {getPlanIcon()}
                 </div>
                 Plan {getPlanName()}
-                {subscription?.isTrialing && (
+                {subscription?.isTrialing && subscription?.status === 'trialing' && (
                   <Badge variant="outline" className="border-emerald-300 text-emerald-700">
                     Essai gratuit
+                  </Badge>
+                )}
+                {subscription?.status === 'active' && (
+                  <Badge variant="outline" className="border-green-300 text-green-700">
+                    Abonnement payant
                   </Badge>
                 )}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
-              {subscription?.isTrialing && (
+              {subscription?.isTrialing && subscription?.status === 'trialing' && (
                 <div className="p-4 bg-emerald-50 rounded-lg border border-emerald-200">
                   <h3 className="font-semibold text-emerald-900 mb-2">
                     Période d'essai de 14 jours
@@ -170,6 +181,18 @@ export default function SubscriptionSuccessPage() {
                   <p className="text-emerald-700 text-sm">
                     Profitez de toutes les fonctionnalités Pro gratuitement pendant 14 jours. 
                     Votre première facturation aura lieu le {subscription.trialEndsAt && new Date(subscription.trialEndsAt).toLocaleDateString('fr-FR')}.
+                  </p>
+                </div>
+              )}
+              
+              {subscription?.status === 'active' && (
+                <div className="p-4 bg-green-50 rounded-lg border border-green-200">
+                  <h3 className="font-semibold text-green-900 mb-2">
+                    Abonnement activé
+                  </h3>
+                  <p className="text-green-700 text-sm">
+                    Votre abonnement {getPlanName()} est maintenant actif. Vous avez accès à toutes les fonctionnalités Pro.
+                    Prochain renouvellement le {subscription.currentPeriodEnd && new Date(subscription.currentPeriodEnd).toLocaleDateString('fr-FR')}.
                   </p>
                 </div>
               )}
