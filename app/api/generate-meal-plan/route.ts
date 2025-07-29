@@ -452,8 +452,8 @@ Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numér
               role: "user",
               content: chunkPrompt
             }],
-            temperature: 0.8,
-            max_tokens: 4000, // Reduced for faster response
+            temperature: 0.7, // Reduced for more consistent output
+            max_tokens: 2500, // Balanced for nutritional data and speed
           });
           
           const text = completion.choices[0]?.message?.content || "";
@@ -463,21 +463,35 @@ Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numér
           
           // Clean and parse chunk
           let jsonText = text.trim();
-          jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
           
+          // Remove all markdown formatting
+          jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+          jsonText = jsonText.replace(/\*\*/g, ''); // Remove bold markdown
+          jsonText = jsonText.replace(/\*/g, ''); // Remove italic markdown
+          jsonText = jsonText.replace(/^-\s+/gm, ''); // Remove list markers
+          jsonText = jsonText.replace(/^#.*$/gm, ''); // Remove headers
+          
+          // Remove any text before the first { or after the last }
           const jsonStart = jsonText.indexOf("{");
           const jsonEnd = jsonText.lastIndexOf("}");
           
           if (jsonStart === -1 || jsonEnd === -1) {
+            console.error(`Raw response: ${text.substring(0, 500)}...`);
             throw new Error(`No valid JSON in chunk ${chunk + 1}`);
           }
           
           jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
+          
+          // Clean common JSON issues
           jsonText = jsonText
-            .replace(/,\s*}/g, '}')
-            .replace(/,\s*]/g, ']')
-            .replace(/\/\*[^*]*\*\//g, '')
-            .replace(/\/\/.*$/gm, '');
+            .replace(/,\s*}/g, '}') // Remove trailing commas
+            .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
+            .replace(/\/\*[^*]*\*\//g, '') // Remove comments
+            .replace(/\/\/.*$/gm, '') // Remove line comments
+            .replace(/\.\.\./g, '') // Remove ellipsis
+            .replace(/\[…\]/g, '[]') // Replace ellipsis in arrays
+            .replace(/…/g, '') // Remove ellipsis character
+            .replace(/\n\s*\n/g, '\n'); // Remove empty lines
           
           const chunkData = JSON.parse(jsonText);
           
@@ -490,6 +504,46 @@ Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numér
         } catch (chunkError) {
           const errorMessage = chunkError instanceof Error ? chunkError.message : String(chunkError);
           console.error(`❌ Chunk ${chunk + 1} failed:`, errorMessage);
+          
+          // Check if it's a timeout
+          if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
+            console.log('🔄 Retrying with shorter prompt...');
+            
+            // Retry with basic recipe structure
+            try {
+              const simplePrompt = `{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"Petit-déjeuner équilibré","description":"Un petit-déjeuner nutritif pour bien commencer la journée","calories":${Math.round(targetCalories*0.25)},"protein":${Math.round(targetCalories*0.25*0.15/4)},"carbs":${Math.round(targetCalories*0.25*0.50/4)},"fat":${Math.round(targetCalories*0.25*0.35/9)},"ingredients":["avoine","lait"],"instructions":["Chauffer le lait","Ajouter l'avoine","Laisser mijoter 5 minutes"],"ingredientsNutrition":[{"name":"avoine","unit":"g","quantity":50,"caloriesPer100":389,"proteinPer100":17,"carbsPer100":66,"fatPer100":7},{"name":"lait","unit":"ml","quantity":200,"caloriesPer100":42,"proteinPer100":3,"carbsPer100":5,"fatPer100":1}]},"lunch":{"name":"Déjeuner complet","description":"Un repas équilibré avec protéines et légumes","calories":${Math.round(targetCalories*0.35)},"protein":${Math.round(targetCalories*0.35*0.25/4)},"carbs":${Math.round(targetCalories*0.35*0.45/4)},"fat":${Math.round(targetCalories*0.35*0.30/9)},"ingredients":["légumes variés","source de protéines"],"instructions":["Préparer les légumes","Cuire les protéines","Assaisonner et servir"],"ingredientsNutrition":[{"name":"légumes variés","unit":"g","quantity":200,"caloriesPer100":25,"proteinPer100":2,"carbsPer100":5,"fatPer100":0},{"name":"source de protéines","unit":"g","quantity":100,"caloriesPer100":200,"proteinPer100":25,"carbsPer100":0,"fatPer100":10}]},"dinner":{"name":"Dîner léger","description":"Un repas léger et digeste pour le soir","calories":${Math.round(targetCalories*0.3)},"protein":${Math.round(targetCalories*0.3*0.30/4)},"carbs":${Math.round(targetCalories*0.3*0.40/4)},"fat":${Math.round(targetCalories*0.3*0.30/9)},"ingredients":["poisson","légumes"],"instructions":["Assaisonner le poisson","Griller 8-10 minutes","Servir avec légumes"],"ingredientsNutrition":[{"name":"poisson","unit":"g","quantity":120,"caloriesPer100":150,"proteinPer100":25,"carbsPer100":0,"fatPer100":5},{"name":"légumes","unit":"g","quantity":150,"caloriesPer100":25,"proteinPer100":2,"carbsPer100":5,"fatPer100":0}]}},"totalCalories":${targetCalories}}`).join(',')}]}`;
+              
+              const retryCompletion = await groq.chat.completions.create({
+                model: "llama-3.1-8b-instant",
+                messages: [{
+                  role: "user",
+                  content: `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE. Améliore les noms des recettes en gardant EXACTEMENT cette structure: ${simplePrompt}`
+                }],
+                temperature: 0.5,
+                max_tokens: 2000,
+              });
+              
+              const retryText = retryCompletion.choices[0]?.message?.content || "";
+              console.log('✅ Retry successful');
+              
+              // Parse retry response
+              let jsonText = retryText.trim();
+              jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+              const jsonStart = jsonText.indexOf("{");
+              const jsonEnd = jsonText.lastIndexOf("}");
+              if (jsonStart !== -1 && jsonEnd !== -1) {
+                jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
+                const chunkData = JSON.parse(jsonText);
+                if (chunkData.days && Array.isArray(chunkData.days)) {
+                  allDays.push(...chunkData.days);
+                  continue;
+                }
+              }
+            } catch (retryError) {
+              console.error('❌ Retry also failed:', retryError);
+            }
+          }
+          
           throw new Error(`Failed to generate chunk ${chunk + 1}: ${errorMessage}`);
         }
       }
@@ -559,8 +613,8 @@ Répète pour ${duration} jours avec variations:`;
               role: "user",
               content: enhancedPrompt
             }],
-            temperature: 0.8,
-            max_tokens: 4000, // Reduced for faster response
+            temperature: 0.7, // Reduced for more consistent output
+            max_tokens: 2500, // Balanced for nutritional data and speed
           });
           
           const text = completion.choices[0]?.message?.content || "";
@@ -570,7 +624,13 @@ Répète pour ${duration} jours avec variations:`;
 
           // Clean and extract JSON
           let jsonText = text.trim();
+          
+          // Remove all markdown formatting
           jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
+          jsonText = jsonText.replace(/\*\*/g, ''); // Remove bold markdown
+          jsonText = jsonText.replace(/\*/g, ''); // Remove italic markdown
+          jsonText = jsonText.replace(/^-\s+/gm, ''); // Remove list markers
+          jsonText = jsonText.replace(/^#.*$/gm, ''); // Remove headers
           
           const jsonStart = jsonText.indexOf("{");
           const jsonEnd = jsonText.lastIndexOf("}");
@@ -582,11 +642,17 @@ Répète pour ${duration} jours avec variations:`;
           }
           
           jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
+          
+          // Clean common JSON issues
           jsonText = jsonText
-            .replace(/,\s*}/g, '}')
-            .replace(/,\s*]/g, ']')
-            .replace(/\/\*[^*]*\*\//g, '')
-            .replace(/\/\/.*$/gm, '');
+            .replace(/,\s*}/g, '}') // Remove trailing commas
+            .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
+            .replace(/\/\*[^*]*\*\//g, '') // Remove comments
+            .replace(/\/\/.*$/gm, '') // Remove line comments
+            .replace(/\.\.\./g, '') // Remove ellipsis
+            .replace(/\[…\]/g, '[]') // Replace ellipsis in arrays
+            .replace(/…/g, '') // Remove ellipsis character
+            .replace(/\n\s*\n/g, '\n'); // Remove empty lines
 
           generatedPlan = JSON.parse(jsonText);
           
