@@ -214,10 +214,59 @@ export async function POST(request: NextRequest) {
     timings.dbQueries = Date.now() - dbStartTime;
     console.log(`⏱️ Total DB queries: ${timings.dbQueries}ms`);
     
-    // Skip ingredients database fetch for faster generation
-    console.log('⚡ Skipping ingredients database for faster generation');
+    // Fetch available ingredients from the global database
+    let availableIngredients: any[] = [];
+    const ingredientsStartTime = Date.now();
+    try {
+      const { data: ingredients, error: ingredientsError } = await supabase
+        .from("ingredients")
+        .select("name, category, unit_type, calories_per_100g, calories_per_100ml, calories_per_piece, protein_per_100g, protein_per_100ml, protein_per_piece, carbs_per_100g, carbs_per_100ml, carbs_per_piece, fat_per_100g, fat_per_100ml, fat_per_piece, fiber_per_100g, fiber_per_100ml, fiber_per_piece")
+        .order("name");
 
-    // Remove ingredients processing for faster generation
+      if (!ingredientsError && ingredients) {
+        availableIngredients = ingredients;
+        timings.ingredientsFetch = Date.now() - ingredientsStartTime;
+        console.log(`⏱️ Loaded ${availableIngredients.length} ingredients in ${timings.ingredientsFetch}ms`);
+      }
+    } catch (error) {
+      console.error("Error fetching ingredients:", error);
+      // Continue without ingredients database if it fails
+    }
+
+    // Helper function to format ingredient data for AI prompt
+    const formatIngredientsForAI = (ingredients: any[]) => {
+      if (ingredients.length === 0) return "Utilisez des ingrédients courants avec leurs valeurs nutritionnelles estimées.";
+      
+      // Group ingredients by category for better organization
+      const grouped = ingredients.reduce((acc: any, ing: any) => {
+        const category = ing.category || 'other';
+        if (!acc[category]) acc[category] = [];
+        acc[category].push(ing);
+        return acc;
+      }, {});
+
+      let formattedList = "INGRÉDIENTS DISPONIBLES (utilisez prioritairement ces ingrédients avec leurs données nutritionnelles exactes):\n\n";
+      
+      Object.entries(grouped).forEach(([category, items]: [string, any]) => {
+        formattedList += `${category.toUpperCase()}:\n`;
+        (items as any[]).slice(0, 15).forEach(ing => { // Limit to 15 per category to keep prompt manageable
+          let nutritionInfo = "";
+          if (ing.unit_type === 'g' && ing.calories_per_100g) {
+            nutritionInfo = `(${ing.calories_per_100g}kcal, ${ing.protein_per_100g || 0}g prot, ${ing.carbs_per_100g || 0}g gluc, ${ing.fat_per_100g || 0}g lip/100g)`;
+          } else if (ing.unit_type === 'ml' && ing.calories_per_100ml) {
+            nutritionInfo = `(${ing.calories_per_100ml}kcal, ${ing.protein_per_100ml || 0}g prot, ${ing.carbs_per_100ml || 0}g gluc, ${ing.fat_per_100ml || 0}g lip/100ml)`;
+          } else if (ing.unit_type === 'piece' && ing.calories_per_piece) {
+            nutritionInfo = `(${ing.calories_per_piece}kcal, ${ing.protein_per_piece || 0}g prot, ${ing.carbs_per_piece || 0}g gluc, ${ing.fat_per_piece || 0}g lip/pièce)`;
+          }
+          formattedList += `- ${ing.name} ${nutritionInfo}\n`;
+        });
+        formattedList += "\n";
+      });
+
+      return formattedList;
+    };
+
+    const ingredientsPromptSection = formatIngredientsForAI(availableIngredients);
 
     // Input validation is now handled above with Zod schema
 
@@ -242,15 +291,13 @@ export async function POST(request: NextRequest) {
         
         console.log(`🔄 Generating days ${startDay}-${endDay} (${chunkDays} days)`);
         
-        // Optimized prompt with essential recipe fields
-        const chunkPrompt = `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE, AUCUN AUTRE TEXTE.
+        // Ultra-minimal prompt to prevent timeouts
+        const chunkPrompt = `Génère ${chunkDays} jours de repas (jours ${startDay}-${endDay}), ${targetCalories}cal/jour.
 
-Plan ${chunkDays}j (${startDay}-${endDay}), ${targetCalories}cal/j.
+JSON minimal:
+{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"...","calories":${Math.round(targetCalories * 0.25)},"protein":15,"carbs":50,"fat":10},"lunch":{"name":"...","calories":${Math.round(targetCalories * 0.35)},"protein":30,"carbs":60,"fat":20},"dinner":{"name":"...","calories":${Math.round(targetCalories * 0.30)},"protein":35,"carbs":45,"fat":15}},"totalCalories":${targetCalories}}`).join(',')}]}
 
-Génère exactement ce JSON:
-{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"[nom créatif]","description":"[courte description]","calories":${Math.round(targetCalories * 0.25)},"protein":${Math.round(targetCalories * 0.25 * 0.15 / 4)},"carbs":${Math.round(targetCalories * 0.25 * 0.50 / 4)},"fat":${Math.round(targetCalories * 0.25 * 0.35 / 9)},"ingredients":["avoine","lait"],"instructions":["Préparer","Servir"],"ingredientsNutrition":[{"name":"avoine","unit":"g","quantity":50,"caloriesPer100":389,"proteinPer100":17,"carbsPer100":66,"fatPer100":7},{"name":"lait","unit":"ml","quantity":200,"caloriesPer100":42,"proteinPer100":3,"carbsPer100":5,"fatPer100":1}]},"lunch":{"name":"[nom créatif]","description":"[courte description]","calories":${Math.round(targetCalories * 0.35)},"protein":${Math.round(targetCalories * 0.35 * 0.25 / 4)},"carbs":${Math.round(targetCalories * 0.35 * 0.45 / 4)},"fat":${Math.round(targetCalories * 0.35 * 0.30 / 9)},"ingredients":["poulet","riz"],"instructions":["Cuire","Assaisonner"],"ingredientsNutrition":[{"name":"poulet","unit":"g","quantity":120,"caloriesPer100":239,"proteinPer100":27,"carbsPer100":0,"fatPer100":14},{"name":"riz","unit":"g","quantity":80,"caloriesPer100":365,"proteinPer100":7,"carbsPer100":77,"fatPer100":1}]},"dinner":{"name":"[nom créatif]","description":"[courte description]","calories":${Math.round(targetCalories * 0.30)},"protein":${Math.round(targetCalories * 0.30 * 0.30 / 4)},"carbs":${Math.round(targetCalories * 0.30 * 0.40 / 4)},"fat":${Math.round(targetCalories * 0.30 * 0.30 / 9)},"ingredients":["saumon","légumes"],"instructions":["Griller","Servir"],"ingredientsNutrition":[{"name":"saumon","unit":"g","quantity":100,"caloriesPer100":208,"proteinPer100":25,"carbsPer100":0,"fatPer100":12},{"name":"légumes","unit":"g","quantity":150,"caloriesPer100":25,"proteinPer100":2,"carbsPer100":5,"fatPer100":0}]}},"totalCalories":${targetCalories}}`).join(',')}]}
-
-Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
+Remplace les ... par des noms de plats français créatifs.`;
         
         try {
           const chunkStartTime = Date.now();
@@ -261,7 +308,7 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
               content: chunkPrompt
             }],
             temperature: 0.7, // Reduced for more consistent output
-            max_tokens: 2500, // Balanced for nutritional data and speed
+            max_tokens: 2000, // Further reduced for faster response
           });
           
           const text = completion.choices[0]?.message?.content || "";
@@ -271,35 +318,21 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
           
           // Clean and parse chunk
           let jsonText = text.trim();
-          
-          // Remove all markdown formatting
           jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-          jsonText = jsonText.replace(/\*\*/g, ''); // Remove bold markdown
-          jsonText = jsonText.replace(/\*/g, ''); // Remove italic markdown
-          jsonText = jsonText.replace(/^-\s+/gm, ''); // Remove list markers
-          jsonText = jsonText.replace(/^#.*$/gm, ''); // Remove headers
           
-          // Remove any text before the first { or after the last }
           const jsonStart = jsonText.indexOf("{");
           const jsonEnd = jsonText.lastIndexOf("}");
           
           if (jsonStart === -1 || jsonEnd === -1) {
-            console.error(`Raw response: ${text.substring(0, 500)}...`);
             throw new Error(`No valid JSON in chunk ${chunk + 1}`);
           }
           
           jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
-          
-          // Clean common JSON issues
           jsonText = jsonText
-            .replace(/,\s*}/g, '}') // Remove trailing commas
-            .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
-            .replace(/\/\*[^*]*\*\//g, '') // Remove comments
-            .replace(/\/\/.*$/gm, '') // Remove line comments
-            .replace(/\.\.\./g, '') // Remove ellipsis
-            .replace(/\[…\]/g, '[]') // Replace ellipsis in arrays
-            .replace(/…/g, '') // Remove ellipsis character
-            .replace(/\n\s*\n/g, '\n'); // Remove empty lines
+            .replace(/,\s*}/g, '}')
+            .replace(/,\s*]/g, ']')
+            .replace(/\/\*[^*]*\*\//g, '')
+            .replace(/\/\/.*$/gm, '');
           
           const chunkData = JSON.parse(jsonText);
           
@@ -317,18 +350,22 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
           if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
             console.log('🔄 Retrying with shorter prompt...');
             
-            // Retry with basic recipe structure
+            // Retry with ultra-simple prompt
             try {
-              const simplePrompt = `{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"Petit-déjeuner équilibré","description":"Un petit-déjeuner nutritif pour bien commencer la journée","calories":${Math.round(targetCalories*0.25)},"protein":${Math.round(targetCalories*0.25*0.15/4)},"carbs":${Math.round(targetCalories*0.25*0.50/4)},"fat":${Math.round(targetCalories*0.25*0.35/9)},"ingredients":["avoine","lait"],"instructions":["Chauffer le lait","Ajouter l'avoine","Laisser mijoter 5 minutes"],"ingredientsNutrition":[{"name":"avoine","unit":"g","quantity":50,"caloriesPer100":389,"proteinPer100":17,"carbsPer100":66,"fatPer100":7},{"name":"lait","unit":"ml","quantity":200,"caloriesPer100":42,"proteinPer100":3,"carbsPer100":5,"fatPer100":1}]},"lunch":{"name":"Déjeuner complet","description":"Un repas équilibré avec protéines et légumes","calories":${Math.round(targetCalories*0.35)},"protein":${Math.round(targetCalories*0.35*0.25/4)},"carbs":${Math.round(targetCalories*0.35*0.45/4)},"fat":${Math.round(targetCalories*0.35*0.30/9)},"ingredients":["légumes variés","source de protéines"],"instructions":["Préparer les légumes","Cuire les protéines","Assaisonner et servir"],"ingredientsNutrition":[{"name":"légumes variés","unit":"g","quantity":200,"caloriesPer100":25,"proteinPer100":2,"carbsPer100":5,"fatPer100":0},{"name":"source de protéines","unit":"g","quantity":100,"caloriesPer100":200,"proteinPer100":25,"carbsPer100":0,"fatPer100":10}]},"dinner":{"name":"Dîner léger","description":"Un repas léger et digeste pour le soir","calories":${Math.round(targetCalories*0.3)},"protein":${Math.round(targetCalories*0.3*0.30/4)},"carbs":${Math.round(targetCalories*0.3*0.40/4)},"fat":${Math.round(targetCalories*0.3*0.30/9)},"ingredients":["poisson","légumes"],"instructions":["Assaisonner le poisson","Griller 8-10 minutes","Servir avec légumes"],"ingredientsNutrition":[{"name":"poisson","unit":"g","quantity":120,"caloriesPer100":150,"proteinPer100":25,"carbsPer100":0,"fatPer100":5},{"name":"légumes","unit":"g","quantity":150,"caloriesPer100":25,"proteinPer100":2,"carbsPer100":5,"fatPer100":0}]}},"totalCalories":${targetCalories}}`).join(',')}]}`;
+              const simplePrompt = `{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"Petit-déjeuner","calories":${Math.round(targetCalories*0.25)}},"lunch":{"name":"Déjeuner","calories":${Math.round(targetCalories*0.35)}},"dinner":{"name":"Dîner","calories":${Math.round(targetCalories*0.3)}}},"totalCalories":${targetCalories}}`).join(',')}]}`;
               
               const retryCompletion = await groq.chat.completions.create({
                 model: "llama-3.1-8b-instant",
                 messages: [{
+                  role: "system",
+                  content: "Modifie ce JSON en changeant UNIQUEMENT les noms des repas par des noms créatifs français. Ne change RIEN d'autre."
+                },
+                {
                   role: "user",
-                  content: `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE. Améliore les noms des recettes en gardant EXACTEMENT cette structure: ${simplePrompt}`
+                  content: simplePrompt
                 }],
-                temperature: 0.5,
-                max_tokens: 2000,
+                temperature: 0.3,
+                max_tokens: 800,
               });
               
               const retryText = retryCompletion.choices[0]?.message?.content || "";
@@ -372,12 +409,13 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
       
     } else {
       // For shorter plans (≤4 days), use single request
-      // Optimized prompt with essential recipe fields
-      const enhancedPrompt = `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE, AUCUN AUTRE TEXTE.
+      // Simplified prompt without ingredient list for faster generation
+      const enhancedPrompt = `Génère un plan alimentaire en JSON pour ${duration} jours.
 
-Plan ${duration}j, ${targetCalories}cal/j.
+${sanitizedPrompt} - ${targetCalories} calories/jour
+${[...restrictions, ...clientDietaryTags].length > 0 ? `Restrictions: ${[...restrictions, ...clientDietaryTags].join(", ")}` : ""}
 
-Génère exactement ce JSON:
+Format JSON EXACT (remplace les ... par des valeurs réelles):
 {
   "name": "Plan ${duration} jours",
   "description": "Plan environ ${targetCalories} calories",
@@ -388,10 +426,10 @@ Génère exactement ce JSON:
     {
       "day": 1,
       "meals": {
-        "breakfast": {"name": "[nom créatif]", "description": "[courte description]", "calories": ${Math.round(targetCalories * 0.25)}, "protein": ${Math.round(targetCalories * 0.25 * 0.15 / 4)}, "carbs": ${Math.round(targetCalories * 0.25 * 0.50 / 4)}, "fat": ${Math.round(targetCalories * 0.25 * 0.35 / 9)}, "ingredients": ["avoine", "lait"], "instructions": ["Préparer", "Servir"], "ingredientsNutrition": [{"name": "avoine", "unit": "g", "quantity": 50, "caloriesPer100": 389, "proteinPer100": 17, "carbsPer100": 66, "fatPer100": 7}, {"name": "lait", "unit": "ml", "quantity": 200, "caloriesPer100": 42, "proteinPer100": 3, "carbsPer100": 5, "fatPer100": 1}]},
-        "lunch": {"name": "[nom créatif]", "description": "[courte description]", "calories": ${Math.round(targetCalories * 0.35)}, "protein": ${Math.round(targetCalories * 0.35 * 0.25 / 4)}, "carbs": ${Math.round(targetCalories * 0.35 * 0.45 / 4)}, "fat": ${Math.round(targetCalories * 0.35 * 0.30 / 9)}, "ingredients": ["poulet", "riz"], "instructions": ["Cuire", "Assaisonner"], "ingredientsNutrition": [{"name": "poulet", "unit": "g", "quantity": 120, "caloriesPer100": 239, "proteinPer100": 27, "carbsPer100": 0, "fatPer100": 14}, {"name": "riz", "unit": "g", "quantity": 80, "caloriesPer100": 365, "proteinPer100": 7, "carbsPer100": 77, "fatPer100": 1}]},
-        "dinner": {"name": "[nom créatif]", "description": "[courte description]", "calories": ${Math.round(targetCalories * 0.30)}, "protein": ${Math.round(targetCalories * 0.30 * 0.30 / 4)}, "carbs": ${Math.round(targetCalories * 0.30 * 0.40 / 4)}, "fat": ${Math.round(targetCalories * 0.30 * 0.30 / 9)}, "ingredients": ["saumon", "légumes"], "instructions": ["Griller", "Servir"], "ingredientsNutrition": [{"name": "saumon", "unit": "g", "quantity": 100, "caloriesPer100": 208, "proteinPer100": 25, "carbsPer100": 0, "fatPer100": 12}, {"name": "légumes", "unit": "g", "quantity": 150, "caloriesPer100": 25, "proteinPer100": 2, "carbsPer100": 5, "fatPer100": 0}]},
-        "snacks": [{"name": "[nom créatif]", "description": "[courte description]", "calories": ${Math.round(targetCalories * 0.10)}, "protein": ${Math.round(targetCalories * 0.10 * 0.20 / 4)}, "carbs": ${Math.round(targetCalories * 0.10 * 0.40 / 4)}, "fat": ${Math.round(targetCalories * 0.10 * 0.40 / 9)}, "ingredients": ["amandes"], "instructions": ["Portionner"], "ingredientsNutrition": [{"name": "amandes", "unit": "g", "quantity": 25, "caloriesPer100": 579, "proteinPer100": 21, "carbsPer100": 22, "fatPer100": 50}]}]
+        "breakfast": {"name": "PDJ", "description": "Matin", "calories": ${Math.round(targetCalories * 0.25)}, "protein": 17, "carbs": 62, "fat": 15, "fiber": 5, "prepTime": 5, "cookTime": 5, "ingredients": ["50g avoine", "200ml lait"], "ingredientsNutrition": [{"name": "avoine", "unit": "g", "caloriesPer100": 389, "proteinPer100": 16.9, "carbsPer100": 66.3, "fatPer100": 6.9, "fiberPer100": 10.6}, {"name": "lait", "unit": "ml", "caloriesPer100": 42, "proteinPer100": 3.4, "carbsPer100": 4.8, "fatPer100": 1.0, "fiberPer100": 0}], "instructions": ["Mélanger"], "tags": ["matin"]},
+        "lunch": {"name": "DEJ", "description": "Midi", "calories": ${Math.round(targetCalories * 0.35)}, "protein": 32, "carbs": 79, "fat": 21, "fiber": 8, "prepTime": 10, "cookTime": 10, "ingredients": ["100g quinoa", "150g légumes"], "ingredientsNutrition": [{"name": "quinoa", "unit": "g", "caloriesPer100": 368, "proteinPer100": 14.1, "carbsPer100": 64.2, "fatPer100": 6.1, "fiberPer100": 7.0}, {"name": "légumes", "unit": "g", "caloriesPer100": 25, "proteinPer100": 2.0, "carbsPer100": 5.0, "fatPer100": 0.2, "fiberPer100": 3.0}], "instructions": ["Cuire"], "tags": ["midi"]},
+        "dinner": {"name": "DIN", "description": "Soir", "calories": ${Math.round(targetCalories * 0.30)}, "protein": 34, "carbs": 61, "fat": 18, "fiber": 6, "prepTime": 10, "cookTime": 15, "ingredients": ["120g poisson", "200g légumes"], "ingredientsNutrition": [{"name": "poisson", "unit": "g", "caloriesPer100": 150, "proteinPer100": 25, "carbsPer100": 0, "fatPer100": 5, "fiberPer100": 0}, {"name": "légumes", "unit": "g", "caloriesPer100": 25, "proteinPer100": 2.0, "carbsPer100": 5.0, "fatPer100": 0.2, "fiberPer100": 3.0}], "instructions": ["Griller"], "tags": ["soir"]},
+        "snacks": [{"name": "Snack", "description": "Collation", "calories": ${Math.round(targetCalories * 0.10)}, "protein": 9, "carbs": 27, "fat": 4, "fiber": 3, "prepTime": 2, "cookTime": 0, "ingredients": ["150g yaourt"], "ingredientsNutrition": [{"name": "yaourt", "unit": "g", "caloriesPer100": 59, "proteinPer100": 10, "carbsPer100": 3.6, "fatPer100": 0.4, "fiberPer100": 0}], "instructions": ["Servir"], "tags": ["snack"]}]
       },
       "totalCalories": ${targetCalories},
       "totalProtein": 90,
@@ -401,7 +439,7 @@ Génère exactement ce JSON:
   ]
 }
 
-Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
+Répète pour ${duration} jours avec variations:`;
 
       // Single request retry logic for short plans
       let attempts = 0;
@@ -419,7 +457,7 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
               content: enhancedPrompt
             }],
             temperature: 0.7, // Reduced for more consistent output
-            max_tokens: 2500, // Balanced for nutritional data and speed
+            max_tokens: 2000, // Further reduced for faster response
           });
           
           const text = completion.choices[0]?.message?.content || "";
@@ -429,13 +467,7 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
 
           // Clean and extract JSON
           let jsonText = text.trim();
-          
-          // Remove all markdown formatting
           jsonText = jsonText.replace(/```json\s*/g, '').replace(/```\s*/g, '');
-          jsonText = jsonText.replace(/\*\*/g, ''); // Remove bold markdown
-          jsonText = jsonText.replace(/\*/g, ''); // Remove italic markdown
-          jsonText = jsonText.replace(/^-\s+/gm, ''); // Remove list markers
-          jsonText = jsonText.replace(/^#.*$/gm, ''); // Remove headers
           
           const jsonStart = jsonText.indexOf("{");
           const jsonEnd = jsonText.lastIndexOf("}");
@@ -447,17 +479,11 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
           }
           
           jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
-          
-          // Clean common JSON issues
           jsonText = jsonText
-            .replace(/,\s*}/g, '}') // Remove trailing commas
-            .replace(/,\s*]/g, ']') // Remove trailing commas in arrays
-            .replace(/\/\*[^*]*\*\//g, '') // Remove comments
-            .replace(/\/\/.*$/gm, '') // Remove line comments
-            .replace(/\.\.\./g, '') // Remove ellipsis
-            .replace(/\[…\]/g, '[]') // Replace ellipsis in arrays
-            .replace(/…/g, '') // Remove ellipsis character
-            .replace(/\n\s*\n/g, '\n'); // Remove empty lines
+            .replace(/,\s*}/g, '}')
+            .replace(/,\s*]/g, ']')
+            .replace(/\/\*[^*]*\*\//g, '')
+            .replace(/\/\/.*$/gm, '');
 
           generatedPlan = JSON.parse(jsonText);
           
