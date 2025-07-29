@@ -18,7 +18,7 @@ const envSchema = z.object({
   CLIENT_AUTH_SECRET: z.string().min(32, 'Client auth secret must be at least 32 characters'),
   
   // AI Integration (REQUIRED for meal planning)
-  GEMINI_API_KEY: z.string().min(20, 'Gemini API key required'),
+  GROQ_API_KEY: z.string().min(20, 'Groq API key required'),
   
   // Payment Processing (REQUIRED for subscriptions)
   STRIPE_SECRET_KEY: z.string().regex(/^sk_(test_|live_)/, 'Invalid Stripe secret key format'),
@@ -47,7 +47,7 @@ export function validateEnvironmentVariables(): EnvConfig {
       NEXT_PUBLIC_SUPABASE_ANON_KEY: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
       SUPABASE_SERVICE_ROLE_KEY: process.env.SUPABASE_SERVICE_ROLE_KEY,
       CLIENT_AUTH_SECRET: process.env.CLIENT_AUTH_SECRET,
-      GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+      GROQ_API_KEY: process.env.GROQ_API_KEY,
       STRIPE_SECRET_KEY: process.env.STRIPE_SECRET_KEY,
       STRIPE_WEBHOOK_SECRET: process.env.STRIPE_WEBHOOK_SECRET,
       NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL,
@@ -77,7 +77,7 @@ export function checkSensitiveEnvExposure(): void {
   const sensitiveVars = [
     'SUPABASE_SERVICE_ROLE_KEY',
     'CLIENT_AUTH_SECRET', 
-    'GEMINI_API_KEY',
+    'GROQ_API_KEY',
     'STRIPE_SECRET_KEY',
     'STRIPE_WEBHOOK_SECRET',
     'SMTP_PASS'

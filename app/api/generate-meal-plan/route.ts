@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { 
@@ -14,16 +14,16 @@ import {
 export async function POST(request: NextRequest) {
   try {
     // SECURITY: Use validated environment configuration
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      console.error('❌ GEMINI_API_KEY environment variable is missing');
+      console.error('❌ GROQ_API_KEY environment variable is missing');
       return NextResponse.json(
         { error: "Service de génération IA indisponible" },
         { status: 503 }
       );
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
+    const groq = new Groq({ apiKey });
 
     // Get auth token from header
     const authHeader = request.headers.get("authorization");
@@ -243,8 +243,7 @@ export async function POST(request: NextRequest) {
 
     // Input validation is now handled above with Zod schema
 
-    // Generate meal plan using Gemini
-    const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+    // Generate meal plan using Groq
 
     let generatedPlan: any;
 
@@ -423,9 +422,17 @@ FORMAT JSON:
 Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numérotation correcte:`;
         
         try {
-          const result = await model.generateContent(chunkPrompt);
-          const response = await result.response;
-          const text = response.text().trim();
+          const completion = await groq.chat.completions.create({
+            model: "llama-3.1-8b-instant",
+            messages: [{
+              role: "user",
+              content: chunkPrompt
+            }],
+            temperature: 0.8,
+            max_tokens: 8000,
+          });
+          
+          const text = completion.choices[0]?.message?.content || "";
           
           console.log(`📏 Chunk ${chunk + 1} response length: ${text.length} characters`);
           
@@ -517,9 +524,17 @@ Répète pour ${duration} jours avec variations:`;
         attempts++;
 
         try {
-          const result = await model.generateContent(enhancedPrompt);
-          const response = await result.response;
-          const text = response.text().trim();
+          const completion = await groq.chat.completions.create({
+            model: "llama-3.1-8b-instant",
+            messages: [{
+              role: "user",
+              content: enhancedPrompt
+            }],
+            temperature: 0.8,
+            max_tokens: 8000,
+          });
+          
+          const text = completion.choices[0]?.message?.content || "";
           
           console.log(`📏 Short plan response length: ${text.length} characters`);
 

@@ -135,7 +135,7 @@ async function checkDatabase(): Promise<ServiceStatus> {
 }
 
 async function checkAIService(): Promise<ServiceStatus> {
-  if (!process.env.GEMINI_API_KEY) {
+  if (!process.env.GROQ_API_KEY) {
     return {
       status: 'not_configured',
       message: 'No AI service configured',
