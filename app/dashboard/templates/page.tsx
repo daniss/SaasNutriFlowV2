@@ -356,30 +356,30 @@ function TemplateCard({
                 <MoreHorizontal className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => onEdit(template)}>
-                <Edit className="mr-2 h-4 w-4" />
-                Modifier
+            <DropdownMenuContent align="end" className="w-56 max-w-[90vw]">
+              <DropdownMenuItem onClick={() => onEdit(template)} className="text-sm">
+                <Edit className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Modifier</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onGenerate(template)}>
-                <Zap className="mr-2 h-4 w-4 text-emerald-600" />
-                <span className="text-emerald-600 font-medium">Générer un plan</span>
+              <DropdownMenuItem onClick={() => onGenerate(template)} className="text-sm">
+                <Zap className="mr-2 h-4 w-4 text-emerald-600 flex-shrink-0" />
+                <span className="text-emerald-600 font-medium truncate">Générer un plan</span>
               </DropdownMenuItem>
-              <DropdownMenuItem>
-                <Copy className="mr-2 h-4 w-4" />
-                Dupliquer
+              <DropdownMenuItem className="text-sm">
+                <Copy className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Dupliquer</span>
               </DropdownMenuItem>
-              <DropdownMenuItem onClick={() => onMealPrep(template)}>
-                <BookOpen className="mr-2 h-4 w-4" />
-                Instructions de préparation
+              <DropdownMenuItem onClick={() => onMealPrep(template)} className="text-sm">
+                <BookOpen className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Instructions prépa.</span>
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem 
                 onClick={() => onDelete(template.id)}
-                className="text-red-600 hover:text-red-700"
+                className="text-red-600 hover:text-red-700 text-sm"
               >
-                <Trash2 className="mr-2 h-4 w-4" />
-                Supprimer
+                <Trash2 className="mr-2 h-4 w-4 flex-shrink-0" />
+                <span className="truncate">Supprimer</span>
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>
