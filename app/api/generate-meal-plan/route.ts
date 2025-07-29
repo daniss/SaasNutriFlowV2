@@ -214,59 +214,10 @@ export async function POST(request: NextRequest) {
     timings.dbQueries = Date.now() - dbStartTime;
     console.log(`⏱️ Total DB queries: ${timings.dbQueries}ms`);
     
-    // Fetch available ingredients from the global database
-    let availableIngredients: any[] = [];
-    const ingredientsStartTime = Date.now();
-    try {
-      const { data: ingredients, error: ingredientsError } = await supabase
-        .from("ingredients")
-        .select("name, category, unit_type, calories_per_100g, calories_per_100ml, calories_per_piece, protein_per_100g, protein_per_100ml, protein_per_piece, carbs_per_100g, carbs_per_100ml, carbs_per_piece, fat_per_100g, fat_per_100ml, fat_per_piece, fiber_per_100g, fiber_per_100ml, fiber_per_piece")
-        .order("name");
+    // Skip ingredients database fetch for faster generation
+    console.log('⚡ Skipping ingredients database for faster generation');
 
-      if (!ingredientsError && ingredients) {
-        availableIngredients = ingredients;
-        timings.ingredientsFetch = Date.now() - ingredientsStartTime;
-        console.log(`⏱️ Loaded ${availableIngredients.length} ingredients in ${timings.ingredientsFetch}ms`);
-      }
-    } catch (error) {
-      console.error("Error fetching ingredients:", error);
-      // Continue without ingredients database if it fails
-    }
-
-    // Helper function to format ingredient data for AI prompt
-    const formatIngredientsForAI = (ingredients: any[]) => {
-      if (ingredients.length === 0) return "Utilisez des ingrédients courants avec leurs valeurs nutritionnelles estimées.";
-      
-      // Group ingredients by category for better organization
-      const grouped = ingredients.reduce((acc: any, ing: any) => {
-        const category = ing.category || 'other';
-        if (!acc[category]) acc[category] = [];
-        acc[category].push(ing);
-        return acc;
-      }, {});
-
-      let formattedList = "INGRÉDIENTS DISPONIBLES (utilisez prioritairement ces ingrédients avec leurs données nutritionnelles exactes):\n\n";
-      
-      Object.entries(grouped).forEach(([category, items]: [string, any]) => {
-        formattedList += `${category.toUpperCase()}:\n`;
-        (items as any[]).slice(0, 15).forEach(ing => { // Limit to 15 per category to keep prompt manageable
-          let nutritionInfo = "";
-          if (ing.unit_type === 'g' && ing.calories_per_100g) {
-            nutritionInfo = `(${ing.calories_per_100g}kcal, ${ing.protein_per_100g || 0}g prot, ${ing.carbs_per_100g || 0}g gluc, ${ing.fat_per_100g || 0}g lip/100g)`;
-          } else if (ing.unit_type === 'ml' && ing.calories_per_100ml) {
-            nutritionInfo = `(${ing.calories_per_100ml}kcal, ${ing.protein_per_100ml || 0}g prot, ${ing.carbs_per_100ml || 0}g gluc, ${ing.fat_per_100ml || 0}g lip/100ml)`;
-          } else if (ing.unit_type === 'piece' && ing.calories_per_piece) {
-            nutritionInfo = `(${ing.calories_per_piece}kcal, ${ing.protein_per_piece || 0}g prot, ${ing.carbs_per_piece || 0}g gluc, ${ing.fat_per_piece || 0}g lip/pièce)`;
-          }
-          formattedList += `- ${ing.name} ${nutritionInfo}\n`;
-        });
-        formattedList += "\n";
-      });
-
-      return formattedList;
-    };
-
-    const ingredientsPromptSection = formatIngredientsForAI(availableIngredients);
+    // Remove ingredients processing for faster generation
 
     // Input validation is now handled above with Zod schema
 
