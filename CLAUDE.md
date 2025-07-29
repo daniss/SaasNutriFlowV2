@@ -475,7 +475,19 @@ npm run type-check && npm run lint && npm test
 🧹 Refactor: Brief description of refactoring
 📝 Docs: Brief description of documentation change
 🚀 Performance: Brief description of performance improvement
+
+# CRITICAL: Always commit AND push changes when task is completed
+git add .
+git commit -m "descriptive message"
+git push  # ← REQUIRED: Never leave changes uncommitted locally
 ```
+
+### AI Agent Workflow Requirements
+- **ALWAYS** commit changes after completing a task or feature
+- **ALWAYS** push commits to remote repository immediately
+- **NEVER** leave work uncommitted or only committed locally
+- Use clear, descriptive commit messages with appropriate emoji prefixes
+- Commit frequently during development, not just at the end
 
 ### Component Development
 ```typescript
@@ -595,6 +607,7 @@ export async function logDataAccess(
 - **MUST** implement proper loading and error states
 - **MUST** ensure mobile responsiveness
 - **MUST** validate GDPR compliance for new features
+- **MUST** commit and push all changes when task is completed
 
 ---
 
