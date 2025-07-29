@@ -16,11 +16,11 @@ export async function POST(request: NextRequest) {
   const timings: Record<string, number> = {};
   
   try {
-    console.log('🚀 Starting meal plan generation...');
+    console.log(' Starting meal plan generation...');
     // SECURITY: Use validated environment configuration
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
-      console.error('❌ GROQ_API_KEY environment variable is missing');
+      console.error(' GROQ_API_KEY environment variable is missing');
       return NextResponse.json(
         { error: "Service de génération IA indisponible" },
         { status: 503 }
@@ -56,7 +56,7 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser(token);
     
     timings.authentication = Date.now() - authStartTime;
-    console.log(`⏱️ Authentication: ${timings.authentication}ms`);
+    console.log(` Authentication: ${timings.authentication}ms`);
 
     if (authError || !user) {
       return NextResponse.json(
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     const validationResult = await validateInput(body, mealPlanRequestSchema);
     
     if (!validationResult.success) {
-      console.warn('❌ Input validation failed:', validationResult.error);
+      console.warn(' Input validation failed:', validationResult.error);
       return NextResponse.json(
         { error: validationResult.error },
         { status: 400 }
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     } = validationResult.data;
 
     // Rate limiting: 20 AI generation requests per hour per user (generous limit to prevent abuse)
-    console.log('⏱️ Checking rate limits...');
+    console.log(' Checking rate limits...');
     const rateLimitResult = checkRateLimit(`ai-generation:${user.id}`, 20, 60 * 60 * 1000);
     
     if (!rateLimitResult.success) {
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (dietitianError || !dietitian) {
-      console.error('❌ Dietitian profile not found:', dietitianError);
+      console.error(' Dietitian profile not found:', dietitianError);
       return NextResponse.json(
         { error: 'Profil nutritionniste non trouvé' },
         { status: 401 }
@@ -126,7 +126,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (planError || !planData) {
-      console.error('❌ Subscription plan not found:', planError);
+      console.error(' Subscription plan not found:', planError);
       return NextResponse.json(
         { error: 'Plan d\'abonnement non trouvé' },
         { status: 500 }
@@ -162,10 +162,10 @@ export async function POST(request: NextRequest) {
         .gte('created_at', startOfMonth.toISOString());
       
       timings.usageCheck = Date.now() - usageStartTime;
-      console.log(`⏱️ Usage check: ${timings.usageCheck}ms`);
+      console.log(` Usage check: ${timings.usageCheck}ms`);
 
       if (usageError) {
-        console.error('❌ Error checking AI usage:', usageError);
+        console.error(' Error checking AI usage:', usageError);
         return NextResponse.json(
           { error: 'Erreur lors de la vérification de l\'utilisation' },
           { status: 500 }
@@ -188,7 +188,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Sanitize and check prompt for malicious content
-    console.log('🛡️ Sanitizing AI prompt...');
+    console.log(' Sanitizing AI prompt...');
     const sanitizedPrompt = sanitizeAIPrompt(prompt);
     
     if (containsMaliciousContent(prompt)) {
@@ -201,21 +201,21 @@ export async function POST(request: NextRequest) {
 
     // Log if the prompt was sanitized (content was filtered)
     if (sanitizedPrompt !== prompt) {
-      console.warn(`⚠️ Prompt sanitized for user ${user.id}`);
+      console.warn(` Prompt sanitized for user ${user.id}`);
       logSuspiciousRequest(user.id, prompt, "Prompt injection patterns detected and sanitized");
     }
 
     timings.dbQueries = Date.now() - dbStartTime;
-    console.log(`⏱️ Total DB queries: ${timings.dbQueries}ms`);
+    console.log(` Total DB queries: ${timings.dbQueries}ms`);
     
     // Skip ingredients database fetch for faster generation
-    console.log('⚡ Skipping ingredients database for faster generation');
+    console.log(' Skipping ingredients database for faster generation');
 
     // Input validation is now handled above with Zod schema
 
     // Generate meal plan using Groq
     const aiStartTime = Date.now();
-    console.log('🤖 Starting AI generation...');
+    console.log(' Starting AI generation...');
 
     let generatedPlan: any;
 
@@ -223,7 +223,7 @@ export async function POST(request: NextRequest) {
     if (duration >= 5) {
       const maxDays = 3; // Generate max 3 days per request to avoid truncation
       
-      console.log(`📦 Splitting ${duration}-day plan into chunks of ${maxDays} days`);
+      console.log(` Splitting ${duration}-day plan into chunks of ${maxDays} days`);
       
       let allDays = [];
       
@@ -232,7 +232,7 @@ export async function POST(request: NextRequest) {
         const endDay = Math.min(startDay + maxDays - 1, duration);
         const chunkDays = endDay - startDay + 1;
         
-        console.log(`🔄 Generating days ${startDay}-${endDay} (${chunkDays} days)`);
+        console.log(` Generating days ${startDay}-${endDay} (${chunkDays} days)`);
         
         // Optimized prompt with essential fields for UI and ingredient creation
         const chunkPrompt = `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE, AUCUN AUTRE TEXTE.
@@ -243,7 +243,6 @@ Génère exactement ce JSON:
 {"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"[nom créatif]","description":"[courte description]","calories":${Math.round(targetCalories * 0.25)},"protein":${Math.round(targetCalories * 0.25 * 0.15 / 4)},"carbs":${Math.round(targetCalories * 0.25 * 0.50 / 4)},"fat":${Math.round(targetCalories * 0.25 * 0.35 / 9)},"ingredients":["avoine","lait"],"instructions":["Préparer","Servir"],"ingredientsNutrition":[{"name":"avoine","unit":"g","quantity":50,"caloriesPer100":389,"proteinPer100":17,"carbsPer100":66,"fatPer100":7},{"name":"lait","unit":"ml","quantity":200,"caloriesPer100":42,"proteinPer100":3,"carbsPer100":5,"fatPer100":1}]},"lunch":{"name":"[nom créatif]","description":"[courte description]","calories":${Math.round(targetCalories * 0.35)},"protein":${Math.round(targetCalories * 0.35 * 0.25 / 4)},"carbs":${Math.round(targetCalories * 0.35 * 0.45 / 4)},"fat":${Math.round(targetCalories * 0.35 * 0.30 / 9)},"ingredients":["poulet","riz"],"instructions":["Cuire","Assaisonner"],"ingredientsNutrition":[{"name":"poulet","unit":"g","quantity":120,"caloriesPer100":239,"proteinPer100":27,"carbsPer100":0,"fatPer100":14},{"name":"riz","unit":"g","quantity":80,"caloriesPer100":365,"proteinPer100":7,"carbsPer100":77,"fatPer100":1}]},"dinner":{"name":"[nom créatif]","description":"[courte description]","calories":${Math.round(targetCalories * 0.30)},"protein":${Math.round(targetCalories * 0.30 * 0.30 / 4)},"carbs":${Math.round(targetCalories * 0.30 * 0.40 / 4)},"fat":${Math.round(targetCalories * 0.30 * 0.30 / 9)},"ingredients":["saumon","légumes"],"instructions":["Griller","Servir"],"ingredientsNutrition":[{"name":"saumon","unit":"g","quantity":100,"caloriesPer100":208,"proteinPer100":25,"carbsPer100":0,"fatPer100":12},{"name":"légumes","unit":"g","quantity":150,"caloriesPer100":25,"proteinPer100":2,"carbsPer100":5,"fatPer100":0}]}},"totalCalories":${targetCalories}}`).join(',')}]}
 
 Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
-`;
         
         try {
           const chunkStartTime = Date.now();
@@ -260,7 +259,7 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
           const text = completion.choices[0]?.message?.content || "";
           
           const chunkTime = Date.now() - chunkStartTime;
-          console.log(`⏱️ Chunk ${chunk + 1} generation: ${chunkTime}ms (${text.length} chars)`);
+          console.log(` Chunk ${chunk + 1} generation: ${chunkTime}ms (${text.length} chars)`);
           
           // Clean and parse chunk
           let jsonText = text.trim();
@@ -304,11 +303,11 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
           
         } catch (chunkError) {
           const errorMessage = chunkError instanceof Error ? chunkError.message : String(chunkError);
-          console.error(`❌ Chunk ${chunk + 1} failed:`, errorMessage);
+          console.error(` Chunk ${chunk + 1} failed:`, errorMessage);
           
           // Check if it's a timeout
           if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
-            console.log('🔄 Retrying with shorter prompt...');
+            console.log(' Retrying with shorter prompt...');
             
             // Retry with basic recipe structure
             try {
@@ -325,7 +324,7 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
               });
               
               const retryText = retryCompletion.choices[0]?.message?.content || "";
-              console.log('✅ Retry successful');
+              console.log(' Retry successful');
               
               // Parse retry response
               let jsonText = retryText.trim();
@@ -341,7 +340,7 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
                 }
               }
             } catch (retryError) {
-              console.error('❌ Retry also failed:', retryError);
+              console.error(' Retry also failed:', retryError);
             }
           }
           
@@ -350,7 +349,7 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
       }
       
       timings.aiGeneration = Date.now() - aiStartTime;
-      console.log(`⏱️ Total AI generation (chunked): ${timings.aiGeneration}ms`);
+      console.log(` Total AI generation (chunked): ${timings.aiGeneration}ms`);
       
       // Assemble final plan
       generatedPlan = {
@@ -421,7 +420,7 @@ Répète pour ${duration} jours avec variations:`;
           const text = completion.choices[0]?.message?.content || "";
           
           const singleGenTime = Date.now() - singleGenStartTime;
-          console.log(`⏱️ Single generation: ${singleGenTime}ms (${text.length} chars)`);
+          console.log(` Single generation: ${singleGenTime}ms (${text.length} chars)`);
 
           // Clean and extract JSON
           let jsonText = text.trim();
@@ -479,7 +478,7 @@ Répète pour ${duration} jours avec variations:`;
     const responseValidation = validateAIResponse(generatedPlan);
     
     if (!responseValidation.isValid) {
-      console.error('🚨 Suspicious AI response detected:', responseValidation.reason);
+      console.error(' Suspicious AI response detected:', responseValidation.reason);
       logSuspiciousRequest(user.id, JSON.stringify(generatedPlan).substring(0, 200), `Suspicious AI response: ${responseValidation.reason}`);
       
       return NextResponse.json(
@@ -494,7 +493,7 @@ Répète pour ${duration} jours avec variations:`;
 
     if (!timings.aiGeneration) {
       timings.aiGeneration = Date.now() - aiStartTime;
-      console.log(`⏱️ Total AI generation: ${timings.aiGeneration}ms`);
+      console.log(` Total AI generation: ${timings.aiGeneration}ms`);
     }
     
     // Track AI usage in dedicated ai_generations table
@@ -515,20 +514,20 @@ Répète pour ${duration} jours avec variations:`;
         });
 
       if (trackingError) {
-        console.error('⚠️ Failed to track AI usage:', trackingError);
+        console.error(' Failed to track AI usage:', trackingError);
         // Don't fail the request if tracking fails, just log it
       }
       
       timings.usageTracking = Date.now() - trackingStartTime;
-      console.log(`⏱️ Usage tracking: ${timings.usageTracking}ms`);
+      console.log(` Usage tracking: ${timings.usageTracking}ms`);
     } catch (trackingError) {
-      console.error('⚠️ Unexpected error tracking AI usage:', trackingError);
+      console.error(' Unexpected error tracking AI usage:', trackingError);
       // Don't fail the request if tracking fails
     }
 
     timings.total = Date.now() - startTime;
-    console.log('✅ Meal plan generation complete!');
-    console.log('📊 Performance summary:', {
+    console.log(' Meal plan generation complete!');
+    console.log(' Performance summary:', {
       ...timings,
       total: `${timings.total}ms (${(timings.total / 1000).toFixed(2)}s)`
     });
