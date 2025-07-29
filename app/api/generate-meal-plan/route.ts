@@ -291,13 +291,12 @@ export async function POST(request: NextRequest) {
         
         console.log(`🔄 Generating days ${startDay}-${endDay} (${chunkDays} days)`);
         
-        // Ultra-minimal prompt to prevent timeouts
-        const chunkPrompt = `Génère ${chunkDays} jours de repas (jours ${startDay}-${endDay}), ${targetCalories}cal/jour.
+        // Optimized prompt with essential recipe fields
+        const chunkPrompt = `Plan alimentaire ${chunkDays} jours (${startDay}-${endDay}), ${targetCalories}cal/jour.
+${[...restrictions, ...clientDietaryTags].slice(0, 2).join(", ") || "Aucune restriction"}
 
-JSON minimal:
-{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"...","calories":${Math.round(targetCalories * 0.25)},"protein":15,"carbs":50,"fat":10},"lunch":{"name":"...","calories":${Math.round(targetCalories * 0.35)},"protein":30,"carbs":60,"fat":20},"dinner":{"name":"...","calories":${Math.round(targetCalories * 0.30)},"protein":35,"carbs":45,"fat":15}},"totalCalories":${targetCalories}}`).join(',')}]}
-
-Remplace les ... par des noms de plats français créatifs.`;
+Génère ce JSON avec repas créatifs:
+{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"[nom créatif]","description":"[description courte]","calories":${Math.round(targetCalories * 0.25)},"protein":15,"carbs":50,"fat":10,"ingredients":["ingrédient1","ingrédient2"],"instructions":["étape1","étape2"]},"lunch":{"name":"[nom créatif]","description":"[description courte]","calories":${Math.round(targetCalories * 0.35)},"protein":30,"carbs":60,"fat":20,"ingredients":["ingrédient1","ingrédient2"],"instructions":["prep"]},"dinner":{"name":"[nom créatif]","description":"[description courte]","calories":${Math.round(targetCalories * 0.30)},"protein":35,"carbs":45,"fat":15,"ingredients":["ingrédient1","ingrédient2"],"instructions":["cuisson"]}},"totalCalories":${targetCalories}}`).join(',')}]}`;
         
         try {
           const chunkStartTime = Date.now();
@@ -350,22 +349,18 @@ Remplace les ... par des noms de plats français créatifs.`;
           if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
             console.log('🔄 Retrying with shorter prompt...');
             
-            // Retry with ultra-simple prompt
+            // Retry with basic recipe structure
             try {
-              const simplePrompt = `{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"Petit-déjeuner","calories":${Math.round(targetCalories*0.25)}},"lunch":{"name":"Déjeuner","calories":${Math.round(targetCalories*0.35)}},"dinner":{"name":"Dîner","calories":${Math.round(targetCalories*0.3)}}},"totalCalories":${targetCalories}}`).join(',')}]}`;
+              const simplePrompt = `{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"Petit-déjeuner équilibré","description":"Repas matinal nutritif","calories":${Math.round(targetCalories*0.25)},"protein":15,"ingredients":["avoine","lait"],"instructions":["Mélanger et chauffer"]},"lunch":{"name":"Déjeuner complet","description":"Repas de midi équilibré","calories":${Math.round(targetCalories*0.35)},"protein":30,"ingredients":["légumes","protéines"],"instructions":["Cuire et assaisonner"]},"dinner":{"name":"Dîner léger","description":"Repas du soir digeste","calories":${Math.round(targetCalories*0.3)},"protein":25,"ingredients":["poisson","légumes"],"instructions":["Griller et accompagner"]}},"totalCalories":${targetCalories}}`).join(',')}]}`;
               
               const retryCompletion = await groq.chat.completions.create({
                 model: "llama-3.1-8b-instant",
                 messages: [{
-                  role: "system",
-                  content: "Modifie ce JSON en changeant UNIQUEMENT les noms des repas par des noms créatifs français. Ne change RIEN d'autre."
-                },
-                {
                   role: "user",
-                  content: simplePrompt
+                  content: `Améliore ce JSON en rendant les recettes plus créatives tout en gardant la structure: ${simplePrompt}`
                 }],
-                temperature: 0.3,
-                max_tokens: 800,
+                temperature: 0.5,
+                max_tokens: 1500,
               });
               
               const retryText = retryCompletion.choices[0]?.message?.content || "";
@@ -409,13 +404,11 @@ Remplace les ... par des noms de plats français créatifs.`;
       
     } else {
       // For shorter plans (≤4 days), use single request
-      // Simplified prompt without ingredient list for faster generation
-      const enhancedPrompt = `Génère un plan alimentaire en JSON pour ${duration} jours.
+      // Optimized prompt with essential recipe fields
+      const enhancedPrompt = `Plan alimentaire ${duration} jours, ${targetCalories}cal/jour.
+${[...restrictions, ...clientDietaryTags].slice(0, 3).join(", ") || "Aucune restriction"}
 
-${sanitizedPrompt} - ${targetCalories} calories/jour
-${[...restrictions, ...clientDietaryTags].length > 0 ? `Restrictions: ${[...restrictions, ...clientDietaryTags].join(", ")}` : ""}
-
-Format JSON EXACT (remplace les ... par des valeurs réelles):
+JSON avec détails recettes:
 {
   "name": "Plan ${duration} jours",
   "description": "Plan environ ${targetCalories} calories",
@@ -426,10 +419,10 @@ Format JSON EXACT (remplace les ... par des valeurs réelles):
     {
       "day": 1,
       "meals": {
-        "breakfast": {"name": "PDJ", "description": "Matin", "calories": ${Math.round(targetCalories * 0.25)}, "protein": 17, "carbs": 62, "fat": 15, "fiber": 5, "prepTime": 5, "cookTime": 5, "ingredients": ["50g avoine", "200ml lait"], "ingredientsNutrition": [{"name": "avoine", "unit": "g", "caloriesPer100": 389, "proteinPer100": 16.9, "carbsPer100": 66.3, "fatPer100": 6.9, "fiberPer100": 10.6}, {"name": "lait", "unit": "ml", "caloriesPer100": 42, "proteinPer100": 3.4, "carbsPer100": 4.8, "fatPer100": 1.0, "fiberPer100": 0}], "instructions": ["Mélanger"], "tags": ["matin"]},
-        "lunch": {"name": "DEJ", "description": "Midi", "calories": ${Math.round(targetCalories * 0.35)}, "protein": 32, "carbs": 79, "fat": 21, "fiber": 8, "prepTime": 10, "cookTime": 10, "ingredients": ["100g quinoa", "150g légumes"], "ingredientsNutrition": [{"name": "quinoa", "unit": "g", "caloriesPer100": 368, "proteinPer100": 14.1, "carbsPer100": 64.2, "fatPer100": 6.1, "fiberPer100": 7.0}, {"name": "légumes", "unit": "g", "caloriesPer100": 25, "proteinPer100": 2.0, "carbsPer100": 5.0, "fatPer100": 0.2, "fiberPer100": 3.0}], "instructions": ["Cuire"], "tags": ["midi"]},
-        "dinner": {"name": "DIN", "description": "Soir", "calories": ${Math.round(targetCalories * 0.30)}, "protein": 34, "carbs": 61, "fat": 18, "fiber": 6, "prepTime": 10, "cookTime": 15, "ingredients": ["120g poisson", "200g légumes"], "ingredientsNutrition": [{"name": "poisson", "unit": "g", "caloriesPer100": 150, "proteinPer100": 25, "carbsPer100": 0, "fatPer100": 5, "fiberPer100": 0}, {"name": "légumes", "unit": "g", "caloriesPer100": 25, "proteinPer100": 2.0, "carbsPer100": 5.0, "fatPer100": 0.2, "fiberPer100": 3.0}], "instructions": ["Griller"], "tags": ["soir"]},
-        "snacks": [{"name": "Snack", "description": "Collation", "calories": ${Math.round(targetCalories * 0.10)}, "protein": 9, "carbs": 27, "fat": 4, "fiber": 3, "prepTime": 2, "cookTime": 0, "ingredients": ["150g yaourt"], "ingredientsNutrition": [{"name": "yaourt", "unit": "g", "caloriesPer100": 59, "proteinPer100": 10, "carbsPer100": 3.6, "fatPer100": 0.4, "fiberPer100": 0}], "instructions": ["Servir"], "tags": ["snack"]}]
+        "breakfast": {"name": "[nom créatif]", "description": "[description courte]", "calories": ${Math.round(targetCalories * 0.25)}, "protein": 17, "carbs": 62, "fat": 15, "ingredients": ["ingrédient1", "ingrédient2"], "instructions": ["étape1", "étape2"]},
+        "lunch": {"name": "[nom créatif]", "description": "[description courte]", "calories": ${Math.round(targetCalories * 0.35)}, "protein": 32, "carbs": 79, "fat": 21, "ingredients": ["ingrédient1", "ingrédient2", "ingrédient3"], "instructions": ["préparation", "cuisson"]},
+        "dinner": {"name": "[nom créatif]", "description": "[description courte]", "calories": ${Math.round(targetCalories * 0.30)}, "protein": 34, "carbs": 61, "fat": 18, "ingredients": ["ingrédient1", "ingrédient2"], "instructions": ["étape1", "étape2"]},
+        "snacks": [{"name": "[nom créatif]", "description": "[description courte]", "calories": ${Math.round(targetCalories * 0.10)}, "protein": 9, "carbs": 27, "fat": 4, "ingredients": ["ingrédient1"], "instructions": ["préparation simple"]}]
       },
       "totalCalories": ${targetCalories},
       "totalProtein": 90,
@@ -439,7 +432,7 @@ Format JSON EXACT (remplace les ... par des valeurs réelles):
   ]
 }
 
-Répète pour ${duration} jours avec variations:`;
+Génère ${duration} jours complets avec noms créatifs, descriptions courtes, ingrédients et instructions simples.`;
 
       // Single request retry logic for short plans
       let attempts = 0;
