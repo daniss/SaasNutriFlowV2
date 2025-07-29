@@ -465,12 +465,12 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner une catégorie" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-w-[90vw] max-h-[60vh] overflow-y-auto">
                     {categories.map(cat => (
                       <SelectItem key={cat.value} value={cat.value}>
                         <div className="flex flex-col">
-                          <span className="font-medium">{cat.label}</span>
-                          <span className="text-sm text-gray-500">{cat.description}</span>
+                          <span className="font-medium truncate">{cat.label}</span>
+                          <span className="text-sm text-gray-500 truncate">{cat.description}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -486,12 +486,12 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un type" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-w-[90vw] max-h-[60vh] overflow-y-auto">
                     {clientTypes.map(type => (
                       <SelectItem key={type.value} value={type.value}>
                         <div className="flex flex-col">
-                          <span className="font-medium">{type.label}</span>
-                          <span className="text-sm text-gray-500">{type.description}</span>
+                          <span className="font-medium truncate">{type.label}</span>
+                          <span className="text-sm text-gray-500 truncate">{type.description}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -505,12 +505,12 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                   <SelectTrigger>
                     <SelectValue placeholder="Sélectionner un objectif" />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-w-[90vw] max-h-[60vh] overflow-y-auto">
                     {goalTypes.map(goal => (
                       <SelectItem key={goal.value} value={goal.value}>
                         <div className="flex flex-col">
-                          <span className="font-medium">{goal.label}</span>
-                          <span className="text-sm text-gray-500">{goal.description}</span>
+                          <span className="font-medium truncate">{goal.label}</span>
+                          <span className="text-sm text-gray-500 truncate">{goal.description}</span>
                         </div>
                       </SelectItem>
                     ))}
@@ -548,7 +548,7 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                   <SelectTrigger>
                     <SelectValue />
                   </SelectTrigger>
-                  <SelectContent>
+                  <SelectContent className="max-w-[90vw]">
                     <SelectItem value="easy">Facile</SelectItem>
                     <SelectItem value="medium">Moyen</SelectItem>
                     <SelectItem value="hard">Difficile</SelectItem>
@@ -709,9 +709,11 @@ export default function MealPlanTemplateDialog({ isOpen, onClose, onSave, templa
                                   <SelectTrigger className={(!meal.name || meal.name.trim() === "") ? "border-red-300 focus:border-red-500" : ""}>
                                     <SelectValue placeholder="Sélectionner..." />
                                   </SelectTrigger>
-                                  <SelectContent className="max-w-[90vw] sm:max-w-[300px]">
+                                  <SelectContent className="max-w-[85vw] sm:max-w-[280px] max-h-[50vh] overflow-y-auto">
                                     {mealTypes.map(type => (
-                                      <SelectItem key={type} value={type} className="text-sm">{type}</SelectItem>
+                                      <SelectItem key={type} value={type} className="text-sm">
+                                        <span className="truncate">{type}</span>
+                                      </SelectItem>
                                     ))}
                                   </SelectContent>
                                 </Select>
