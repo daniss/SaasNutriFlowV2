@@ -101,6 +101,27 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Determine if user is already in trial (should skip additional trial period)
+    let skipTrial = false
+    if (dietitian.subscription_status === 'trialing') {
+      // Get trial end date to check if still valid
+      const { data: trialInfo } = await supabase
+        .from('dietitians')
+        .select('trial_ends_at')
+        .eq('id', dietitian.id)
+        .single()
+      
+      if (trialInfo?.trial_ends_at) {
+        const trialEndDate = new Date(trialInfo.trial_ends_at)
+        const now = new Date()
+        
+        // If user is still in valid trial, skip adding another trial period
+        if (trialEndDate > now) {
+          skipTrial = true
+        }
+      }
+    }
+
     // Create checkout session
     const checkoutSession = await paymentService.createCheckoutSession(
       stripeCustomerId,
@@ -108,7 +129,8 @@ export async function POST(request: NextRequest) {
       {
         dietitian_id: dietitian.id,
         plan_name: planName
-      }
+      },
+      skipTrial // Skip trial if user is already in trial period
     )
 
     return NextResponse.json({

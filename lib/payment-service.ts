@@ -8,7 +8,7 @@ export interface PaymentProvider {
   confirmPayment(paymentIntentId: string): Promise<PaymentResult>
   createCustomer(email: string, name: string): Promise<Customer>
   createSubscription(customerId: string, priceId: string): Promise<Subscription>
-  createCheckoutSession(customerId: string, priceId: string, metadata?: Record<string, string>): Promise<CheckoutSession>
+  createCheckoutSession(customerId: string, priceId: string, metadata?: Record<string, string>, skipTrial?: boolean): Promise<CheckoutSession>
   createBillingPortalSession(customerId: string, returnUrl?: string): Promise<BillingPortalSession>
   getSubscription(subscriptionId: string): Promise<Subscription | null>
   cancelSubscription(subscriptionId: string): Promise<Subscription>
@@ -239,7 +239,7 @@ class StripeProvider implements PaymentProvider {
     }
   }
 
-  async createCheckoutSession(customerId: string, priceId: string, metadata?: Record<string, string>): Promise<CheckoutSession> {
+  async createCheckoutSession(customerId: string, priceId: string, metadata?: Record<string, string>, skipTrial?: boolean): Promise<CheckoutSession> {
     try {
       const params = new URLSearchParams({
         customer: customerId,
@@ -248,8 +248,12 @@ class StripeProvider implements PaymentProvider {
         'line_items[0][quantity]': '1',
         success_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard/subscription/success?session_id={CHECKOUT_SESSION_ID}`,
         cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/dashboard/upgrade`
-        // No trial_period_days for expired trial users - they should pay immediately
       })
+
+      // Only add trial period for new users (not already in trial)
+      if (!skipTrial) {
+        params.append('subscription_data[trial_period_days]', '14')
+      }
 
       if (metadata) {
         Object.entries(metadata).forEach(([key, value]) => {
@@ -493,7 +497,7 @@ class PayPalProvider implements PaymentProvider {
     throw new Error('PayPal subscriptions not implemented in this example')
   }
 
-  async createCheckoutSession(customerId: string, priceId: string, metadata?: Record<string, string>): Promise<CheckoutSession> {
+  async createCheckoutSession(customerId: string, priceId: string, metadata?: Record<string, string>, skipTrial?: boolean): Promise<CheckoutSession> {
     throw new Error('PayPal checkout sessions not implemented in this example')
   }
 
@@ -570,12 +574,12 @@ export class PaymentService {
     return await this.provider.createSubscription(customerId, priceId)
   }
 
-  async createCheckoutSession(customerId: string, priceId: string, metadata?: Record<string, string>): Promise<CheckoutSession> {
+  async createCheckoutSession(customerId: string, priceId: string, metadata?: Record<string, string>, skipTrial?: boolean): Promise<CheckoutSession> {
     if (!this.provider) {
       throw new Error('No payment provider configured')
     }
 
-    return await this.provider.createCheckoutSession(customerId, priceId, metadata)
+    return await this.provider.createCheckoutSession(customerId, priceId, metadata, skipTrial)
   }
 
   async createBillingPortalSession(customerId: string, returnUrl?: string): Promise<BillingPortalSession> {
