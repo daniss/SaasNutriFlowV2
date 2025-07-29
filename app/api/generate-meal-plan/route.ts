@@ -12,7 +12,11 @@ import {
 } from "@/lib/security-validation";
 
 export async function POST(request: NextRequest) {
+  const startTime = Date.now();
+  const timings: Record<string, number> = {};
+  
   try {
+    console.log('🚀 Starting meal plan generation...');
     // SECURITY: Use validated environment configuration
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
@@ -23,9 +27,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const groq = new Groq({ apiKey });
+    const groq = new Groq({ 
+      apiKey,
+      timeout: 60000, // 60 second timeout to prevent timeouts
+    });
 
     // Get auth token from header
+    const authStartTime = Date.now();
     const authHeader = request.headers.get("authorization");
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return NextResponse.json(
@@ -46,6 +54,9 @@ export async function POST(request: NextRequest) {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser(token);
+    
+    timings.authentication = Date.now() - authStartTime;
+    console.log(`⏱️ Authentication: ${timings.authentication}ms`);
 
     if (authError || !user) {
       return NextResponse.json(
@@ -92,6 +103,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Get dietitian profile for subscription checking
+    const dbStartTime = Date.now();
     const { data: dietitian, error: dietitianError } = await supabase
       .from('dietitians')
       .select('id, subscription_status, subscription_plan')
@@ -141,12 +153,16 @@ export async function POST(request: NextRequest) {
       startOfMonth.setHours(0, 0, 0, 0);
 
       // Check AI usage from the dedicated ai_generations table
+      const usageStartTime = Date.now();
       const { count: currentUsage, error: usageError } = await supabase
         .from('ai_generations')
         .select('id', { count: 'exact' })
         .eq('dietitian_id', dietitian.id)
         .eq('generation_successful', true)
         .gte('created_at', startOfMonth.toISOString());
+      
+      timings.usageCheck = Date.now() - usageStartTime;
+      console.log(`⏱️ Usage check: ${timings.usageCheck}ms`);
 
       if (usageError) {
         console.error('❌ Error checking AI usage:', usageError);
@@ -189,8 +205,12 @@ export async function POST(request: NextRequest) {
       logSuspiciousRequest(user.id, prompt, "Prompt injection patterns detected and sanitized");
     }
 
+    timings.dbQueries = Date.now() - dbStartTime;
+    console.log(`⏱️ Total DB queries: ${timings.dbQueries}ms`);
+    
     // Fetch available ingredients from the global database
     let availableIngredients: any[] = [];
+    const ingredientsStartTime = Date.now();
     try {
       const { data: ingredients, error: ingredientsError } = await supabase
         .from("ingredients")
@@ -199,7 +219,8 @@ export async function POST(request: NextRequest) {
 
       if (!ingredientsError && ingredients) {
         availableIngredients = ingredients;
-        console.log(`Loaded ${availableIngredients.length} ingredients from database`);
+        timings.ingredientsFetch = Date.now() - ingredientsStartTime;
+        console.log(`⏱️ Loaded ${availableIngredients.length} ingredients in ${timings.ingredientsFetch}ms`);
       }
     } catch (error) {
       console.error("Error fetching ingredients:", error);
@@ -244,6 +265,8 @@ export async function POST(request: NextRequest) {
     // Input validation is now handled above with Zod schema
 
     // Generate meal plan using Groq
+    const aiStartTime = Date.now();
+    console.log('🤖 Starting AI generation...');
 
     let generatedPlan: any;
 
@@ -422,6 +445,7 @@ FORMAT JSON:
 Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numérotation correcte:`;
         
         try {
+          const chunkStartTime = Date.now();
           const completion = await groq.chat.completions.create({
             model: "llama-3.1-8b-instant",
             messages: [{
@@ -429,12 +453,13 @@ Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numér
               content: chunkPrompt
             }],
             temperature: 0.8,
-            max_tokens: 8000,
+            max_tokens: 4000, // Reduced for faster response
           });
           
           const text = completion.choices[0]?.message?.content || "";
           
-          console.log(`📏 Chunk ${chunk + 1} response length: ${text.length} characters`);
+          const chunkTime = Date.now() - chunkStartTime;
+          console.log(`⏱️ Chunk ${chunk + 1} generation: ${chunkTime}ms (${text.length} chars)`);
           
           // Clean and parse chunk
           let jsonText = text.trim();
@@ -468,6 +493,9 @@ Génère exactement ${chunkDays} jours (${startDay} à ${endDay}) avec la numér
           throw new Error(`Failed to generate chunk ${chunk + 1}: ${errorMessage}`);
         }
       }
+      
+      timings.aiGeneration = Date.now() - aiStartTime;
+      console.log(`⏱️ Total AI generation (chunked): ${timings.aiGeneration}ms`);
       
       // Assemble final plan
       generatedPlan = {
@@ -524,6 +552,7 @@ Répète pour ${duration} jours avec variations:`;
         attempts++;
 
         try {
+          const singleGenStartTime = Date.now();
           const completion = await groq.chat.completions.create({
             model: "llama-3.1-8b-instant",
             messages: [{
@@ -531,12 +560,13 @@ Répète pour ${duration} jours avec variations:`;
               content: enhancedPrompt
             }],
             temperature: 0.8,
-            max_tokens: 8000,
+            max_tokens: 4000, // Reduced for faster response
           });
           
           const text = completion.choices[0]?.message?.content || "";
           
-          console.log(`📏 Short plan response length: ${text.length} characters`);
+          const singleGenTime = Date.now() - singleGenStartTime;
+          console.log(`⏱️ Single generation: ${singleGenTime}ms (${text.length} chars)`);
 
           // Clean and extract JSON
           let jsonText = text.trim();
@@ -595,7 +625,13 @@ Répète pour ${duration} jours avec variations:`;
     }
 
 
+    if (!timings.aiGeneration) {
+      timings.aiGeneration = Date.now() - aiStartTime;
+      console.log(`⏱️ Total AI generation: ${timings.aiGeneration}ms`);
+    }
+    
     // Track AI usage in dedicated ai_generations table
+    const trackingStartTime = Date.now();
     try {
       const { error: trackingError } = await supabase
         .from('ai_generations')
@@ -615,22 +651,43 @@ Répète pour ${duration} jours avec variations:`;
         console.error('⚠️ Failed to track AI usage:', trackingError);
         // Don't fail the request if tracking fails, just log it
       }
+      
+      timings.usageTracking = Date.now() - trackingStartTime;
+      console.log(`⏱️ Usage tracking: ${timings.usageTracking}ms`);
     } catch (trackingError) {
       console.error('⚠️ Unexpected error tracking AI usage:', trackingError);
       // Don't fail the request if tracking fails
     }
 
+    timings.total = Date.now() - startTime;
+    console.log('✅ Meal plan generation complete!');
+    console.log('📊 Performance summary:', {
+      ...timings,
+      total: `${timings.total}ms (${(timings.total / 1000).toFixed(2)}s)`
+    });
+    
     return NextResponse.json({
       success: true,
       data: generatedPlan,
       debug: {
         trackingAttempted: true,
         profileId: user.id,
-        dietitianRecordId: dietitian.id
+        dietitianRecordId: dietitian.id,
+        performanceTimings: timings
       }
     });
   } catch (error) {
     console.error("Meal plan generation error:", error);
+    
+    // Log detailed error information
+    if (error instanceof Error) {
+      console.error('Error details:', {
+        message: error.message,
+        name: error.name,
+        stack: error.stack?.split('\n').slice(0, 3).join('\n'),
+        isTimeout: error.message.includes('timeout') || error.message.includes('ETIMEDOUT')
+      });
+    }
 
     // Note: Failed AI generation tracking is skipped due to variable scope limitations
     // The tracking still happens for successful generations
