@@ -145,14 +145,16 @@ async function handleCheckoutSessionCompleted(supabase: any, session: any) {
     .single()
 
   const now = new Date()
+  const wasInTrial = currentDietitian?.subscription_status === 'trialing'
   const trialExpired = currentDietitian?.trial_ends_at 
     ? new Date(currentDietitian.trial_ends_at) < now 
     : false
 
-  // If trial was expired, activate subscription immediately
-  // If trial was not expired or no trial, let Stripe handle the trial period
-  const newStatus = trialExpired ? 'active' : 'trialing'
-  const trialEndsAt = trialExpired 
+  // If user was already in trial (even if not expired) OR trial was expired, 
+  // activate subscription immediately - they chose to pay instead of continuing trial
+  const shouldActivateImmediately = wasInTrial || trialExpired
+  const newStatus = shouldActivateImmediately ? 'active' : 'trialing'
+  const trialEndsAt = shouldActivateImmediately 
     ? null 
     : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()
 
@@ -189,7 +191,7 @@ async function handleCheckoutSessionCompleted(supabase: any, session: any) {
     newStatus,
     null,
     metadata.plan_name,
-    { session_id: session.id, trial_expired: trialExpired }
+    { session_id: session.id, was_in_trial: wasInTrial, trial_expired: trialExpired, activated_immediately: shouldActivateImmediately }
   )
 }
 
