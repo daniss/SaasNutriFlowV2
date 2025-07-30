@@ -307,7 +307,7 @@ export async function GET(request: NextRequest) {
       data: clientPortalData,
     });
   } catch (error) {
-    console.error("Client data fetch error:", error);
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Erreur lors de la récupération des données" },
       { status: 500 }

@@ -66,13 +66,13 @@ export async function GET(request: NextRequest) {
       .single();
 
     if (clientError || !client) {
-      console.warn(`Client validation failed for ID ${clientId}:`, clientError);
+      // TODO: Log warning to monitoring service
       return NextResponse.json({ error: "Client not found" }, { status: 404 });
     }
 
     // CRITICAL: Verify client belongs to a valid dietitian
     if (!client.dietitian_id || !client.dietitians || !(client.dietitians as any).auth_user_id) {
-      console.error(`Client ${clientId} has invalid dietitian relationship`);
+      // TODO: Log error to monitoring service
       return NextResponse.json(
         { error: "Invalid client configuration" },
         { status: 403 }
@@ -88,7 +88,7 @@ export async function GET(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Client session validation error:", error);
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

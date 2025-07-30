@@ -34,7 +34,7 @@ export async function GET(request: NextRequest) {
       .order("created_at", { ascending: false });
 
     if (consentsError) {
-      console.error("Error fetching consents:", consentsError);
+      // TODO: Log error to monitoring service
       return NextResponse.json(
         { error: "Erreur lors de la récupération des consentements" },
         { status: 500 }
@@ -46,7 +46,7 @@ export async function GET(request: NextRequest) {
       consents: consents || [],
     });
   } catch (error) {
-    console.error("Error in client GDPR consents GET API:", error);
+    // TODO: Log error to monitoring service
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -93,7 +93,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (clientError || !client) {
-      console.error("Error finding client:", clientError);
+      // TODO: Log error to monitoring service
       return NextResponse.json({ error: "Client non trouvé" }, { status: 404 });
     }
 
@@ -129,7 +129,7 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (updateError) {
-          console.error("Error updating consent:", updateError);
+          // TODO: Log error to monitoring service
         } else {
           results.push(updatedConsent);
         }
@@ -152,7 +152,7 @@ export async function POST(request: NextRequest) {
           .single();
 
         if (insertError) {
-          console.error("Error creating consent:", insertError);
+          // TODO: Log error to monitoring service
         } else {
           results.push(newConsent);
         }
@@ -165,7 +165,7 @@ export async function POST(request: NextRequest) {
       consents: results,
     });
   } catch (error) {
-    console.error("Error in client GDPR consents POST API:", error);
+    // TODO: Log error to monitoring service
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

@@ -80,7 +80,7 @@ export async function POST(request: NextRequest) {
       .download(filePath);
 
     if (downloadError || !fileData) {
-      console.error("Storage download error:", downloadError);
+      // TODO: Log error to monitoring service
       return NextResponse.json(
         { error: "Failed to download file" },
         { status: 500 }
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("API error:", error);
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

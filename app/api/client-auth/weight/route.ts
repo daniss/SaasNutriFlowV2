@@ -45,7 +45,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (weightError) {
-      console.error("Error adding weight measurement:", weightError);
+      // TODO: Log error to monitoring service
       return NextResponse.json(
         { error: "Erreur lors de l'ajout de la mesure" },
         { status: 500 }
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       .eq("id", clientId);
 
     if (updateError) {
-      console.error("Error updating client weight:", updateError);
+      // TODO: Log error to monitoring service
       // Don't fail the request if updating current_weight fails
     }
 
@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
       message: "Poids ajouté avec succès",
     });
   } catch (error) {
-    console.error("Weight tracking error:", error);
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Erreur lors de l'ajout du poids" },
       { status: 500 }

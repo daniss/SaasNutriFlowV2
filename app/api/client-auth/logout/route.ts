@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
-    console.error("Client logout error:", error);
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Erreur lors de la déconnexion" },
       { status: 500 }

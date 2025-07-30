@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
         }
       );
     } catch (emailError) {
-      console.error("Failed to send notification email:", emailError);
+      // TODO: Log error to monitoring service
       // Don't fail the request if email fails
     }
 
@@ -84,7 +84,7 @@ export async function POST(request: NextRequest) {
       message: "Votre demande a été envoyée. Vous recevrez un email sous 48h.",
     });
   } catch (error) {
-    console.error("Error in client GDPR export API:", error);
+    // TODO: Log error to monitoring service
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

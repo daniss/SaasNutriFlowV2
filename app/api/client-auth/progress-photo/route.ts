@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
       });
 
     if (uploadError) {
-      console.error('Upload error:', uploadError);
+      // TODO: Log error to monitoring service
       return NextResponse.json({ error: 'Failed to upload photo' }, { status: 500 });
     }
 
@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (documentError) {
-      console.error('Document creation error:', documentError);
+      // TODO: Log error to monitoring service
       
       // Clean up uploaded file if document creation failed
       await supabase.storage
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Progress photo upload error:', error);
+    // TODO: Log error to monitoring service
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

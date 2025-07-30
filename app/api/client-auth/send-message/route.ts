@@ -114,7 +114,7 @@ export async function POST(request: NextRequest) {
       },
     });
   } catch (error) {
-    console.error("Message send error:", error);
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Erreur lors de l'envoi du message" },
       { status: 500 }

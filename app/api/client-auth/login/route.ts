@@ -47,10 +47,7 @@ export async function POST(request: NextRequest) {
     );
 
     // Find the client account by email
-    console.log(
-      "🔍 Looking for client account with email:",
-      email.toLowerCase()
-    );
+    // TODO: Log authentication events to monitoring service
 
     // First, let's check what client accounts exist (for debugging)
     const { data: allAccounts, error: debugError } = await supabase
@@ -82,7 +79,7 @@ export async function POST(request: NextRequest) {
 
 
     if (accountError || !clientAccount) {
-      console.log("❌ No client account found or error:", accountError);
+      // TODO: Log authentication failure to monitoring service
       return NextResponse.json(
         { error: "Email ou mot de passe incorrect" },
         { status: 401 }
@@ -126,7 +123,7 @@ export async function POST(request: NextRequest) {
       message: "Connexion réussie",
     });
   } catch (error) {
-    console.error("Client login error:", error);
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Erreur lors de la connexion" },
       { status: 500 }

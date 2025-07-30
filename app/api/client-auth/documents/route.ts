@@ -58,7 +58,7 @@ export async function GET(request: NextRequest) {
     }) || [];
 
     if (error) {
-      console.error("Database error:", error);
+      // TODO: Log error to monitoring service
       return NextResponse.json(
         { error: "Failed to fetch documents" },
         { status: 500 }
@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       documents: filteredDocuments,
     });
   } catch (error) {
-    console.error("API error:", error);
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }
