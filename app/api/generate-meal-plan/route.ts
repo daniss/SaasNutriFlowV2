@@ -16,9 +16,6 @@ export async function POST(request: NextRequest) {
   const timings: Record<string, number> = {};
   
   try {
-    console.log(' Starting meal plan generation...');
-    console.log(' Request timestamp:', new Date().toISOString());
-    
     // SECURITY: Use validated environment configuration
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
@@ -29,13 +26,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const groqInitStart = Date.now();
     const groq = new Groq({ 
       apiKey,
       timeout: 60000, // 60 second timeout to prevent timeouts
     });
-    timings.groqInit = Date.now() - groqInitStart;
-    console.log(` Groq client init: ${timings.groqInit}ms`);
 
     // Get auth token from header
     const authStartTime = Date.now();
@@ -61,7 +55,6 @@ export async function POST(request: NextRequest) {
     } = await supabase.auth.getUser(token);
     
     timings.authentication = Date.now() - authStartTime;
-    console.log(` Authentication: ${timings.authentication}ms`);
 
     if (authError || !user) {
       return NextResponse.json(
@@ -70,16 +63,10 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    const bodyParseStart = Date.now();
     const body = await request.json();
-    timings.bodyParsing = Date.now() - bodyParseStart;
-    console.log(` Body parsing: ${timings.bodyParsing}ms`);
 
     // Comprehensive input validation using Zod schema
-    const validationStart = Date.now();
     const validationResult = await validateInput(body, mealPlanRequestSchema);
-    timings.validation = Date.now() - validationStart;
-    console.log(` Validation: ${timings.validation}ms`);
     
     if (!validationResult.success) {
       console.warn(' Input validation failed:', validationResult.error);
@@ -99,7 +86,6 @@ export async function POST(request: NextRequest) {
     } = validationResult.data;
 
     // Rate limiting: 20 AI generation requests per hour per user (generous limit to prevent abuse)
-    console.log(' Checking rate limits...');
     const rateLimitResult = checkRateLimit(`ai-generation:${user.id}`, 20, 60 * 60 * 1000);
     
     if (!rateLimitResult.success) {
@@ -173,7 +159,6 @@ export async function POST(request: NextRequest) {
         .gte('created_at', startOfMonth.toISOString());
       
       timings.usageCheck = Date.now() - usageStartTime;
-      console.log(` Usage check: ${timings.usageCheck}ms`);
 
       if (usageError) {
         console.error(' Error checking AI usage:', usageError);
@@ -199,7 +184,6 @@ export async function POST(request: NextRequest) {
     }
 
     // Sanitize and check prompt for malicious content
-    console.log(' Sanitizing AI prompt...');
     const sanitizedPrompt = sanitizeAIPrompt(prompt);
     
     if (containsMaliciousContent(prompt)) {
@@ -217,24 +201,19 @@ export async function POST(request: NextRequest) {
     }
 
     timings.dbQueries = Date.now() - dbStartTime;
-    console.log(` Total DB queries: ${timings.dbQueries}ms`);
     
     // Skip ingredients database fetch for faster generation
-    console.log(' Skipping ingredients database for faster generation');
 
     // Input validation is now handled above with Zod schema
 
     // Generate meal plan using Groq
     const aiStartTime = Date.now();
-    console.log(' Starting AI generation...');
 
     let generatedPlan: any;
 
     // Always use chunked approach for consistent performance
     if (duration >= 1) {
       const maxDays = 2; // Generate max 2 days per request for optimal speed
-      
-      console.log(` Splitting ${duration}-day plan into chunks of ${maxDays} days`);
       
       let allDays = [];
       
@@ -246,8 +225,6 @@ export async function POST(request: NextRequest) {
         const startDay = chunk * maxDays + 1;
         const endDay = Math.min(startDay + maxDays - 1, duration);
         const chunkDays = endDay - startDay + 1;
-        
-        console.log(` Preparing chunk ${chunk + 1}: days ${startDay}-${endDay} (${chunkDays} days)`);
         
         // Create a promise for this chunk
         const chunkPromise = (async () => {
@@ -262,8 +239,6 @@ Génère exactement ce JSON:
 Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
         
         try {
-          const chunkStartTime = Date.now();
-          console.log(` Starting Groq API call for chunk ${chunk + 1} at ${new Date().toISOString()}`);
           const completion = await groq.chat.completions.create({
             model: "llama-3.1-8b-instant",
             messages: [{
@@ -275,10 +250,6 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
           });
           
           const text = completion.choices[0]?.message?.content || "";
-          console.log(` Groq API response received at ${new Date().toISOString()}`);
-          
-          const chunkTime = Date.now() - chunkStartTime;
-          console.log(` Chunk ${chunk + 1} generation: ${chunkTime}ms (${text.length} chars)`);
           
           // Clean and parse chunk
           let jsonText = text.trim();
@@ -326,7 +297,6 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
           
           // Check if it's a timeout
           if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
-            console.log(' Retrying with shorter prompt...');
             
             // Retry with basic recipe structure
             try {
@@ -343,7 +313,6 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
               });
               
               const retryText = retryCompletion.choices[0]?.message?.content || "";
-              console.log(' Retry successful');
               
               // Parse retry response
               let jsonText = retryText.trim();
@@ -370,12 +339,10 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
       }
       
       // Execute all chunks in parallel
-      console.log(` Executing ${totalChunks} chunks in parallel...`);
       const parallelStartTime = Date.now();
       
       try {
         const chunkResults = await Promise.all(chunkPromises);
-        console.log(` All chunks completed in ${Date.now() - parallelStartTime}ms`);
         
         // Flatten all days from all chunks
         allDays = chunkResults.flat();
@@ -385,7 +352,6 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
       }
       
       timings.aiGeneration = Date.now() - aiStartTime;
-      console.log(` Total AI generation (chunked): ${timings.aiGeneration}ms`);
       
       // Assemble final plan
       generatedPlan = {
@@ -453,7 +419,6 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
           const text = completion.choices[0]?.message?.content || "";
           
           const singleGenTime = Date.now() - singleGenStartTime;
-          console.log(` Single generation: ${singleGenTime}ms (${text.length} chars)`);
 
           // Clean and extract JSON
           let jsonText = text.trim();
@@ -526,7 +491,6 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
 
     if (!timings.aiGeneration) {
       timings.aiGeneration = Date.now() - aiStartTime;
-      console.log(` Total AI generation: ${timings.aiGeneration}ms`);
     }
     
     // Track AI usage in dedicated ai_generations table
@@ -552,18 +516,12 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
       }
       
       timings.usageTracking = Date.now() - trackingStartTime;
-      console.log(` Usage tracking: ${timings.usageTracking}ms`);
     } catch (trackingError) {
       console.error(' Unexpected error tracking AI usage:', trackingError);
       // Don't fail the request if tracking fails
     }
 
     timings.total = Date.now() - startTime;
-    console.log(' Meal plan generation complete!');
-    console.log(' Performance summary:', {
-      ...timings,
-      total: `${timings.total}ms (${(timings.total / 1000).toFixed(2)}s)`
-    });
     
     return NextResponse.json({
       success: true,
@@ -578,15 +536,6 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
   } catch (error) {
     console.error("Meal plan generation error:", error);
     
-    // Log detailed error information
-    if (error instanceof Error) {
-      console.error('Error details:', {
-        message: error.message,
-        name: error.name,
-        stack: error.stack?.split('\n').slice(0, 3).join('\n'),
-        isTimeout: error.message.includes('timeout') || error.message.includes('ETIMEDOUT')
-      });
-    }
 
     // Note: Failed AI generation tracking is skipped due to variable scope limitations
     // The tracking still happens for successful generations
