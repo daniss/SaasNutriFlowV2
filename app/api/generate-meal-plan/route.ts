@@ -230,23 +230,29 @@ export async function POST(request: NextRequest) {
 
     let generatedPlan: any;
 
-    // For longer plans (5+ days), generate in chunks to avoid truncation
-    if (duration >= 5) {
-      const maxDays = 3; // Generate max 3 days per request to avoid truncation
+    // Always use chunked approach for consistent performance
+    if (duration >= 1) {
+      const maxDays = 2; // Generate max 2 days per request for optimal speed
       
       console.log(` Splitting ${duration}-day plan into chunks of ${maxDays} days`);
       
       let allDays = [];
       
-      for (let chunk = 0; chunk < Math.ceil(duration / maxDays); chunk++) {
+      // Create all chunk promises for parallel execution
+      const chunkPromises = [];
+      const totalChunks = Math.ceil(duration / maxDays);
+      
+      for (let chunk = 0; chunk < totalChunks; chunk++) {
         const startDay = chunk * maxDays + 1;
         const endDay = Math.min(startDay + maxDays - 1, duration);
         const chunkDays = endDay - startDay + 1;
         
-        console.log(` Generating days ${startDay}-${endDay} (${chunkDays} days)`);
+        console.log(` Preparing chunk ${chunk + 1}: days ${startDay}-${endDay} (${chunkDays} days)`);
         
-        // Optimized prompt with essential fields for UI and ingredient creation
-        const chunkPrompt = `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE, AUCUN AUTRE TEXTE.
+        // Create a promise for this chunk
+        const chunkPromise = (async () => {
+          // Optimized prompt with essential fields for UI and ingredient creation
+          const chunkPrompt = `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE, AUCUN AUTRE TEXTE.
 
 Plan ${chunkDays}j (${startDay}-${endDay}), ${targetCalories}cal/j.
 
@@ -309,7 +315,7 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
           const chunkData = JSON.parse(jsonText);
           
           if (chunkData.days && Array.isArray(chunkData.days)) {
-            allDays.push(...chunkData.days);
+            return chunkData.days; // Return days for this chunk
           } else {
             throw new Error(`Invalid chunk structure ${chunk + 1}`);
           }
@@ -348,8 +354,7 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
                 jsonText = jsonText.substring(jsonStart, jsonEnd + 1);
                 const chunkData = JSON.parse(jsonText);
                 if (chunkData.days && Array.isArray(chunkData.days)) {
-                  allDays.push(...chunkData.days);
-                  continue;
+                  return chunkData.days; // Return days from retry
                 }
               }
             } catch (retryError) {
@@ -359,6 +364,24 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
           
           throw new Error(`Failed to generate chunk ${chunk + 1}: ${errorMessage}`);
         }
+        })();
+        
+        chunkPromises.push(chunkPromise);
+      }
+      
+      // Execute all chunks in parallel
+      console.log(` Executing ${totalChunks} chunks in parallel...`);
+      const parallelStartTime = Date.now();
+      
+      try {
+        const chunkResults = await Promise.all(chunkPromises);
+        console.log(` All chunks completed in ${Date.now() - parallelStartTime}ms`);
+        
+        // Flatten all days from all chunks
+        allDays = chunkResults.flat();
+      } catch (parallelError) {
+        console.error(' Parallel generation failed:', parallelError);
+        throw parallelError;
       }
       
       timings.aiGeneration = Date.now() - aiStartTime;
