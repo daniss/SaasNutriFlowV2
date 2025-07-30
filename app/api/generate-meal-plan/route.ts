@@ -17,6 +17,8 @@ export async function POST(request: NextRequest) {
   
   try {
     console.log(' Starting meal plan generation...');
+    console.log(' Request timestamp:', new Date().toISOString());
+    
     // SECURITY: Use validated environment configuration
     const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
@@ -27,10 +29,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const groqInitStart = Date.now();
     const groq = new Groq({ 
       apiKey,
       timeout: 60000, // 60 second timeout to prevent timeouts
     });
+    timings.groqInit = Date.now() - groqInitStart;
+    console.log(` Groq client init: ${timings.groqInit}ms`);
 
     // Get auth token from header
     const authStartTime = Date.now();
@@ -65,10 +70,16 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const bodyParseStart = Date.now();
     const body = await request.json();
+    timings.bodyParsing = Date.now() - bodyParseStart;
+    console.log(` Body parsing: ${timings.bodyParsing}ms`);
 
     // Comprehensive input validation using Zod schema
+    const validationStart = Date.now();
     const validationResult = await validateInput(body, mealPlanRequestSchema);
+    timings.validation = Date.now() - validationStart;
+    console.log(` Validation: ${timings.validation}ms`);
     
     if (!validationResult.success) {
       console.warn(' Input validation failed:', validationResult.error);
@@ -246,6 +257,7 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
         
         try {
           const chunkStartTime = Date.now();
+          console.log(` Starting Groq API call for chunk ${chunk + 1} at ${new Date().toISOString()}`);
           const completion = await groq.chat.completions.create({
             model: "llama-3.1-8b-instant",
             messages: [{
@@ -257,6 +269,7 @@ Remplace [nom] par des noms créatifs français. SEULEMENT JSON, PAS DE TEXTE.`;
           });
           
           const text = completion.choices[0]?.message?.content || "";
+          console.log(` Groq API response received at ${new Date().toISOString()}`);
           
           const chunkTime = Date.now() - chunkStartTime;
           console.log(` Chunk ${chunk + 1} generation: ${chunkTime}ms (${text.length} chars)`);
