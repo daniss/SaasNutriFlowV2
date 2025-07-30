@@ -260,7 +260,7 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
             messages: [
               { role: "user", content: chunkPrompt }
             ],
-            model: "llama-3.1-70b-versatile",
+            model: "llama-3.1-8b-instant",
             temperature: 0.7,
             max_tokens: 2500,
           });
@@ -322,7 +322,7 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
                 messages: [
                   { role: "user", content: `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE. Améliore les noms des recettes en gardant EXACTEMENT cette structure: ${simplePrompt}` }
                 ],
-                model: "llama-3.1-70b-versatile",
+                model: "llama-3.1-8b-instant",
                 temperature: 0.5,
                 max_tokens: 2000,
               });
@@ -425,7 +425,7 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
             messages: [
               { role: "user", content: enhancedPrompt }
             ],
-            model: "llama-3.1-70b-versatile",
+            model: "llama-3.1-8b-instant",
             temperature: 0.7,
             max_tokens: 2500,
           });
