@@ -1,4 +1,4 @@
-import Groq from "groq-sdk";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { 
@@ -17,19 +17,16 @@ export async function POST(request: NextRequest) {
   
   try {
     // SECURITY: Use validated environment configuration
-    const apiKey = process.env.GROQ_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      console.error(' GROQ_API_KEY environment variable is missing');
       return NextResponse.json(
         { error: "Service de génération IA indisponible" },
         { status: 503 }
       );
     }
 
-    const groq = new Groq({ 
-      apiKey,
-      timeout: 60000, // 60 second timeout to prevent timeouts
-    });
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
 
     // Get auth token from header
     const authStartTime = Date.now();
@@ -69,7 +66,7 @@ export async function POST(request: NextRequest) {
     const validationResult = await validateInput(body, mealPlanRequestSchema);
     
     if (!validationResult.success) {
-      console.warn(' Input validation failed:', validationResult.error);
+      // TODO: Log validation failures to monitoring service
       return NextResponse.json(
         { error: validationResult.error },
         { status: 400 }
@@ -89,7 +86,7 @@ export async function POST(request: NextRequest) {
     const rateLimitResult = checkRateLimit(`ai-generation:${user.id}`, 20, 60 * 60 * 1000);
     
     if (!rateLimitResult.success) {
-      console.warn(`🚫 Rate limit exceeded for user ${user.id}`);
+      // TODO: Log rate limit violations to monitoring service
       return NextResponse.json(
         { 
           error: "Trop de générations en peu de temps. Veuillez patienter quelques minutes.",
@@ -108,7 +105,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (dietitianError || !dietitian) {
-      console.error(' Dietitian profile not found:', dietitianError);
+      // TODO: Log dietitian profile errors to monitoring service
       return NextResponse.json(
         { error: 'Profil nutritionniste non trouvé' },
         { status: 401 }
@@ -123,7 +120,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (planError || !planData) {
-      console.error(' Subscription plan not found:', planError);
+      // TODO: Log subscription plan errors to monitoring service
       return NextResponse.json(
         { error: 'Plan d\'abonnement non trouvé' },
         { status: 500 }
@@ -132,7 +129,7 @@ export async function POST(request: NextRequest) {
 
     // Check if user has AI generation access
     if (planData.ai_generations_per_month === 0) {
-      console.warn(`🚫 AI generation not available for plan: ${dietitian.subscription_plan}`);
+      // TODO: Log AI access attempts for unavailable plans to monitoring service
       return NextResponse.json(
         { 
           error: 'La génération IA n\'est pas disponible avec votre plan actuel',
@@ -161,7 +158,7 @@ export async function POST(request: NextRequest) {
       timings.usageCheck = Date.now() - usageStartTime;
 
       if (usageError) {
-        console.error(' Error checking AI usage:', usageError);
+        // TODO: Log AI usage check errors to monitoring service
         return NextResponse.json(
           { error: 'Erreur lors de la vérification de l\'utilisation' },
           { status: 500 }
@@ -169,7 +166,7 @@ export async function POST(request: NextRequest) {
       }
 
       if ((currentUsage || 0) >= planData.ai_generations_per_month) {
-        console.warn(`🚫 AI generation limit exceeded: ${currentUsage}/${planData.ai_generations_per_month}`);
+        // TODO: Log AI generation limit violations to monitoring service
         return NextResponse.json(
           { 
             error: `Limite mensuelle atteinte (${planData.ai_generations_per_month} générations)`,
@@ -196,7 +193,7 @@ export async function POST(request: NextRequest) {
 
     // Log if the prompt was sanitized (content was filtered)
     if (sanitizedPrompt !== prompt) {
-      console.warn(` Prompt sanitized for user ${user.id}`);
+      // TODO: Log prompt sanitization events to security monitoring
       logSuspiciousRequest(user.id, prompt, "Prompt injection patterns detected and sanitized");
     }
 
@@ -239,17 +236,15 @@ Génère exactement ce JSON:
 Remplace [nom] par des noms créatifs français et [étape détaillée X] par des instructions de cuisine détaillées et précises. SEULEMENT JSON, PAS DE TEXTE.`;
         
         try {
-          const completion = await groq.chat.completions.create({
-            model: "llama-3.1-8b-instant",
-            messages: [{
-              role: "user",
-              content: chunkPrompt
-            }],
-            temperature: 0.7, // Reduced for more consistent output
-            max_tokens: 2500, // Balanced for nutritional data and speed
+          const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: chunkPrompt }] }],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 2500,
+            },
           });
           
-          const text = completion.choices[0]?.message?.content || "";
+          const text = result.response.text();
           
           // Clean and parse chunk
           let jsonText = text.trim();
@@ -266,7 +261,7 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
           const jsonEnd = jsonText.lastIndexOf("}");
           
           if (jsonStart === -1 || jsonEnd === -1) {
-            console.error(`Raw response: ${text.substring(0, 500)}...`);
+            // TODO: Log raw response parsing errors to monitoring service
             throw new Error(`No valid JSON in chunk ${chunk + 1}`);
           }
           
@@ -293,7 +288,7 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
           
         } catch (chunkError) {
           const errorMessage = chunkError instanceof Error ? chunkError.message : String(chunkError);
-          console.error(` Chunk ${chunk + 1} failed:`, errorMessage);
+          // TODO: Log chunk generation failures to monitoring service
           
           // Check if it's a timeout
           if (errorMessage.includes('timeout') || errorMessage.includes('ETIMEDOUT')) {
@@ -302,17 +297,15 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
             try {
               const simplePrompt = `{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"Petit-déjeuner équilibré","description":"Un petit-déjeuner nutritif pour bien commencer la journée","calories":${Math.round(targetCalories*0.25)},"protein":${Math.round(targetCalories*0.25*0.15/4)},"carbs":${Math.round(targetCalories*0.25*0.50/4)},"fat":${Math.round(targetCalories*0.25*0.35/9)},"ingredients":["avoine","lait"],"instructions":["Verser le lait dans une casserole","Chauffer à feu moyen jusqu'à frémissement","Ajouter l'avoine en remuant","Laisser mijoter 5 minutes en remuant régulièrement","Servir chaud avec des fruits frais"],"ingredientsNutrition":[{"name":"avoine","unit":"g","quantity":50,"caloriesPer100":389,"proteinPer100":17,"carbsPer100":66,"fatPer100":7},{"name":"lait","unit":"ml","quantity":200,"caloriesPer100":42,"proteinPer100":3,"carbsPer100":5,"fatPer100":1}]},"lunch":{"name":"Déjeuner complet","description":"Un repas équilibré avec protéines et légumes","calories":${Math.round(targetCalories*0.35)},"protein":${Math.round(targetCalories*0.35*0.25/4)},"carbs":${Math.round(targetCalories*0.35*0.45/4)},"fat":${Math.round(targetCalories*0.35*0.30/9)},"ingredients":["légumes variés","source de protéines"],"instructions":["Laver et couper les légumes en morceaux réguliers","Faire chauffer une poêle avec un peu d'huile","Cuire les protéines à feu moyen 8-10 minutes","Ajouter les légumes et sauter 5 minutes","Assaisonner avec sel, poivre et herbes au choix","Servir chaud"],"ingredientsNutrition":[{"name":"légumes variés","unit":"g","quantity":200,"caloriesPer100":25,"proteinPer100":2,"carbsPer100":5,"fatPer100":0},{"name":"source de protéines","unit":"g","quantity":100,"caloriesPer100":200,"proteinPer100":25,"carbsPer100":0,"fatPer100":10}]},"dinner":{"name":"Dîner léger","description":"Un repas léger et digeste pour le soir","calories":${Math.round(targetCalories*0.3)},"protein":${Math.round(targetCalories*0.3*0.30/4)},"carbs":${Math.round(targetCalories*0.3*0.40/4)},"fat":${Math.round(targetCalories*0.3*0.30/9)},"ingredients":["poisson","légumes"],"instructions":["Préchauffer le grill ou la poêle","Assaisonner le poisson avec sel, poivre et citron","Badigeonner d'un peu d'huile d'olive","Griller 4-5 minutes de chaque côté","Faire sauter les légumes à la poêle 5 minutes","Servir le poisson sur lit de légumes"],"ingredientsNutrition":[{"name":"poisson","unit":"g","quantity":120,"caloriesPer100":150,"proteinPer100":25,"carbsPer100":0,"fatPer100":5},{"name":"légumes","unit":"g","quantity":150,"caloriesPer100":25,"proteinPer100":2,"carbsPer100":5,"fatPer100":0}]}},"totalCalories":${targetCalories}}`).join(',')}]}`;
               
-              const retryCompletion = await groq.chat.completions.create({
-                model: "llama-3.1-8b-instant",
-                messages: [{
-                  role: "user",
-                  content: `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE. Améliore les noms des recettes en gardant EXACTEMENT cette structure: ${simplePrompt}`
-                }],
-                temperature: 0.5,
-                max_tokens: 2000,
+              const retryResult = await model.generateContent({
+                contents: [{ role: "user", parts: [{ text: `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE. Améliore les noms des recettes en gardant EXACTEMENT cette structure: ${simplePrompt}` }] }],
+                generationConfig: {
+                  temperature: 0.5,
+                  maxOutputTokens: 2000,
+                },
               });
               
-              const retryText = retryCompletion.choices[0]?.message?.content || "";
+              const retryText = retryResult.response.text();
               
               // Parse retry response
               let jsonText = retryText.trim();
@@ -327,7 +320,7 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
                 }
               }
             } catch (retryError) {
-              console.error(' Retry also failed:', retryError);
+              // TODO: Log retry failures to monitoring service
             }
           }
           
@@ -347,7 +340,7 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
         // Flatten all days from all chunks
         allDays = chunkResults.flat();
       } catch (parallelError) {
-        console.error(' Parallel generation failed:', parallelError);
+        // TODO: Log parallel generation failures to monitoring service
         throw parallelError;
       }
       
@@ -406,17 +399,15 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
 
         try {
           const singleGenStartTime = Date.now();
-          const completion = await groq.chat.completions.create({
-            model: "llama-3.1-8b-instant",
-            messages: [{
-              role: "user",
-              content: enhancedPrompt
-            }],
-            temperature: 0.7, // Reduced for more consistent output
-            max_tokens: 2500, // Balanced for nutritional data and speed
+          const result = await model.generateContent({
+            contents: [{ role: "user", parts: [{ text: enhancedPrompt }] }],
+            generationConfig: {
+              temperature: 0.7,
+              maxOutputTokens: 2500,
+            },
           });
           
-          const text = completion.choices[0]?.message?.content || "";
+          const text = result.response.text();
           
           const singleGenTime = Date.now() - singleGenStartTime;
 
@@ -434,7 +425,7 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
           const jsonEnd = jsonText.lastIndexOf("}");
           
           if (jsonStart === -1 || jsonEnd === -1) {
-            console.error(`Short plan attempt ${attempts}: No valid JSON found`);
+            // TODO: Log JSON parsing failures to monitoring service
             if (attempts === maxAttempts) throw new Error("No JSON found after all attempts");
             continue;
           }
@@ -456,7 +447,7 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
           
           // Validate structure
           if (!generatedPlan.name || !generatedPlan.days || !Array.isArray(generatedPlan.days) || generatedPlan.days.length !== duration) {
-            console.error(`Short plan attempt ${attempts}: Invalid structure`);
+            // TODO: Log structure validation failures to monitoring service
             if (attempts === maxAttempts) throw new Error("Invalid structure after all attempts");
             continue;
           }
@@ -465,7 +456,7 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
 
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
-          console.error(`Short plan attempt ${attempts} failed:`, errorMessage);
+          // TODO: Log generation attempt failures to monitoring service
           if (attempts === maxAttempts) throw error;
           await new Promise(resolve => setTimeout(resolve, 1000));
         }
@@ -476,7 +467,7 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
     const responseValidation = validateAIResponse(generatedPlan);
     
     if (!responseValidation.isValid) {
-      console.error(' Suspicious AI response detected:', responseValidation.reason);
+      // TODO: Log suspicious AI responses to security monitoring
       logSuspiciousRequest(user.id, JSON.stringify(generatedPlan).substring(0, 200), `Suspicious AI response: ${responseValidation.reason}`);
       
       return NextResponse.json(
@@ -511,13 +502,13 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
         });
 
       if (trackingError) {
-        console.error(' Failed to track AI usage:', trackingError);
-        // Don't fail the request if tracking fails, just log it
+        // TODO: Log AI usage tracking failures to monitoring service
+        // Don't fail the request if tracking fails
       }
       
       timings.usageTracking = Date.now() - trackingStartTime;
     } catch (trackingError) {
-      console.error(' Unexpected error tracking AI usage:', trackingError);
+      // TODO: Log unexpected tracking errors to monitoring service
       // Don't fail the request if tracking fails
     }
 
@@ -534,7 +525,7 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
       }
     });
   } catch (error) {
-    console.error("Meal plan generation error:", error);
+    // TODO: Log meal plan generation errors to monitoring service
     
 
     // Note: Failed AI generation tracking is skipped due to variable scope limitations

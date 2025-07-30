@@ -35,7 +35,7 @@ export async function GET(request: NextRequest) {
       authenticated: true
     })
   } catch (error) {
-    console.error('Health check error:', error)
+    // TODO: Log health check error to monitoring service
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

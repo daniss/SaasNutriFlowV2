@@ -154,7 +154,7 @@ export async function GET(request: Request) {
       performance_over_time: performanceOverTime
     })
   } catch (error) {
-    console.error("Error fetching template analytics:", error)
+    // TODO: Log template analytics fetch error to monitoring service
     return NextResponse.json(
       { error: "Failed to fetch template analytics" },
       { status: 500 }

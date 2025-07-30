@@ -99,7 +99,7 @@ export async function GET(request: Request) {
       }
     })
   } catch (error) {
-    console.error("Error fetching shared templates:", error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: "Failed to fetch shared templates" },
       { status: 500 }
@@ -204,7 +204,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ template: sharedTemplate }, { status: 201 })
   } catch (error) {
-    console.error("Error sharing template:", error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: "Failed to share template" },
       { status: 500 }

@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/86</span>
+                <span class='fraction'>0/97</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/86</span>
+                <span class='fraction'>0/97</span>
             </div>
         
             
@@ -149,7 +149,29 @@
 <a name='L84'></a><a href='#L84'>84</a>
 <a name='L85'></a><a href='#L85'>85</a>
 <a name='L86'></a><a href='#L86'>86</a>
-<a name='L87'></a><a href='#L87'>87</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L87'></a><a href='#L87'>87</a>
+<a name='L88'></a><a href='#L88'>88</a>
+<a name='L89'></a><a href='#L89'>89</a>
+<a name='L90'></a><a href='#L90'>90</a>
+<a name='L91'></a><a href='#L91'>91</a>
+<a name='L92'></a><a href='#L92'>92</a>
+<a name='L93'></a><a href='#L93'>93</a>
+<a name='L94'></a><a href='#L94'>94</a>
+<a name='L95'></a><a href='#L95'>95</a>
+<a name='L96'></a><a href='#L96'>96</a>
+<a name='L97'></a><a href='#L97'>97</a>
+<a name='L98'></a><a href='#L98'>98</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -294,15 +316,26 @@
 <span class="cstat-no" title="statement not covered" >      }</span>
 <span class="cstat-no" title="statement not covered" >    );</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >    // Get basic client info for session validation</span>
+<span class="cstat-no" title="statement not covered" >    // SECURITY FIX: Get client info with dietitian relationship validation</span>
+<span class="cstat-no" title="statement not covered" >    // This ensures multi-tenant isolation - clients can only be accessed by their assigned dietitian</span>
 <span class="cstat-no" title="statement not covered" >    const { data: client, error: clientError } = await supabase</span>
 <span class="cstat-no" title="statement not covered" >      .from("clients")</span>
-<span class="cstat-no" title="statement not covered" >      .select("id, name, email")</span>
+<span class="cstat-no" title="statement not covered" >      .select("id, name, email, dietitian_id, dietitians!inner(auth_user_id)")</span>
 <span class="cstat-no" title="statement not covered" >      .eq("id", clientId)</span>
 <span class="cstat-no" title="statement not covered" >      .single();</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    if (clientError || !client) {</span>
+<span class="cstat-no" title="statement not covered" >      console.warn(`Client validation failed for ID ${clientId}:`, clientError);</span>
 <span class="cstat-no" title="statement not covered" >      return NextResponse.json({ error: "Client not found" }, { status: 404 });</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >    // CRITICAL: Verify client belongs to a valid dietitian</span>
+<span class="cstat-no" title="statement not covered" >    if (!client.dietitian_id || !client.dietitians || !(client.dietitians as any).auth_user_id) {</span>
+<span class="cstat-no" title="statement not covered" >      console.error(`Client ${clientId} has invalid dietitian relationship`);</span>
+<span class="cstat-no" title="statement not covered" >      return NextResponse.json(</span>
+<span class="cstat-no" title="statement not covered" >        { error: "Invalid client configuration" },</span>
+<span class="cstat-no" title="statement not covered" >        { status: 403 }</span>
+<span class="cstat-no" title="statement not covered" >      );</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    return NextResponse.json({</span>
@@ -328,7 +361,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-26T18:23:58.316Z
+                at 2025-07-30T13:03:29.330Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

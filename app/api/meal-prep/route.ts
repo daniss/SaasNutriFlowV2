@@ -112,7 +112,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json({ instructions: processedInstructions || [] })
   } catch (error) {
-    console.error("Error fetching meal prep instructions:", error)
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Failed to fetch instructions" },
       { status: 500 }
@@ -303,7 +303,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ instruction: completeInstruction }, { status: 201 })
   } catch (error) {
-    console.error("Error creating meal prep instruction:", error)
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Failed to create instruction" },
       { status: 500 }

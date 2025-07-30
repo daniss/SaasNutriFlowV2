@@ -56,7 +56,7 @@ export async function GET(
       }
     })
   } catch (error) {
-    console.error("Error fetching reviews:", error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: "Failed to fetch reviews" },
       { status: 500 }
@@ -161,7 +161,7 @@ export async function POST(
 
     return NextResponse.json({ review }, { status: 201 })
   } catch (error) {
-    console.error("Error creating review:", error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: "Failed to create review" },
       { status: 500 }

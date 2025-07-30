@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/485</span>
+                <span class='fraction'>0/484</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/485</span>
+                <span class='fraction'>0/484</span>
             </div>
         
             
@@ -546,9 +546,7 @@
 <a name='L481'></a><a href='#L481'>481</a>
 <a name='L482'></a><a href='#L482'>482</a>
 <a name='L483'></a><a href='#L483'>483</a>
-<a name='L484'></a><a href='#L484'>484</a>
-<a name='L485'></a><a href='#L485'>485</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L484'></a><a href='#L484'>484</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -1045,7 +1043,6 @@
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >// Stripe webhook handler for subscription events</span>
 <span class="cstat-no" title="statement not covered" >export async function POST(request: NextRequest) {</span>
-<span class="cstat-no" title="statement not covered" >  console.log('Webhook received at:', new Date().toISOString())</span>
 <span class="cstat-no" title="statement not covered" >  </span>
 <span class="cstat-no" title="statement not covered" >  try {</span>
 <span class="cstat-no" title="statement not covered" >    // Use service role client to bypass RLS for webhooks</span>
@@ -1063,11 +1060,9 @@
 <span class="cstat-no" title="statement not covered" >    // Verify webhook signature</span>
 <span class="cstat-no" title="statement not covered" >    const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET</span>
 <span class="cstat-no" title="statement not covered" >    if (!webhookSecret) {</span>
-<span class="cstat-no" title="statement not covered" >      console.error('STRIPE_WEBHOOK_SECRET not configured')</span>
 <span class="cstat-no" title="statement not covered" >      return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >    </span>
-<span class="cstat-no" title="statement not covered" >    console.log('Processing webhook with signature:', signature?.substring(0, 20) + '...')</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    let event</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
@@ -1178,14 +1173,16 @@
 <span class="cstat-no" title="statement not covered" >    .single()</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  const now = new Date()</span>
+<span class="cstat-no" title="statement not covered" >  const wasInTrial = currentDietitian?.subscription_status === 'trialing'</span>
 <span class="cstat-no" title="statement not covered" >  const trialExpired = currentDietitian?.trial_ends_at </span>
 <span class="cstat-no" title="statement not covered" >    ? new Date(currentDietitian.trial_ends_at) &lt; now </span>
 <span class="cstat-no" title="statement not covered" >    : false</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >  // If trial was expired, activate subscription immediately</span>
-<span class="cstat-no" title="statement not covered" >  // If trial was not expired or no trial, let Stripe handle the trial period</span>
-<span class="cstat-no" title="statement not covered" >  const newStatus = trialExpired ? 'active' : 'trialing'</span>
-<span class="cstat-no" title="statement not covered" >  const trialEndsAt = trialExpired </span>
+<span class="cstat-no" title="statement not covered" >  // If user was already in trial (even if not expired) OR trial was expired, </span>
+<span class="cstat-no" title="statement not covered" >  // activate subscription immediately - they chose to pay instead of continuing trial</span>
+<span class="cstat-no" title="statement not covered" >  const shouldActivateImmediately = wasInTrial || trialExpired</span>
+<span class="cstat-no" title="statement not covered" >  const newStatus = shouldActivateImmediately ? 'active' : 'trialing'</span>
+<span class="cstat-no" title="statement not covered" >  const trialEndsAt = shouldActivateImmediately </span>
 <span class="cstat-no" title="statement not covered" >    ? null </span>
 <span class="cstat-no" title="statement not covered" >    : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000).toISOString()</span>
 <span class="cstat-no" title="statement not covered" ></span>
@@ -1222,7 +1219,7 @@
 <span class="cstat-no" title="statement not covered" >    newStatus,</span>
 <span class="cstat-no" title="statement not covered" >    null,</span>
 <span class="cstat-no" title="statement not covered" >    metadata.plan_name,</span>
-<span class="cstat-no" title="statement not covered" >    { session_id: session.id, trial_expired: trialExpired }</span>
+<span class="cstat-no" title="statement not covered" >    { session_id: session.id, was_in_trial: wasInTrial, trial_expired: trialExpired, activated_immediately: shouldActivateImmediately }</span>
 <span class="cstat-no" title="statement not covered" >  )</span>
 <span class="cstat-no" title="statement not covered" >}</span>
 <span class="cstat-no" title="statement not covered" ></span>
@@ -1522,7 +1519,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-26T18:23:58.316Z
+                at 2025-07-30T13:03:29.330Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

@@ -132,7 +132,7 @@ export async function middleware(request: NextRequest) {
         return NextResponse.redirect(url);
       }
     } catch (error) {
-      console.error('Error checking subscription status:', error);
+      // TODO: Add proper error logging to monitoring service
       // On error, redirect to upgrade page to be safe
       const url = request.nextUrl.clone();
       url.pathname = "/dashboard/upgrade";

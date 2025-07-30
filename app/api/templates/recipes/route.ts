@@ -50,14 +50,14 @@ export async function GET(request: Request) {
     const { data: recipes, error } = await query.limit(50)
 
     if (error) {
-      console.error('Error fetching recipes:', error)
+      // TODO: Log database error to monitoring service
       return NextResponse.json({ error: 'Failed to fetch recipes' }, { status: 500 })
     }
 
     return NextResponse.json({ recipes })
 
   } catch (error) {
-    console.error("Error in recipes API:", error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json({ error: "Server error" }, { status: 500 })
   }
 }
@@ -162,7 +162,7 @@ export async function POST(request: Request) {
       .eq('dietitian_id', user.id)
 
     if (updateError) {
-      console.error('Error updating template:', updateError)
+      // TODO: Log database error to monitoring service
       return NextResponse.json({ error: 'Failed to update template' }, { status: 500 })
     }
 
@@ -183,7 +183,7 @@ export async function POST(request: Request) {
     })
 
   } catch (error) {
-    console.error("Error updating template recipe:", error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json({ error: "Server error" }, { status: 500 })
   }
 }

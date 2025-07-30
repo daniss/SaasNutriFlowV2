@@ -79,7 +79,7 @@ export async function GET(request: NextRequest) {
         );
     }
   } catch (error) {
-    console.error("Error in GDPR API:", error);
+    // TODO: Log GDPR API error to monitoring service;
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }
@@ -164,7 +164,7 @@ export async function POST(request: NextRequest) {
         );
     }
   } catch (error) {
-    console.error("Error in GDPR POST API:", error);
+    // TODO: Log GDPR POST API error to monitoring service;
     return NextResponse.json({ error: "Erreur serveur" }, { status: 500 });
   }
 }

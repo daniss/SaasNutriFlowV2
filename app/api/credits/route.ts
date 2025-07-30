@@ -60,7 +60,7 @@ export async function GET(request: Request) {
       transactions: transactions || []
     })
   } catch (error) {
-    console.error("Error fetching credits:", error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: "Failed to fetch credits" },
       { status: 500 }
@@ -152,7 +152,7 @@ export async function POST(request: Request) {
       credits: updatedCredits
     }, { status: 201 })
   } catch (error) {
-    console.error("Error creating credit transaction:", error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: "Failed to create transaction" },
       { status: 500 }

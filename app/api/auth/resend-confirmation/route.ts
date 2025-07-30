@@ -28,7 +28,7 @@ export async function POST(request: Request) {
     })
 
     if (error) {
-      console.error('Resend confirmation error:', error)
+      // TODO: Log resend confirmation error to monitoring service
       
       // Handle specific Supabase errors
       if (error.message?.includes('rate limit') || error.message?.includes('31 seconds')) {
@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     })
 
   } catch (error) {
-    console.error('API Error:', error)
+    // TODO: Log API error to monitoring service
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

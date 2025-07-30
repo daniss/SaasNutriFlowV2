@@ -78,7 +78,7 @@ export async function GET(
       reviews: reviews || []
     })
   } catch (error) {
-    console.error("Error fetching shared template:", error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: "Failed to fetch template" },
       { status: 500 }
@@ -129,7 +129,7 @@ export async function PUT(
 
     return NextResponse.json({ template })
   } catch (error) {
-    console.error("Error updating shared template:", error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: "Failed to update template" },
       { status: 500 }
@@ -173,7 +173,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting shared template:", error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: "Failed to delete template" },
       { status: 500 }

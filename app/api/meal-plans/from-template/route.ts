@@ -13,7 +13,7 @@ export async function POST(request: Request) {
 
     const { templateId, clientId, customizations } = await request.json()
 
-    console.log('Request data:', { templateId, clientId, customizations })
+    // TODO: Log request data to monitoring service
 
     // Validate required fields
     if (!templateId || !clientId) {
@@ -31,10 +31,10 @@ export async function POST(request: Request) {
       .eq('dietitian_id', user.id)
       .single()
 
-    console.log('Template fetch result:', { template, templateError })
+    // TODO: Log template fetch result to monitoring service
 
     if (templateError || !template) {
-      console.error('Template not found:', { templateId, userId: user.id, templateError })
+      // TODO: Log template not found error to monitoring service
       return NextResponse.json(
         { error: "Template not found" },
         { status: 404 }
@@ -49,10 +49,10 @@ export async function POST(request: Request) {
       .eq('id', clientId)
       .single()
 
-    console.log('Client fetch result:', { client, clientError })
+    // TODO: Log client fetch result to monitoring service
 
     if (clientError || !client) {
-      console.error('Client not found:', { clientId, userId: user.id, clientError })
+      // TODO: Log client not found error to monitoring service
       return NextResponse.json(
         { error: "Client not found" },
         { status: 404 }
@@ -119,7 +119,7 @@ export async function POST(request: Request) {
                     mealSlot.original_meal_name = recipe.name
                   }
                 } catch (error) {
-                  console.error('Error fetching recipe:', error)
+                  // TODO: Log recipe fetch error to monitoring service
                 }
               }
 
@@ -218,7 +218,7 @@ export async function POST(request: Request) {
             return [`${recipe.name}${nutritionText}${timeInfo}`]
           }
         } catch (error) {
-          console.error('Error fetching recipe:', error)
+          // TODO: Log recipe fetch error to monitoring service
         }
       }
       
@@ -289,7 +289,7 @@ export async function POST(request: Request) {
       status: 'draft'
     }
 
-    console.log('Creating meal plan with data:', mealPlanData)
+    // TODO: Log meal plan creation data to monitoring service
 
     const { data: mealPlan, error: mealPlanError } = await supabase
       .from('meal_plans')
@@ -301,7 +301,7 @@ export async function POST(request: Request) {
       `)
       .single()
 
-    console.log('Meal plan creation result:', { mealPlan, mealPlanError })
+    // TODO: Log meal plan creation result to monitoring service
 
     if (mealPlanError) throw mealPlanError
 
@@ -320,15 +320,11 @@ export async function POST(request: Request) {
     }, { status: 201 })
 
   } catch (error) {
-    console.error("Error creating meal plan from template:", error)
+    // TODO: Log meal plan creation error to monitoring service
     
     // More detailed error logging
     if (error instanceof Error) {
-      console.error("Error details:", {
-        message: error.message,
-        stack: error.stack,
-        name: error.name
-      })
+      // TODO: Log detailed error information to monitoring service
     }
     
     const errorMessage = error instanceof Error ? error.message : JSON.stringify(error)

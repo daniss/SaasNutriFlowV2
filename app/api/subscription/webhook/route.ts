@@ -67,13 +67,12 @@ export async function POST(request: NextRequest) {
 
       event = JSON.parse(body)
     } catch (error) {
-      console.error('Webhook signature verification failed:', error)
+      // TODO: Log webhook signature verification failures to monitoring service
       return NextResponse.json({ error: 'Invalid signature' }, { status: 400 })
     }
 
     // Handle the event
-    console.log('Processing webhook event:', event.type, event.id)
-    console.log('Event data object keys:', Object.keys(event.data.object))
+    // TODO: Log webhook events to monitoring service for tracking
 
     try {
       switch (event.type) {
@@ -106,31 +105,31 @@ export async function POST(request: NextRequest) {
           break
 
         default:
-          console.log('Unhandled event type:', event.type)
+          // TODO: Log unhandled event types to monitoring service
       }
 
       return NextResponse.json({ received: true })
     } catch (error) {
-      console.error('Error processing webhook event:', error)
+      // TODO: Log webhook processing errors to monitoring service
       return NextResponse.json({ error: 'Event processing failed' }, { status: 500 })
     }
 
   } catch (error) {
-    console.error('Webhook error:', error)
+    // TODO: Log webhook errors to monitoring service
     return NextResponse.json({ error: 'Webhook processing failed' }, { status: 500 })
   }
 }
 
 // Event handlers
 async function handleCheckoutSessionCompleted(supabase: any, session: any) {
-  console.log('Handling checkout session completed:', session.id)
+  // TODO: Log checkout session completion to monitoring service
 
   const customerId = session.customer
   const subscriptionId = session.subscription
   const metadata = session.metadata
 
   if (!customerId || !subscriptionId || !metadata?.dietitian_id) {
-    console.error('Missing required data in checkout session:', { customerId, subscriptionId, metadata })
+    // TODO: Log missing checkout session data to monitoring service
     return
   }
 
@@ -173,7 +172,7 @@ async function handleCheckoutSessionCompleted(supabase: any, session: any) {
     .eq('id', metadata.dietitian_id)
 
   if (updateError) {
-    console.error('Failed to update dietitian subscription:', updateError)
+    // TODO: Log dietitian subscription update failures to monitoring service
     throw updateError
   }
 
@@ -193,7 +192,7 @@ async function handleCheckoutSessionCompleted(supabase: any, session: any) {
 }
 
 async function handleSubscriptionCreated(supabase: any, subscription: any) {
-  console.log('Handling subscription created:', subscription.id)
+  // TODO: Log subscription creation events to monitoring service
 
   const { data: dietitian, error: findError } = await supabase
     .from('dietitians')
@@ -202,7 +201,7 @@ async function handleSubscriptionCreated(supabase: any, subscription: any) {
     .single()
 
   if (!dietitian || findError) {
-    console.error('Dietitian not found for customer:', subscription.customer, findError)
+    // TODO: Log missing dietitian records to monitoring service
     return
   }
 
@@ -233,7 +232,7 @@ async function handleSubscriptionCreated(supabase: any, subscription: any) {
     .eq('id', dietitian.id)
 
   if (error) {
-    console.error('Failed to update subscription:', error)
+    // TODO: Log subscription update failures to monitoring service
     throw error
   }
 
@@ -252,7 +251,7 @@ async function handleSubscriptionCreated(supabase: any, subscription: any) {
 }
 
 async function handleSubscriptionUpdated(supabase: any, subscription: any) {
-  console.log('Handling subscription updated:', subscription.id)
+  // TODO: Log subscription update events to monitoring service
 
   const { data: dietitian } = await supabase
     .from('dietitians')
@@ -261,7 +260,7 @@ async function handleSubscriptionUpdated(supabase: any, subscription: any) {
     .single()
 
   if (!dietitian) {
-    console.error('Dietitian not found for subscription:', subscription.id)
+    // TODO: Log missing dietitian records to monitoring service
     return
   }
 
@@ -289,7 +288,7 @@ async function handleSubscriptionUpdated(supabase: any, subscription: any) {
     .eq('id', dietitian.id)
 
   if (error) {
-    console.error('Failed to update subscription:', error)
+    // TODO: Log subscription update failures to monitoring service
     throw error
   }
 
@@ -308,7 +307,7 @@ async function handleSubscriptionUpdated(supabase: any, subscription: any) {
 }
 
 async function handleSubscriptionDeleted(supabase: any, subscription: any) {
-  console.log('Handling subscription deleted:', subscription.id)
+  // TODO: Log subscription deletion events to monitoring service
 
   const { data: dietitian } = await supabase
     .from('dietitians')
@@ -317,7 +316,7 @@ async function handleSubscriptionDeleted(supabase: any, subscription: any) {
     .single()
 
   if (!dietitian) {
-    console.error('Dietitian not found for subscription:', subscription.id)
+    // TODO: Log missing dietitian records to monitoring service
     return
   }
 
@@ -332,7 +331,7 @@ async function handleSubscriptionDeleted(supabase: any, subscription: any) {
     .eq('id', dietitian.id)
 
   if (error) {
-    console.error('Failed to update subscription:', error)
+    // TODO: Log subscription update failures to monitoring service
     throw error
   }
 
@@ -351,7 +350,7 @@ async function handleSubscriptionDeleted(supabase: any, subscription: any) {
 }
 
 async function handleInvoicePaymentSucceeded(supabase: any, invoice: any) {
-  console.log('Handling invoice payment succeeded:', invoice.id)
+  // TODO: Log successful invoice payments to monitoring service
 
   const subscriptionId = invoice.subscription
   if (!subscriptionId) return
@@ -363,7 +362,7 @@ async function handleInvoicePaymentSucceeded(supabase: any, invoice: any) {
     .single()
 
   if (!dietitian) {
-    console.error('Dietitian not found for subscription:', subscriptionId)
+    // TODO: Log missing dietitian records to monitoring service
     return
   }
 
@@ -382,7 +381,7 @@ async function handleInvoicePaymentSucceeded(supabase: any, invoice: any) {
 }
 
 async function handleInvoicePaymentFailed(supabase: any, invoice: any) {
-  console.log('Handling invoice payment failed:', invoice.id)
+  // TODO: Log failed invoice payments to monitoring service
 
   const subscriptionId = invoice.subscription
   if (!subscriptionId) return
@@ -394,7 +393,7 @@ async function handleInvoicePaymentFailed(supabase: any, invoice: any) {
     .single()
 
   if (!dietitian) {
-    console.error('Dietitian not found for subscription:', subscriptionId)
+    // TODO: Log missing dietitian records to monitoring service
     return
   }
 
@@ -407,7 +406,7 @@ async function handleInvoicePaymentFailed(supabase: any, invoice: any) {
     .eq('id', dietitian.id)
 
   if (error) {
-    console.error('Failed to update subscription to past_due:', error)
+    // TODO: Log subscription status update failures to monitoring service
   }
 
   await logSubscriptionEvent(
@@ -425,7 +424,7 @@ async function handleInvoicePaymentFailed(supabase: any, invoice: any) {
 }
 
 async function handleTrialWillEnd(supabase: any, subscription: any) {
-  console.log('Handling trial will end:', subscription.id)
+  // TODO: Log trial ending notifications to monitoring service
 
   const { data: dietitian } = await supabase
     .from('dietitians')
@@ -434,7 +433,7 @@ async function handleTrialWillEnd(supabase: any, subscription: any) {
     .single()
 
   if (!dietitian) {
-    console.error('Dietitian not found for subscription:', subscription.id)
+    // TODO: Log missing dietitian records to monitoring service
     return
   }
 
@@ -479,6 +478,6 @@ async function logSubscriptionEvent(
   })
 
   if (error) {
-    console.error('Failed to log subscription event:', error)
+    // TODO: Log subscription event logging failures to monitoring service
   }
 }

@@ -63,7 +63,7 @@ export async function GET(
     });
 
   } catch (error) {
-    console.error('Help article API error:', error);
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
@@ -121,7 +121,7 @@ export async function PATCH(
     );
 
   } catch (error) {
-    console.error('Help article vote API error:', error);
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

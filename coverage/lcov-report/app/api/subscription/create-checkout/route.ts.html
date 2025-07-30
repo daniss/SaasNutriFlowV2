@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/152</span>
+                <span class='fraction'>0/156</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/152</span>
+                <span class='fraction'>0/156</span>
             </div>
         
             
@@ -214,7 +214,15 @@
 <a name='L149'></a><a href='#L149'>149</a>
 <a name='L150'></a><a href='#L150'>150</a>
 <a name='L151'></a><a href='#L151'>151</a>
-<a name='L152'></a><a href='#L152'>152</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L152'></a><a href='#L152'>152</a>
+<a name='L153'></a><a href='#L153'>153</a>
+<a name='L154'></a><a href='#L154'>154</a>
+<a name='L155'></a><a href='#L155'>155</a>
+<a name='L156'></a><a href='#L156'>156</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -440,25 +448,7 @@
 <span class="cstat-no" title="statement not covered" >      return NextResponse.json({ error: 'Subscription already exists' }, { status: 400 })</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >    </span>
-<span class="cstat-no" title="statement not covered" >    // For trialing status, check if trial is still valid</span>
-<span class="cstat-no" title="statement not covered" >    if (dietitian.subscription_status === 'trialing') {</span>
-<span class="cstat-no" title="statement not covered" >      // Get trial end date from the dietitian record</span>
-<span class="cstat-no" title="statement not covered" >      const { data: trialInfo } = await supabase</span>
-<span class="cstat-no" title="statement not covered" >        .from('dietitians')</span>
-<span class="cstat-no" title="statement not covered" >        .select('trial_ends_at')</span>
-<span class="cstat-no" title="statement not covered" >        .eq('id', dietitian.id)</span>
-<span class="cstat-no" title="statement not covered" >        .single()</span>
-<span class="cstat-no" title="statement not covered" >      </span>
-<span class="cstat-no" title="statement not covered" >      if (trialInfo?.trial_ends_at) {</span>
-<span class="cstat-no" title="statement not covered" >        const trialEndDate = new Date(trialInfo.trial_ends_at)</span>
-<span class="cstat-no" title="statement not covered" >        const now = new Date()</span>
-<span class="cstat-no" title="statement not covered" >        </span>
-<span class="cstat-no" title="statement not covered" >        // If trial is still valid, prevent checkout</span>
-<span class="cstat-no" title="statement not covered" >        if (trialEndDate &gt; now) {</span>
-<span class="cstat-no" title="statement not covered" >          return NextResponse.json({ error: 'Trial is still active' }, { status: 400 })</span>
-<span class="cstat-no" title="statement not covered" >        }</span>
-<span class="cstat-no" title="statement not covered" >      }</span>
-<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" >    // Allow users to upgrade during trial period - they can choose to upgrade early</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    const body = await request.json()</span>
 <span class="cstat-no" title="statement not covered" >    const { priceId, planName } = createCheckoutSchema.parse(body)</span>
@@ -486,6 +476,27 @@
 <span class="cstat-no" title="statement not covered" >      }</span>
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >    // Determine if user is already in trial (should skip additional trial period)</span>
+<span class="cstat-no" title="statement not covered" >    let skipTrial = false</span>
+<span class="cstat-no" title="statement not covered" >    if (dietitian.subscription_status === 'trialing') {</span>
+<span class="cstat-no" title="statement not covered" >      // Get trial end date to check if still valid</span>
+<span class="cstat-no" title="statement not covered" >      const { data: trialInfo } = await supabase</span>
+<span class="cstat-no" title="statement not covered" >        .from('dietitians')</span>
+<span class="cstat-no" title="statement not covered" >        .select('trial_ends_at')</span>
+<span class="cstat-no" title="statement not covered" >        .eq('id', dietitian.id)</span>
+<span class="cstat-no" title="statement not covered" >        .single()</span>
+<span class="cstat-no" title="statement not covered" >      </span>
+<span class="cstat-no" title="statement not covered" >      if (trialInfo?.trial_ends_at) {</span>
+<span class="cstat-no" title="statement not covered" >        const trialEndDate = new Date(trialInfo.trial_ends_at)</span>
+<span class="cstat-no" title="statement not covered" >        const now = new Date()</span>
+<span class="cstat-no" title="statement not covered" >        </span>
+<span class="cstat-no" title="statement not covered" >        // If user is still in valid trial, skip adding another trial period</span>
+<span class="cstat-no" title="statement not covered" >        if (trialEndDate &gt; now) {</span>
+<span class="cstat-no" title="statement not covered" >          skipTrial = true</span>
+<span class="cstat-no" title="statement not covered" >        }</span>
+<span class="cstat-no" title="statement not covered" >      }</span>
+<span class="cstat-no" title="statement not covered" >    }</span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    // Create checkout session</span>
 <span class="cstat-no" title="statement not covered" >    const checkoutSession = await paymentService.createCheckoutSession(</span>
 <span class="cstat-no" title="statement not covered" >      stripeCustomerId,</span>
@@ -493,7 +504,8 @@
 <span class="cstat-no" title="statement not covered" >      {</span>
 <span class="cstat-no" title="statement not covered" >        dietitian_id: dietitian.id,</span>
 <span class="cstat-no" title="statement not covered" >        plan_name: planName</span>
-<span class="cstat-no" title="statement not covered" >      }</span>
+<span class="cstat-no" title="statement not covered" >      },</span>
+<span class="cstat-no" title="statement not covered" >      skipTrial // Skip trial if user is already in trial period</span>
 <span class="cstat-no" title="statement not covered" >    )</span>
 <span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >    return NextResponse.json({</span>
@@ -523,7 +535,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-26T18:23:58.316Z
+                at 2025-07-30T13:03:29.330Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

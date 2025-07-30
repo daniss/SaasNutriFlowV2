@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
       .order('sort_order')
 
     if (error) {
-      console.error('Failed to fetch subscription plans:', error)
+      // TODO: Log database error to monitoring service
       return NextResponse.json(
         { error: 'Failed to fetch subscription plans' },
         { status: 500 }
@@ -26,7 +26,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Get subscription plans error:', error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: 'Failed to get subscription plans' },
       { status: 500 }

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
       .maybeSingle();
 
     if (error) {
-      console.error("Error checking user in profiles:", error);
+      // TODO: Log user profile check error to monitoring service;
       // If there's an error, still try to check auth users
     }
 
@@ -63,7 +63,7 @@ export async function POST(request: NextRequest) {
       await supabase.auth.admin.listUsers();
 
     if (authError) {
-      console.error("Error checking auth users:", authError);
+      // TODO: Log auth users check error to monitoring service;
       return NextResponse.json(
         { error: "Failed to check user" },
         { status: 500 }
@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ exists });
   } catch (error) {
-    console.error("Error in check-user API:", error);
+    // TODO: Log check-user API error to monitoring service;
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -50,7 +50,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Payment creation error:', error)
+    // TODO: Log payment creation error to monitoring service
     return NextResponse.json(
       { error: 'Failed to create payment' },
       { status: 500 }
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(result)
 
   } catch (error) {
-    console.error('Payment confirmation error:', error)
+    // TODO: Log payment confirmation error to monitoring service
     return NextResponse.json(
       { error: 'Failed to confirm payment' },
       { status: 500 }

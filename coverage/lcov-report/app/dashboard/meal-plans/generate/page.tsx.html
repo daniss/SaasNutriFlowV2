@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/2310</span>
+                <span class='fraction'>0/2330</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/2310</span>
+                <span class='fraction'>0/2330</span>
             </div>
         
             
@@ -2373,7 +2373,47 @@
 <a name='L2308'></a><a href='#L2308'>2308</a>
 <a name='L2309'></a><a href='#L2309'>2309</a>
 <a name='L2310'></a><a href='#L2310'>2310</a>
-<a name='L2311'></a><a href='#L2311'>2311</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<a name='L2311'></a><a href='#L2311'>2311</a>
+<a name='L2312'></a><a href='#L2312'>2312</a>
+<a name='L2313'></a><a href='#L2313'>2313</a>
+<a name='L2314'></a><a href='#L2314'>2314</a>
+<a name='L2315'></a><a href='#L2315'>2315</a>
+<a name='L2316'></a><a href='#L2316'>2316</a>
+<a name='L2317'></a><a href='#L2317'>2317</a>
+<a name='L2318'></a><a href='#L2318'>2318</a>
+<a name='L2319'></a><a href='#L2319'>2319</a>
+<a name='L2320'></a><a href='#L2320'>2320</a>
+<a name='L2321'></a><a href='#L2321'>2321</a>
+<a name='L2322'></a><a href='#L2322'>2322</a>
+<a name='L2323'></a><a href='#L2323'>2323</a>
+<a name='L2324'></a><a href='#L2324'>2324</a>
+<a name='L2325'></a><a href='#L2325'>2325</a>
+<a name='L2326'></a><a href='#L2326'>2326</a>
+<a name='L2327'></a><a href='#L2327'>2327</a>
+<a name='L2328'></a><a href='#L2328'>2328</a>
+<a name='L2329'></a><a href='#L2329'>2329</a>
+<a name='L2330'></a><a href='#L2330'>2330</a>
+<a name='L2331'></a><a href='#L2331'>2331</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
+<span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -5174,7 +5214,7 @@
 <span class="cstat-no" title="statement not covered" >      </span>
 <span class="cstat-no" title="statement not covered" >      const { error } = await supabase.from("meal_plan_templates").insert({</span>
 <span class="cstat-no" title="statement not covered" >        dietitian_id: user.id,</span>
-<span class="cstat-no" title="statement not covered" >        name: formData.planName || generatedPlan.title,</span>
+<span class="cstat-no" title="statement not covered" >        name: formData.planName || generatedPlan.title || `Modèle - ${new Date().toLocaleDateString('fr-FR')}`,</span>
 <span class="cstat-no" title="statement not covered" >        description: generatedPlan.description || '',</span>
 <span class="cstat-no" title="statement not covered" >        category: 'general',</span>
 <span class="cstat-no" title="statement not covered" >        client_type: 'general',</span>
@@ -5421,7 +5461,7 @@
 <span class="cstat-no" title="statement not covered" >        .insert({</span>
 <span class="cstat-no" title="statement not covered" >          dietitian_id: user!.id,</span>
 <span class="cstat-no" title="statement not covered" >          client_id: formData.clientId,</span>
-<span class="cstat-no" title="statement not covered" >          name: formData.planName || generatedPlan.title,</span>
+<span class="cstat-no" title="statement not covered" >          name: formData.planName || generatedPlan.title || `Plan alimentaire - ${new Date().toLocaleDateString('fr-FR')}`,</span>
 <span class="cstat-no" title="statement not covered" >          description: generatedPlan.description,</span>
 <span class="cstat-no" title="statement not covered" >          duration_days: generatedPlan.duration,</span>
 <span class="cstat-no" title="statement not covered" >          plan_content: dynamicPlan,</span>
@@ -5581,7 +5621,7 @@
 <span class="cstat-no" title="statement not covered" >        .insert({</span>
 <span class="cstat-no" title="statement not covered" >          dietitian_id: user!.id,</span>
 <span class="cstat-no" title="statement not covered" >          client_id: formData.clientId || null, // Allow null client</span>
-<span class="cstat-no" title="statement not covered" >          name: formData.planName || generatedPlan.title,</span>
+<span class="cstat-no" title="statement not covered" >          name: formData.planName || generatedPlan.title || `Plan alimentaire - ${new Date().toLocaleDateString('fr-FR')}`,</span>
 <span class="cstat-no" title="statement not covered" >          description: generatedPlan.description,</span>
 <span class="cstat-no" title="statement not covered" >          duration_days: generatedPlan.duration,</span>
 <span class="cstat-no" title="statement not covered" >          plan_content: dynamicPlan,</span>
@@ -5620,6 +5660,18 @@
 <span class="cstat-no" title="statement not covered" >    }</span>
 <span class="cstat-no" title="statement not covered" >  }</span>
 <span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >  // Helper function to clean ingredient names (remove quantities and units)</span>
+<span class="cstat-no" title="statement not covered" >  const cleanIngredientName = (name: string): string =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    if (!name) return ''</span>
+<span class="cstat-no" title="statement not covered" >    </span>
+<span class="cstat-no" title="statement not covered" >    // Remove quantity and unit prefixes like "50g ", "200ml ", "2 ", etc.</span>
+<span class="cstat-no" title="statement not covered" >    return name</span>
+<span class="cstat-no" title="statement not covered" >      .replace(/^\d+\s*(g|ml|kg|l|cl|tsp|tbsp|cup|cups|piece|pieces)?\s*/i, '') // Remove quantity + unit</span>
+<span class="cstat-no" title="statement not covered" >      .replace(/^\d+\s*/, '') // Remove standalone numbers</span>
+<span class="cstat-no" title="statement not covered" >      .trim()</span>
+<span class="cstat-no" title="statement not covered" >      .toLowerCase()</span>
+<span class="cstat-no" title="statement not covered" >  }</span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  // Function to save ingredients to database</span>
 <span class="cstat-no" title="statement not covered" >  const saveIngredientsToDatabase = async (days: any[]) =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    const savedIngredients = []</span>
@@ -5630,11 +5682,15 @@
 <span class="cstat-no" title="statement not covered" >        </span>
 <span class="cstat-no" title="statement not covered" >        for (const ingredient of meal.ingredientsNutrition) {</span>
 <span class="cstat-no" title="statement not covered" >          try {</span>
+<span class="cstat-no" title="statement not covered" >            // Clean the ingredient name to remove quantities and units</span>
+<span class="cstat-no" title="statement not covered" >            const cleanName = cleanIngredientName(ingredient.name)</span>
+<span class="cstat-no" title="statement not covered" >            if (!cleanName) continue // Skip if name becomes empty after cleaning</span>
+<span class="cstat-no" title="statement not covered" >            </span>
 <span class="cstat-no" title="statement not covered" >            // Check if ingredient already exists globally</span>
 <span class="cstat-no" title="statement not covered" >            const { data: existingIngredient } = await supabase</span>
 <span class="cstat-no" title="statement not covered" >              .from("ingredients")</span>
 <span class="cstat-no" title="statement not covered" >              .select("id")</span>
-<span class="cstat-no" title="statement not covered" >              .eq("name", ingredient.name)</span>
+<span class="cstat-no" title="statement not covered" >              .eq("name", cleanName)</span>
 <span class="cstat-no" title="statement not covered" >              .single()</span>
 <span class="cstat-no" title="statement not covered" >            </span>
 <span class="cstat-no" title="statement not covered" >            if (existingIngredient) {</span>
@@ -5643,7 +5699,7 @@
 <span class="cstat-no" title="statement not covered" >            </span>
 <span class="cstat-no" title="statement not covered" >            // Prepare ingredient data based on unit type</span>
 <span class="cstat-no" title="statement not covered" >            const ingredientData = {</span>
-<span class="cstat-no" title="statement not covered" >              name: ingredient.name,</span>
+<span class="cstat-no" title="statement not covered" >              name: cleanName,</span>
 <span class="cstat-no" title="statement not covered" >              category: ingredient.unit === 'ml' ? 'liquid' : ingredient.unit === 'piece' ? 'countable' : 'solid',</span>
 <span class="cstat-no" title="statement not covered" >              unit_type: ingredient.unit,</span>
 <span class="cstat-no" title="statement not covered" >              </span>
@@ -5782,28 +5838,27 @@
 <span class="cstat-no" title="statement not covered" >            // Use detailed ingredient nutrition data</span>
 <span class="cstat-no" title="statement not covered" >            for (let index = 0; index &lt; meal.ingredientsNutrition.length; index++) {</span>
 <span class="cstat-no" title="statement not covered" >              const nutritionData = meal.ingredientsNutrition[index]</span>
-<span class="cstat-no" title="statement not covered" >              const ingredientString = meal.ingredients[index] || `${nutritionData.name}`</span>
 <span class="cstat-no" title="statement not covered" >              </span>
-<span class="cstat-no" title="statement not covered" >              // Parse quantity and unit from ingredient string</span>
-<span class="cstat-no" title="statement not covered" >              let quantity = null</span>
-<span class="cstat-no" title="statement not covered" >              let unit = nutritionData.unit || 'g'</span>
+<span class="cstat-no" title="statement not covered" >              // Use quantity and unit directly from nutritionData instead of parsing strings</span>
+<span class="cstat-no" title="statement not covered" >              const quantity = nutritionData.quantity || null</span>
+<span class="cstat-no" title="statement not covered" >              const unit = nutritionData.unit || 'g'</span>
+<span class="cstat-no" title="statement not covered" >              const cleanName = cleanIngredientName(nutritionData.name)</span>
 <span class="cstat-no" title="statement not covered" >              </span>
-<span class="cstat-no" title="statement not covered" >              // Extract quantity from ingredient string (e.g., "100g quinoa" -&gt; 100)</span>
-<span class="cstat-no" title="statement not covered" >              const quantityMatch = ingredientString.match(/^(\d+(?:\.\d+)?)\s*(g|ml|kg|l|piece|pièce|cuillère|tasse)?/)</span>
-<span class="cstat-no" title="statement not covered" >              if (quantityMatch) {</span>
-<span class="cstat-no" title="statement not covered" >                quantity = parseFloat(quantityMatch[1])</span>
-<span class="cstat-no" title="statement not covered" >                if (quantityMatch[2]) {</span>
-<span class="cstat-no" title="statement not covered" >                  unit = quantityMatch[2] === 'piece' || quantityMatch[2] === 'pièce' ? 'piece' : quantityMatch[2]</span>
-<span class="cstat-no" title="statement not covered" >                }</span>
-<span class="cstat-no" title="statement not covered" >              }</span>
+<span class="cstat-no" title="statement not covered" >              // Debug logging</span>
+<span class="cstat-no" title="statement not covered" >              console.log('Ingredient data:', {</span>
+<span class="cstat-no" title="statement not covered" >                name: nutritionData.name,</span>
+<span class="cstat-no" title="statement not covered" >                quantity: nutritionData.quantity,</span>
+<span class="cstat-no" title="statement not covered" >                unit: nutritionData.unit,</span>
+<span class="cstat-no" title="statement not covered" >                cleanName</span>
+<span class="cstat-no" title="statement not covered" >              })</span>
 <span class="cstat-no" title="statement not covered" >              </span>
-<span class="cstat-no" title="statement not covered" >              // Find ingredient ID from global database</span>
+<span class="cstat-no" title="statement not covered" >              // Find ingredient ID from global database using clean name</span>
 <span class="cstat-no" title="statement not covered" >              let ingredientId = null</span>
 <span class="cstat-no" title="statement not covered" >              try {</span>
 <span class="cstat-no" title="statement not covered" >                const { data: globalIngredient } = await supabase</span>
 <span class="cstat-no" title="statement not covered" >                  .from("ingredients")</span>
 <span class="cstat-no" title="statement not covered" >                  .select("id")</span>
-<span class="cstat-no" title="statement not covered" >                  .eq("name", nutritionData.name)</span>
+<span class="cstat-no" title="statement not covered" >                  .eq("name", cleanName)</span>
 <span class="cstat-no" title="statement not covered" >                  .single()</span>
 <span class="cstat-no" title="statement not covered" >                </span>
 <span class="cstat-no" title="statement not covered" >                if (globalIngredient) {</span>
@@ -5815,7 +5870,7 @@
 <span class="cstat-no" title="statement not covered" >              ingredientData.push({</span>
 <span class="cstat-no" title="statement not covered" >                recipe_id: savedRecipe.id,</span>
 <span class="cstat-no" title="statement not covered" >                ingredient_id: ingredientId, // Link to global ingredient if found</span>
-<span class="cstat-no" title="statement not covered" >                name: nutritionData.name,</span>
+<span class="cstat-no" title="statement not covered" >                name: cleanName,</span>
 <span class="cstat-no" title="statement not covered" >                quantity: quantity,</span>
 <span class="cstat-no" title="statement not covered" >                unit: unit,</span>
 <span class="cstat-no" title="statement not covered" >                notes: null,</span>
@@ -6014,7 +6069,9 @@
 <span class="cstat-no" title="statement not covered" >              &lt;/CardHeader&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;CardContent className="space-y-4"&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;div&gt;</span>
-<span class="cstat-no" title="statement not covered" >                  &lt;Label htmlFor="planName" className="text-sm font-medium"&gt;Nom du plan&lt;/Label&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;Label htmlFor="planName" className="text-sm font-medium"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                    Nom du plan &lt;span className="text-gray-400 font-normal"&gt;(optionnel)&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;/Label&gt;</span>
 <span class="cstat-no" title="statement not covered" >                  &lt;Input</span>
 <span class="cstat-no" title="statement not covered" >                    id="planName"</span>
 <span class="cstat-no" title="statement not covered" >                    placeholder="ex: Plan de Marie - Janvier 2024"</span>
@@ -6024,6 +6081,9 @@
 <span class="cstat-no" title="statement not covered" >                    readOnly={isGenerating}</span>
 <span class="cstat-no" title="statement not covered" >                    disabled={isGenerating}</span>
 <span class="cstat-no" title="statement not covered" >                  /&gt;</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;p className="text-xs text-gray-500 mt-1"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                    Un nom sera automatiquement généré si ce champ est laissé vide</span>
+<span class="cstat-no" title="statement not covered" >                  &lt;/p&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;/div&gt;</span>
 <span class="cstat-no" title="statement not covered" >                &lt;div&gt;</span>
 <span class="cstat-no" title="statement not covered" >                  &lt;Label htmlFor="client" className="text-sm font-medium"&gt;Client (optionnel)&lt;/Label&gt;</span>
@@ -7000,7 +7060,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-26T18:23:58.316Z
+                at 2025-07-30T13:03:29.330Z
             </div>
         <script src="../../../../prettify.js"></script>
         <script>

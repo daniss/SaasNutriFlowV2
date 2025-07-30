@@ -102,7 +102,7 @@ export async function GET(
 
     return NextResponse.json({ instruction: processedInstruction })
   } catch (error) {
-    console.error("Error fetching meal prep instruction:", error)
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Failed to fetch instruction" },
       { status: 500 }
@@ -279,7 +279,7 @@ export async function PUT(
 
     return NextResponse.json({ instruction: updatedInstruction })
   } catch (error) {
-    console.error("Error updating meal prep instruction:", error)
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Failed to update instruction" },
       { status: 500 }
@@ -323,7 +323,7 @@ export async function DELETE(
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error deleting meal prep instruction:", error)
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: "Failed to delete instruction" },
       { status: 500 }

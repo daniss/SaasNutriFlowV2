@@ -1291,30 +1291,30 @@
 <span class="cstat-no" title="statement not covered" >                &lt;MoreHorizontal className="h-4 w-4" /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/Button&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/DropdownMenuTrigger&gt;</span>
-<span class="cstat-no" title="statement not covered" >            &lt;DropdownMenuContent align="end"&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;DropdownMenuItem onClick={() =&gt; onEdit(template)}&gt;</span>
-<span class="cstat-no" title="statement not covered" >                &lt;Edit className="mr-2 h-4 w-4" /&gt;</span>
-<span class="cstat-no" title="statement not covered" >                Modifier</span>
+<span class="cstat-no" title="statement not covered" >            &lt;DropdownMenuContent align="end" className="w-56 max-w-[90vw]"&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;DropdownMenuItem onClick={() =&gt; onEdit(template)} className="text-sm"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;Edit className="mr-2 h-4 w-4 flex-shrink-0" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;span className="truncate"&gt;Modifier&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/DropdownMenuItem&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;DropdownMenuItem onClick={() =&gt; onGenerate(template)}&gt;</span>
-<span class="cstat-no" title="statement not covered" >                &lt;Zap className="mr-2 h-4 w-4 text-emerald-600" /&gt;</span>
-<span class="cstat-no" title="statement not covered" >                &lt;span className="text-emerald-600 font-medium"&gt;Générer un plan&lt;/span&gt;</span>
+<span class="cstat-no" title="statement not covered" >              &lt;DropdownMenuItem onClick={() =&gt; onGenerate(template)} className="text-sm"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;Zap className="mr-2 h-4 w-4 text-emerald-600 flex-shrink-0" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;span className="text-emerald-600 font-medium truncate"&gt;Générer un plan&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/DropdownMenuItem&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;DropdownMenuItem&gt;</span>
-<span class="cstat-no" title="statement not covered" >                &lt;Copy className="mr-2 h-4 w-4" /&gt;</span>
-<span class="cstat-no" title="statement not covered" >                Dupliquer</span>
+<span class="cstat-no" title="statement not covered" >              &lt;DropdownMenuItem className="text-sm"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;Copy className="mr-2 h-4 w-4 flex-shrink-0" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;span className="truncate"&gt;Dupliquer&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/DropdownMenuItem&gt;</span>
-<span class="cstat-no" title="statement not covered" >              &lt;DropdownMenuItem onClick={() =&gt; onMealPrep(template)}&gt;</span>
-<span class="cstat-no" title="statement not covered" >                &lt;BookOpen className="mr-2 h-4 w-4" /&gt;</span>
-<span class="cstat-no" title="statement not covered" >                Instructions de préparation</span>
+<span class="cstat-no" title="statement not covered" >              &lt;DropdownMenuItem onClick={() =&gt; onMealPrep(template)} className="text-sm"&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;BookOpen className="mr-2 h-4 w-4 flex-shrink-0" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;span className="truncate"&gt;Instructions prépa.&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/DropdownMenuItem&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;DropdownMenuSeparator /&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;DropdownMenuItem </span>
 <span class="cstat-no" title="statement not covered" >                onClick={() =&gt; onDelete(template.id)}</span>
-<span class="cstat-no" title="statement not covered" >                className="text-red-600 hover:text-red-700"</span>
+<span class="cstat-no" title="statement not covered" >                className="text-red-600 hover:text-red-700 text-sm"</span>
 <span class="cstat-no" title="statement not covered" >              &gt;</span>
-<span class="cstat-no" title="statement not covered" >                &lt;Trash2 className="mr-2 h-4 w-4" /&gt;</span>
-<span class="cstat-no" title="statement not covered" >                Supprimer</span>
+<span class="cstat-no" title="statement not covered" >                &lt;Trash2 className="mr-2 h-4 w-4 flex-shrink-0" /&gt;</span>
+<span class="cstat-no" title="statement not covered" >                &lt;span className="truncate"&gt;Supprimer&lt;/span&gt;</span>
 <span class="cstat-no" title="statement not covered" >              &lt;/DropdownMenuItem&gt;</span>
 <span class="cstat-no" title="statement not covered" >            &lt;/DropdownMenuContent&gt;</span>
 <span class="cstat-no" title="statement not covered" >          &lt;/DropdownMenu&gt;</span>
@@ -1375,7 +1375,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-26T18:23:58.316Z
+                at 2025-07-30T13:03:29.330Z
             </div>
         <script src="../../../prettify.js"></script>
         <script>

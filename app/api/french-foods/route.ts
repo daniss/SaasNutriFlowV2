@@ -60,7 +60,7 @@ export async function GET(req: NextRequest) {
 
     const { data, error } = await query;
     if (error) {
-      console.error("Database error in french-foods API:", error);
+      // TODO: Log database error to monitoring service;
       return NextResponse.json(
         { error: "Database query failed" },
         { status: 500 }
@@ -69,7 +69,7 @@ export async function GET(req: NextRequest) {
     
     return NextResponse.json({ foods: data });
   } catch (error) {
-    console.error("Error in french-foods API:", error);
+    // TODO: Log french-foods API error to monitoring service;
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

@@ -25,7 +25,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Statements</span>
-                <span class='fraction'>0/196</span>
+                <span class='fraction'>0/186</span>
             </div>
         
             
@@ -46,7 +46,7 @@
             <div class='fl pad1y space-right2'>
                 <span class="strong">0% </span>
                 <span class="quiet">Lines</span>
-                <span class='fraction'>0/196</span>
+                <span class='fraction'>0/186</span>
             </div>
         
             
@@ -249,27 +249,7 @@
 <a name='L184'></a><a href='#L184'>184</a>
 <a name='L185'></a><a href='#L185'>185</a>
 <a name='L186'></a><a href='#L186'>186</a>
-<a name='L187'></a><a href='#L187'>187</a>
-<a name='L188'></a><a href='#L188'>188</a>
-<a name='L189'></a><a href='#L189'>189</a>
-<a name='L190'></a><a href='#L190'>190</a>
-<a name='L191'></a><a href='#L191'>191</a>
-<a name='L192'></a><a href='#L192'>192</a>
-<a name='L193'></a><a href='#L193'>193</a>
-<a name='L194'></a><a href='#L194'>194</a>
-<a name='L195'></a><a href='#L195'>195</a>
-<a name='L196'></a><a href='#L196'>196</a>
-<a name='L197'></a><a href='#L197'>197</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
-<span class="cline-any cline-no">&nbsp;</span>
+<a name='L187'></a><a href='#L187'>187</a></td><td class="line-coverage quiet"><span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
 <span class="cline-any cline-no">&nbsp;</span>
@@ -508,27 +488,25 @@
 <span class="cstat-no" title="statement not covered" >    checkClientSession();</span>
 <span class="cstat-no" title="statement not covered" >  }, []);</span>
 <span class="cstat-no" title="statement not covered" ></span>
+<span class="cstat-no" title="statement not covered" >  const clearClientSession = () =&gt; {</span>
+<span class="cstat-no" title="statement not covered" >    setClient(null);</span>
+<span class="cstat-no" title="statement not covered" >    setHasCheckedSession(true);</span>
+<span class="cstat-no" title="statement not covered" >    localStorage.removeItem("client-session");</span>
+<span class="cstat-no" title="statement not covered" >    localStorage.removeItem("client-token");</span>
+<span class="cstat-no" title="statement not covered" >    localStorage.removeItem("client-consents-given");</span>
+<span class="cstat-no" title="statement not covered" >  };</span>
+<span class="cstat-no" title="statement not covered" ></span>
 <span class="cstat-no" title="statement not covered" >  const checkClientSession = async () =&gt; {</span>
 <span class="cstat-no" title="statement not covered" >    // Prevent concurrent session validation calls</span>
 <span class="cstat-no" title="statement not covered" >    if (isValidating) return;</span>
 <span class="cstat-no" title="statement not covered" >    setIsValidating(true);</span>
 <span class="cstat-no" title="statement not covered" >    try {</span>
-<span class="cstat-no" title="statement not covered" >      // Check if there's a valid client session and token</span>
-<span class="cstat-no" title="statement not covered" >      const sessionData = localStorage.getItem("client-session");</span>
+<span class="cstat-no" title="statement not covered" >      // Check if there's a valid client token</span>
 <span class="cstat-no" title="statement not covered" >      const clientToken = localStorage.getItem("client-token");</span>
 <span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >      if (sessionData &amp;&amp; clientToken) {</span>
-<span class="cstat-no" title="statement not covered" >        // First set client from stored session data to avoid timing issues</span>
-<span class="cstat-no" title="statement not covered" >        try {</span>
-<span class="cstat-no" title="statement not covered" >          const storedClient = JSON.parse(sessionData);</span>
-<span class="cstat-no" title="statement not covered" >          if (storedClient &amp;&amp; storedClient.id) {</span>
-<span class="cstat-no" title="statement not covered" >            setClient(storedClient);</span>
-<span class="cstat-no" title="statement not covered" >          }</span>
-<span class="cstat-no" title="statement not covered" >        } catch (parseError) {</span>
-<span class="cstat-no" title="statement not covered" >          console.error("Error parsing stored client session:", parseError);</span>
-<span class="cstat-no" title="statement not covered" >        }</span>
-<span class="cstat-no" title="statement not covered" ></span>
-<span class="cstat-no" title="statement not covered" >        // Then verify the token is still valid with lightweight validation endpoint</span>
+<span class="cstat-no" title="statement not covered" >      if (clientToken) {</span>
+<span class="cstat-no" title="statement not covered" >        // SECURITY FIX: Always verify with server BEFORE setting client state</span>
+<span class="cstat-no" title="statement not covered" >        // Never trust localStorage data for authentication</span>
 <span class="cstat-no" title="statement not covered" >        const response = await fetch("/api/client-auth/validate-session", {</span>
 <span class="cstat-no" title="statement not covered" >          method: "GET",</span>
 <span class="cstat-no" title="statement not covered" >          headers: {</span>
@@ -539,34 +517,26 @@
 <span class="cstat-no" title="statement not covered" >        if (response.ok) {</span>
 <span class="cstat-no" title="statement not covered" >          const result = await response.json();</span>
 <span class="cstat-no" title="statement not covered" >          if (result.success &amp;&amp; result.client) {</span>
-<span class="cstat-no" title="statement not covered" >            // Update with fresh client data from server</span>
+<span class="cstat-no" title="statement not covered" >            // Only set client data from verified server response</span>
 <span class="cstat-no" title="statement not covered" >            setClient(result.client);</span>
+<span class="cstat-no" title="statement not covered" >            // Update localStorage with fresh server data</span>
+<span class="cstat-no" title="statement not covered" >            localStorage.setItem("client-session", JSON.stringify(result.client));</span>
 <span class="cstat-no" title="statement not covered" >            setHasCheckedSession(true);</span>
 <span class="cstat-no" title="statement not covered" >          } else {</span>
 <span class="cstat-no" title="statement not covered" >            // Session invalid, clear stored data</span>
-<span class="cstat-no" title="statement not covered" >            setClient(null);</span>
-<span class="cstat-no" title="statement not covered" >            setHasCheckedSession(true);</span>
-<span class="cstat-no" title="statement not covered" >            localStorage.removeItem("client-session");</span>
-<span class="cstat-no" title="statement not covered" >            localStorage.removeItem("client-token");</span>
+<span class="cstat-no" title="statement not covered" >            clearClientSession();</span>
 <span class="cstat-no" title="statement not covered" >          }</span>
 <span class="cstat-no" title="statement not covered" >        } else {</span>
 <span class="cstat-no" title="statement not covered" >          // Token is invalid, clear stored data</span>
-<span class="cstat-no" title="statement not covered" >          setClient(null);</span>
-<span class="cstat-no" title="statement not covered" >          setHasCheckedSession(true);</span>
-<span class="cstat-no" title="statement not covered" >          localStorage.removeItem("client-session");</span>
-<span class="cstat-no" title="statement not covered" >          localStorage.removeItem("client-token");</span>
+<span class="cstat-no" title="statement not covered" >          clearClientSession();</span>
 <span class="cstat-no" title="statement not covered" >        }</span>
 <span class="cstat-no" title="statement not covered" >      } else {</span>
-<span class="cstat-no" title="statement not covered" >        // No session data available</span>
-<span class="cstat-no" title="statement not covered" >        setClient(null);</span>
-<span class="cstat-no" title="statement not covered" >        setHasCheckedSession(true);</span>
+<span class="cstat-no" title="statement not covered" >        // No token available</span>
+<span class="cstat-no" title="statement not covered" >        clearClientSession();</span>
 <span class="cstat-no" title="statement not covered" >      }</span>
 <span class="cstat-no" title="statement not covered" >    } catch (error) {</span>
 <span class="cstat-no" title="statement not covered" >      console.error("Error checking client session:", error);</span>
-<span class="cstat-no" title="statement not covered" >      setClient(null);</span>
-<span class="cstat-no" title="statement not covered" >      setHasCheckedSession(true);</span>
-<span class="cstat-no" title="statement not covered" >      localStorage.removeItem("client-session");</span>
-<span class="cstat-no" title="statement not covered" >      localStorage.removeItem("client-token");</span>
+<span class="cstat-no" title="statement not covered" >      clearClientSession();</span>
 <span class="cstat-no" title="statement not covered" >    } finally {</span>
 <span class="cstat-no" title="statement not covered" >      setIsLoading(false);</span>
 <span class="cstat-no" title="statement not covered" >      setIsValidating(false);</span>
@@ -658,7 +628,7 @@
             <div class='footer quiet pad2 space-top1 center small'>
                 Code coverage generated by
                 <a href="https://istanbul.js.org/" target="_blank" rel="noopener noreferrer">istanbul</a>
-                at 2025-07-26T18:23:58.316Z
+                at 2025-07-30T13:03:29.330Z
             </div>
         <script src="../../prettify.js"></script>
         <script>

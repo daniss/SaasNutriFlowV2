@@ -153,7 +153,7 @@ export async function POST(
       message: "Template purchased successfully"
     })
   } catch (error) {
-    console.error("Error purchasing template:", error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: "Failed to purchase template" },
       { status: 500 }

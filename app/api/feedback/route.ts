@@ -55,11 +55,7 @@ export async function POST(request: NextRequest) {
       created_at: new Date().toISOString(),
     }
 
-    // Log feedback for now (in production, integrate with your preferred system)
-    console.log('📝 New feedback received:', {
-      ...feedbackData,
-      timestamp: new Date().toLocaleString('fr-FR'),
-    })
+    // TODO: Integrate feedback with monitoring service or issue tracking system
 
     // Here you could integrate with:
     // - Email service to notify your team
@@ -75,7 +71,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Feedback submission error:', error)
+    // TODO: Log feedback submission errors to monitoring service
     return NextResponse.json(
       { error: 'Failed to submit feedback' },
       { status: 500 }

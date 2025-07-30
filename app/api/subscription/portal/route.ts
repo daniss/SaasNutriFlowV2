@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Create portal session error:', error)
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: 'Failed to create billing portal session' },
       { status: 500 }

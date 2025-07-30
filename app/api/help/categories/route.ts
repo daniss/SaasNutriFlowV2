@@ -23,7 +23,7 @@ export async function GET() {
       .order('sort_order');
 
     if (error) {
-      console.error('Database error:', error);
+      // TODO: Log database error to monitoring service
       return NextResponse.json(
         { error: 'Failed to fetch help categories' },
         { status: 500 }
@@ -47,7 +47,7 @@ export async function GET() {
     });
 
   } catch (error) {
-    console.error('Help categories API error:', error);
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }

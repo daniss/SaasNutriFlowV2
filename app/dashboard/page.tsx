@@ -60,7 +60,6 @@ export default function DashboardPage() {
 
 
       if (clientsError) {
-        console.error("🏠 Dashboard client fetch error:", clientsError);
         throw clientsError;
       }
 
@@ -73,7 +72,6 @@ export default function DashboardPage() {
 
 
       if (mealPlansError) {
-        console.error("🏠 Dashboard meal plans fetch error:", mealPlansError);
         throw mealPlansError;
       }
 
@@ -84,7 +82,6 @@ export default function DashboardPage() {
         recentMealPlans: mealPlans?.slice(0, 5) || [],
       });
     } catch (err) {
-      console.error("Error fetching dashboard data:", err);
       setError(
         err instanceof Error ? err.message : "Failed to load dashboard data"
       );

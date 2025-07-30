@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
             .single()
 
           if (fetchError || !invoice) {
-            console.error('Invoice not found or error fetching:', fetchError)
+            // TODO: Log invoice fetch error to monitoring service
             return NextResponse.json(
               { error: 'Invalid invoice ID' },
               { status: 400 }
@@ -46,7 +46,7 @@ export async function POST(request: NextRequest) {
             .eq('dietitian_id', invoice.dietitian_id) // Multi-tenant safety
 
           if (error) {
-            console.error('Error updating invoice status:', error)
+            // TODO: Log invoice status update error to monitoring service
           }
         }
       }
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ received: true })
 
   } catch (error) {
-    console.error('Webhook processing error:', error)
+    // TODO: Log webhook processing error to monitoring service
     return NextResponse.json(
       { error: 'Webhook processing failed' },
       { status: 400 }

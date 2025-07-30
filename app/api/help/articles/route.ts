@@ -44,7 +44,7 @@ export async function GET(request: NextRequest) {
     const { data: articles, error } = await query;
 
     if (error) {
-      console.error('Database error:', error);
+      // TODO: Log database error to monitoring service
       return NextResponse.json(
         { error: 'Failed to fetch help articles' },
         { status: 500 }
@@ -76,7 +76,7 @@ export async function GET(request: NextRequest) {
     });
 
   } catch (error) {
-    console.error('Help articles API error:', error);
+    // TODO: Log API error to monitoring service
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 }
