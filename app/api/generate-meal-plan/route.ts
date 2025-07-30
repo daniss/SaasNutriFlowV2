@@ -1,4 +1,4 @@
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import Groq from "groq-sdk";
 import { createClient } from "@supabase/supabase-js";
 import { NextRequest, NextResponse } from "next/server";
 import { 
@@ -17,16 +17,19 @@ export async function POST(request: NextRequest) {
   
   try {
     // SECURITY: Use validated environment configuration
-    const apiKey = process.env.GEMINI_API_KEY;
+    const apiKey = process.env.GROQ_API_KEY;
     if (!apiKey) {
+      // TODO: Log missing API key to monitoring service
       return NextResponse.json(
         { error: "Service de génération IA indisponible" },
         { status: 503 }
       );
     }
 
-    const genAI = new GoogleGenerativeAI(apiKey);
-    const model = genAI.getGenerativeModel({ model: "gemini-pro" });
+    const groq = new Groq({ 
+      apiKey,
+      timeout: 60000, // 60 second timeout to prevent timeouts
+    });
 
     // Get auth token from header
     const authStartTime = Date.now();
@@ -236,15 +239,16 @@ Génère exactement ce JSON:
 Remplace [nom] par des noms créatifs français et [étape détaillée X] par des instructions de cuisine détaillées et précises. SEULEMENT JSON, PAS DE TEXTE.`;
         
         try {
-          const result = await model.generateContent({
-            contents: [{ role: "user", parts: [{ text: chunkPrompt }] }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 2500,
-            },
+          const result = await groq.chat.completions.create({
+            messages: [
+              { role: "user", content: chunkPrompt }
+            ],
+            model: "llama-3.1-70b-versatile",
+            temperature: 0.7,
+            max_tokens: 2500,
           });
           
-          const text = result.response.text();
+          const text = result.choices[0]?.message?.content || "";
           
           // Clean and parse chunk
           let jsonText = text.trim();
@@ -297,15 +301,16 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
             try {
               const simplePrompt = `{"days":[${Array.from({length: chunkDays}, (_, i) => `{"day":${startDay + i},"meals":{"breakfast":{"name":"Petit-déjeuner équilibré","description":"Un petit-déjeuner nutritif pour bien commencer la journée","calories":${Math.round(targetCalories*0.25)},"protein":${Math.round(targetCalories*0.25*0.15/4)},"carbs":${Math.round(targetCalories*0.25*0.50/4)},"fat":${Math.round(targetCalories*0.25*0.35/9)},"ingredients":["avoine","lait"],"instructions":["Verser le lait dans une casserole","Chauffer à feu moyen jusqu'à frémissement","Ajouter l'avoine en remuant","Laisser mijoter 5 minutes en remuant régulièrement","Servir chaud avec des fruits frais"],"ingredientsNutrition":[{"name":"avoine","unit":"g","quantity":50,"caloriesPer100":389,"proteinPer100":17,"carbsPer100":66,"fatPer100":7},{"name":"lait","unit":"ml","quantity":200,"caloriesPer100":42,"proteinPer100":3,"carbsPer100":5,"fatPer100":1}]},"lunch":{"name":"Déjeuner complet","description":"Un repas équilibré avec protéines et légumes","calories":${Math.round(targetCalories*0.35)},"protein":${Math.round(targetCalories*0.35*0.25/4)},"carbs":${Math.round(targetCalories*0.35*0.45/4)},"fat":${Math.round(targetCalories*0.35*0.30/9)},"ingredients":["légumes variés","source de protéines"],"instructions":["Laver et couper les légumes en morceaux réguliers","Faire chauffer une poêle avec un peu d'huile","Cuire les protéines à feu moyen 8-10 minutes","Ajouter les légumes et sauter 5 minutes","Assaisonner avec sel, poivre et herbes au choix","Servir chaud"],"ingredientsNutrition":[{"name":"légumes variés","unit":"g","quantity":200,"caloriesPer100":25,"proteinPer100":2,"carbsPer100":5,"fatPer100":0},{"name":"source de protéines","unit":"g","quantity":100,"caloriesPer100":200,"proteinPer100":25,"carbsPer100":0,"fatPer100":10}]},"dinner":{"name":"Dîner léger","description":"Un repas léger et digeste pour le soir","calories":${Math.round(targetCalories*0.3)},"protein":${Math.round(targetCalories*0.3*0.30/4)},"carbs":${Math.round(targetCalories*0.3*0.40/4)},"fat":${Math.round(targetCalories*0.3*0.30/9)},"ingredients":["poisson","légumes"],"instructions":["Préchauffer le grill ou la poêle","Assaisonner le poisson avec sel, poivre et citron","Badigeonner d'un peu d'huile d'olive","Griller 4-5 minutes de chaque côté","Faire sauter les légumes à la poêle 5 minutes","Servir le poisson sur lit de légumes"],"ingredientsNutrition":[{"name":"poisson","unit":"g","quantity":120,"caloriesPer100":150,"proteinPer100":25,"carbsPer100":0,"fatPer100":5},{"name":"légumes","unit":"g","quantity":150,"caloriesPer100":25,"proteinPer100":2,"carbsPer100":5,"fatPer100":0}]}},"totalCalories":${targetCalories}}`).join(',')}]}`;
               
-              const retryResult = await model.generateContent({
-                contents: [{ role: "user", parts: [{ text: `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE. Améliore les noms des recettes en gardant EXACTEMENT cette structure: ${simplePrompt}` }] }],
-                generationConfig: {
-                  temperature: 0.5,
-                  maxOutputTokens: 2000,
-                },
+              const retryResult = await groq.chat.completions.create({
+                messages: [
+                  { role: "user", content: `RÉPONDS UNIQUEMENT AVEC DU JSON VALIDE. Améliore les noms des recettes en gardant EXACTEMENT cette structure: ${simplePrompt}` }
+                ],
+                model: "llama-3.1-70b-versatile",
+                temperature: 0.5,
+                max_tokens: 2000,
               });
               
-              const retryText = retryResult.response.text();
+              const retryText = retryResult.choices[0]?.message?.content || "";
               
               // Parse retry response
               let jsonText = retryText.trim();
@@ -399,15 +404,16 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
 
         try {
           const singleGenStartTime = Date.now();
-          const result = await model.generateContent({
-            contents: [{ role: "user", parts: [{ text: enhancedPrompt }] }],
-            generationConfig: {
-              temperature: 0.7,
-              maxOutputTokens: 2500,
-            },
+          const result = await groq.chat.completions.create({
+            messages: [
+              { role: "user", content: enhancedPrompt }
+            ],
+            model: "llama-3.1-70b-versatile",
+            temperature: 0.7,
+            max_tokens: 2500,
           });
           
-          const text = result.response.text();
+          const text = result.choices[0]?.message?.content || "";
           
           const singleGenTime = Date.now() - singleGenStartTime;
 
