@@ -154,7 +154,7 @@ export async function POST(request: NextRequest) {
       const { count: currentUsage, error: usageError } = await supabase
         .from('ai_generations')
         .select('id', { count: 'exact' })
-        .eq('dietitian_id', dietitian.id)
+        .eq('dietitian_id', user.id)
         .eq('generation_successful', true)
         .gte('created_at', startOfMonth.toISOString());
       
