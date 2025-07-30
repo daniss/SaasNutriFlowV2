@@ -125,7 +125,7 @@ L'équipe NutriFlow
 
     return NextResponse.json({ success: true })
   } catch (error) {
-    console.error("Error in welcome notification API:", error)
+    // TODO: Log API errors to monitoring service
     return NextResponse.json(
       { error: "Internal server error" },
       { status: 500 }

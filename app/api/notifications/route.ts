@@ -192,7 +192,7 @@ Votre diététicien`
     })
 
   } catch (error) {
-    console.error('Notification sending error:', error)
+    // TODO: Log notification sending errors to monitoring service
     return NextResponse.json(
       { error: 'Failed to send notification' },
       { status: 500 }

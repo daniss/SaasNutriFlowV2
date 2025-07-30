@@ -147,11 +147,7 @@ export async function POST(request: NextRequest) {
 
       if (!emailService.isEmailServiceAvailable()) {
         // Fallback: log the email if service is not configured
-        console.log("GDPR Email Notification (service not configured):", {
-          to: "contact@nutri-flow.me",
-          subject: content.subject,
-          html: content.html,
-        });
+        // TODO: Log GDPR notification events to monitoring service when email service not configured
 
         return NextResponse.json({
           success: true,
@@ -170,29 +166,23 @@ export async function POST(request: NextRequest) {
       const emailResult = await emailService.sendEmail(emailData);
 
       if (emailResult.success) {
-        console.log(
-          "GDPR notification sent successfully to contact@nutri-flow.me"
-        );
+        // TODO: Log successful GDPR notification delivery to monitoring service
         return NextResponse.json({
           success: true,
           message: "Notification envoyée à l'équipe de conformité",
         });
       } else {
-        console.log("Email service failed, logging notification:", emailData);
+        // TODO: Log email service failures to monitoring service
         return NextResponse.json({
           success: true,
           message: "Notification enregistrée (problème d'envoi)",
         });
       }
     } catch (emailError) {
-      console.error("Error sending GDPR email:", emailError);
+      // TODO: Log GDPR email sending errors to monitoring service
 
       // Fallback: log the email content
-      console.log("GDPR Email Notification (fallback):", {
-        to: "contact@nutri-flow.me",
-        subject: content.subject,
-        html: content.html,
-      });
+      // TODO: Log GDPR notification fallback events to monitoring service
 
       return NextResponse.json({
         success: true,
@@ -200,7 +190,7 @@ export async function POST(request: NextRequest) {
       });
     }
   } catch (error) {
-    console.error("Error sending GDPR notification:", error);
+    // TODO: Log GDPR notification API errors to monitoring service
     return NextResponse.json(
       { error: "Erreur lors de l'envoi de la notification" },
       { status: 500 }

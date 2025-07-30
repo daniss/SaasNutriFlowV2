@@ -9,7 +9,7 @@ export async function POST(request: NextRequest) {
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     
     if (authError) {
-      console.error("Auth error:", authError)
+      // TODO: Log authentication errors to monitoring service
       return NextResponse.json(
         { error: "Authentication failed: " + authError.message },
         { status: 401 }
@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     }
     
     if (!user) {
-      console.error("No user found in session")
+      // TODO: Log authentication failures to monitoring service
       return NextResponse.json(
         { error: "No user session found" },
         { status: 401 }
@@ -32,7 +32,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (dietitianError) {
-      console.error("Dietitian lookup error:", dietitianError)
+      // TODO: Log dietitian lookup errors to monitoring service
       return NextResponse.json(
         { error: "Dietitian profile not found: " + dietitianError.message },
         { status: 401 }
@@ -40,7 +40,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!dietitian) {
-      console.error("No dietitian profile found for user:", user.id)
+      // TODO: Log missing dietitian profile events to monitoring service
       return NextResponse.json(
         { error: "Dietitian profile not found" },
         { status: 401 }
@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       .single()
 
     if (clientError) {
-      console.error("Client lookup error:", clientError)
+      // TODO: Log client lookup errors to monitoring service
       return NextResponse.json(
         { error: "Client lookup failed: " + clientError.message },
         { status: 404 }
@@ -74,7 +74,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!client) {
-      console.error("Client not found for ID:", clientId)
+      // TODO: Log client not found events to monitoring service
       return NextResponse.json(
         { error: "Client not found" },
         { status: 404 }
@@ -170,7 +170,7 @@ L'équipe NutriFlow
       message: "Meal plan shared notification sent successfully"
     })
   } catch (error) {
-    console.error("Error in meal plan shared API:", error)
+    // TODO: Log API errors to monitoring service
     const errorMessage = error instanceof Error ? error.message : "Unknown error"
     return NextResponse.json(
       { error: "Internal server error: " + errorMessage },
