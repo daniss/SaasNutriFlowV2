@@ -80,7 +80,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Get usage error:', error)
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: 'Failed to get usage data' },
       { status: 500 }

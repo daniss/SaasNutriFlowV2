@@ -69,7 +69,6 @@ export async function middleware(request: NextRequest) {
   if (user && isProtectedRoute) {
     // Check if email is confirmed
     if (!user.email_confirmed_at) {
-      console.log('🚨 Access denied: Email not confirmed for user:', user.email);
       const url = request.nextUrl.clone();
       url.pathname = "/auth/check-email";
       url.searchParams.set('email', user.email || '');

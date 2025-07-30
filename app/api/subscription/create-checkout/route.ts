@@ -58,13 +58,13 @@ export async function POST(request: NextRequest) {
         .single()
 
       if (createError) {
-        console.error('Error creating dietitian record:', createError)
+        // TODO: Log error to monitoring service
         return NextResponse.json({ error: 'Failed to create dietitian profile' }, { status: 500 })
       }
 
       dietitian = newDietitian
     } else if (dietitianError) {
-      console.error('Error fetching dietitian:', dietitianError)
+      // TODO: Log error to monitoring service
       return NextResponse.json({ error: 'Database error' }, { status: 500 })
     }
 
@@ -96,7 +96,7 @@ export async function POST(request: NextRequest) {
         .eq('id', dietitian.id)
 
       if (updateError) {
-        console.error('Failed to update dietitian with stripe customer ID:', updateError)
+        // TODO: Log error to monitoring service
         return NextResponse.json({ error: 'Failed to create customer' }, { status: 500 })
       }
     }
@@ -139,7 +139,7 @@ export async function POST(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Create checkout error:', error)
+    // TODO: Log error to monitoring service
     
     if (error instanceof z.ZodError) {
       return NextResponse.json(

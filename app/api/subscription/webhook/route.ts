@@ -12,7 +12,6 @@ export async function GET() {
 
 // Stripe webhook handler for subscription events
 export async function POST(request: NextRequest) {
-  console.log('Webhook received at:', new Date().toISOString())
   
   try {
     // Use service role client to bypass RLS for webhooks
@@ -30,11 +29,9 @@ export async function POST(request: NextRequest) {
     // Verify webhook signature
     const webhookSecret = process.env.STRIPE_WEBHOOK_SECRET
     if (!webhookSecret) {
-      console.error('STRIPE_WEBHOOK_SECRET not configured')
       return NextResponse.json({ error: 'Webhook secret not configured' }, { status: 500 })
     }
     
-    console.log('Processing webhook with signature:', signature?.substring(0, 20) + '...')
 
     let event
     try {

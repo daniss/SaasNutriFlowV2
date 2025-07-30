@@ -89,14 +89,12 @@ export default function TemplateSelectionDialog({
 
   const fetchTemplatesAndClients = async () => {
     if (!user) {
-      console.log('No user found')
       return
     }
 
     try {
       setLoading(true)
 
-      console.log('Fetching data for dietitian:', user.id)
 
       // Fetch templates
       const { data: templatesData, error: templatesError } = await supabase
@@ -105,7 +103,6 @@ export default function TemplateSelectionDialog({
         .eq('dietitian_id', user.id)
         .order('usage_count', { ascending: false })
 
-      console.log('Templates query result:', { templatesData, templatesError })
 
       if (templatesError) throw templatesError
       setTemplates(templatesData || [])
@@ -117,7 +114,6 @@ export default function TemplateSelectionDialog({
         .eq('status', 'active')
         .order('name')
 
-      console.log('Clients query result:', { clientsData, clientsError })
 
       if (clientsError) throw clientsError
       setClients(clientsData || [])

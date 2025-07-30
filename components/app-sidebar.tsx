@@ -72,11 +72,6 @@ const data = {
       url: "/dashboard/appointments",
       icon: Calendar,
     },
-    // {
-    //   title: "Factures",
-    //   url: "/dashboard/invoices",
-    //   icon: Receipt,
-    // },
     {
       title: "Paramètres",
       url: "/dashboard/settings",

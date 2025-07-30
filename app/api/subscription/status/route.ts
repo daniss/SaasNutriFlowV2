@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       .single()
 
     if (planError) {
-      console.error('Failed to fetch plan details:', planError)
+      // TODO: Log error to monitoring service
     }
 
     // Calculate trial status
@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
     })
 
   } catch (error) {
-    console.error('Get subscription status error:', error)
+    // TODO: Log error to monitoring service
     return NextResponse.json(
       { error: 'Failed to get subscription status' },
       { status: 500 }
