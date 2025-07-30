@@ -16,25 +16,34 @@ export async function POST(request: NextRequest) {
   const timings: Record<string, number> = {};
   
   try {
+    console.log("🚀 Starting meal plan generation request");
+    
     // SECURITY: Use validated environment configuration
     const apiKey = process.env.GROQ_API_KEY;
+    console.log("🔑 GROQ API key check:", !!apiKey, "length:", apiKey?.length || 0);
+    
     if (!apiKey) {
-      // TODO: Log missing API key to monitoring service
+      console.error("❌ Missing GROQ_API_KEY - returning 503");
       return NextResponse.json(
         { error: "Service de génération IA indisponible" },
         { status: 503 }
       );
     }
 
+    console.log("📡 Initializing Groq client");
     const groq = new Groq({ 
       apiKey,
       timeout: 60000, // 60 second timeout to prevent timeouts
     });
+    console.log("✅ Groq client initialized successfully");
 
     // Get auth token from header
     const authStartTime = Date.now();
     const authHeader = request.headers.get("authorization");
+    console.log("🔐 Auth header check:", !!authHeader, authHeader?.startsWith("Bearer "));
+    
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      console.error("❌ Missing or invalid auth header - returning 401");
       return NextResponse.json(
         { error: "Authentication required" },
         { status: 401 }
@@ -42,26 +51,34 @@ export async function POST(request: NextRequest) {
     }
 
     const token = authHeader.split(" ")[1];
+    console.log("🎫 Token extracted, length:", token?.length || 0);
 
     // Validate token with Supabase
+    console.log("🗄️ Creating Supabase client");
     const supabase = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
       process.env.SUPABASE_SERVICE_ROLE_KEY!
     );
+    console.log("✅ Supabase client created");
 
+    console.log("👤 Validating user token with Supabase");
     const {
       data: { user },
       error: authError,
     } = await supabase.auth.getUser(token);
     
     timings.authentication = Date.now() - authStartTime;
+    console.log("🕒 Auth validation took:", timings.authentication, "ms");
 
     if (authError || !user) {
+      console.error("❌ Auth validation failed:", authError?.message || "No user");
       return NextResponse.json(
         { error: "Invalid authentication token" },
         { status: 401 }
       );
     }
+    
+    console.log("✅ User authenticated:", user.id);
 
     const body = await request.json();
 
@@ -531,8 +548,24 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
       }
     });
   } catch (error) {
-    // TODO: Log meal plan generation errors to monitoring service
+    // TEMPORARY: Add detailed logging to debug production 500 errors
+    console.error("🚨 MEAL PLAN GENERATION ERROR - FULL DETAILS:");
+    console.error("Error type:", typeof error);
+    console.error("Error name:", error instanceof Error ? error.name : 'Unknown');
+    console.error("Error message:", error instanceof Error ? error.message : String(error));
+    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack trace');
+    console.error("Request timing so far:", Date.now() - startTime, "ms");
     
+    // Try to log the state when error occurred
+    try {
+      console.error("Additional context:");
+      console.error("- GROQ_API_KEY exists:", !!process.env.GROQ_API_KEY);
+      console.error("- GROQ_API_KEY length:", process.env.GROQ_API_KEY?.length || 0);
+      console.error("- Supabase URL exists:", !!process.env.NEXT_PUBLIC_SUPABASE_URL);
+      console.error("- Service role key exists:", !!process.env.SUPABASE_SERVICE_ROLE_KEY);
+    } catch (contextError) {
+      console.error("Failed to log context:", contextError);
+    }
 
     // Note: Failed AI generation tracking is skipped due to variable scope limitations
     // The tracking still happens for successful generations
@@ -543,18 +576,30 @@ Remplace [nom] par des noms créatifs français et [étape détaillée X] par de
 
     // Only expose safe, user-friendly error messages
     if (error instanceof Error) {
+      // TEMPORARY: Log the actual error message for debugging
+      console.error("🔍 Categorizing error:", error.message);
+      
       if (error.message.includes("rate limit") || error.message.includes("quota")) {
         errorMessage = "Service temporairement indisponible. Veuillez réessayer plus tard.";
         statusCode = 503;
+        console.error("🏷️ Categorized as: Rate limit/quota");
       } else if (error.message.includes("timeout")) {
         errorMessage = "La génération a pris trop de temps. Veuillez réduire la durée du plan.";
         statusCode = 408;
+        console.error("🏷️ Categorized as: Timeout");
       } else if (error.message.includes("validation")) {
         errorMessage = "Données de requête invalides";
         statusCode = 400;
+        console.error("🏷️ Categorized as: Validation");
+      } else {
+        console.error("🏷️ Categorized as: Generic error");
       }
       // For all other errors, use generic message to prevent info disclosure
+    } else {
+      console.error("🏷️ Non-Error object thrown:", typeof error);
     }
+
+    console.error("📤 Returning error response:", { errorMessage, statusCode });
 
     return NextResponse.json(
       {
